@@ -1,0 +1,3 @@
+* Green 5 mm LED, GaP (our fit to Kingbright WP7113GD's sheet)
+* Fitted by Solum Builder to Kingbright WP7113GD data sheet, Spec No DSAE9335, Rev. V.12B (04/02/2019), Forward Current vs. Forward Voltage (page 3), read from the PDF's vector drawing (D-156)
+.model WP7113GD D(is=1e-26 n=1.334 rs=12.61 cjo=1.5e-11 bv=5 ibv=1e-05)

@@ -1,0 +1,463 @@
+{
+  "schema": 29,
+  "id": "buffered-bypass-3pdt-v1",
+  "name": "Bypass · buffered (JFET buffer + 3PDT)",
+  "version": {
+    "major": 1,
+    "minor": 2
+  },
+  "description": "The JFET source follower in front of a true-bypass 3PDT footswitch: the guitar always drives the buffer's high input impedance, on and bypassed, so a long cable after the pedal doesn't dull it. On: the buffer feeds your circuit (send) and its output (return) goes to the jack (out), the LED lit; bypassed: the buffer goes straight to out, your circuit's input grounded. The buffer's values are the JFET source follower block's starting values; the switching as in the True bypass block (Coda Effects, General Guitar Gadgets). Flip it in Knobs: Bypass.",
+  "tags": [
+    "bypass",
+    "buffer",
+    "footswitch",
+    "switching",
+    "jfet"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "C1",
+      "pos": [
+        40,
+        0
+      ],
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "film"
+    },
+    {
+      "ref": "Q1",
+      "pos": [
+        140,
+        0
+      ],
+      "type": "jfet",
+      "model": "J201"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        90,
+        -50
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "2M2"
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        90,
+        50
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "2M2"
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        160,
+        60
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        210,
+        20
+      ],
+      "type": "capacitor",
+      "value": "1µ",
+      "kind": "film"
+    },
+    {
+      "ref": "R4",
+      "pos": [
+        260,
+        60
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "1M"
+    },
+    {
+      "ref": "SW1A",
+      "pos": [
+        600,
+        0
+      ],
+      "type": "switch",
+      "kind": "footswitch",
+      "pole": "a",
+      "label": "Bypass"
+    },
+    {
+      "ref": "SW1B",
+      "pos": [
+        600,
+        80
+      ],
+      "type": "switch",
+      "kind": "footswitch",
+      "pole": "b",
+      "label": "Bypass"
+    },
+    {
+      "ref": "SW1C",
+      "pos": [
+        600,
+        160
+      ],
+      "type": "switch",
+      "kind": "footswitch",
+      "pole": "c",
+      "label": "Bypass"
+    },
+    {
+      "ref": "LEDR1",
+      "pos": [
+        400,
+        160
+      ],
+      "type": "resistor",
+      "value": "4k7"
+    },
+    {
+      "ref": "LED1",
+      "pos": [
+        500,
+        160
+      ],
+      "type": "led",
+      "model": "APT1608SURCK",
+      "label": "Status"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        0,
+        0
+      ],
+      "to": [
+        20,
+        0
+      ]
+    },
+    {
+      "from": [
+        60,
+        0
+      ],
+      "to": [
+        120,
+        0
+      ]
+    },
+    {
+      "from": [
+        90,
+        -30
+      ],
+      "to": [
+        90,
+        0
+      ]
+    },
+    {
+      "from": [
+        90,
+        0
+      ],
+      "to": [
+        90,
+        30
+      ]
+    },
+    {
+      "from": [
+        160,
+        -20
+      ],
+      "to": [
+        160,
+        -70
+      ]
+    },
+    {
+      "from": [
+        160,
+        20
+      ],
+      "to": [
+        160,
+        40
+      ]
+    },
+    {
+      "from": [
+        160,
+        20
+      ],
+      "to": [
+        190,
+        20
+      ]
+    },
+    {
+      "from": [
+        230,
+        20
+      ],
+      "to": [
+        260,
+        20
+      ]
+    },
+    {
+      "from": [
+        260,
+        20
+      ],
+      "to": [
+        260,
+        40
+      ]
+    },
+    {
+      "from": [
+        260,
+        20
+      ],
+      "to": [
+        280,
+        20
+      ]
+    },
+    {
+      "from": [
+        620,
+        -20
+      ],
+      "to": [
+        660,
+        -20
+      ]
+    },
+    {
+      "from": [
+        620,
+        20
+      ],
+      "to": [
+        640,
+        20
+      ]
+    },
+    {
+      "from": [
+        580,
+        0
+      ],
+      "to": [
+        540,
+        0
+      ]
+    },
+    {
+      "from": [
+        620,
+        60
+      ],
+      "to": [
+        660,
+        60
+      ]
+    },
+    {
+      "from": [
+        620,
+        100
+      ],
+      "to": [
+        660,
+        100
+      ]
+    },
+    {
+      "from": [
+        580,
+        80
+      ],
+      "to": [
+        540,
+        80
+      ]
+    },
+    {
+      "from": [
+        360,
+        160
+      ],
+      "to": [
+        380,
+        160
+      ]
+    },
+    {
+      "from": [
+        420,
+        160
+      ],
+      "to": [
+        480,
+        160
+      ]
+    },
+    {
+      "from": [
+        520,
+        160
+      ],
+      "to": [
+        580,
+        160
+      ]
+    },
+    {
+      "from": [
+        620,
+        140
+      ],
+      "to": [
+        640,
+        140
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "in",
+      "pos": [
+        0,
+        0
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        90,
+        -70
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        90,
+        70
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        160,
+        -70
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        160,
+        80
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        260,
+        80
+      ]
+    },
+    {
+      "net": "buf",
+      "pos": [
+        280,
+        20
+      ]
+    },
+    {
+      "net": "buf",
+      "pos": [
+        660,
+        -20
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        640,
+        20
+      ],
+      "rot": 270
+    },
+    {
+      "net": "send",
+      "pos": [
+        540,
+        0
+      ]
+    },
+    {
+      "net": "return",
+      "pos": [
+        660,
+        60
+      ]
+    },
+    {
+      "net": "buf",
+      "pos": [
+        660,
+        100
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        540,
+        80
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        360,
+        160
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        640,
+        140
+      ],
+      "rot": 270
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "send": "send",
+    "return": "return",
+    "out": "out"
+  }
+}

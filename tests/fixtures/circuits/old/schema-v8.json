@@ -1,0 +1,42 @@
+{
+  "schema": 8,
+  "id": "old-v8",
+  "name": "Old v8",
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "parts": [
+    {
+      "ref": "R1",
+      "type": "resistor",
+      "value": "10k",
+      "pos": [
+        0,
+        0
+      ]
+    }
+  ],
+  "wires": [],
+  "labels": [
+    {
+      "net": "GND",
+      "pos": [
+        -20,
+        0
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        20,
+        0
+      ]
+    }
+  ],
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  }
+}

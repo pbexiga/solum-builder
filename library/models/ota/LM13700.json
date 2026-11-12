@@ -1,0 +1,126 @@
+{
+  "id": "LM13700",
+  "type": "ota",
+  "description": "LM13700 dual OTA with linearising diodes and buffers (our model from TI's sheet)",
+  "spice_name": "LM13700_OTA",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "out",
+    "iabc",
+    "dbias",
+    "bufin",
+    "bufout",
+    "V+",
+    "V-"
+  ],
+  "card": "LM13700.lib",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://www.ti.com/lit/ds/symlink/lm13700.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model built from the maker's data sheet (D-180): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.ti.com/lit/ds/symlink/lm13700.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 3.0,
+    "cm_pos_headroom": 3.0
+  },
+  "rating_sources": {
+    "vs_max": "TI LM13700 data sheet SNOSBW2F (November 2015): Absolute Maximum Ratings, supply voltage 36 V (±18 V)",
+    "cm_neg_headroom": "TI LM13700 data sheet SNOSBW2F (November 2015), 6.4 Electrical Characteristics: common-mode range ±12 V min (±13.5 V typ) at VS = ±15 V, so 3 V from each supply",
+    "cm_pos_headroom": "TI LM13700 data sheet SNOSBW2F (November 2015), 6.4 Electrical Characteristics: common-mode range ±12 V min (±13.5 V typ) at VS = ±15 V, so 3 V from each supply"
+  },
+  "validation": [
+    {
+      "quantity": "gm",
+      "conditions": {
+        "supply": 15.0,
+        "iabc": 0.0005
+      },
+      "simulated": 0.009760072,
+      "datasheet": {
+        "min": 0.0067,
+        "typ": 0.0096,
+        "max": 0.013,
+        "source": "https://www.ti.com/lit/ds/symlink/lm13700.pdf",
+        "note": "LM13700 gm 9600 µS typ (6700 to 13000), ±15 V, IABC = 500 µA"
+      }
+    },
+    {
+      "quantity": "iout_max",
+      "conditions": {
+        "supply": 15.0,
+        "iabc": 0.0005
+      },
+      "simulated": 0.00050495,
+      "datasheet": {
+        "min": 0.00035,
+        "typ": 0.0005,
+        "max": 0.00065,
+        "source": "https://www.ti.com/lit/ds/symlink/lm13700.pdf",
+        "note": "LM13700 peak output current 500 µA typ (350 to 650) at IABC = 500 µA"
+      }
+    },
+    {
+      "quantity": "iout_max",
+      "conditions": {
+        "supply": 15.0,
+        "iabc": 5e-06
+      },
+      "simulated": 5.05e-06,
+      "datasheet": {
+        "typ": 5e-06,
+        "source": "https://www.ti.com/lit/ds/symlink/lm13700.pdf",
+        "note": "LM13700 peak output current 5 µA typ at IABC = 5 µA"
+      }
+    }
+  ],
+  "channels": 2,
+  "package": {
+    "name": "16-pin DIP",
+    "pins": {
+      "a.iabc": 1,
+      "a.dbias": 2,
+      "a.+": 3,
+      "a.-": 4,
+      "a.out": 5,
+      "V-": 6,
+      "a.bufin": 7,
+      "a.bufout": 8,
+      "b.bufout": 9,
+      "b.bufin": 10,
+      "V+": 11,
+      "b.out": 12,
+      "b.-": 13,
+      "b.+": 14,
+      "b.dbias": 15,
+      "b.iabc": 16
+    },
+    "source": "TI LM13700 data sheet SNOSBW2F (November 2015), Pin Configuration and Functions (p.3)"
+  },
+  "fit": {
+    "sheet": "TI LM13700 data sheet SNOSBW2F (November 2015)",
+    "figure": "Figure 8, transconductance vs amplifier bias current; Figure 10, amplifier bias voltage; Figure 3, input bias current; Figure 12, output resistance",
+    "points": [
+      [
+        9.98e-05,
+        4.5e-06
+      ],
+      [
+        0.003185,
+        0.00015
+      ],
+      [
+        0.009377,
+        0.00045
+      ]
+    ],
+    "method": "Behavioural OTA as the CA3080's (Iout = Iabc·tanh(Vd/2VT)), the bias pin two junctions to V- fitted to Figure 10, base currents to Figure 3, Early term to Figure 12; linearising diodes and the Darlington buffer as junctions sized for the table's 0.5 µA buffer input current. Build script .claude/skills/fit-model/worked/ota/build_ota.py; checks check_ota.py.",
+    "note": "Input bias current follows Figures 3 and 9 (2 µA, inside the 5 µA max) rather than the table's 0.4 µA typical, which contradicts its own 26 kΩ input resistance. The linearising diodes cancel the tanh more exactly than Figure 13 shows. Offsets, noise and the buffer's 20 mA limit aren't modelled. 9 V is under the sheet's 9.5 V minimum single supply."
+  }
+}

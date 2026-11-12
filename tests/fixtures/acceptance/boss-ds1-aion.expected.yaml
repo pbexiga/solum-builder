@@ -1,0 +1,147 @@
+# Expected values for library/starters/boss-ds1-aion.json (D-019, D-213).
+# Refs follow Aion's Comet schematic (Aion's RPD is RPD1, D-232); ElectroSmash numbers the
+# same parts differently, so each check names Aion's part and the page's in its note.
+circuit: boss-ds1-aion
+source:
+  title: ElectroSmash, "Boss DS-1 Distortion Analysis"
+  url: https://electrosmash.com/boss-ds1-analysis
+  snapshot: http://web.archive.org/web/20260518121143/https://electrosmash.com/boss-ds1-analysis
+  read: 2026-11-09
+  licence: CC BY-NC 3.0 (its figures, said in our own words)
+substitutions:
+  - >-
+    The circuit is Aion FX's Comet (document 1.1.0): the post-1994 dual op-amp DS-1 with
+    Aion's pre-1994 values (C5 470n, C6 250p, C7 1µ: "The default parts list for the Comet
+    is for the pre-1994 version"), with true bypass (not drawn), and Aion's Mode switch
+    (Diodes, LEDs, Two diodes) drawn at Diodes, the stock DS-1's. C4, D2, D3 and D11 are
+    Aion's "OMIT" and aren't drawn. Without the bypass board, LED and LEDR.
+  - >-
+    ElectroSmash analyses the post-1994 circuit (C5 68n, C7 100p, C8 0.47u in its
+    numbering), so only the stages whose parts match Aion's are checked: the input buffer,
+    the booster, the op-amp stage's gain, the clipping and its treble cut, and the tone
+    stack. Its Tone pot is 20kB, Aion's 25kB ("The original uses 20kB if you can find it");
+    the notch check sets 20k.
+  - >-
+    Q1-Q3 2N5088, Aion's substitute ("Original uses 2SC2248"; ElectroSmash's 2SC2240). IC1
+    the NJM3404A, Aion's NJM3404AD (our card from Nisshinbo's sheet, D-252). D1 1N5817 as Aion's (ElectroSmash's 1N4004). D5-D8 and D4 1N914 (the page's
+    1N4148). D9, D10 red LEDs as the APT1608SURCK card.
+  - The supply is an ideal 9 V into D1, as the other starters'.
+
+checks:
+  - id: bias-reference
+    kind: dc
+    node: VB
+    volts: 4.5
+    tol: 0.45
+    from: text
+    says: "The supply stage is a resistor divider: it gives the pedal its 9 V and its 4.5 V bias voltage."
+    note: Aion's VB (R21, R22), after D1 and R23, so a little under half of 9 V.
+  - id: booster-collector
+    known_gap: >-
+      Simulated 3.96 V. By hand the shunt-feedback stage sits at VBE + R5 x (VBE/R4 + IB):
+      0.625 + 470K x (6.25 µA + 0.85 µA) = 3.96 V with the 2N5088's gain of about 550 at
+      0.47 mA. 5.8 V would need 11 µA through R5, a base current of about 4.8 µA: a gain near
+      70, far under the 200-700 the page gives its own 2SC2240. The figure is from a reader's
+      note on D8 (given as a rough figure), not the page's worked bias.
+    kind: dc
+    node: Q2.C
+    volts: 5.8
+    tol: 0.58
+    from: text
+    says: "Q2's collector sits at about 5.8 V."
+  - id: input-high-pass
+    kind: corner
+    side: low
+    node: Q1.E
+    hz: 7.2
+    tol_pct: 15
+    sweep: {start: 0.5}
+    from: text
+    says: "C1 keeps the pedal's DC off the guitar and cuts what lies below hearing, with its corner at 7.2 Hz."
+    note: C1 47n with R2 470k, the same in both; at the input buffer's output.
+  - id: booster-gain
+    kind: peak_gain
+    node: Q2.C
+    ref: Q1.E
+    db: 35
+    tol_db: 2.0
+    from: text
+    says: "Above 3.3 kHz the stage's gain is 35 dB, 56 times."
+    note: From the booster's input (Q1's emitter, before C2) to Q2's collector; R6 10k, R7 22R, R5 470k, C3 250p as the page's R8, R9, R7, C4.
+  - id: opamp-gain
+    kind: gain
+    node: IC1A.out
+    ref: IC1A.+
+    set: {VR1: {rotation: 1.0}}
+    hz: 1000
+    db: 26.5
+    tol_db: 1.0
+    from: text
+    says: "The op-amp's most gain: 1 + VR1/R13 = 1 + 100k/4.7k = 22.3, which is 26.5 dB."
+    note: Distortion fully up; Aion's R11 is the page's R13. 22.3 times is 27.0 dB, so ±1 dB covers both figures.
+  - id: clip-treble-cut
+    known_gap: >-
+      Simulated 4.9 kHz. The page gives R14 and C10 on their own (1/(2π·2.2K·10n) = 7.2 kHz);
+      in the pedal the tone stack hangs on the same node, and its input impedance falls as
+      C11 and C10 conduct, so the response sags from about 100 Hz (-2.1 dB) and is 3 dB down
+      by 4.9 kHz. With C10 and C11 set to 1p (the stack's AC load taken away) the simulation
+      reads about 7.6 kHz, the page's figure.
+    kind: corner
+    side: high
+    node: clip
+    ref: IC1A.out
+    hz: 7200
+    tol_pct: 15
+    from: text
+    says: "R14 and C10 make a low-pass filter with its corner at 7.2 kHz."
+    note: Aion's R12 2k2 and C9 10n; small signal, so the diodes are off.
+  - id: clipping-level
+    kind: clip
+    node: clip
+    minus: VB
+    level: med
+    volts: 0.7
+    tol: 0.15
+    from: text
+    says: "The wave is squared off between +0.7 V and -0.7 V, the diodes' forward voltage."
+  - id: tone-notch
+    known_gap: >-
+      Simulated 692 Hz, -14.5 dB. Worked by hand (nodal analysis of the stack alone, 20K pot
+      at noon, 100K load) it notches at 681 Hz, -14.5 dB, so the simulation agrees with the
+      circuit; unloaded, 683 Hz, -14.0 dB. The page's rough 500 Hz is the middle of its two
+      filter corners (√(234 x 1063) = 499 Hz), not the stack's response, and its -20 dB
+      isn't worked.
+    kind: notch
+    node: VR2.2
+    ref: clip
+    set: {VR2: {value: 20k}}
+    band: [100, 5000]
+    hz: 500
+    tol_pct: 20
+    db: -20
+    tol_db: 2.5
+    from: text
+    says: "The stack loses 12 dB overall (4 times) and about 20 dB at the notch, at 500 Hz."
+    note: Tone at noon with the page's 20kB pot, loaded by Level (100k) as in the pedal; Aion says "a mid-scoop centered at 550 Hz".
+
+omitted:
+  - what: The op-amp stage's 72 Hz and 23 Hz high-passes, the output's 3.4 Hz
+    why: They use the post-1994 values (C8 0.47u, C5 68n in the page's numbering; R19 ∥ R20); Aion's pre-1994 C7 1µ and C5 470n and its single R17 1M put them elsewhere.
+  - what: The booster's 33 Hz and 3.3 Hz high-passes
+    why: The page gives each RC on its own; in the stage, R5's shunt feedback lowers Q2's input impedance far below R4, so no single corner matches either figure.
+  - what: The tone stack's 234 Hz and 1063 Hz filters
+    why: Worked RC values for each half of the stack, not responses of the pedal; the notch they make is checked.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  sources:
+    - title: Aion FX, "Comet Vintage Distortion" documentation 1.1.0 (2026-07-22), based on the BOSS DS-1 Distortion
+      url: https://aionfx.com/app/files/docs/comet_documentation.pdf
+      snapshot: http://web.archive.org/web/20260805194649/https://aionfx.com/app/files/docs/comet_documentation.pdf
+      read: 2026-11-09
+      licence: Aion FX project documentation (short quotes, for testing); the projects may be built, commercially too, without attribution (its License & Usage page)
+  parts:
+    - "The circuit and every value are from this document's schematic and parts list (the main source above checks them)."
+    - "Capacitor types from its parts list: C6 NP0/C0G (\"MLCC capacitor, NP0/C0G\"), C16 X7R (\"MLCC capacitor, X7R\"), C14 and C15 electrolytic, the rest film (\"Film capacitor\"), C7 and C13 too (\"1uF Film capacitor\"). C3 is \"Ceramic capacitor, X5F\": drawn as C0G, the app's advice for a small cap in the signal path (it simulates the same)."
+    - "The electrolytics' ratings aren't given: 16 V, the app's advice on a 9 V pedal."
+    - "Enclosure 125B (\"Enclosure, die-cast aluminum\")."

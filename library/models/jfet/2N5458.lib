@@ -1,0 +1,3 @@
+* 2N5458 N-channel JFET (Rat output buffer; our model from onsemi's sheet)
+* Built by Solum Builder from onsemi 2N5457/D Rev. 6 (Feb 2010) (D-161)
+.model J2N5458 NJF(vto=-4.282 beta=0.0003273 lambda=0.001667 cgs=3e-12 cgd=1.5e-12)

@@ -1,0 +1,60 @@
+id: opamp-input-common-mode
+layer: operating_point
+severity: warning
+check: opamp_input_common_mode
+title: Op-amp or OTA input out of range
+message: "{ref}'s {input} input sits at {volts}, outside {range}."
+why: >
+  Every op-amp (and OTA) has an input common-mode range from its datasheet: inputs closer to the
+  supplies stop working properly (some op-amps' outputs even jump to the wrong rail).
+  Pedal stages bias their inputs at half the supply to stay well inside it. Checked for
+  models whose datasheet range is recorded.
+fix: >
+  Bias {ref}'s inputs nearer the middle of the supply (VREF), or pick a chip whose
+  inputs reach that close to the supply.
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, p], value: 100n}
+        - {ref: R1, type: resistor, nets: [p, GND], value: 1M}
+        - {ref: U1, type: opamp, nets: [p, o, o], model: LM308}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [U1]
+    - rails: {V+: 9}   # an OTA's + input on ground, its - at VREF (D-238)
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, p], value: 100n}
+        - {ref: R1, type: resistor, nets: [p, GND], value: 1M}
+        - {ref: R2, type: resistor, nets: [V+, vref], value: 100k}
+        - {ref: R3, type: resistor, nets: [vref, GND], value: 100k}
+        - {ref: C2, type: capacitor, nets: [vref, GND], value: 10u}
+        - {ref: R4, type: resistor, nets: [V+, ib], value: 100k}
+        - {ref: R5, type: resistor, nets: [o, vref], value: 1M}
+        - {ref: U1, type: ota, nets: [p, vref, o, ib], model: CA3080}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [U1]
+    - rails: {V+: 5}   # a TL072 has no input range at all on 5 V (D-238)
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, p], value: 100n}
+        - {ref: R1, type: resistor, nets: [p, vref], value: 1M}
+        - {ref: R2, type: resistor, nets: [V+, vref], value: 100k}
+        - {ref: R3, type: resistor, nets: [vref, GND], value: 100k}
+        - {ref: C2, type: capacitor, nets: [vref, GND], value: 10u}
+        - {ref: U1, type: opamp, nets: [p, o, o], model: TL072}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [U1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, p], value: 100n}
+        - {ref: R1, type: resistor, nets: [p, vref], value: 1M}
+        - {ref: R2, type: resistor, nets: [V+, vref], value: 100k}
+        - {ref: R3, type: resistor, nets: [vref, GND], value: 100k}
+        - {ref: C2, type: capacitor, nets: [vref, GND], value: 10u}
+        - {ref: U1, type: opamp, nets: [p, o, o], model: LM308}
+        - {ref: OUT, type: amp, nets: [o]}
+    - starter: mxr-dyna-comp-aion   # an OTA biased right, and a spare one

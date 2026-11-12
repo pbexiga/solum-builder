@@ -1,0 +1,3 @@
+* 2SK184-GR low-noise N-channel JFET, GR grade (the Boss BD-2's; our model from Toshiba's sheet)
+* Built by Solum Builder from Toshiba 2SK184 data sheet (2007-11-01) (D-161, D-216, D-255)
+.model J2SK184GR NJF(vto=-0.482 beta=0.01769 lambda=0.006 cgs=1e-11 cgd=3e-12)

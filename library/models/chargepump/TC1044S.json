@@ -1,0 +1,64 @@
+{
+  "id": "TC1044S",
+  "type": "chargepump",
+  "description": "TC1044S charge pump (TC7660 upgrade with a boost pin): the classic pedal 18 V doubler and -9 V inverter",
+  "kind": "behavioural",
+  "manufacturer": "Microchip",
+  "source": {
+    "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/21348a.pdf",
+    "retrieved": "2026-10-22",
+    "licence": "values read from the manufacturer's data sheet",
+    "original": "Microchip"
+  },
+  "datasheet": "https://ww1.microchip.com/downloads/en/DeviceDoc/21348a.pdf",
+  "note": "A behavioural model, not the chip's circuit: the figures read from the maker's sheet (pump frequency, output resistance, voltage drop, supply current) drive Solum Builder's own model of a charge pump, switching ripple included (D-093).",
+  "ratings": {
+    "vs_max": 13.0
+  },
+  "rating_sources": {
+    "vs_max": "Microchip TC1044S data sheet, DS21348A (2001): Absolute Maximum Ratings, Supply Voltage +13 V (operating range 1.5 V to 12 V)"
+  },
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "cap+": 2,
+      "gnd": 3,
+      "cap-": 4,
+      "out": 5,
+      "in": 8
+    },
+    "source": "Microchip TC1044S data sheet, DS21348A (2001), Pin Configuration: 8-pin PDIP, BOOST 1, CAP+ 2, GND 3, CAP- 4, VOUT 5, LV 6, OSC 7, V+ 8. The pump's caps and diodes are drawn parts (D-226)."
+  },
+  "params": {
+    "f_pump": 5000.0,
+    "f_pump_boost": 22500.0,
+    "r_out": 60.0,
+    "i_q": 8e-05,
+    "i_q_boost": 0.0003,
+    "c_pump": 1e-05
+  },
+  "param_sources": {
+    "f_pump": "Microchip TC1044S data sheet, DS21348A (2001): oscillator 10 kHz typ (Electrical Characteristics, F_OSC, pin 1 open); the switches run at half of it (block diagram: RC oscillator then divide-by-2)",
+    "f_pump_boost": "Microchip TC1044S data sheet, DS21348A (2001): oscillator 45 kHz typ with Boost Pin = V+ (Electrical Characteristics, F_OSC), halved by the divide-by-2",
+    "r_out": "Microchip TC1044S data sheet, DS21348A (2001): R_OUT 60 ohms typ at I_OUT = 20 mA, V+ = 5 V, 25 C (Electrical Characteristics); flying and reservoir caps as the test circuit",
+    "i_q": "Microchip TC1044S data sheet, DS21348A (2001): supply current 80 uA typ, R_L = infinity, V+ = 5 V (Electrical Characteristics)",
+    "i_q_boost": "Microchip TC1044S data sheet, DS21348A (2001): supply current with Boost Pin = V+, 300 uA max at 0-70 C (no typical given, so the max is used)",
+    "c_pump": "Microchip TC1044S data sheet, DS21348A (2001): C1 = 10 uF, the flying cap of the text (page 3, \"inexpensive 10 uF polarized electrolytic capacitors\") and of Figure 3; Figure 1, the test circuit, prints 1 uF, but that can't give its 60 ohms (1/(f C1) alone would be 200 ohms at 5 kHz)"
+  },
+  "validation": [
+    {
+      "quantity": "vout",
+      "conditions": {
+        "supply": 5.0,
+        "load": 0.01
+      },
+      "simulated": -4.4,
+      "datasheet": {
+        "typ": -4.3,
+        "tol": 0.15,
+        "source": "Microchip TC1044S data sheet, DS21348A (2001), page 4: the inverter is an ideal source behind 70 ohms, so -10 mA at +5 V gives -4.3 V",
+        "note": "The sheet's text says 70 ohms here and its table 60 ohms typ (100 max); the model uses the table's typical."
+      }
+    }
+  ]
+}

@@ -1,0 +1,44 @@
+id: cap-kind-signal-path
+layer: topology
+severity: info
+check: cap_kind_signal_path
+title: Capacitor kind for the signal path
+message: "{ref} is a {kind} capacitor in the signal path."
+why: >
+  A general-purpose ceramic (X7R, Y5V) changes value with the voltage across it and with
+  temperature, which colours the sound, and it can pick up taps. A tantalum is polarised and
+  fails as a short. In the signal path, film is the usual choice, C0G for small values.
+  Capacitors from a supply to ground (decoupling, bulk, reservoir) aren't checked.
+fix: "Use {advice} for {ref}. Help → Choosing capacitors says which kind goes where."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:   # a coupling cap
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, a], value: 100n, kind: ceramic}
+        - {ref: R1, type: resistor, nets: [a, GND], value: 1M}
+      expect: [C1]
+    - rails: {V+: 9}
+      parts:   # a tone cap to ground is in the signal path too
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, a], value: 10k}
+        - {ref: C1, type: capacitor, nets: [a, GND], value: 10u, kind: tantalum}
+      expect: [C1]
+  good:
+    - rails: {V+: 9}
+      parts:   # film and C0G in the signal path; ceramic decoupling on the supply
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, a], value: 100n, kind: film}
+        - {ref: C2, type: capacitor, nets: [a, GND], value: 100p, kind: c0g}
+        - {ref: R1, type: resistor, nets: [a, GND], value: 1M}
+        - {ref: C3, type: capacitor, nets: [V+, GND], value: 100n, kind: ceramic}
+    - rails: {V+: 9}
+      parts:   # a ceramic on a bias net held still by a big cap (VREF) is decoupling
+        - {ref: R1, type: resistor, nets: [V+, vref], value: 10k}
+        - {ref: R2, type: resistor, nets: [vref, GND], value: 10k}
+        - {ref: C1, type: capacitor, nets: [vref, GND], value: 47u, kind: electrolytic}
+        - {ref: C2, type: capacitor, nets: [vref, GND], value: 100n, kind: ceramic}
+    - starter: fuzz-face
+    - starter: proco-rat
+    - starter: ts808
+    - starter: big-muff-pi-v3

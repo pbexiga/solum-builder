@@ -1,0 +1,9 @@
+* Vref divider
+V_RAIL1 v_ 0 DC 9
+R1 v_ vref 100000
+R2 vref 0 100000
+C1 vref 0 1e-06
+R_JIGR1 v_ vref 100000
+R_JIGR2 vref 0 100000
+.op
+.end

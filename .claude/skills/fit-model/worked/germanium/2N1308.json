@@ -1,0 +1,374 @@
+{
+  "id": "2N1308",
+  "type": "bjt",
+  "description": "2N1308 germanium NPN (TI alloy junction, high-frequency computer switching; the 2N1309 is its PNP twin), our fit to TI's sheet",
+  "spice_name": "2N1308",
+  "kind": "model",
+  "pins": [],
+  "card": "2N1308.lib",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://bitsavers.mirrorservice.org/components/ti/discrete/transistors/2N1302_2N1304_2N1306_2N1308_2N1303_2N1305_2N1307_2N1309.pdf (kept as data/spec-sheets/2N1302-2N1309_TI.pdf)",
+    "retrieved": "2026-11-03",
+    "licence": "Our own model fitted to the maker's data sheet (D-163): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "fixes": [],
+  "ratings": {
+    "vceo": 15.0,
+    "ic": 0.3
+  },
+  "rating_sources": {
+    "vceo": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 1: maximum ratings at 25 °C case: collector-emitter voltage 15 V (2N1308, 9)",
+    "ic": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 1: maximum ratings: collector current 300 mA"
+  },
+  "package": {
+    "name": "TO-5 (EBC; base on the case)",
+    "pins": {
+      "E": 1,
+      "B": 2,
+      "C": 3
+    },
+    "source": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 1: mechanical data: outline, emitter, base, collector around the tab; the base is connected internally to the case"
+  },
+  "fit": {
+    "sheet": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959)",
+    "figure": "page 2 table, 2N1308 column (hFE, VBE, VCE(sat), ICBO, IEBO, Cib, fαb; Cob's 20 pF maximum); page 5 design curves: normalised N-P-N hFE against IC (its shape), VCE against IC at IB 20 and 50 mA (their slope, RC), normalised Cob against VCB (its shape)",
+    "points": [
+      [
+        0.01,
+        150.0
+      ],
+      [
+        0.02186,
+        151.94502101547047
+      ],
+      [
+        0.0448,
+        165.3752759867053
+      ],
+      [
+        0.06774,
+        172.4261598466036
+      ],
+      [
+        0.09068000000000001,
+        174.7001461996877
+      ],
+      [
+        0.11355,
+        173.09767259516536
+      ],
+      [
+        0.13636,
+        167.03879620473327
+      ],
+      [
+        0.15918000000000002,
+        159.1332597557564
+      ],
+      [
+        0.182,
+        151.80766613508285
+      ],
+      [
+        0.2047,
+        144.78730558193737
+      ],
+      [
+        0.227,
+        138.16374801657835
+      ],
+      [
+        0.24930000000000002,
+        132.97478586860126
+      ],
+      [
+        0.2716,
+        128.06053348139943
+      ],
+      [
+        0.2939,
+        124.35195171093346
+      ]
+    ],
+    "curves": {
+      "cobo": [
+        [
+          0.69,
+          3.1746e-11
+        ],
+        [
+          1.53,
+          2.7936e-11
+        ],
+        [
+          2.37,
+          2.515e-11
+        ],
+        [
+          3.21,
+          2.3067999999999997e-11
+        ],
+        [
+          4.05,
+          2.1446e-11
+        ],
+        [
+          4.89,
+          2.0106e-11
+        ],
+        [
+          5.74,
+          1.9064e-11
+        ],
+        [
+          6.6,
+          1.8197999999999998e-11
+        ],
+        [
+          9.15,
+          1.6684e-11
+        ],
+        [
+          10.14,
+          1.6324e-11
+        ],
+        [
+          11.0,
+          1.6035999999999998e-11
+        ],
+        [
+          11.85,
+          1.5783999999999998e-11
+        ],
+        [
+          12.71,
+          1.5531999999999998e-11
+        ],
+        [
+          13.56,
+          1.5244e-11
+        ],
+        [
+          14.42,
+          1.4954e-11
+        ],
+        [
+          15.42,
+          1.463e-11
+        ],
+        [
+          16.28,
+          1.4306e-11
+        ],
+        [
+          17.14,
+          1.4054e-11
+        ],
+        [
+          18.0,
+          1.3802e-11
+        ],
+        [
+          18.86,
+          1.3513999999999999e-11
+        ],
+        [
+          19.72,
+          1.3261999999999999e-11
+        ]
+      ],
+      "cibo": [
+        [
+          5.0,
+          1e-11
+        ]
+      ],
+      "vce_sat": [
+        [
+          0.01,
+          0.1
+        ]
+      ],
+      "vbe_sat": [
+        [
+          0.01,
+          0.24
+        ]
+      ]
+    },
+    "method": ".claude/skills/fit-model/worked/germanium/alloy.py: the 2N1308's table column (x3 weight) with the family's normalised N-P-N gain curve at VCE 1 V (its shape, a free level: 1.02 x 150 at unity), leakage included; IS, NF, BF, ISE, NE, IKF, NKF, BR, ISC, NC free, NR = NF; RC 1.28 Ω from the slope of the family's VCE lines at IB 20 and 50 mA, RE 0. No rbb' on the sheet, so RB 0; no output curves, so no VAF. CJC from Cob: the 20 pF maximum at 5 V with the family's normalised curve (no typical given); CJE from Cib 10 pF at 5 V (one point); TF from fαb 20 MHz taken as fT. Fitted points within 6.2 % (hFE, the curve; the table's 150 within 0.1 %), 0.8 mV (VCE(sat)) and 0.4 mV (VBE); ICBO 2.45 µA, IEBO 2.45 µA. Curves read off the raster by pixel (.claude/skills/fit-model/worked/germanium/pix.py)",
+    "note": "Our own fit by pixel from TI's sheet: the 2N1308's table column (its design centres at 10 mA) with the family's normalised N-P-N gain curve (22-300 mA) and saturation lines. Nothing on the sheet goes below 10 mA, so at a pedal's 0.3-2 mA, and on the tester, the gain is the card's extrapolation. Cob is the sheet's 20 pF maximum (no typical given). Germanium units vary widely (hFE 80 min at 10 mA, no max): give a measured hFE and leakage (D-130)."
+  },
+  "validation": [
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.01,
+        "vce": 1.0
+      },
+      "simulated": 149.824,
+      "datasheet": {
+        "min": 80.0,
+        "typ": 150.0,
+        "source": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 2: N-P-N design characteristics at 25 °C, 2N1308, hFE at IC 10 mA, VCE 1 V: 80 min, 150 design centre"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.2,
+        "vce": 0.35
+      },
+      "simulated": 79.4881,
+      "datasheet": {
+        "min": 20.0,
+        "source": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 2: N-P-N design characteristics at 25 °C, 2N1308, hFE at IC 200 mA, VCE 0.35 V: 20 min"
+      }
+    },
+    {
+      "quantity": "vbe_sat",
+      "conditions": {
+        "ic": 0.01,
+        "ib": 0.0005
+      },
+      "simulated": 0.240463,
+      "datasheet": {
+        "min": 0.2,
+        "typ": 0.24,
+        "max": 0.3,
+        "source": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 2: N-P-N design characteristics at 25 °C, 2N1308, VBE at IC 10 mA, IB 0.5 mA: 0.20 min, 0.24 centre, 0.30 max V"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.01,
+        "ib": 0.00013
+      },
+      "simulated": 0.100906,
+      "datasheet": {
+        "typ": 0.1,
+        "max": 0.15,
+        "source": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 2: N-P-N design characteristics at 25 °C, 2N1308, VCE(sat) at IC 10 mA, IB 0.13 mA: 0.10 centre, 0.15 max V"
+      }
+    },
+    {
+      "quantity": "icbo",
+      "conditions": {
+        "vcb": 25.0
+      },
+      "simulated": 2.44648e-06,
+      "datasheet": {
+        "typ": 3e-06,
+        "max": 6e-06,
+        "source": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 2: N-P-N design characteristics at 25 °C, 2N1308, ICBO at VCB 25 V, IE 0: 3 centre, 6 max µA"
+      },
+      "note": "Fitted with the IEBO; a measured unit's leakage replaces it (D-130)"
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.03333,
+        "vce": 1.0
+      },
+      "simulated": 166.258,
+      "datasheet": {
+        "typ": 160.2,
+        "tol": 8.0,
+        "source": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 5: design characteristics (all types), normalised N-P-N hFE against IC, at the fit's level (by pixel)"
+      },
+      "note": "A point of the normalised curve the fit was not given, within 5 %"
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.07921,
+        "vce": 1.0
+      },
+      "simulated": 169.743,
+      "datasheet": {
+        "typ": 174.6,
+        "tol": 8.7,
+        "source": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 5: design characteristics (all types), normalised N-P-N hFE against IC, at the fit's level (by pixel)"
+      },
+      "note": "A point of the normalised curve the fit was not given, within 5 %"
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.12496,
+        "vce": 1.0
+      },
+      "simulated": 163.948,
+      "datasheet": {
+        "typ": 171.1,
+        "tol": 8.6,
+        "source": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 5: design characteristics (all types), normalised N-P-N hFE against IC, at the fit's level (by pixel)"
+      },
+      "note": "A point of the normalised curve the fit was not given, within 5 %"
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.17059,
+        "vce": 1.0
+      },
+      "simulated": 154.685,
+      "datasheet": {
+        "typ": 155.6,
+        "tol": 7.8,
+        "source": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 5: design characteristics (all types), normalised N-P-N hFE against IC, at the fit's level (by pixel)"
+      },
+      "note": "A point of the normalised curve the fit was not given, within 5 %"
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.21585,
+        "vce": 1.0
+      },
+      "simulated": 143.723,
+      "datasheet": {
+        "typ": 141.9,
+        "tol": 7.1,
+        "source": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 5: design characteristics (all types), normalised N-P-N hFE against IC, at the fit's level (by pixel)"
+      },
+      "note": "A point of the normalised curve the fit was not given, within 5 %"
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.26045,
+        "vce": 1.0
+      },
+      "simulated": 131.929,
+      "datasheet": {
+        "typ": 130.8,
+        "tol": 6.5,
+        "source": "TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), page 5: design characteristics (all types), normalised N-P-N hFE against IC, at the fit's level (by pixel)"
+      },
+      "note": "A point of the normalised curve the fit was not given, within 5 %"
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 103.287,
+      "note": "The card's own gain on the tester (where a measured form starts)"
+    },
+    {
+      "quantity": "iceo",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0
+      },
+      "simulated": 0.000182081,
+      "note": "The card's own leakage on the tester"
+    }
+  ]
+}

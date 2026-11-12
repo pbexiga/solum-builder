@@ -1,0 +1,195 @@
+{
+  "schema": 29,
+  "id": "big-muff-tone-v1",
+  "name": "Tone stack · Big Muff",
+  "version": {
+    "major": 1,
+    "minor": 2
+  },
+  "description": "The Big Muff's passive tone control: a low-pass (R8, C8) and a high-pass (C9, R5) blended by the Tone pot, with a mid scoop at noon. Values: ElectroSmash's Big Muff Pi analysis (electrosmash.com/big-muff-pi-analysis), as in the Big Muff Pi (V3) starter. Loses a lot of level; it needs a high-impedance load (the Big Muff's output stage).",
+  "tags": [
+    "tone",
+    "tone stack",
+    "big muff"
+  ],
+  "template": true,
+  "parts": [
+    {
+      "ref": "R8",
+      "pos": [
+        350,
+        380
+      ],
+      "type": "resistor",
+      "value": "39k"
+    },
+    {
+      "ref": "C8",
+      "pos": [
+        390,
+        420
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10n",
+      "kind": "film"
+    },
+    {
+      "ref": "C9",
+      "pos": [
+        350,
+        480
+      ],
+      "type": "capacitor",
+      "value": "4n",
+      "kind": "film"
+    },
+    {
+      "ref": "R5",
+      "pos": [
+        390,
+        510
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "22k"
+    },
+    {
+      "ref": "VR1",
+      "pos": [
+        460,
+        430
+      ],
+      "rot": 90,
+      "type": "pot",
+      "value": "100k",
+      "label": "Tone"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        320,
+        380
+      ],
+      "to": [
+        320,
+        480
+      ]
+    },
+    {
+      "from": [
+        320,
+        380
+      ],
+      "to": [
+        330,
+        380
+      ]
+    },
+    {
+      "from": [
+        320,
+        480
+      ],
+      "to": [
+        330,
+        480
+      ]
+    },
+    {
+      "from": [
+        370,
+        380
+      ],
+      "to": [
+        460,
+        380
+      ]
+    },
+    {
+      "from": [
+        460,
+        380
+      ],
+      "to": [
+        460,
+        410
+      ]
+    },
+    {
+      "from": [
+        370,
+        480
+      ],
+      "to": [
+        460,
+        480
+      ]
+    },
+    {
+      "from": [
+        460,
+        480
+      ],
+      "to": [
+        460,
+        450
+      ]
+    },
+    {
+      "from": [
+        390,
+        380
+      ],
+      "to": [
+        390,
+        400
+      ]
+    },
+    {
+      "from": [
+        390,
+        480
+      ],
+      "to": [
+        390,
+        490
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "GND",
+      "pos": [
+        390,
+        440
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        390,
+        530
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        330,
+        380
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        480,
+        430
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "out": "out"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "schema": 29,
+  "id": "v29",
+  "name": "v29",
+  "parts": [
+    {"ref": "R1", "type": "resistor", "value": "10k"},
+    {"ref": "VR1A", "type": "pot", "value": "100k", "gang": "a", "pos": [100, 0]},
+    {"ref": "VR1B", "type": "pot", "value": "100k", "gang": "b", "pos": [180, 0]},
+    {"ref": "C1", "type": "capacitor", "value": "100n", "pos": [0, 100]}
+  ],
+  "notes": {
+    "part:R1": "sets the gain",
+    "part:VR1": "the volume",
+    "net:VREF": "half the supply",
+    "net:Q1.D": "the drain",
+    "part:R9": "a part since deleted"
+  }
+}

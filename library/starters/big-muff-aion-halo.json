@@ -1,0 +1,1720 @@
+{
+ "schema": 30,
+ "id": "big-muff-aion-halo",
+ "name": "Big Muff Pi (Aion Halo)",
+ "version": {
+  "major": 1,
+  "minor": 0
+ },
+ "description": "Electro-Harmonix Big Muff Pi as Aion FX's Halo (document 2.1.0), with the Gilmour '73 Ram's Head values and Aion's Midrange switch (Mid scoop, the stock tone; Flat mids; Mid hump). The text blocks below the drawing list the parts to change for every other version on Aion's sheet. Four 2N3904s and 1N914 clipping diodes, as Aion lists them.",
+ "tags": [
+  "fuzz",
+  "distortion"
+ ],
+ "starter": true,
+ "power": {
+  "rails": {
+   "V+": 9.0
+  }
+ },
+ "parts": [
+  {
+   "ref": "D1",
+   "pos": [
+    40,
+    -260
+   ],
+   "note": "Reverse-polarity protection (Schottky: a small drop). R24 with C14 and C15 filters the supply to VA.",
+   "type": "diode",
+   "model": "1N5817"
+  },
+  {
+   "ref": "R24",
+   "pos": [
+    100,
+    -260
+   ],
+   "type": "resistor",
+   "value": "100"
+  },
+  {
+   "ref": "C15",
+   "pos": [
+    160,
+    -220
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "ceramic"
+  },
+  {
+   "ref": "C14",
+   "pos": [
+    200,
+    -220
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "100µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "RPD1",
+   "pos": [
+    40,
+    40
+   ],
+   "rot": 90,
+   "note": "Aion's RPD: the input pull-down, so the bypass switch doesn't pop. Can be as low as 1M.",
+   "type": "resistor",
+   "value": "2M2"
+  },
+  {
+   "ref": "R2",
+   "pos": [
+    80,
+    0
+   ],
+   "type": "resistor",
+   "value": "33k"
+  },
+  {
+   "ref": "C1",
+   "pos": [
+    140,
+    0
+   ],
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "Q1",
+   "pos": [
+    240,
+    0
+   ],
+   "type": "bjt",
+   "model": "2N3904"
+  },
+  {
+   "ref": "R3",
+   "pos": [
+    180,
+    40
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "R4",
+   "pos": [
+    220,
+    -50
+   ],
+   "type": "resistor",
+   "value": "470k"
+  },
+  {
+   "ref": "C2",
+   "pos": [
+    220,
+    -100
+   ],
+   "note": "Miller cap: with R4 it rolls off the highs before the clipping stages.",
+   "type": "capacitor",
+   "value": "470p",
+   "kind": "c0g"
+  },
+  {
+   "ref": "R6",
+   "pos": [
+    260,
+    -130
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "R5",
+   "pos": [
+    260,
+    40
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100"
+  },
+  {
+   "ref": "C3",
+   "pos": [
+    300,
+    -50
+   ],
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "VR1",
+   "pos": [
+    360,
+    -50
+   ],
+   "rot": 180,
+   "note": "Sustain: how hard the two clipping stages are driven.",
+   "type": "pot",
+   "value": "100k",
+   "rotation": 1.0,
+   "label": "Sustain"
+  },
+  {
+   "ref": "R7",
+   "pos": [
+    400,
+    -30
+   ],
+   "rot": 90,
+   "note": "Sets the least gain: Sustain fully down still lets some signal through.",
+   "type": "resistor",
+   "value": "560"
+  },
+  {
+   "ref": "C4",
+   "pos": [
+    420,
+    40
+   ],
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "R8",
+   "pos": [
+    480,
+    40
+   ],
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "Q2",
+   "pos": [
+    620,
+    40
+   ],
+   "type": "bjt",
+   "model": "2N3904"
+  },
+  {
+   "ref": "R9",
+   "pos": [
+    540,
+    80
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "R10",
+   "pos": [
+    590,
+    -10
+   ],
+   "type": "resistor",
+   "value": "470k"
+  },
+  {
+   "ref": "C5",
+   "pos": [
+    590,
+    -60
+   ],
+   "type": "capacitor",
+   "value": "470p",
+   "kind": "c0g"
+  },
+  {
+   "ref": "C6",
+   "pos": [
+    540,
+    -110
+   ],
+   "rot": 90,
+   "note": "The diodes clip in the feedback path, in series with C6: the stage limits to about ±0.6 V around its collector's DC.",
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "D2",
+   "pos": [
+    600,
+    -130
+   ],
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "D3",
+   "pos": [
+    600,
+    -180
+   ],
+   "rot": 180,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "R12",
+   "pos": [
+    640,
+    -240
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "R11",
+   "pos": [
+    640,
+    80
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100"
+  },
+  {
+   "ref": "C7",
+   "pos": [
+    40,
+    440
+   ],
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "R13",
+   "pos": [
+    100,
+    440
+   ],
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "Q3",
+   "pos": [
+    240,
+    440
+   ],
+   "type": "bjt",
+   "model": "2N3904"
+  },
+  {
+   "ref": "R14",
+   "pos": [
+    160,
+    480
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "R15",
+   "pos": [
+    210,
+    390
+   ],
+   "type": "resistor",
+   "value": "470k"
+  },
+  {
+   "ref": "C8",
+   "pos": [
+    210,
+    340
+   ],
+   "type": "capacitor",
+   "value": "470p",
+   "kind": "c0g"
+  },
+  {
+   "ref": "C9",
+   "pos": [
+    160,
+    290
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "D4",
+   "pos": [
+    220,
+    270
+   ],
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "D5",
+   "pos": [
+    220,
+    220
+   ],
+   "rot": 180,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "R17",
+   "pos": [
+    260,
+    160
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "R16",
+   "pos": [
+    260,
+    480
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100"
+  },
+  {
+   "ref": "R19",
+   "pos": [
+    360,
+    330
+   ],
+   "type": "resistor",
+   "value": "33k"
+  },
+  {
+   "ref": "SW1B",
+   "pos": [
+    420,
+    370
+   ],
+   "rot": 90,
+   "type": "switch",
+   "kind": "dpdt-on-on-on",
+   "pole": "b",
+   "label": "Midrange",
+   "names": [
+    "Mid scoop",
+    "Flat mids",
+    "Mid hump"
+   ]
+  },
+  {
+   "ref": "C17",
+   "pos": [
+    400,
+    430
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "3n9",
+   "kind": "film"
+  },
+  {
+   "ref": "C11",
+   "pos": [
+    440,
+    430
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "12n",
+   "kind": "film"
+  },
+  {
+   "ref": "VR2",
+   "pos": [
+    600,
+    350
+   ],
+   "rot": 90,
+   "note": "Tone pans between the low-pass leg (R19 and C11) at lug 1 and the high-pass leg (C10 and R18) at lug 3. At noon the bass and treble are even; the mids follow the Midrange switch.",
+   "type": "pot",
+   "value": "100k",
+   "label": "Tone"
+  },
+  {
+   "ref": "C16",
+   "pos": [
+    360,
+    480
+   ],
+   "type": "capacitor",
+   "value": "12n",
+   "kind": "film"
+  },
+  {
+   "ref": "C10",
+   "pos": [
+    360,
+    550
+   ],
+   "type": "capacitor",
+   "value": "3n9",
+   "kind": "film"
+  },
+  {
+   "ref": "SW1A",
+   "pos": [
+    420,
+    530
+   ],
+   "rot": 180,
+   "note": "Midrange: Mid scoop is the stock Big Muff; Flat mids swaps C10 for C16 (12n); Mid hump also swaps C11 for C17 (3n9).",
+   "type": "switch",
+   "kind": "dpdt-on-on-on",
+   "pole": "a",
+   "label": "Midrange",
+   "names": [
+    "Mid scoop",
+    "Flat mids",
+    "Mid hump"
+   ]
+  },
+  {
+   "ref": "R18",
+   "pos": [
+    600,
+    570
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "33k"
+  },
+  {
+   "ref": "C12",
+   "pos": [
+    660,
+    350
+   ],
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "Q4",
+   "pos": [
+    780,
+    350
+   ],
+   "type": "bjt",
+   "model": "2N3904"
+  },
+  {
+   "ref": "R20",
+   "pos": [
+    720,
+    290
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "470k"
+  },
+  {
+   "ref": "R21",
+   "pos": [
+    720,
+    410
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "R22",
+   "pos": [
+    800,
+    270
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "R23",
+   "pos": [
+    800,
+    390
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "2k7"
+  },
+  {
+   "ref": "C13",
+   "pos": [
+    840,
+    310
+   ],
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "VR3",
+   "pos": [
+    900,
+    310
+   ],
+   "rot": 180,
+   "type": "pot",
+   "value": "100k",
+   "taper": "A",
+   "rotation": 1.0,
+   "label": "Volume"
+  },
+  {
+   "ref": "OUT",
+   "pos": [
+    960,
+    370
+   ],
+   "type": "amp"
+  },
+  {
+   "ref": "IN",
+   "type": "guitar",
+   "volume": "250k"
+  }
+ ],
+ "wires": [
+  {
+   "from": [
+    0,
+    -260
+   ],
+   "to": [
+    20,
+    -260
+   ]
+  },
+  {
+   "from": [
+    60,
+    -260
+   ],
+   "to": [
+    80,
+    -260
+   ]
+  },
+  {
+   "from": [
+    120,
+    -260
+   ],
+   "to": [
+    220,
+    -260
+   ]
+  },
+  {
+   "from": [
+    160,
+    -260
+   ],
+   "to": [
+    160,
+    -240
+   ]
+  },
+  {
+   "from": [
+    200,
+    -260
+   ],
+   "to": [
+    200,
+    -240
+   ]
+  },
+  {
+   "from": [
+    20,
+    0
+   ],
+   "to": [
+    60,
+    0
+   ]
+  },
+  {
+   "from": [
+    40,
+    0
+   ],
+   "to": [
+    40,
+    20
+   ]
+  },
+  {
+   "from": [
+    100,
+    0
+   ],
+   "to": [
+    120,
+    0
+   ]
+  },
+  {
+   "from": [
+    160,
+    0
+   ],
+   "to": [
+    220,
+    0
+   ]
+  },
+  {
+   "from": [
+    180,
+    0
+   ],
+   "to": [
+    180,
+    20
+   ]
+  },
+  {
+   "from": [
+    180,
+    0
+   ],
+   "to": [
+    180,
+    -50
+   ]
+  },
+  {
+   "from": [
+    180,
+    -50
+   ],
+   "to": [
+    200,
+    -50
+   ]
+  },
+  {
+   "from": [
+    180,
+    -50
+   ],
+   "to": [
+    180,
+    -100
+   ]
+  },
+  {
+   "from": [
+    180,
+    -100
+   ],
+   "to": [
+    200,
+    -100
+   ]
+  },
+  {
+   "from": [
+    240,
+    -50
+   ],
+   "to": [
+    260,
+    -50
+   ]
+  },
+  {
+   "from": [
+    240,
+    -100
+   ],
+   "to": [
+    260,
+    -100
+   ]
+  },
+  {
+   "from": [
+    260,
+    -20
+   ],
+   "to": [
+    260,
+    -110
+   ]
+  },
+  {
+   "from": [
+    260,
+    -50
+   ],
+   "to": [
+    280,
+    -50
+   ]
+  },
+  {
+   "from": [
+    320,
+    -50
+   ],
+   "to": [
+    340,
+    -50
+   ]
+  },
+  {
+   "from": [
+    380,
+    -50
+   ],
+   "to": [
+    400,
+    -50
+   ]
+  },
+  {
+   "from": [
+    360,
+    -30
+   ],
+   "to": [
+    360,
+    40
+   ]
+  },
+  {
+   "from": [
+    360,
+    40
+   ],
+   "to": [
+    400,
+    40
+   ]
+  },
+  {
+   "from": [
+    440,
+    40
+   ],
+   "to": [
+    460,
+    40
+   ]
+  },
+  {
+   "from": [
+    500,
+    40
+   ],
+   "to": [
+    600,
+    40
+   ]
+  },
+  {
+   "from": [
+    540,
+    40
+   ],
+   "to": [
+    540,
+    60
+   ]
+  },
+  {
+   "from": [
+    540,
+    40
+   ],
+   "to": [
+    540,
+    -10
+   ]
+  },
+  {
+   "from": [
+    540,
+    -10
+   ],
+   "to": [
+    570,
+    -10
+   ]
+  },
+  {
+   "from": [
+    540,
+    -10
+   ],
+   "to": [
+    540,
+    -60
+   ]
+  },
+  {
+   "from": [
+    540,
+    -60
+   ],
+   "to": [
+    570,
+    -60
+   ]
+  },
+  {
+   "from": [
+    540,
+    -60
+   ],
+   "to": [
+    540,
+    -90
+   ]
+  },
+  {
+   "from": [
+    540,
+    -130
+   ],
+   "to": [
+    580,
+    -130
+   ]
+  },
+  {
+   "from": [
+    570,
+    -130
+   ],
+   "to": [
+    570,
+    -180
+   ]
+  },
+  {
+   "from": [
+    570,
+    -180
+   ],
+   "to": [
+    580,
+    -180
+   ]
+  },
+  {
+   "from": [
+    610,
+    -10
+   ],
+   "to": [
+    640,
+    -10
+   ]
+  },
+  {
+   "from": [
+    610,
+    -60
+   ],
+   "to": [
+    640,
+    -60
+   ]
+  },
+  {
+   "from": [
+    620,
+    -130
+   ],
+   "to": [
+    640,
+    -130
+   ]
+  },
+  {
+   "from": [
+    620,
+    -180
+   ],
+   "to": [
+    640,
+    -180
+   ]
+  },
+  {
+   "from": [
+    640,
+    20
+   ],
+   "to": [
+    640,
+    -220
+   ]
+  },
+  {
+   "from": [
+    640,
+    -90
+   ],
+   "to": [
+    690,
+    -90
+   ]
+  },
+  {
+   "from": [
+    0,
+    440
+   ],
+   "to": [
+    20,
+    440
+   ]
+  },
+  {
+   "from": [
+    60,
+    440
+   ],
+   "to": [
+    80,
+    440
+   ]
+  },
+  {
+   "from": [
+    120,
+    440
+   ],
+   "to": [
+    220,
+    440
+   ]
+  },
+  {
+   "from": [
+    160,
+    440
+   ],
+   "to": [
+    160,
+    460
+   ]
+  },
+  {
+   "from": [
+    160,
+    440
+   ],
+   "to": [
+    160,
+    390
+   ]
+  },
+  {
+   "from": [
+    160,
+    390
+   ],
+   "to": [
+    190,
+    390
+   ]
+  },
+  {
+   "from": [
+    160,
+    390
+   ],
+   "to": [
+    160,
+    340
+   ]
+  },
+  {
+   "from": [
+    160,
+    340
+   ],
+   "to": [
+    190,
+    340
+   ]
+  },
+  {
+   "from": [
+    160,
+    340
+   ],
+   "to": [
+    160,
+    310
+   ]
+  },
+  {
+   "from": [
+    160,
+    270
+   ],
+   "to": [
+    200,
+    270
+   ]
+  },
+  {
+   "from": [
+    190,
+    270
+   ],
+   "to": [
+    190,
+    220
+   ]
+  },
+  {
+   "from": [
+    190,
+    220
+   ],
+   "to": [
+    200,
+    220
+   ]
+  },
+  {
+   "from": [
+    230,
+    390
+   ],
+   "to": [
+    260,
+    390
+   ]
+  },
+  {
+   "from": [
+    230,
+    340
+   ],
+   "to": [
+    260,
+    340
+   ]
+  },
+  {
+   "from": [
+    240,
+    270
+   ],
+   "to": [
+    260,
+    270
+   ]
+  },
+  {
+   "from": [
+    240,
+    220
+   ],
+   "to": [
+    260,
+    220
+   ]
+  },
+  {
+   "from": [
+    260,
+    420
+   ],
+   "to": [
+    260,
+    180
+   ]
+  },
+  {
+   "from": [
+    260,
+    330
+   ],
+   "to": [
+    340,
+    330
+   ]
+  },
+  {
+   "from": [
+    380,
+    330
+   ],
+   "to": [
+    600,
+    330
+   ]
+  },
+  {
+   "from": [
+    420,
+    330
+   ],
+   "to": [
+    420,
+    350
+   ]
+  },
+  {
+   "from": [
+    400,
+    390
+   ],
+   "to": [
+    400,
+    410
+   ]
+  },
+  {
+   "from": [
+    440,
+    390
+   ],
+   "to": [
+    440,
+    410
+   ]
+  },
+  {
+   "from": [
+    260,
+    390
+   ],
+   "to": [
+    300,
+    390
+   ]
+  },
+  {
+   "from": [
+    300,
+    390
+   ],
+   "to": [
+    300,
+    550
+   ]
+  },
+  {
+   "from": [
+    300,
+    550
+   ],
+   "to": [
+    340,
+    550
+   ]
+  },
+  {
+   "from": [
+    300,
+    480
+   ],
+   "to": [
+    340,
+    480
+   ]
+  },
+  {
+   "from": [
+    380,
+    480
+   ],
+   "to": [
+    390,
+    480
+   ]
+  },
+  {
+   "from": [
+    390,
+    480
+   ],
+   "to": [
+    390,
+    510
+   ]
+  },
+  {
+   "from": [
+    390,
+    510
+   ],
+   "to": [
+    400,
+    510
+   ]
+  },
+  {
+   "from": [
+    380,
+    550
+   ],
+   "to": [
+    400,
+    550
+   ]
+  },
+  {
+   "from": [
+    440,
+    530
+   ],
+   "to": [
+    600,
+    530
+   ]
+  },
+  {
+   "from": [
+    600,
+    370
+   ],
+   "to": [
+    600,
+    550
+   ]
+  },
+  {
+   "from": [
+    620,
+    350
+   ],
+   "to": [
+    640,
+    350
+   ]
+  },
+  {
+   "from": [
+    680,
+    350
+   ],
+   "to": [
+    760,
+    350
+   ]
+  },
+  {
+   "from": [
+    720,
+    310
+   ],
+   "to": [
+    720,
+    350
+   ]
+  },
+  {
+   "from": [
+    720,
+    350
+   ],
+   "to": [
+    720,
+    390
+   ]
+  },
+  {
+   "from": [
+    800,
+    290
+   ],
+   "to": [
+    800,
+    330
+   ]
+  },
+  {
+   "from": [
+    800,
+    310
+   ],
+   "to": [
+    820,
+    310
+   ]
+  },
+  {
+   "from": [
+    860,
+    310
+   ],
+   "to": [
+    880,
+    310
+   ]
+  },
+  {
+   "from": [
+    920,
+    310
+   ],
+   "to": [
+    940,
+    310
+   ]
+  },
+  {
+   "from": [
+    940,
+    310
+   ],
+   "to": [
+    940,
+    330
+   ]
+  },
+  {
+   "from": [
+    900,
+    330
+   ],
+   "to": [
+    900,
+    370
+   ]
+  },
+  {
+   "from": [
+    900,
+    370
+   ],
+   "to": [
+    940,
+    370
+   ]
+  }
+ ],
+ "labels": [
+  {
+   "net": "V+",
+   "pos": [
+    0,
+    -260
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    220,
+    -260
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    160,
+    -200
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    200,
+    -200
+   ]
+  },
+  {
+   "net": "in",
+   "pos": [
+    20,
+    0
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    40,
+    60
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    180,
+    60
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    260,
+    60
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    260,
+    -150
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    400,
+    -10
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    540,
+    100
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    640,
+    100
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    640,
+    -260
+   ]
+  },
+  {
+   "net": "q2c",
+   "pos": [
+    690,
+    -90
+   ]
+  },
+  {
+   "net": "q2c",
+   "pos": [
+    0,
+    440
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    160,
+    500
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    260,
+    500
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    260,
+    140
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    400,
+    450
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    440,
+    450
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    600,
+    590
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    720,
+    270
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    800,
+    250
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    720,
+    430
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    800,
+    410
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    940,
+    330
+   ]
+  },
+  {
+   "net": "out",
+   "pos": [
+    940,
+    370
+   ]
+  }
+ ],
+ "texts": [
+  {
+   "title": "Credit",
+   "text": "Based on Aion FX's Halo (document 2.1.0): its circuit, values and build ideas.\nThe drawing, notes and wording are Solum Builder's own.\nhttps://aionfx.com/project/halo-distortion-sustainer/",
+   "pos": [
+    0,
+    650
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "title": "Big Muff versions",
+   "text": "The drawing is the Gilmour '73 Ram's Head. For another version, fit the parts listed for it (Aion FX's versions table, after Kit Rae's schematics). In every version C16 matches C11 and C17 matches C10. Each version's parts are a note of their own, \"Version: …\" (from Aion FX's Halo document)."
+  },
+  {
+   "title": "Version: V1 Perf",
+   "text": "R2 36k, R5 120, R6 39k, R7 1k, R11 120, R16 120, R17 39k, R18 27k, R19 27k, R23 2k2, C1 1µ, C2 500p, C3 680n, C4 680n, C5 500p, C6 1µ, C7 1µ, C8 500p, C9 1µ, C11 10n, C12 680n, C13 680n."
+  },
+  {
+   "title": "Version: Foxey Lady",
+   "text": "R6 15k, R7 1k, R8 8k2, R13 8k2, R16 150, R17 15k, R18 22k, R19 22k, R20 390k, C1 120n, C2 (omit), C3 1µ, C4 120n, C5 500p, C6 120n, C7 120n, C8 500p, C9 1µ, C11 10n, C12 1µ, C13 1µ."
+  },
+  {
+   "title": "Version: Triangle Standard",
+   "text": "R6 10k or 15k, R7 820, R8 8k2, R13 8k2, R17 15k, rarely 12k, R20 390k, R22 12k, C2 500p, C5 500p, C8 500p, C11 10n."
+  },
+  {
+   "title": "Version: Triangle '72",
+   "text": "R3 82k, R4 390k, R5 82, R6 22k, R7 820, R8 8k2, R9 82k, R10 390k, R11 82, R12 12k, R13 8k2, R14 82k, R15 390k, R16 82, R17 22k, R18 39k, R19 39k, R20 390k, R22 12k, C2 560p, C5 560p, C6 50n, C8 560p, C9 50n, C11 10n."
+  },
+  {
+   "title": "Version: Ram's Head \"47\"",
+   "text": "R6 12k, R7 1k2, R8 7k5, R12 12k, R13 7k5, R17 12k, R22 12k, C1 47n, C3 470n, C4 470n, C6 470n, C7 47n, C9 47n, C12 470n, C13 470n."
+  },
+  {
+   "title": "Version: Ram's Head '73",
+   "text": "R6 12k, R7 820, R8 7k5, R12 12k, R13 7k5, R17 12k, R22 12k, R23 3k3, C4 150n, C11 10n."
+  },
+  {
+   "title": "Version: Violet Ram's Head",
+   "text": "R6 12k, R8 8k2, R12 12k, R13 8k2, R17 12k, R22 12k, C11 10n."
+  },
+  {
+   "title": "Version: Violet Ram's Head (#2)",
+   "text": "R2 39k, R6 15k, R7 1k, R8 8k2, R13 8k2, R17 15k, R18 39k, R19 39k, R20 390k, C2 560p, C5 560p, C8 560p."
+  },
+  {
+   "title": "Version: Ram's Head White Can",
+   "text": "R6 12k, R7 820, R11 150, R12 12k, R16 150, R17 12k, R20 390k, R22 12k, R23 3k3, C1 1µ or 10µ, C2 220p, C5 680p, C7 1µ or 10µ, C8 680p, C11 6n8, C13 1µ or 10µ."
+  },
+  {
+   "title": "Version: Ram's Head '75 Schematic",
+   "text": "R2 39k, R6 15k, R7 1k, R8 8k2, R12 15k, R13 8k2, R17 15k, R18 22k, R19 39k, R20 390k, R23 2k2, C1 1µ, C2 500p, C3 1µ, C4 (unlabeled), C5 500p, C7 1µ, C8 500p, C11 10n, C13 1µ."
+  },
+  {
+   "title": "Version: Ram's Head Box Cap",
+   "text": "R3 47k, R5 120, R7 1k, R11 150, R16 150, R17 15k, R18 22k, R20 430k, R22 15k, R23 3k3, C1 1µ or 10µ, C6 1µ, C9 1µ, C11 10n, C13 1µ."
+  },
+  {
+   "title": "Version: V3",
+   "text": "R2 39k, R3 47k, R6 15k, R7 1k, R11 150, R12 15k, R13 10k or 10.6k, R16 150, R17 15k or 10k, R18 22k, R19 39k, R20 430k, 390k, or 470k, R22 15k, R23 3k3, C1 10µ, C2 470p or 560p, C3 1µ, C5 470p or 560p, C6 1µ, C9 1µ, C11 10n."
+  },
+  {
+   "title": "Version: V3 Tone Bypass",
+   "text": "R2 39k, R6 15k, R7 1k, R8 8k2, R12 15k, R13 8k2, R17 15k, R18 22k, R19 39k, R20 390k, R23 2k2, C1 1µ, C6 1µ, C9 1µ, C11 10n, C13 1µ."
+  },
+  {
+   "title": "Version: Civil War / Red Army",
+   "text": "R2 39k, R5 390, R6 12k, R7 1k, R11 390, R12 12k, R16 390, R17 12k, R18 22k, R19 20k, C2 430p, 470p, or 500p, C5 430p, 470p, or 500p, C6 47n, C8 430p, 470p, or 500p, C9 47n, C11 10n."
+  },
+  {
+   "title": "Version: NYC Reissue (2000)",
+   "text": "R2 39k, R4 510k, R7 1k8, R11 390, R16 390, R18 22k, R19 22k, R23 2k, C1 1µ, C3 1µ, C4 1µ, C6 1µ, C7 1µ, C9 1µ, C11 10n, C12 1µ, C13 1µ."
+  },
+  {
+   "title": "Version: Tone Wicker",
+   "text": "R2 39k, R5 120, R11 120, R16 120, R18 27k, R19 27k, R23 2k2, C1 1µ, C3 470n, C4 1µ, C6 1µ, C7 1µ, C9 2µ2, C10 3n3, C11 10n, C12 470n, C13 1µ."
+  },
+  {
+   "title": "Version: 3003 Rev. E",
+   "text": "R2 39k, R5 120, R11 120, R16 120, R18 27k, R19 27k, R23 2k2, C1 1µ (100n), C3 470n (100n), C4 1µ (100n), C6 1µ (47n), C7 1µ (100n), C9 2µ2 (47n), C10 3n3, C11 10n, C12 470n (100n), C13 1µ (100n)."
+  },
+  {
+   "title": "Version: Cornish P-1",
+   "text": "R3 47k, R5 120, R7 1k, R11 150, R16 150, R17 15k, R18 22k, R20 430k, R22 15k, R23 3k3, C1 10µ, C6 1µ, C9 1µ, C11 10n, C13 1µ."
+  },
+  {
+   "title": "Version: Violet Reissue",
+   "text": "R4 560k, R5 120, R6 12k, R8 8k2, R10 560k, R11 120, R12 12k, R13 8k2, R15 560k, R16 120, R17 12k, R20 560k, R22 12k, C2 470p + 100p, C5 470p + 100p, C8 470p + 100p, C11 10n."
+  }
+ ],
+ "probes": {
+  "in": "in",
+  "out": "out"
+ },
+ "net_notes": {
+  "q2c": "First clipping stage's collector, on to the second stage through C7."
+ },
+ "enclosure": {
+  "size": "125B"
+ }
+}

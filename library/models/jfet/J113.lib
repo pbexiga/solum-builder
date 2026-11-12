@@ -1,0 +1,5 @@
+* J113 N-channel JFET, low cutoff voltage (Philips card)
+* Source: https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/uncategorized/spice_complete/phil_fet.lib
+.model J113 NJF(vto=-1.2854E+000 beta=9.25964E-003 lambda=3.03839E-002 rd=1.30170E+000
++ rs=1.30170E+000 is=9.86870E-016 cgs=1.05000E-011 cgd=1.20000E-011 pb=5.04493E-001
++ fc=5.00000E-001)

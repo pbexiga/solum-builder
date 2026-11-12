@@ -1,0 +1,19 @@
+id: labels-joined
+layer: topology
+severity: error
+check: labels_joined
+stops_sim: true
+title: Two names on one net
+message: "Net labels {labels} are wired together."
+why: >
+  A net has one name. Two labels on one net join nets you meant to keep apart (a supply
+  and ground, say), or one of them is a leftover.
+fix: Remove one of the labels, or the wire that joins them.
+fixtures:
+  bad:
+    - parts:
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+      labels:
+        - {net: b, pos: [80, 100]}   # on R1 pin 1, which is already labelled a
+  good:
+    - starter: ts808

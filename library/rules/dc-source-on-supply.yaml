@@ -1,0 +1,33 @@
+id: dc-source-on-supply
+layer: topology
+severity: error
+check: dc_source_on_supply
+stops_sim: true
+title: DC source on a supply rail
+message: "{ref} is a DC source on {net}, which the Power menu supplies."
+why: >
+  V+ and V- always come from the Power menu. A DC source on one of them is a second
+  supply fighting the first, so the circuit can't be simulated. A DC source drives a
+  net of its own (V16, VBIAS…), like a regulator's output.
+fix: "Set the voltage in the Power menu and delete {ref}, or move {ref} to a net of its own and label the parts it powers with that net."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: V1, type: vsource, nets: [V+, GND], value: 9}
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 10k}
+      expect: [V1]
+    - rails: {V-: -9}
+      parts:
+        - {ref: V1, type: vsource, nets: [GND, V-], value: 9}
+        - {ref: R1, type: resistor, nets: [V-, GND], value: 10k}
+      expect: [V1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: V1, type: vsource, nets: [V16, GND], value: 16}
+        - {ref: R1, type: resistor, nets: [V16, GND], value: 10k}
+        - {ref: R2, type: resistor, nets: [V+, GND], value: 10k}
+    - parts:   # a test jig with no rails: its source drives its own net
+        - {ref: V1, type: vsource, nets: [a, GND], value: 9}
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}

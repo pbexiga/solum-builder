@@ -1,0 +1,24 @@
+id: regulator-dropout
+layer: operating_point
+severity: warning
+check: regulator_dropout
+title: Regulator input too low to regulate
+message: "{ref} gets {volts} on its input; the {model} needs about {needs} to hold {vout}."
+why: >
+  A linear regulator needs its input a little above its output (its dropout voltage: 1.7 V
+  for a 78L12) to hold the output steady. Below that its output follows the input down,
+  ripple and all, so the circuit runs from less than it was designed for.
+fix: "Feed {ref} from a higher supply (a 78L12 from a charge pump's 18 V, not from 9 V), or use a lower-voltage regulator."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: U1, type: regulator, nets: [V+, V12, GND], model: 78L12}
+        - {ref: R1, type: resistor, nets: [V12, GND], value: 10k}
+      expect: [U1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: V1, type: vsource, nets: [VIN, GND], value: 18}
+        - {ref: U1, type: regulator, nets: [VIN, V12, GND], model: 78L12}
+        - {ref: R1, type: resistor, nets: [V12, GND], value: 10k}

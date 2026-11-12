@@ -1,0 +1,188 @@
+{
+  "schema": 29,
+  "id": "bjt-buffer-v1",
+  "name": "Buffer · transistor (Boss DS-1)",
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "description": "Boss's input buffer: an emitter follower (Q1) biased at half the supply through R2, so the guitar sees about 470k, and a low-impedance output after C2. R1 and C1 on the way in. Values and refs from ElectroSmash's \"Boss DS-1 Distortion Analysis\" (electrosmash.com/boss-ds1-analysis), as the DS-1 starter, with our own 2SC2240 card. The DS-1 uses the same follower as its output buffer. Biased from a reference voltage (vref port: wire it to a Vref divider).",
+  "tags": [
+    "buffer",
+    "bjt",
+    "boss"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "R1",
+      "pos": [
+        20,
+        0
+      ],
+      "type": "resistor",
+      "value": "1k"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        100,
+        0
+      ],
+      "type": "capacitor",
+      "value": "47n",
+      "kind": "film"
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        160,
+        -60
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "470k"
+    },
+    {
+      "ref": "Q1",
+      "pos": [
+        200,
+        0
+      ],
+      "type": "bjt",
+      "model": "2SC2240"
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        220,
+        80
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        280,
+        20
+      ],
+      "type": "capacitor",
+      "value": "470n",
+      "kind": "film"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        40,
+        0
+      ],
+      "to": [
+        80,
+        0
+      ]
+    },
+    {
+      "from": [
+        120,
+        0
+      ],
+      "to": [
+        180,
+        0
+      ]
+    },
+    {
+      "from": [
+        160,
+        -40
+      ],
+      "to": [
+        160,
+        0
+      ]
+    },
+    {
+      "from": [
+        220,
+        -20
+      ],
+      "to": [
+        220,
+        -60
+      ]
+    },
+    {
+      "from": [
+        220,
+        20
+      ],
+      "to": [
+        220,
+        60
+      ]
+    },
+    {
+      "from": [
+        220,
+        20
+      ],
+      "to": [
+        260,
+        20
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "VB",
+      "pos": [
+        160,
+        -80
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        220,
+        -60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        220,
+        100
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        0,
+        0
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        300,
+        20
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "out": "out",
+    "vref": "VB"
+  },
+  "notes": {
+    "part:Q1": "Input buffer: an emitter follower biased at VB through R2, so the pickup sees about 470k."
+  }
+}

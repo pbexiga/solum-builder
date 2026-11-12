@@ -1,0 +1,438 @@
+{
+  "id": "2N2222A",
+  "type": "bjt",
+  "description": "2N2222A general-purpose NPN switch and amplifier (VCEO 40 V), our fit to Fairchild's PN2222A sheet: the PN2222A is the 2N2222A die in a TO-92 case",
+  "spice_name": "2N2222A",
+  "kind": "model",
+  "pins": [],
+  "card": "2N2222A.lib",
+  "manufacturer": "Fairchild (onsemi)",
+  "source": {
+    "url": "https://ee6131b.mit.edu/document/pn2222a.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model fitted to the maker's data sheet (D-163): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://ee6131b.mit.edu/document/pn2222a.pdf",
+  "fixes": [],
+  "ratings": {
+    "vceo": 40.0,
+    "ic": 0.6
+  },
+  "rating_sources": {
+    "vceo": "Diotec 2N2222A data sheet (version 2026-03-10), Maximum ratings: VCEO 40 V",
+    "ic": "Diotec 2N2222A data sheet (version 2026-03-10), Maximum ratings: IC 600 mA DC"
+  },
+  "package": {
+    "name": "TO-92 (EBC)",
+    "pins": {
+      "E": 1,
+      "B": 2,
+      "C": 3
+    },
+    "source": "Diotec 2N2222A data sheet (version 2026-03-10), page 1 pin drawing"
+  },
+  "fit": {
+    "sheet": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004)",
+    "figure": "Figure 1. Typical Pulsed Current Gain vs Collector Current (25 °C, VCE = 5 V); Figure 4. Base-Emitter On Voltage vs Collector Current (25 °C, VCE = 5 V; drawn as straight segments); Figure 2. Collector-Emitter Saturation Voltage vs Collector Current (β = 10, 25 °C); Figure 6. Emitter Transition and Output Capacitance vs Reverse Bias Voltage (Cte); Figure 6 (Cob); the table's fT, 300 MHz minimum at IC = 20 mA, VCE = 20 V (the sheet draws no fT figure, so its minimum is used); VCB = 20 V less VBE(on) 0.71 V read from Figure 4 at 20 mA",
+    "points": [
+      [
+        0.0001,
+        209.5990684117233
+      ],
+      [
+        0.0002,
+        207.44696533362236
+      ],
+      [
+        0.0005,
+        204.6020398115872
+      ],
+      [
+        0.001,
+        202.44993673348625
+      ],
+      [
+        0.002,
+        200.29783365538535
+      ],
+      [
+        0.005,
+        197.45290813335015
+      ],
+      [
+        0.01,
+        195.30080505524924
+      ],
+      [
+        0.02,
+        192.40248965900514
+      ],
+      [
+        0.05,
+        186.54639979731445
+      ],
+      [
+        0.1,
+        176.62541752542185
+      ],
+      [
+        0.2,
+        160.13466361523047
+      ]
+    ],
+    "curves": {
+      "vbe_on": [
+        [
+          0.0001,
+          0.5396139535420063
+        ],
+        [
+          0.0002,
+          0.5637887630415281
+        ],
+        [
+          0.0005,
+          0.595746122907496
+        ],
+        [
+          0.001,
+          0.6199185664434813
+        ],
+        [
+          0.002,
+          0.6413609277476869
+        ],
+        [
+          0.005,
+          0.6697057458176439
+        ],
+        [
+          0.01,
+          0.6896195890933876
+        ],
+        [
+          0.02,
+          0.7122430074373926
+        ]
+      ],
+      "vce_sat": [
+        [
+          0.001,
+          0.06133
+        ],
+        [
+          0.002,
+          0.05614104953964083
+        ],
+        [
+          0.005,
+          0.05065901792516417
+        ],
+        [
+          0.01,
+          0.04842445362383457
+        ],
+        [
+          0.02,
+          0.05038356019601529
+        ],
+        [
+          0.05,
+          0.0648447629307232
+        ],
+        [
+          0.1,
+          0.09492643087742726
+        ],
+        [
+          0.2,
+          0.1515385897060322
+        ]
+      ],
+      "cibo": [
+        [
+          0.0999,
+          2.1e-11
+        ],
+        [
+          0.2001,
+          2e-11
+        ],
+        [
+          0.3374,
+          1.9079999999999997e-11
+        ],
+        [
+          0.501,
+          1.821e-11
+        ],
+        [
+          0.775,
+          1.6870000000000002e-11
+        ],
+        [
+          1.162,
+          1.562e-11
+        ],
+        [
+          1.889,
+          1.408e-11
+        ],
+        [
+          2.861,
+          1.258e-11
+        ],
+        [
+          4.14,
+          1.124e-11
+        ],
+        [
+          5.989,
+          9.697e-12
+        ]
+      ],
+      "cobo": [
+        [
+          0.0999,
+          9.005e-12
+        ],
+        [
+          0.3002,
+          7.91e-12
+        ],
+        [
+          0.5775,
+          7.0830000000000004e-12
+        ],
+        [
+          1.105,
+          6.278e-12
+        ],
+        [
+          2.385,
+          5.3630000000000005e-12
+        ],
+        [
+          4.993,
+          4.602e-12
+        ],
+        [
+          9.936,
+          3.977e-12
+        ],
+        [
+          19.31,
+          3.3959999999999997e-12
+        ],
+        [
+          34.42,
+          2.9489999999999997e-12
+        ],
+        [
+          49.83,
+          2.7029999999999997e-12
+        ]
+      ]
+    },
+    "method": "Gummel-Poon (scripts/fit_models.py). IS, NF, BF, ISE, NE, IKF, NKF and RE by least squares on the hFE and VBE(on) curves at VCE = 5 V together (points: the curves read at 1-2-5 steps); no Early voltage (VAF left out): the sheet's output admittance (Figures 10 and 12) is drawn only relative to its value at 10 mA, 10 V, with no absolute value, so none is set (ngspice's default). BR, ISC, NC and RC by least squares on the VCE(sat) curve, the hFE points held, NR = NF, at IC/IB = 10. CJE, VJE, MJE from Cibo and CJC, VJC, MJC from Cobo against reverse voltage. TF from fT 300 MHz at 20 mA (the table's fT, 300 MHz minimum at IC = 20 mA, VCE = 20 V (the sheet draws no fT figure, so its minimum is used); VCB = 20 V less VBE(on) 0.71 V read from Figure 4 at 20 mA), less the junctions' charging time. Fitted curves are matched within 2.1 % (hFE), 5.2 mV (VBE) and 1.8 mV (VCE(sat)). RB, VAR, TR and the temperature terms are ngspice's defaults: the sheet doesn't pin them",
+    "note": "Fitted to Fairchild's PN2222A sheet: the PN2222A is the 2N2222A die in a TO-92 case, and the record keeps the 2N2222A name. The sheet draws 125 °C, 25 °C and −40 °C curves; the 25 °C ones are used. Its gain and VBE(on) curves are at VCE = 5 V, its table at 10 V (no Early voltage is set, so they are the same here). fT is the table's 300 MHz minimum (no typical figure), so the card is, if anything, slow above a few MHz. Fairchild's table prints its VCE(sat) conditions as 'VCE = 10 V'; those two limits are checked at Diotec's 2N2222A conditions (IB = IC/10), which give the same limits. Fitted up to 200 mA: above it Gummel-Poon's knee can't follow the gain curve's shape (fitted on to 500 mA it read 135 against 143 at 300 mA). This card reads high above 200 mA instead (134 against the curve's 92 at 500 mA; the table's 40 minimum there still holds); a pedal never runs one there"
+  },
+  "validation": [
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.0001,
+        "vce": 10.0
+      },
+      "simulated": 207.295,
+      "datasheet": {
+        "min": 35.0,
+        "source": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004), Electrical Characteristics: hFE at IC = 0.1 mA, VCE = 10 V"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.001,
+        "vce": 10.0
+      },
+      "simulated": 203.126,
+      "datasheet": {
+        "min": 50.0,
+        "source": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004), Electrical Characteristics: hFE at IC = 1.0 mA, VCE = 10 V"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.01,
+        "vce": 10.0
+      },
+      "simulated": 199.403,
+      "datasheet": {
+        "min": 75.0,
+        "source": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004), Electrical Characteristics: hFE at IC = 10 mA, VCE = 10 V"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.15,
+        "vce": 10.0
+      },
+      "simulated": 166.75,
+      "datasheet": {
+        "min": 100.0,
+        "max": 300.0,
+        "source": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004), Electrical Characteristics: hFE at IC = 150 mA, VCE = 10 V (pulsed)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.5,
+        "vce": 10.0
+      },
+      "simulated": 133.71,
+      "datasheet": {
+        "min": 40.0,
+        "source": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004), Electrical Characteristics: hFE at IC = 500 mA, VCE = 10 V (pulsed)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.15,
+        "ib": 0.015
+      },
+      "simulated": 0.122958,
+      "datasheet": {
+        "max": 0.3,
+        "source": "Diotec 2N2222A data sheet (version 2026-03-10), Characteristics: VCEsat at IC = 150 mA, IB = 15 mA",
+        "note": "Fairchild's table gives the same 0.3 V limit but prints its condition as 'VCE = 10 V' with no base current, so Diotec's 2N2222A line is used"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.5,
+        "ib": 0.05
+      },
+      "simulated": 0.31939,
+      "datasheet": {
+        "max": 1.0,
+        "source": "Diotec 2N2222A data sheet (version 2026-03-10), Characteristics: VCEsat at IC = 500 mA, IB = 50 mA",
+        "note": "Fairchild's table gives the same 1.0 V limit but prints its condition as 'VCE = 10 V' with no base current, so Diotec's 2N2222A line is used"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.0003,
+        "vce": 5.0
+      },
+      "simulated": 204.373,
+      "datasheet": {
+        "typ": 206.2,
+        "tol": 10.3,
+        "source": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004), Figure 1. Typical Pulsed Current Gain vs Collector Current (25 °C, VCE = 5 V)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.0003,
+        "vce": 5.0
+      },
+      "simulated": 0.576122,
+      "datasheet": {
+        "typ": 0.5779,
+        "tol": 0.01,
+        "source": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004), Figure 4. Base-Emitter On Voltage vs Collector Current (25 °C, VCE = 5 V; drawn as straight segments)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 5.0
+      },
+      "simulated": 202.081,
+      "datasheet": {
+        "typ": 199.0,
+        "tol": 10.0,
+        "source": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004), Figure 1. Typical Pulsed Current Gain vs Collector Current (25 °C, VCE = 5 V)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 5.0
+      },
+      "simulated": 0.653121,
+      "datasheet": {
+        "typ": 0.6539,
+        "tol": 0.01,
+        "source": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004), Figure 4. Base-Emitter On Voltage vs Collector Current (25 °C, VCE = 5 V; drawn as straight segments)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.003,
+        "ib": 0.0003
+      },
+      "simulated": 0.0515935,
+      "datasheet": {
+        "typ": 0.0531,
+        "tol": 0.005,
+        "source": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004), Figure 2. Collector-Emitter Saturation Voltage vs Collector Current (β = 10, 25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.03,
+        "vce": 5.0
+      },
+      "simulated": 192.762,
+      "datasheet": {
+        "typ": 191.2,
+        "tol": 9.6,
+        "source": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004), Figure 1. Typical Pulsed Current Gain vs Collector Current (25 °C, VCE = 5 V)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.03,
+        "ib": 0.003
+      },
+      "simulated": 0.0559399,
+      "datasheet": {
+        "typ": 0.0544,
+        "tol": 0.005,
+        "source": "Fairchild PN2222A/MMBT2222A/PZT2222A data sheet, Rev. A1 (August 2004), Figure 2. Collector-Emitter Saturation Voltage vs Collector Current (β = 10, 25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 202.7974,
+      "note": "Gain on the Geofex tester (D-130, D-153): 9 V, collector through 2.4 kΩ, 2.2 MΩ from base to supply; collector current less the leakage, over the base current. Where a measured transistor's form starts."
+    }
+  ]
+}

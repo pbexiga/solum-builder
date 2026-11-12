@@ -1,0 +1,113 @@
+{
+  "id": "NJM3404A",
+  "type": "opamp",
+  "description": "NJM3404A single-supply bipolar dual op-amp (an improved NJM2904/LM358), 36 V max: the Boss DS-1's (our model from Nisshinbo's sheet)",
+  "spice_name": "NJM3404A",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "NJM3404A.lib",
+  "manufacturer": "Nisshinbo (New Japan Radio)",
+  "source": {
+    "url": "https://www.nisshinbo-microdevices.co.jp/en/pdf/datasheet/NJM3404A_E.pdf",
+    "retrieved": "2026-11-10",
+    "licence": "Our own model built from the maker's data sheet (D-162): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.nisshinbo-microdevices.co.jp/en/pdf/datasheet/NJM3404A_E.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 0.0,
+    "cm_pos_headroom": 2.0,
+    "out_neg_headroom": 0.005,
+    "out_pos_headroom": 1.0
+  },
+  "rating_sources": {
+    "vs_max": "Nisshinbo Micro Devices NJM3404A data sheet (Ver. 20260723): vs_max 36 V (Absolute Maximum Ratings); common-mode range VICM −15 to +13 V at ±15 V (down to V−, 2 V short of V+); output about 1.0 V short of V+ and within a few mV of V− at V+ = 5 V, RL 1 kΩ to 10 kΩ, read off the Maximum Output Voltage Swing vs. Load Resistance graph",
+    "cm_neg_headroom": "Nisshinbo Micro Devices NJM3404A data sheet (Ver. 20260723): vs_max 36 V (Absolute Maximum Ratings); common-mode range VICM −15 to +13 V at ±15 V (down to V−, 2 V short of V+); output about 1.0 V short of V+ and within a few mV of V− at V+ = 5 V, RL 1 kΩ to 10 kΩ, read off the Maximum Output Voltage Swing vs. Load Resistance graph",
+    "cm_pos_headroom": "Nisshinbo Micro Devices NJM3404A data sheet (Ver. 20260723): vs_max 36 V (Absolute Maximum Ratings); common-mode range VICM −15 to +13 V at ±15 V (down to V−, 2 V short of V+); output about 1.0 V short of V+ and within a few mV of V− at V+ = 5 V, RL 1 kΩ to 10 kΩ, read off the Maximum Output Voltage Swing vs. Load Resistance graph",
+    "out_neg_headroom": "Nisshinbo Micro Devices NJM3404A data sheet (Ver. 20260723): vs_max 36 V (Absolute Maximum Ratings); common-mode range VICM −15 to +13 V at ±15 V (down to V−, 2 V short of V+); output about 1.0 V short of V+ and within a few mV of V− at V+ = 5 V, RL 1 kΩ to 10 kΩ, read off the Maximum Output Voltage Swing vs. Load Resistance graph",
+    "out_pos_headroom": "Nisshinbo Micro Devices NJM3404A data sheet (Ver. 20260723): vs_max 36 V (Absolute Maximum Ratings); common-mode range VICM −15 to +13 V at ±15 V (down to V−, 2 V short of V+); output about 1.0 V short of V+ and within a few mV of V− at V+ = 5 V, RL 1 kΩ to 10 kΩ, read off the Maximum Output Voltage Swing vs. Load Resistance graph"
+  },
+  "channels": 2,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "a.out": 1,
+      "a.-": 2,
+      "a.+": 3,
+      "V-": 4,
+      "b.+": 5,
+      "b.-": 6,
+      "b.out": 7,
+      "V+": 8
+    },
+    "source": "Nisshinbo Micro Devices NJM3404A data sheet (Ver. 20260723), pin configuration (NJM3404AD DIP8, NJM3404AM, NJM3404AV the same): 1 A output, 2 A −input, 3 A +input, 4 V−, 5 B +input, 6 B −input, 7 B output, 8 V+"
+  },
+  "fit": {
+    "sheet": "Nisshinbo Micro Devices NJM3404A data sheet (Ver. 20260723), at ±15 V and at a single 5 V; phase margin assumed (D-169)",
+    "figure": "Electrical characteristics at ±15 V: AV 100 dB typ (88 min, RL > 2 kΩ), unity gain bandwidth 1.2 MHz, slew rate 1.2 V/µs, operating current 2.0 mA (both amplifiers), VOM ±14 V typ, ±13 min at RL = 2 kΩ, VICM −15 to +13 V; Maximum Output Voltage Swing vs. Load Resistance graph (V+ = 5 V): +VOM about 4.0 V from 1 kΩ to 10 kΩ, −VOM about 1 mV. No phase margin",
+    "points": [],
+    "method": "A small macromodel (scripts/fit_models.py opamp_card, D-162): a tanh transconductance stage limited to 10 µA into C1 sets the slew rate, gm the unity-gain crossing and R1 the open-loop gain; a second pole gives the phase margin; diode clamps and an output resistance set the swing; the supply current is drawn from the rails. Unity gain bandwidth 1.2 MHz as the table gives it, phase margin 60° assumed as for the other sheets without one (D-169). A single-supply output like the LM358's: the clamps are 0.95 V from V+ and 5 mV from V− (the 5 V graph: +VOM about 4.0 V, −VOM about 1 mV), with 10 Ω of output resistance, so ±15 V into 2 kΩ swings to 1.0 V of V+ (the table's ±14 V typ). The table's −14 V is the output sinking 7 mA into a load at the middle, which this output stage doesn't model: it swings nearer V−.",
+    "note": "Input bias, offset, noise, common-mode limits and the output's current limit are not modelled: the input stage is ideal (1 TΩ)."
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "min": 88.0,
+        "typ": 100.0,
+        "source": "Nisshinbo Micro Devices NJM3404A data sheet (Ver. 20260723)",
+        "note": "AV 88 dB min, 100 dB typ, RL > 2 kΩ"
+      },
+      "simulated": 99.9671
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "typ": 1200000.0,
+        "source": "Nisshinbo Micro Devices NJM3404A data sheet (Ver. 20260723)",
+        "note": "unity gain bandwidth fT 1.2 MHz typ; no phase margin given, 60° assumed (D-169)"
+      },
+      "simulated": 1199020.0
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 2000.0
+      },
+      "datasheet": {
+        "typ": 1.0,
+        "max": 2.0,
+        "source": "Nisshinbo Micro Devices NJM3404A data sheet (Ver. 20260723): VOM ±14 V typ, ±13 V min, RL = 2 kΩ"
+      },
+      "simulated": 0.990157
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 2000.0
+      },
+      "datasheet": {
+        "max": 2.0,
+        "source": "Nisshinbo Micro Devices NJM3404A data sheet (Ver. 20260723): VOM ±14 V typ, ±13 V min, RL = 2 kΩ",
+        "note": "the model swings nearer V− than the table's typical 1 V: its output stage follows the 5 V graph's few mV and doesn't model sinking into a load at the middle"
+      },
+      "simulated": 0.0498585
+    }
+  ]
+}

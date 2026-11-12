@@ -1,0 +1,191 @@
+# Expected values for library/starters/big-muff-pi-v3.json (D-019, D-034).
+# Refs follow the page: Q4 is the input booster, Q3 and Q2 the clipping stages, Q1 the output.
+circuit: big-muff-pi-v3
+source:
+  title: ElectroSmash, "Big Muff Pi Analysis"
+  url: https://electrosmash.com/big-muff-pi-analysis
+  snapshot: http://web.archive.org/web/20260518010214/https://electrosmash.com/big-muff-pi-analysis
+  read: 2026-10-20
+  licence: CC BY-NC 3.0 (its figures, said in our own words)
+substitutions:
+  - 2N5089 for BC239 and 1N4148 for 1N914 (both listed as equivalents on the page).
+  - BC549C for BC239 in the two Miller-pole checks (`set:`), the same low-noise family (D-167); the starter keeps 2N5089.
+  - The page's transistors differ from ours, but every stage has emitter degeneration and shunt feedback, so the standard bias tolerance is kept.
+
+checks:
+  # Bias, from the bias diagram. The archived image (same file as the one read, by SHA-256)
+  # is linked from each check; the Wayback capture date differs from the page's.
+  - {id: q4-base, kind: dc, node: Q4.B, volts: 0.6, tol: 0.15, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - id: q4-collector
+    kind: dc
+    node: Q4.C
+    volts: 7.0
+    tol: 0.7
+    from: text
+    says: "R14 is only 47k, so the collector sits at about 7 V, not at half the supply (4.5 V)."
+    note: The bias diagram shows 7 V too.
+  - {id: q4-emitter, kind: dc, node: Q4.E, volts: 0.02, tol: 0.15, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - {id: q3-base, kind: dc, node: Q3.B, volts: 0.7, tol: 0.15, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - {id: q3-collector, kind: dc, node: Q3.C, volts: 4.4, tol: 0.44, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - {id: q3-emitter, kind: dc, node: Q3.E, volts: 0.07, tol: 0.15, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - {id: q2-base, kind: dc, node: Q2.B, volts: 0.7, tol: 0.15, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - {id: q2-collector, kind: dc, node: Q2.C, volts: 4.4, tol: 0.44, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - {id: q2-emitter, kind: dc, node: Q2.E, volts: 0.07, tol: 0.15, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - {id: q1-base, kind: dc, node: Q1.B, volts: 1.6, tol: 0.16, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - {id: q1-collector, kind: dc, node: Q1.C, volts: 4.4, tol: 0.44, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - {id: q1-emitter, kind: dc, node: Q1.E, volts: 1.0, tol: 0.15, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - {id: tone-high-leg, kind: dc, node: R5.1, volts: 0.6, tol: 0.15, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - {id: tone-wiper, kind: dc, node: VR2.2, volts: 2.0, tol: 0.2, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+  - {id: tone-low-leg, kind: dc, node: R8.2, volts: 3.3, tol: 0.33, from: image,
+     image: "http://web.archive.org/web/20260329030234im_/https://www.electrosmash.com/images/tech/bmp/big-muff-pi-v3-bias.png",
+     confirmed: 2026-10-20}
+
+  - id: input-booster-gain
+    kind: peak_gain
+    node: Q4.C
+    db: 16.7
+    tol_db: 2.0
+    from: text
+    says: "The formula gives a gain of 9.6 (19.6 dB); the page's own simulation reaches only 16.7 dB."
+    note: Gain from the pedal input (through R2) to Q4's collector; ElectroSmash's simulated value, so ±2 dB.
+  - id: input-high-pass
+    known_gap: >-
+      Simulated 3.1 Hz. By hand the booster's input (R14 ∥ base ∥ R9 divided by the stage gain) is ~9.4K, so C1 sees ~48K and the corner is ~3.3 Hz; the page's 3.8 Hz implies only ~3K for the booster. Not a simulator fault as far as the hand check goes.
+    kind: corner
+    side: low
+    node: Q4.C
+    hz: 3.8
+    tol_pct: 15
+    sweep: {start: 0.5}
+    from: text
+    says: "C1 makes a high-pass filter at the input, with its corner near 3.8 Hz."
+  - id: input-miller-low-pass
+    known_gap: >-
+      Simulated 856 Hz with a BC549C as the page's BC239 (D-167); 847 Hz with the starter's 2N5089, 871 Hz with a 2N3904,
+      so the transistor isn't the cause: the stage's gain is set by its bias current and R22, not by beta, and the
+      transistor's own capacitance is a few pF against C10's 470p. The pole is R9 ∥ C10's 1/(2π·470K·470p) = 720 Hz,
+      lifted by the stage's finite loop gain; 1.2 kHz would need a much lower gain than the stage has. The page hedges:
+      it says the figure depends on the transistor's own capacitance.
+    kind: corner
+    side: high
+    node: Q4.C
+    set: {Q4: {model: BC549C}}
+    hz: 1200
+    tol_pct: 15
+    from: text
+    says: "With C10 at 470 pF the low-pass corner is near 1.2 kHz; the transistor's own capacitance moves it."
+
+  - id: first-clipper-gain
+    kind: peak_gain
+    node: Q3.C
+    ref: VR1.2
+    db: 23.4
+    tol_db: 2.0
+    from: text
+    says: "After the first clipping stage (the red curve): 23.4 dB of gain at most, with corners at 55 Hz and 1.78 kHz."
+    note: Measured from the Sustain wiper (the stage's input, before C5/R19), Sustain at maximum as on the page. Small signal, so the diodes are off.
+  - {id: first-clipper-low, kind: corner, side: low, node: Q3.C, ref: VR1.2, hz: 55, tol_pct: 15, from: text,
+     says: "The first clipping stage's corners: 55 Hz and 1.78 kHz."}
+  - {id: first-clipper-high, kind: corner, side: high, node: Q3.C, ref: VR1.2, hz: 1780, tol_pct: 15, from: text,
+     says: "The first clipping stage's corners: 55 Hz and 1.78 kHz."}
+  - id: both-clippers-gain
+    kind: peak_gain
+    node: Q2.C
+    ref: VR1.2
+    db: 48.6
+    tol_db: 2.0
+    from: text
+    says: "After the second clipping stage (the blue curve): 25.2 dB of gain at most (48.6 less the first stage's 23.4), with corners at 94 Hz and 1.17 kHz."
+    note: The blue curve is the output after both clippers (48.6 dB in total), so its poles are checked on the same path.
+  - {id: both-clippers-low, kind: corner, side: low, node: Q2.C, ref: VR1.2, hz: 94, tol_pct: 15, from: text,
+     says: "The second clipping stage's corners: 94 Hz and 1.17 kHz."}
+  - id: both-clippers-high
+    kind: corner
+    side: high
+    node: Q2.C
+    ref: VR1.2
+    set: {Q2: {model: BC549C}, Q3: {model: BC549C}}
+    hz: 1170
+    tol_pct: 15
+    from: text
+    says: "The second clipping stage's corners: 94 Hz and 1.17 kHz."
+    note: >-
+      With BC549Cs as the page's BC239s (D-167): 1002 Hz, inside by 8 Hz. With the starter's 2N5089s (our fit, D-163)
+      it reads 991 Hz, 15.3 % low; with 2N3904s 1061 Hz.
+  - id: clipping-level
+    kind: clip
+    node: Q3.C
+    level: med
+    volts: 0.6
+    tol: 0.15
+    from: text
+    says: "The diodes hold the output's peaks within ±0.6 V."
+
+  - id: tone-notch
+    known_gap: >-
+      Notch frequency passes; depth simulates at -16.7 dB. The stack is loaded by the output stage (~74K: R7 ∥ R3 ∥ Q1's base) as in the real pedal, and the page's other figure for the same point, about 13 dB down at 1 kHz in the full circuit, is also from ElectroSmash's simulation with BC239s. Explained by the Phase 6 calculator: the stack alone (ideal source, no load) notches at 1.00 kHz, -13.8 dB, matching the page, so the page's figure is for the stack unloaded; the 74K load takes 3 dB more (`tests/sim/test_tone_stacks.py`, D-080).
+    kind: notch
+    node: VR2.2
+    ref: Q2.C
+    band: [200, 5000]
+    hz: 1000
+    tol_pct: 15
+    db: -13.5
+    tol_db: 2.0
+    from: text
+    says: "The stack loses 7 dB overall and about 6.5 dB more at the notch: -13.5 dB in all, at 1 kHz."
+    note: Tone at mid, loaded by the output stage as in the real pedal.
+  - id: output-stage-gain
+    known_gap: >-
+      Simulated 11.6 dB. The formula R6/R4 ignores the Volume pot (100K) and amp (1M) loading R6 and the transistor's re (~84 Ω); by hand 12.9K/3.38K = 3.81 = 11.6 dB, matching the simulation.
+    kind: gain
+    node: Q1.C
+    ref: Q1.B
+    hz: 1000
+    db: 13.1
+    tol_db: 1.0
+    from: text
+    says: "The gain is the collector resistor over the emitter resistor: R6/R4 = 15k/3.3k = 4.5, which is 13 dB."
+    note: 20·log10(15K/3.3K) = 13.1 dB, measured base to collector.
+
+omitted:
+  - what: Input booster formula gain 19.6 dB
+    why: The page itself says the circuit never reaches it; the simulated 16.7 dB is checked instead.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  sources:
+    - title: Aion FX, "Halo Fuzz" documentation 2.1.0 (2025-11-04), based on the Electro-Harmonix Big Muff Pi
+      url: https://aionfx.com/app/files/docs/halo_documentation.pdf
+      snapshot: http://web.archive.org/web/20260305210252/https://aionfx.com/app/files/docs/halo_documentation.pdf
+      read: 2026-11-04
+      licence: Aion FX project documentation (short quotes, for testing); the projects may be built, commercially too, without attribution (its License & Usage page)
+  parts:
+    - "The main source gives no types. From the Aion Halo, by role (its values are another Big Muff version's): the 470 pF Miller caps NP0/C0G (\"470pF MLCC capacitor, NP0/C0G\"); the coupling, feedback and tone caps film (\"Film capacitor\"). The four 1 µF caps, 100 nF in the Halo, are film too: no polarised part where the source doesn't show one."
+    - "Enclosure 125B, as the Halo."

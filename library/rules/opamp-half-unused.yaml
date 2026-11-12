@@ -1,0 +1,52 @@
+id: opamp-half-unused
+layer: topology
+severity: warning
+check: opamp_half_unused
+title: Op-amp half not used
+message: "{ref}, half of {chip} ({model}), is wired to nothing."
+why: >
+  The chip has all its halves whether you use them or not. Left with its inputs floating, the
+  spare half can swing from rail to rail or oscillate, drawing current and putting noise on
+  the supply. It isn't simulated while unused.
+fix: "Wire {ref} as a buffer: its output ({out}) to its − input ({minus}), and its + input ({plus}) to {mid}."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, VREF], value: 1M}
+        - {ref: R2, type: resistor, nets: [V+, VREF], value: 100k}
+        - {ref: R3, type: resistor, nets: [VREF, GND], value: 100k}
+        - {ref: C1, type: capacitor, nets: [VREF, GND], value: 10u}
+        - {ref: C2, type: capacitor, nets: [V+, GND], value: 100u}
+        - {ref: IC1A, type: opamp, nets: [in, o, o], model: TL072, half: a}
+        - {ref: IC1B, type: opamp, model: TL072, half: b}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [IC1B]
+    - rails: {V+: 9}
+      parts:   # a quad (D-172) with two halves in use
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, VREF], value: 1M}
+        - {ref: R2, type: resistor, nets: [V+, VREF], value: 100k}
+        - {ref: R3, type: resistor, nets: [VREF, GND], value: 100k}
+        - {ref: C1, type: capacitor, nets: [VREF, GND], value: 10u}
+        - {ref: C2, type: capacitor, nets: [V+, GND], value: 100u}
+        - {ref: IC1A, type: opamp, nets: [in, a, a], model: TL074, half: a}
+        - {ref: IC1B, type: opamp, nets: [a, o, o], model: TL074, half: b}
+        - {ref: IC1C, type: opamp, model: TL074, half: c}
+        - {ref: IC1D, type: opamp, model: TL074, half: d}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [IC1C, IC1D]
+  good:
+    - starter: ts808   # both halves of its RC4558 in use
+    - rails: {V+: 9}
+      parts:   # the spare half wired as a buffer on VREF
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, VREF], value: 1M}
+        - {ref: R2, type: resistor, nets: [V+, VREF], value: 100k}
+        - {ref: R3, type: resistor, nets: [VREF, GND], value: 100k}
+        - {ref: C1, type: capacitor, nets: [VREF, GND], value: 10u}
+        - {ref: C2, type: capacitor, nets: [V+, GND], value: 100u}
+        - {ref: IC1A, type: opamp, nets: [in, o, o], model: TL072, half: a}
+        - {ref: IC1B, type: opamp, nets: [VREF, b, b], model: TL072, half: b}
+        - {ref: OUT, type: amp, nets: [o]}

@@ -1,0 +1,253 @@
+{
+  "id": "2SC2459",
+  "type": "bjt",
+  "description": "2SC2459 audio NPN (Toshiba; hFE 200-700 in grades GR, BL; VCEO 120 V): the Boss BD-2's, our fit to Toshiba's sheet",
+  "spice_name": "2SC2459",
+  "kind": "model",
+  "pins": [],
+  "card": "2SC2459.lib",
+  "manufacturer": "Toshiba",
+  "source": {
+    "url": "https://doc.platan.ru/pdf/datasheets/toshiba/2SC2459.pdf (Toshiba 2SC2459, 2003-03-27, 3 pages; distributor mirror)",
+    "retrieved": "2026-11-10",
+    "licence": "Our own model fitted to the maker's data sheet (D-163): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "fixes": [],
+  "ratings": {
+    "vceo": 120.0,
+    "ic": 0.1
+  },
+  "rating_sources": {
+    "vceo": "Toshiba 2SC2459 data sheet (2003-03-27, 3 pages), page 1, maximum ratings: VCEO 120 V",
+    "ic": "Toshiba 2SC2459 data sheet (2003-03-27, 3 pages), page 1, maximum ratings: IC 100 mA"
+  },
+  "package": {
+    "name": "TO-92 mini (ECB; Toshiba 2-4E1A)",
+    "pins": {
+      "E": 1,
+      "C": 2,
+      "B": 3
+    },
+    "source": "Toshiba 2SC2459 data sheet (2003-03-27, 3 pages), page 1: outline 2-4E1A, 1. emitter, 2. collector, 3. base"
+  },
+  "fit": {
+    "sheet": "Toshiba 2SC2459 data sheet (2003-03-27, 3 pages)",
+    "figure": "hFE – IC, VCE = 6 V, 25 °C (page 2, by pixel; to 55 mA, past which the three temperature lines cross); IC – VBE, VCE = 6 V, 25 °C (page 2, by pixel, 10 to 190 mA; the table gives no VBE); VCE(sat) – IC, IC/IB = 10, 25 °C (page 2, by pixel; under 30 mA the three lines overlap and the band's middle is read); page 1, Cob 3.0 pF typ at VCB = 10 V, IE = 0, f = 1 MHz; page 1: fT 100 MHz typ at VCE = 6 V, IC = 1 mA",
+    "points": [
+      [
+        0.0005,
+        280.43799236389253
+      ],
+      [
+        0.001,
+        294.9312571291824
+      ],
+      [
+        0.002,
+        304.53664700437173
+      ],
+      [
+        0.005,
+        314.3
+      ],
+      [
+        0.01,
+        314.3
+      ],
+      [
+        0.02,
+        312.35690763014264
+      ],
+      [
+        0.05,
+        302.93621974609016
+      ]
+    ],
+    "curves": {
+      "vbe_on": [
+        [
+          0.01,
+          0.6404420486674244
+        ],
+        [
+          0.02,
+          0.6683206354153571
+        ],
+        [
+          0.05,
+          0.7041700809865912
+        ],
+        [
+          0.1,
+          0.7388817897154573
+        ]
+      ],
+      "vce_sat": [
+        [
+          0.0005,
+          0.0870267193939946
+        ],
+        [
+          0.001,
+          0.07835549639328425
+        ],
+        [
+          0.002,
+          0.06955313583700384
+        ],
+        [
+          0.005,
+          0.0584186622767645
+        ],
+        [
+          0.01,
+          0.0615
+        ],
+        [
+          0.02,
+          0.058967591768686226
+        ],
+        [
+          0.05,
+          0.07474513665669948
+        ],
+        [
+          0.1,
+          0.0969
+        ],
+        [
+          0.2,
+          0.13911953473465663
+        ]
+      ],
+      "cobo": [
+        [
+          10.0,
+          3e-12
+        ]
+      ]
+    },
+    "method": "Gummel-Poon (scripts/fit_models.py). IS, NF, BF, ISE, NE, IKF, NKF and RE by least squares on the hFE and VBE(on) curves at VCE = 6 V together (points: the curves read at 1-2-5 steps); no Early voltage (VAF left out): the IC – VCE figures (page 2) draw the lines flat from 1 to 10 V; no output admittance in the table, so none is set (ngspice's default). BR, ISC, NC and RC by least squares on the VCE(sat) curve, the hFE points held, NR = NF, at IC/IB = 10. CJC from Cobo (one point: VJC, MJC ngspice's defaults); no Cibo on the sheet, so CJE is left out. TF from fT 100 MHz at 1 mA (page 1: fT 100 MHz typ at VCE = 6 V, IC = 1 mA), less the junctions' charging time. Fitted curves are matched within 0.5 % (hFE), 1.9 mV (VBE) and 3.5 mV (VCE(sat)). RB, VAR, TR and the temperature terms are ngspice's defaults: the sheet doesn't pin them",
+    "note": "The sheet draws one typical gain line (about 300 to 314 from 1 to 45 mA at VCE 6 V), a GR-grade unit, as the BD-2's 2SC2459-GR. The VBE comes from the linear IC – VBE figure alone (no table value); on the 2SC2240's sheet the same figure reads 50 mV under the table (D-252), so a real unit's VBE may be that much higher. ISC is left free (not capped as the 2SC2240's): capped, the fit misses the VCE(sat) curve by 9 mV at 30 mA; free, it leaks 10 nA at 120 V, inside the sheet's 0.1 µA."
+  },
+  "validation": [
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.002,
+        "vce": 6.0
+      },
+      "simulated": 305.867,
+      "datasheet": {
+        "min": 200.0,
+        "max": 700.0,
+        "source": "Toshiba 2SC2459 data sheet (2003-03-27, 3 pages), page 1, electrical characteristics: hFE at VCE = 6 V, IC = 2 mA: 200 min, 700 max (GR 200-400, BL 350-700)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.01,
+        "ib": 0.001
+      },
+      "simulated": 0.0599139,
+      "datasheet": {
+        "max": 0.3,
+        "source": "Toshiba 2SC2459 data sheet (2003-03-27, 3 pages), page 1, electrical characteristics: VCE(sat) at IC = 10 mA, IB = 1 mA: 0.3 V max"
+      }
+    },
+    {
+      "quantity": "icbo",
+      "conditions": {
+        "vcb": 120.0
+      },
+      "simulated": 1.01321e-08,
+      "datasheet": {
+        "max": 0.0001,
+        "source": "Toshiba 2SC2459 data sheet (2003-03-27, 3 pages), page 1, electrical characteristics: ICBO at VCB = 120 V, IE = 0: 0.1 µA max (printed as 0.1 mA in this copy's units column, as on the 2SC2240's)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 6.0
+      },
+      "simulated": 309.776,
+      "datasheet": {
+        "typ": 305.9,
+        "tol": 15.3,
+        "source": "Toshiba 2SC2459 data sheet (2003-03-27, 3 pages), hFE – IC, VCE = 6 V, 25 °C (page 2, by pixel; to 55 mA, past which the three temperature lines cross)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.003,
+        "ib": 0.0003
+      },
+      "simulated": 0.0653229,
+      "datasheet": {
+        "typ": 0.0655,
+        "tol": 0.005,
+        "source": "Toshiba 2SC2459 data sheet (2003-03-27, 3 pages), VCE(sat) – IC, IC/IB = 10, 25 °C (page 2, by pixel; under 30 mA the three lines overlap and the band's middle is read)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.03,
+        "vce": 6.0
+      },
+      "simulated": 309.563,
+      "datasheet": {
+        "typ": 308.4,
+        "tol": 15.4,
+        "source": "Toshiba 2SC2459 data sheet (2003-03-27, 3 pages), hFE – IC, VCE = 6 V, 25 °C (page 2, by pixel; to 55 mA, past which the three temperature lines cross)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.03,
+        "vce": 6.0
+      },
+      "simulated": 0.682225,
+      "datasheet": {
+        "typ": 0.6846,
+        "tol": 0.01,
+        "source": "Toshiba 2SC2459 data sheet (2003-03-27, 3 pages), IC – VBE, VCE = 6 V, 25 °C (page 2, by pixel, 10 to 190 mA; the table gives no VBE)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.03,
+        "ib": 0.003
+      },
+      "simulated": 0.0647841,
+      "datasheet": {
+        "typ": 0.0601,
+        "tol": 0.005,
+        "source": "Toshiba 2SC2459 data sheet (2003-03-27, 3 pages), VCE(sat) – IC, IC/IB = 10, 25 °C (page 2, by pixel; under 30 mA the three lines overlap and the band's middle is read)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 298.293,
+      "note": "Gain on the Geofex tester (D-130, D-153): 9 V, collector through 2.4 kΩ, 2.2 MΩ from base to supply; collector current less the leakage, over the base current. Where a measured transistor's form starts."
+    }
+  ],
+  "datasheet": "https://doc.platan.ru/pdf/datasheets/toshiba/2SC2459.pdf"
+}

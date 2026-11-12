@@ -1,0 +1,171 @@
+# Expected values for library/starters/klon-centaur.json (D-019, D-244).
+# The circuit is drawn from this page's schematic, with its part numbers (pots as VR).
+circuit: klon-centaur
+source:
+  title: ElectroSmash, "Klon Centaur Analysis"
+  url: https://www.electrosmash.com/klon-centaur-analysis
+  snapshot: http://web.archive.org/web/20260522134203/https://www.electrosmash.com/klon-centaur-analysis
+  read: 2026-11-10
+  licence: CC BY-NC 3.0 (its figures, said in our own words)
+substitutions:
+  - >-
+    The page's schematic, with SW1 (Boss-style buffered bypass, no true bypass) drawn at
+    effect on: the Level wiper goes straight to the output, so R242, across SW1's throw then,
+    carries nothing and isn't drawn. The bypass path (C2, R3, R4) and R243 stay, as they're
+    always connected (the page notes that with the effect on, some clean signal reaches
+    the output through R243).
+  - >-
+    U3 the MAX1044 of the schematic (the text says TC1044, the same 7660 family), our card
+    from Maxim's sheet. D2, D3 1N34A as the page's. D4 1N4742A, D7, D8 1N4001 as the page's.
+    U1, U2 TL072 (our card from TI's sheet, D-219).
+  - The supply is an ideal 9 V, as the other starters'.
+
+checks:
+  - id: input-high-pass
+    known_gap: >-
+      Simulated 1.88 Hz. The page works C1 against R2 as if R2's far end (VR) were ground;
+      VR is held only by C18 (47µ, about 2k at 1.6 Hz) with R29 and R30, and the stages
+      after the buffer push signal into it through R8, R9 and Gain B, so R2 isn't fully
+      grounded at these frequencies. With C18 set to 1 F the simulation reads 1.58 Hz, the
+      page's RC.
+    kind: corner
+    side: low
+    node: U1A.out
+    hz: 1.5
+    tol_pct: 15
+    sweep: {start: 0.1}
+    from: text
+    says: "The input corner: 1/(2π x 1 MΩ x 100 nF) = 1.5 Hz."
+    note: 1/(2π·1M·0.1µ) is 1.59 Hz; ±15 % covers both.
+  - id: gain-stage-peak
+    kind: peak_gain
+    node: U1B.out
+    ref: U1B.+
+    set: {VR1A: {rotation: 1.0}}
+    db: 40
+    tol_db: 2.0
+    from: text
+    says: "The most gain is 40 dB, 100 times, near 1 kHz."
+    note: >-
+      Gain fully up, small signal (the diodes off), the op-amp's own gain as the page's Gain
+      Calculation works it (+ input to output; simulated 40.0 dB at 990 Hz). From the
+      buffer's output it is 37 dB: R6 and C5 into Gain A's track lose 3 dB first.
+  - id: feedforward-low-pass
+    known_gap: >-
+      Simulated 124 Hz. The page's formula takes R7 and C16 alone; R19 (15k) carries C16's
+      node into the summing amp's virtual ground and loads it, 1/(2π·(R7 ∥ R19)·C16) = 117 Hz
+      by hand. With R19 set to 1G the simulation reads 106.8 Hz, the page's figure.
+    kind: corner
+    side: high
+    node: C16.1
+    ref: C3.2
+    hz: 106
+    tol_pct: 15
+    from: text
+    says: "R7 and C16 make a low-pass filter that cuts harmonics above 106 Hz."
+  - id: treble-max
+    kind: gain
+    node: U2B.out
+    ref: U2A.out
+    set: {VR2: {rotation: 1.0}}
+    hz: 20000
+    db: 18.24
+    tol_db: 1.5
+    from: text
+    says: "The Treble's most gain: (RV2 + R23)/R21 = 14.7/1.8 = 8.16, which is 18.24 dB."
+  - id: treble-min
+    kind: gain
+    node: U2B.out
+    ref: U2A.out
+    set: {VR2: {rotation: 0.0}}
+    hz: 20000
+    db: -8
+    tol_db: 1.5
+    from: text
+    says: "The Treble's least gain: R23/(RV2 + R21) = 4.7/11.8 = 0.4, which is -8 dB."
+  - id: treble-pass-band
+    kind: gain
+    node: U2B.out
+    ref: U2A.out
+    set: {VR2: {rotation: 1.0}}
+    hz: 20
+    db: 0
+    tol_db: 0.5
+    from: text
+    says: "In the pass band the gain is R24/R22 = 1."
+  - id: output-high-pass
+    known_gap: >-
+      Simulated 4.8 Hz. With the bypass path's bleed through R243 taken away (C2 set to 1p)
+      it reads 3.7 Hz, within the tolerance: C15 sees R25 and the whole Level pot (10.56k,
+      3.2 Hz) with R28 and the amp's 1M across it, 3.76 Hz by hand. The bleed is the clean
+      signal arriving at the output by its own path, which the ratio to U2B's output counts
+      as a change of response at the lowest frequencies.
+    kind: corner
+    side: low
+    node: out
+    ref: U2B.out
+    set: {VR3: {rotation: 1.0}}
+    hz: 3.38
+    tol_pct: 15
+    sweep: {start: 0.1}
+    from: text
+    says: "The output corner, C15 with RV3: 3.38 Hz."
+    note: Level fully up.
+  - id: clipping-level
+    kind: clip
+    node: D2.K
+    set: {VR1A: {rotation: 1.0}}
+    level: med
+    volts: 0.35
+    tol: 0.1
+    from: text
+    says: "The 1N34A germanium diodes' forward voltage is 0.35 V."
+
+  # The charge pump's two supplies, from a second source (the page gives them only on its
+  # schematic image): a replica builder's measured chart, at its own supply.
+  - id: doubled-supply
+    kind: dc
+    node: U2C.V+
+    supply: 9.4
+    volts: 17.1
+    tol: 0.5
+    from: text
+    says: "On a 9.4 V supply the chart reads 17.1 V at IC2 pin 8."
+    note: >-
+      General Guitar Gadgets, "Klon Centaur Replica Instructions" (2018-09-05), voltage
+      chart: http://generalguitargadgets.com/pdf/ggg_kc_instruct.pdf (read 2026-11-10).
+      A second source for the supplies, measured on a built replica at its own 9.4 V; it
+      calls the readings "approximate", so the ±0.5 V of Aion's chart
+      (klon-centaur-aion) is used.
+  - id: inverted-supply
+    kind: dc
+    node: U2C.V-
+    supply: 9.4
+    volts: -9.1
+    tol: 0.5
+    from: text
+    says: "On a 9.4 V supply the chart reads -9.1 V at IC2 pin 4."
+    note: Same source as doubled-supply.
+
+omitted:
+  - what: The supplies on the schematic, "+16.2V" (VB) and "-8.6V" (-VA)
+    why: >-
+      Read off the schematic image; checked instead against a replica's measured chart at 9.4 V
+      (doubled-supply, inverted-supply). The simulation reads 16.33 V and -8.73 V at 9 V, in line
+      with the image.
+  - what: The summing amp's 495 Hz low-pass (R20, C13)
+    why: Its feedback network's corner; three paths feed the amp's input, so no one response of the circuit shows it alone.
+  - what: The tone control's 408 Hz
+    why: The frequency the shelf starts from (R22 with C14), not a -3 dB point; the shelf's gains are checked.
+  - what: The summing amp's rough 100 dB and the gain-stage curves
+    why: Read off graphs (images) of the page's own simulation, not worked figures.
+  - what: The bypass path's 0.3 Hz high-pass and the bleed of about 1 dB
+    why: The bypass path is checked only as part of the circuit; its corner is far below the band and the bleed is given loosely.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  parts:
+    - "The circuit and every value are from the main source's schematic."
+    - "Capacitor types aren't given there, so they follow the app's advice: C8 390p and C13 820p NP0/C0G (small caps in the signal path), C2, C15 and C17-C22 electrolytic, the rest film, C9, C10 and C16 too."
+    - "Electrolytics rated 16 V, 25 V on VB (about 16 V) and at U2B's output: the source gives no rating, so this is the app's own advice (D-203)."
+    - "Enclosure 125B, a builder's choice (the Klon has its own case), as the Aion version's."

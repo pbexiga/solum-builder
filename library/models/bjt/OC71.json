@@ -1,0 +1,336 @@
+{
+  "id": "OC71",
+  "type": "bjt",
+  "description": "OC71 germanium PNP (Mullard, small-signal audio), our fit to Mullard's sheet",
+  "spice_name": "OC71",
+  "kind": "model",
+  "pins": [],
+  "card": "OC71.lib",
+  "manufacturer": "Mullard",
+  "source": {
+    "url": "https://frank.pocnet.net/other/Mullard/Mullard_Volume4PartIII_transistors_1968-11.pdf (Mullard Vol. 4 Part III, Nov 1968; pages 159-178 extracted, kept as data/spec-sheets/OC71_Mullard.pdf)",
+    "retrieved": "2026-11-03",
+    "licence": "Our own model fitted to the maker's data sheet (D-163): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://frank.pocnet.net/other/Mullard/Mullard_Volume4PartIII_transistors_1968-11.pdf",
+  "fixes": [],
+  "ratings": {
+    "vceo": 20.0,
+    "ic": 0.01
+  },
+  "rating_sources": {
+    "vceo": "Mullard OC71 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC71 Issue 2, pages 158-1 to 158-20), page 158-1: limiting values, grounded emitter: Vc max. (d.c.) -20 V (base-ground impedance < 500 Ω or Vbe > 500 mV reverse)",
+    "ic": "Mullard OC71 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC71 Issue 2, pages 158-1 to 158-20), page 158-1: limiting values: Ic max. 10 mA (averaged over 20 ms; 50 mA peak)"
+  },
+  "package": {
+    "name": "SO-2 glass (EBC)",
+    "pins": {
+      "E": 1,
+      "B": 2,
+      "C": 3
+    },
+    "source": "Mullard OC71 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC71 Issue 2, pages 158-1 to 158-20), page 158-6: outline and dimensions (V.A.S.C.A. SO-2/SB3-2): e, b, c in a line, the dot on the collector side"
+  },
+  "fit": {
+    "sheet": "Mullard OC71 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC71 Issue 2, pages 158-1 to 158-20)",
+    "figure": "page 158-12 transfer characteristic at Vc = -4.5 V (IB 0 to 16 µA); page 158-13 Average transfer line (5 to 14 mA); page 158-7 IE against VBE at Vc = -4.5 V (both ranges); page 158-2 table (Ico, rbb', Cc, fα); page 158-3 h'22 (VAF)",
+    "points": [
+      [
+        0.0001858,
+        627.7027027027028
+      ],
+      [
+        0.0002783,
+        134.12048192771084
+      ],
+      [
+        0.0004219,
+        94.87294805486846
+      ],
+      [
+        0.0005244,
+        84.30868167202571
+      ],
+      [
+        0.0006289,
+        78.69119119119121
+      ],
+      [
+        0.0007314000000000001,
+        74.90782466202378
+      ],
+      [
+        0.0008379,
+        72.8608695652174
+      ],
+      [
+        0.0009395,
+        71.00748242763208
+      ],
+      [
+        0.0010426,
+        69.68319743349821
+      ],
+      [
+        0.0010785,
+        69.33016199537157
+      ],
+      [
+        0.0049518,
+        55.501008742434436
+      ],
+      [
+        0.0065062,
+        55.54208639235104
+      ],
+      [
+        0.0080573,
+        55.94181767687288
+      ],
+      [
+        0.0096053,
+        56.141796715179154
+      ],
+      [
+        0.0111901,
+        56.16956128902721
+      ],
+      [
+        0.0130793,
+        56.19221515724352
+      ],
+      [
+        0.0139939,
+        56.36338005477687
+      ]
+    ],
+    "curves": {
+      "transfer": [
+        [
+          2.9599999999999995e-07,
+          0.0001858
+        ],
+        [
+          2.075e-06,
+          0.0002783
+        ],
+        [
+          4.447e-06,
+          0.0004219
+        ],
+        [
+          6.22e-06,
+          0.0005244
+        ],
+        [
+          7.991999999999999e-06,
+          0.0006289
+        ],
+        [
+          9.763999999999998e-06,
+          0.0007314000000000001
+        ],
+        [
+          1.15e-05,
+          0.0008379
+        ],
+        [
+          1.3231e-05,
+          0.0009395
+        ],
+        [
+          1.4961999999999998e-05,
+          0.0010426
+        ],
+        [
+          1.5555999999999998e-05,
+          0.0010785
+        ],
+        [
+          8.921999999999999e-05,
+          0.0049518
+        ],
+        [
+          0.00011713999999999999,
+          0.0065062
+        ],
+        [
+          0.00014403,
+          0.0080573
+        ],
+        [
+          0.00017109,
+          0.0096053
+        ],
+        [
+          0.00019921999999999998,
+          0.0111901
+        ],
+        [
+          0.00023276,
+          0.0130793
+        ],
+        [
+          0.00024828,
+          0.0139939
+        ]
+      ],
+      "vbe_ie": [
+        [
+          2.1629999999999998e-05,
+          0.008480000000000001
+        ],
+        [
+          5.0249999999999995e-05,
+          0.025670000000000002
+        ],
+        [
+          6.74e-05,
+          0.033490000000000006
+        ],
+        [
+          8.456e-05,
+          0.0405
+        ],
+        [
+          0.00010170999999999999,
+          0.046939999999999996
+        ],
+        [
+          0.00011881,
+          0.05312
+        ],
+        [
+          0.0007818,
+          0.10724
+        ],
+        [
+          0.0009365,
+          0.11546
+        ],
+        [
+          0.0011075,
+          0.12368000000000001
+        ],
+        [
+          0.0013111,
+          0.13191
+        ],
+        [
+          0.0016287,
+          0.14128000000000002
+        ],
+        [
+          0.0021173000000000003,
+          0.15130000000000002
+        ],
+        [
+          0.0026055,
+          0.16038999999999998
+        ],
+        [
+          0.0030924999999999998,
+          0.16786
+        ],
+        [
+          0.0035794999999999998,
+          0.17386000000000001
+        ],
+        [
+          0.0040666,
+          0.17971
+        ],
+        [
+          0.0050408,
+          0.18994
+        ],
+        [
+          0.0055309999999999995,
+          0.19448
+        ],
+        [
+          0.006021200000000001,
+          0.19886
+        ]
+      ],
+      "cobo": [
+        [
+          6.0,
+          4e-11
+        ]
+      ]
+    },
+    "method": "see NOTES.md (germanium study): transfer, VBE-IE and Ico fitted together at Vc = -4.5 V, leakage included. The transfer curve is kept as read under curves.transfer (IB, IC); points are its (IC, IC/IB), leakage included, so the lowest-current gains are high. Fitted points within 7.9 % (IC at IB) and 4.7 mV (VBE); ICBO 4.46 µA. Curves read off the raster by pixel (.claude/skills/fit-model/worked/germanium/pix.py)",
+    "note": "Our own fit by pixel from Mullard's curves (D-184); germanium units vary widely, so give a measured hFE and leakage."
+  },
+  "validation": [
+    {
+      "quantity": "icbo",
+      "conditions": {
+        "vcb": 4.5
+      },
+      "simulated": 4.46435e-06,
+      "datasheet": {
+        "typ": 4.5e-06,
+        "max": 1.3e-05,
+        "source": "Mullard OC71 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC71 Issue 2, pages 158-1 to 158-20), page 158-2: characteristics at Tj = 25 °C, Ico (Vc = -4.5 V, Ie = 0): 4.5 av., 13 max µA"
+      },
+      "note": "Fitted to the average; a measured unit's leakage replaces it (D-130)"
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.001,
+        "vce": 4.5
+      },
+      "simulated": 0.120842,
+      "datasheet": {
+        "min": 0.115,
+        "typ": 0.135,
+        "max": 0.155,
+        "source": "Mullard OC71 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC71 Issue 2, pages 158-1 to 158-20), page 158-2: characteristics at Tj = 25 °C, Vbe (Vc = -4.5 V, Ic = 1 mA): -115 min, -135 av., -155 max mV"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.009,
+        "ib": 0.0005
+      },
+      "simulated": 0.0711127,
+      "datasheet": {
+        "typ": 0.08,
+        "max": 0.21,
+        "source": "Mullard OC71 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC71 Issue 2, pages 158-1 to 158-20), page 158-2: characteristics at Tj = 25 °C, collector bottoming voltage (Ic = 9 mA, Ib = 0.5 mA): -80 av., -210 max mV"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.001,
+        "vce": 4.5
+      },
+      "simulated": 69.6617
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 60.1056,
+      "note": "The card's own gain on the tester (where a measured form starts)"
+    },
+    {
+      "quantity": "iceo",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0
+      },
+      "simulated": 0.000200452,
+      "note": "The card's own leakage on the tester"
+    }
+  ]
+}

@@ -1,0 +1,133 @@
+{
+  "id": "1N4001",
+  "type": "diode",
+  "description": "1N4001 1 A, 50 V rectifier diode (our fit to Diotec's sheet)",
+  "spice_name": "1N4001",
+  "kind": "model",
+  "pins": [],
+  "card": "1N4001.lib",
+  "manufacturer": "Diotec",
+  "source": {
+    "url": "https://www.diotec.com/request/datasheet/1n4001.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own fit to the maker's datasheet curve (D-156): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.diotec.com/request/datasheet/1n4001.pdf",
+  "fixes": [],
+  "ratings": {
+    "if_avg": 1.0,
+    "vr_max": 50.0
+  },
+  "rating_sources": {
+    "if_avg": "Diotec 1N4001 ... 1N4007 data sheet (Version 2026-03-19): IFAV 1 A",
+    "vr_max": "Diotec 1N4001 ... 1N4007 data sheet (Version 2026-03-19): VRRM 50 V (1N4001)"
+  },
+  "fit": {
+    "sheet": "Diotec 1N4001 ... 1N4007 data sheet (Version 2026-03-19)",
+    "figure": "Forward characteristics (typical values), Tj = 25 °C (read from the PDF's vector drawing, centre of the drawn line), up to about 3 A",
+    "points": [
+      [
+        0.7511,
+        0.010119999999999999
+      ],
+      [
+        0.8185,
+        0.0504
+      ],
+      [
+        0.8949,
+        0.2813
+      ],
+      [
+        0.936,
+        0.6405
+      ],
+      [
+        0.9804,
+        1.358
+      ],
+      [
+        1.0278,
+        2.569
+      ],
+      [
+        1.0533,
+        3.364
+      ]
+    ],
+    "method": "IS, N and RS by least squares on V = N·Vt·ln(I/IS) + RS·I (scripts/fit_models.py fit_diode, Vt at 27 °C) over every other curve point, the curve's last point always included; IS held under the sheet's 5 µA leakage limit at VRRM; CJO is the sheet's typical 15 pF (at 4 V; a little under the zero-bias value); no breakdown modelled (50 V is never reached in a pedal)",
+    "note": "The figure starts at 10 mA; below that the fit follows the diode equation, not the sheet"
+  },
+  "validation": [
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 1.0
+      },
+      "simulated": 0.96098,
+      "datasheet": {
+        "max": 1.1,
+        "source": "Diotec 1N4001 ... 1N4007 data sheet (Version 2026-03-19), Characteristics: forward voltage at IF = 1 A, Tj = 25 °C"
+      }
+    },
+    {
+      "quantity": "ir",
+      "conditions": {
+        "vr": 50.0
+      },
+      "simulated": 2.213e-10,
+      "datasheet": {
+        "max": 5e-06,
+        "source": "Diotec 1N4001 ... 1N4007 data sheet (Version 2026-03-19), Characteristics: leakage current at VR = VRRM, Tj = 25 °C"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.02182
+      },
+      "simulated": 0.783336,
+      "datasheet": {
+        "source": "Diotec 1N4001 ... 1N4007 data sheet (Version 2026-03-19), Forward characteristics (typical values), Tj = 25 °C (read from the PDF's vector drawing, centre of the drawn line), up to about 3 A",
+        "typ": 0.783,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.9399
+      },
+      "simulated": 0.957324,
+      "datasheet": {
+        "source": "Diotec 1N4001 ... 1N4007 data sheet (Version 2026-03-19), Forward characteristics (typical values), Tj = 25 °C (read from the PDF's vector drawing, centre of the drawn line), up to about 3 A",
+        "typ": 0.9572,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 2.966
+      },
+      "simulated": 1.04111,
+      "datasheet": {
+        "source": "Diotec 1N4001 ... 1N4007 data sheet (Version 2026-03-19), Forward characteristics (typical values), Tj = 25 °C (read from the PDF's vector drawing, centre of the drawn line), up to about 3 A",
+        "typ": 1.0409,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    }
+  ],
+  "package": {
+    "name": "DO-41",
+    "pins": {
+      "K": 1,
+      "A": 2
+    },
+    "source": "Diotec 1N4001 ... 1N4007 data sheet: DO-41; pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The band marks the cathode"
+  }
+}

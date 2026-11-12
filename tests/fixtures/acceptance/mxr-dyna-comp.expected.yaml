@@ -1,0 +1,133 @@
+# Expected values for library/starters/mxr-dyna-comp.json (D-019, D-245).
+# The circuit is drawn from this page's schematic and parts list, with its part numbers
+# (its Rtrimmer is TR1, its RV1 and RV2 are VR1 and VR2).
+circuit: mxr-dyna-comp
+source:
+  title: ElectroSmash, "MXR Dyna Comp Analysis"
+  url: https://www.electrosmash.com/mxr-dyna-comp-analysis
+  snapshot: http://web.archive.org/web/20260413030625/https://electrosmash.com/mxr-dyna-comp-analysis
+  read: 2026-11-10
+  licence: CC BY-NC 3.0 (its figures, said in our own words)
+substitutions:
+  - >-
+    The page's schematic, redrawn by the page itself to make it simpler, with C10 and C11 as it draws
+    them (it notes the original seems to have had no decoupling caps), D3 across the supply as it draws it, and no bypass switching.
+  - >-
+    The parts list's 2N3904s, 1N914s, 1N4148 and CA3080 (each has a card). The page gives
+    no tapers; Aion FX's Aurora document (https://aionfx.com/project/aurora-compressor-sustainer/)
+    does: "Stock Ross/Dyna uses 500kB" (Sustain, VR1 here) and "Stock Ross/Dyna uses 50kB"
+    (Level, VR2). TR1 at its middle, where the page says it is set.
+  - The supply is an ideal 9 V, as the other starters'.
+
+checks:
+  - id: bias-reference
+    kind: dc
+    node: VB
+    volts: 2.54
+    tol: 0.15
+    from: text
+    says: "Q1's base is held at 2.54 V through R2, 1 MΩ."
+  - id: phase-splitter-bias
+    kind: dc
+    node: Q2.B
+    volts: 2.5
+    tol: 0.3
+    from: text
+    says: "Q2's base is held at 2.5 V through R8."
+    note: The page calls R8 a transistor; it is the resistor R8 (150k) from VB.
+  - id: ota-input-bias
+    known_gap: >-
+      Simulated 4.56 V. The page loads the divider with the CA3080's input resistance (about
+      1M each, from the sheet's input resistance vs bias current), but that is a small-signal
+      figure: at DC an input draws only its bias current, Iabc/(2β), a fraction of a µA here.
+      R5 against R4 ∥ R6 alone gives 9 x 500k/970k = 4.64 V by hand, less the bias currents'
+      drop; the page's text also puts the bias point near 4 V.
+    kind: dc
+    node: U1.-
+    volts: 3.1
+    tol: 0.5
+    from: text
+    says: "The page works the bias point as a divider: R5 (470 in its sum) against R4, R6 and the two inputs in parallel (four of 1M), from 9 V, and gives 3.1 V."
+  - id: envelope-at-rest
+    kind: dc
+    node: C8.1
+    volts: 9.0
+    tol: 0.5
+    from: text
+    says: "As the guitar's signal grows past about 1 V peak to peak, the averaged signal (the blue line) falls from 9 V to 0 V."
+    note: With no signal Q3 and Q4 are off, so C8 sits near the supply.
+  - id: input-high-pass
+    known_gap: >-
+      Simulated 26.2 Hz. The page's 1MΩ//1MΩ puts R2 in parallel with the buffer's input
+      impedance, which already includes R2 (its own Zin = R1 + R2 // (β+1)R3, which it gives as 1 MΩ), and
+      its β of 300 is the 2N5088's. With the 2N3904 card's gain of about 155 at Q1's current,
+      (β+1)R3 is 1.56M, so R2 // 1.56M = 610k and C1 gives 26 Hz by hand.
+    kind: corner
+    side: low
+    node: Q1.E
+    hz: 31.8
+    tol_pct: 15
+    sweep: {start: 1}
+    from: text
+    says: "The input corner: 1/(2π x (1 MΩ ∥ 1 MΩ) x 10 nF) = 31.8 Hz."
+  - id: phase-splitter-gain
+    known_gap: >-
+      Simulated +1.3 dB. R9 and R10 are equal, so the two outputs match only unloaded; the
+      output stage hangs on the emitter (C9, R14 and the 50k Output pot, about 60k at 1 kHz)
+      and the second detector (C7, R12), so the emitter sees about 8.6k against the
+      collector's 9.9k (R9 with R11 through C6): 20 log(9.9/8.6) = 1.2 dB by hand.
+    kind: gain
+    node: Q2.C
+    ref: Q2.E
+    hz: 1000
+    db: 0
+    tol_db: 0.5
+    from: text
+    says: "OUT_1 and OUT_2 each carry the input at the same size (a gain of 1), one the other way up."
+  - id: ota-inputs-at-300hz
+    kind: gain
+    node: U1.+
+    ref: U1.-
+    hz: 300
+    db: -1
+    tol_db: 0.5
+    from: text
+    says: "Low in the band, at 300 Hz say, the two differ by little: 1 dB."
+    note: The + input is the lower; the page's blue line, the CA3080's + input, is the slightly smaller one.
+  - id: ota-inputs-at-10khz
+    kind: gain
+    node: U1.+
+    ref: U1.-
+    hz: 10000
+    db: -4
+    tol_db: 1.0
+    from: text
+    says: "High in the band, at 10 kHz say, they differ by more: 4 dB."
+  - id: output-high-pass
+    kind: corner
+    side: low
+    node: out
+    ref: Q2.E
+    set: {VR2: {rotation: 1.0}}
+    hz: 52
+    tol_pct: 15
+    sweep: {start: 1}
+    from: text
+    says: "The output's lowest corner, with RV2 at its full 50k: 52 Hz."
+    note: Output fully up.
+
+omitted:
+  - what: The C2/R4 0.15 Hz high-pass, and the 3.1 Hz pole of the response section
+    why: 0.15 Hz is far below the band and R4 is in parallel with the trimmer network there; the response section's 3.1 Hz disagrees with the page's own worked 31.8 Hz (checked).
+  - what: The output's 310 Hz with RV2 at its least
+    why: With the Output pot at its bottom the output is silent; the figure is C9 against R14 alone, not a response at the output.
+  - what: The compression itself (the envelope falling from about 1 V peak to peak)
+    why: Read off the page's graphs; no worked figure.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  parts:
+    - "The circuit and every value are from the main source's schematic and parts list."
+    - "Capacitor types aren't given there, so they follow the app's advice: C5 1n NP0/C0G (a small cap in the signal path), C8, C10 and C11 electrolytic, the rest film, C2 and C3 (1µ) too."
+    - "Electrolytics rated 16 V: the source gives no rating, so this is the app's own advice for a 9 V circuit (D-203)."
+    - "Enclosure 125B, a builder's choice (the MXR has its own case), as the Aion version's."

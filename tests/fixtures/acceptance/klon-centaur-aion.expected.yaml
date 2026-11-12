@@ -1,0 +1,148 @@
+# Expected values for library/starters/klon-centaur-aion.json (D-019, D-213).
+# Refs follow Aion's schematic, except: Aion's RPD is RPD1 (D-232);
+# IC1's halves are named by their pins, so our IC1A is Aion's IC1B (pins 1-3, the gain
+# stage) and our IC1B is Aion's IC1A (pins 5-7, the input buffer), and the bias sheet's pin
+# numbers match Aion's voltage table. The dual Gain pot's gangs are VR1A (Aion's GAIN A)
+# and VR1B (GAIN B); VR2 Treble, VR3 Output (Aion's VOLUME).
+circuit: klon-centaur-aion
+source:
+  title: Aion FX, "Refractor Professional Overdrive" documentation 2.0.1 (2026-07-16), based on the Klon Centaur / KTR
+  url: https://aionfx.com/app/files/docs/refractor_documentation.pdf
+  snapshot: none yet (archive.org refused requests on 2026-11-04; to be archived by the user)
+  read: 2026-11-04
+  licence: Aion FX project documentation (short quotes, for testing); the projects may be built, commercially too, without attribution (its Licensing page)
+substitutions:
+  - >-
+    The KTR's circuit as Aion draws it ("the KTR is identical to the original Centaur circuit
+    except for two components"): RPD 2M added (RPD1) and R2 2M, so the input is still
+    1M. Without the bypass board (the 4PDT slide switch for true or buffered bypass, R26-R28,
+    LED) and the buffered bypass output (C2, R3, R4), which carry the signal only when the
+    effect is off; the sheet's build notes list them.
+  - >-
+    D1, D2: BAT41 Schottkys, Aion's ("Substitute for original germanium diodes"). The
+    original's germaniums "have been measured at around 0.35V forward voltage" at 5 mA;
+    no card in the library is those diodes.
+  - >-
+    IC3: one LT1054 doubling VA to VB and inverting it to -VA, wired as both (D-218). Its
+    caps C20, C21 and doubler diodes D3, D4 (1N4001) are drawn as Aion draws them (D-226).
+  - >-
+    Z1 (1N4742A, 12 V zener across VA, "Overvoltage protection for the charge pump") drawn
+    with Diodes Inc.'s card (D-221); below 12 V it carries only leakage.
+  - >-
+    C16 1µ film, where Aion and the original fit a tantalum ("Tantalum capacitor"): the app
+    advises film in the signal path (a tantalum fails as a short), and it simulates the same.
+  - IC1 and IC2 TL072 as listed (our own card from TI's sheet, D-219). C9 and C10 1µ film, as Aion's (the original's are electrolytic).
+  - The supply is an ideal 9 V, as the other starters'; the checks below run at the prototype's 9.86 V.
+
+# The kit document's benchmark readings: "The following voltages are taken from our
+# prototype unit using a 9.86V supply ... if you see anything more than +/-0.5V from the
+# listed voltages, it's a good indicator of an issue". Its tolerance is used as is.
+checks:
+  - id: vr
+    kind: dc
+    node: IC2A.+
+    supply: 9.86
+    volts: 4.91
+    tol: 0.5
+    from: text
+    quote: "IC2 … 3 4.91V"
+  - id: buffer-output
+    kind: dc
+    node: IC1B.out
+    supply: 9.86
+    volts: 4.97
+    tol: 0.5
+    from: text
+    quote: "IC1 … 7 4.97V"
+  - id: gain-stage-output
+    kind: dc
+    node: IC1A.out
+    supply: 9.86
+    volts: 4.92
+    tol: 0.5
+    from: text
+    quote: "IC1 … 1 4.92V"
+  - id: summing-output
+    kind: dc
+    node: IC2A.out
+    supply: 9.86
+    volts: 4.96
+    tol: 0.5
+    from: text
+    quote: "IC2 … 1 4.96V"
+  - id: treble-output
+    kind: dc
+    node: IC2B.out
+    supply: 9.86
+    volts: 4.87
+    tol: 0.5
+    from: text
+    quote: "IC2 … 7 4.87V"
+  - id: vb
+    kind: dc
+    node: IC2C.V+
+    supply: 9.86
+    volts: 17.99
+    tol: 0.5
+    from: text
+    quote: "IC2 … 8 17.99V"
+  - id: minus-va
+    kind: dc
+    node: IC2C.V-
+    supply: 9.86
+    volts: -9.49
+    tol: 0.5
+    from: text
+    quote: "IC2 … 4 -9.49V"
+  - id: pump-cap-plus
+    kind: dc
+    node: IC3.cap+
+    supply: 9.86
+    volts: 5.02
+    tol: 0.5
+    from: text
+    quote: "IC3 … 2 5.02V"
+  - id: pump-cap-minus
+    kind: dc
+    node: IC3.cap-
+    supply: 9.86
+    volts: -4.66
+    tol: 0.5
+    from: text
+    quote: "IC3 … 4 -4.66V"
+
+omitted:
+  - what: IC1 pin 3 "3V–4V (drifts)"
+    why: >-
+      The gain stage's + input, reached from VR only through Gain A's track: the document
+      gives a range, not a reading (the simulation has 4.93 V, VR).
+  - what: The op-amps' inputs (IC1 pins 2, 5, 6; IC2 pins 2, 5, 6) and the supply (pins 8 of IC1 and IC3)
+    why: >-
+      Each equals VR or its own output, or is the supply itself; they say nothing the checks
+      above don't. All are within 0.05 V in the simulation.
+  - what: IC3 pins 6 (2.54 V) and 7 (1.42 V)
+    why: >-
+      The pump's reference and oscillator pins: the charge-pump part is a behavioural
+      model of the chip (D-093, D-226) and doesn't wire them. Pins 2 and 4 are checked:
+      the model holds them at their averages, half VA and half -VA.
+  - what: Gains, clipping levels, frequency curves
+    why: >-
+      Neither Aion document publishes any. ElectroSmash's Klon analysis gives curves as
+      images only, for the original's values; not checked in this round.
+
+# VB and -VA read 18.05 and -9.58 V: within 0.1 V of the prototype's since the TL072 is our
+# own card drawing the sheet's 1.4 mA a half (D-219). TI's 1989 macromodel drew 12.6 mA a
+# half at 27 V and left them 0.36 and 0.14 V low (D-218).
+
+build:
+  sources:
+    - title: Aion FX, "Refractor Professional Overdrive" kit build documentation 1.0.7 (2025-09-18)
+      url: https://aionfx.com/app/files/docs/refractor_kit_documentation.pdf
+      snapshot: none yet (archive.org refused requests on 2026-11-04; to be archived by the user)
+      read: 2026-11-04
+      licence: Aion FX kit documentation (short quotes, for testing); kits may be built and sold, commercially too, without attribution (its Resale Terms)
+  parts:
+    - "The checks' voltages are from this kit document's Troubleshooting page (1.0.7)."
+    - "Every capacitor's type from the PCB document's parts list: C8 and C13 NP0/C0G (\"MLCC capacitor, NP0/C0G\"), C16 film though Aion lists a tantalum (see substitutions), C15 and C17-C22 electrolytic, the rest film (\"Film capacitor\"), C9 and C10 too."
+    - "The electrolytics' ratings aren't given: 16 V, the app's advice on a 9 V pedal; 25 V for C22 on VB (18 V) and C15 at IC2B's output (IC2 swings over 27 V)."
+    - "Enclosure 125B (\"Enclosure, die-cast aluminum\", \"Can also use a Hammond 1590N1\")."

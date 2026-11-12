@@ -1,0 +1,25 @@
+id: part-no-package
+layer: topology
+severity: info
+check: part_no_package
+build: true
+title: No package or pinout
+message: "{model} ({parts}) has no package or pin numbers in its model."
+why: >
+  The parts list gives each transistor, diode and chip its package and which pin is which,
+  so it goes into the board the right way round. A model added with Tools → Add a model,
+  and a few library models, don't say.
+fix: "Check {model}'s datasheet for its package and pinout before soldering it."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IC1, type: chargepump, supply: V+, double: out, model: TEST7660}  # tests/fixtures/rule-models: no library model lacks a package
+        - {ref: C1, type: capacitor, nets: [out, GND], value: 10u, kind: electrolytic, rating_v: 25}
+        - {ref: R1, type: resistor, nets: [out, GND], value: 10k}
+      expect: [IC1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, a], value: 10k}
+        - {ref: D1, type: diode, nets: [a, GND], model: 1N4148}

@@ -1,0 +1,49 @@
+id: supply-no-bulk
+layer: topology
+severity: warning
+check: supply_no_bulk
+title: Supply without a bulk capacitor
+message: "{net} powers {ref} but has no bulk capacitor to ground."
+why: >
+  A bulk capacitor is a big electrolytic from the supply to ground, where power comes
+  into the pedal. It is a local reservoir for the bursts of current ICs draw as the
+  signal swings, and with a small resistor before it, a filter that keeps an adapter's
+  noise out. A charge pump needs one most: it draws its current in short pulses at its
+  switching rate, and without a reservoir close by they travel back along V+ and whine in
+  the other stages. One bulk capacitor on V+ serves the whole pedal, pump included: a
+  pedal that has one needs no second. The simulator's supply is ideal, so leaving it out
+  changes nothing here; on a real adapter the pedal can be noisier or less stable.
+fix: "Add an electrolytic from {net} to ground (1 µF or more; the Rat uses 100 µF after a 47 Ω resistor, the Input filter block)."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, GND], value: 1M}
+        - {ref: U1, type: opamp, nets: [in, o, o], model: TL072, supply: [V+, GND]}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [U1]
+    - rails: {V+: 9}
+      parts:   # the filter is on V+F, but the op-amp runs from V+ itself
+        - {ref: R2, type: resistor, nets: [V+, V+F], value: 47}
+        - {ref: C1, type: capacitor, nets: [V+F, GND], value: 100u}
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, GND], value: 1M}
+        - {ref: U1, type: opamp, nets: [in, o, o], model: TL072, supply: [V+, GND]}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [U1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R2, type: resistor, nets: [V+, V+F], value: 47}
+        - {ref: C1, type: capacitor, nets: [V+F, GND], value: 100u}
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, GND], value: 1M}
+        - {ref: U1, type: opamp, nets: [in, o, o], model: TL072, supply: [V+F, GND]}
+        - {ref: OUT, type: amp, nets: [o]}
+    - rails: {V+: 9}
+      parts:   # no IC: a transistor fuzz on a battery needs no bulk cap to be checked
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [V+, c], value: 10k}
+        - {ref: Q1, type: bjt, nets: [c, in, GND], model: 2N5089}
+        - {ref: OUT, type: amp, nets: [c]}

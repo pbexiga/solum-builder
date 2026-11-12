@@ -1,0 +1,15 @@
+{
+  "schema": 3,
+  "id": "old-buffer-v3",
+  "name": "Pasted divider saved by schema v3",
+  "template": true,
+  "power": {"mode": "custom", "rails": {"V+": 9.0}},
+  "parts": [
+    {"ref": "R5", "type": "resistor", "value": "10k", "pos": [0, 0]},
+    {"ref": "R6", "type": "resistor", "value": "10k", "pos": [60, 0]}
+  ],
+  "wires": [{"from": [20, 0], "to": [40, 0]}],
+  "labels": [{"net": "V+", "pos": [-20, 0]}, {"net": "GND", "pos": [80, 0]}, {"net": "MID", "pos": [20, 0]}],
+  "ports": {"mid": "MID"},
+  "provenance": [{"refs": ["R5", "R6"], "from": "core:vref-divider", "version": "a1b2c3d"}]
+}

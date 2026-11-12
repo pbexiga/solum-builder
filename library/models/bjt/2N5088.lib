@@ -1,0 +1,3 @@
+* 2N5088 high-gain, low-noise NPN (hFE 300-900 at 100 µA; VCEO 30 V), our fit to Fairchild's sheet
+* Fitted by Solum Builder to Fairchild 2N5088/2N5089/MMBT5088/MMBT5089 data sheet, Rev A (2001; onsemi's copy), its typical curves (D-163)
+.model 2N5088 NPN(is=7.732e-14 nf=1.055 bf=643.3 ise=4.637e-15 ne=1.395 ikf=0.1245 br=2.802 isc=1.826e-16 nc=1.05 re=0.06929 rc=1.262 cje=4.058e-12 vje=0.9692 mje=0.3484 cjc=4.637e-12 vjc=1.2 mjc=0.4718 tf=8.733e-10 nkf=0.8647 nr=1.055)

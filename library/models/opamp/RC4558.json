@@ -1,0 +1,109 @@
+{
+  "id": "RC4558",
+  "type": "opamp",
+  "description": "RC4558 dual op-amp (TI 1989 macromodel; stands in for the TS808's JRC4558)",
+  "spice_name": "RC4558",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "RC4558.lib",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Manufacturer/Texas%20Instruments/rc4558.mod",
+    "retrieved": "2026-10-20",
+    "licence": "KiCad-Spice-Library collection (GPL-3.0); model by the manufacturer named, redistributed there",
+    "original": "Texas Instruments"
+  },
+  "datasheet": "https://www.ti.com/lit/ds/symlink/rc4558.pdf",
+  "note": "The card clips 2.0 V from each rail, about a volt sooner than a typical part (still inside the sheet's minimum). Bias & headroom uses the sheet's typical swing, so a render can clip about a volt before the pane's limit.",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 3.0,
+    "cm_pos_headroom": 3.0,
+    "out_neg_headroom": 0.9,
+    "out_pos_headroom": 0.9
+  },
+  "rating_sources": {
+    "vs_max": "TI RC4558 datasheet SLOS073H (rev. Oct 2024): vs_max from 5.1 Absolute Maximum Ratings (VCC+ 18 V, VCC- -18 V); common-mode headroom from 5.5, VICR ±12 V min at ±15 V",
+    "cm_neg_headroom": "TI RC4558 datasheet SLOS073H (rev. Oct 2024): vs_max from 5.1 Absolute Maximum Ratings (VCC+ 18 V, VCC- -18 V); common-mode headroom from 5.5, VICR ±12 V min at ±15 V",
+    "cm_pos_headroom": "TI RC4558 datasheet SLOS073H (rev. Oct 2024): vs_max from 5.1 Absolute Maximum Ratings (VCC+ 18 V, VCC- -18 V); common-mode headroom from 5.5, VICR ±12 V min at ±15 V",
+    "out_neg_headroom": "TI RC4558 datasheet SLOS073H (rev. Oct 2024): output headroom from 5.5, VOUT ±14.1 V typ at RL = 10 kΩ (±12 V min)",
+    "out_pos_headroom": "TI RC4558 datasheet SLOS073H (rev. Oct 2024): output headroom from 5.5, VOUT ±14.1 V typ at RL = 10 kΩ (±12 V min)"
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 15.0
+      },
+      "simulated": 110.2,
+      "datasheet": {
+        "min": 86.0,
+        "typ": 118.0,
+        "source": "https://www.ti.com/lit/ds/symlink/rc4558.pdf",
+        "note": "current datasheet, RL ≥ 2 kΩ"
+      }
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 15.0
+      },
+      "simulated": 3156000.0,
+      "datasheet": {
+        "typ": 4000000.0,
+        "source": "https://www.ti.com/lit/ds/symlink/rc4558.pdf",
+        "note": "current (redesigned) part; the 1989 model reflects the original"
+      }
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "max": 3.0,
+        "source": "TI RC4558 datasheet SLOS073H (rev. Oct 2024), 5.5: VOUT ±14.1 V typ, ±12 V min, RL = 10 kΩ",
+        "typ": 0.9,
+        "note": "The card stops 2 V from each rail, a volt short of the typical part"
+      },
+      "simulated": 1.962923
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "max": 3.0,
+        "source": "TI RC4558 datasheet SLOS073H (rev. Oct 2024), 5.5: VOUT ±14.1 V typ, ±12 V min, RL = 10 kΩ",
+        "typ": 0.9,
+        "note": "The card stops 2 V from each rail, a volt short of the typical part"
+      },
+      "simulated": 1.962792
+    }
+  ],
+  "channels": 2,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "a.out": 1,
+      "a.-": 2,
+      "a.+": 3,
+      "V-": 4,
+      "b.+": 5,
+      "b.-": 6,
+      "b.out": 7,
+      "V+": 8
+    },
+    "source": "TI RC4558 datasheet SLOS073H (rev. Oct 2024), Table 4-1, Pin Functions"
+  }
+}

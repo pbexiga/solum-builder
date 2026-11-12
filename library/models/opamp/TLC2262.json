@@ -1,0 +1,113 @@
+{
+  "id": "TLC2262",
+  "type": "opamp",
+  "description": "TLC2262 rail-to-rail-output CMOS dual op-amp, ±8 V max (our model from TI's sheet)",
+  "spice_name": "TLC2262",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "TLC2262.lib",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://www.ti.com/lit/ds/symlink/tlc2262.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model built from the maker's data sheet (D-162): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.ti.com/lit/ds/symlink/tlc2262.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 16.0,
+    "cm_neg_headroom": 0.0,
+    "cm_pos_headroom": 1.0,
+    "out_neg_headroom": 0.09,
+    "out_pos_headroom": 0.15
+  },
+  "rating_sources": {
+    "vs_max": "TI TLC226x datasheet SLOS177D: vs_max from Absolute Maximum Ratings (VDD± ±8 V); common-mode range from the TLC2262C ±5 V table, VICR –5 V to 4 V min; output headroom from the same table, VOM+ 4.85 V typ at IO = –400 µA and VOM– –4.91 V typ at IO = 500 µA (about a 10 kΩ load)",
+    "cm_neg_headroom": "TI TLC226x datasheet SLOS177D: vs_max from Absolute Maximum Ratings (VDD± ±8 V); common-mode range from the TLC2262C ±5 V table, VICR –5 V to 4 V min; output headroom from the same table, VOM+ 4.85 V typ at IO = –400 µA and VOM– –4.91 V typ at IO = 500 µA (about a 10 kΩ load)",
+    "cm_pos_headroom": "TI TLC226x datasheet SLOS177D: vs_max from Absolute Maximum Ratings (VDD± ±8 V); common-mode range from the TLC2262C ±5 V table, VICR –5 V to 4 V min; output headroom from the same table, VOM+ 4.85 V typ at IO = –400 µA and VOM– –4.91 V typ at IO = 500 µA (about a 10 kΩ load)",
+    "out_neg_headroom": "TI TLC226x datasheet SLOS177D: vs_max from Absolute Maximum Ratings (VDD± ±8 V); common-mode range from the TLC2262C ±5 V table, VICR –5 V to 4 V min; output headroom from the same table, VOM+ 4.85 V typ at IO = –400 µA and VOM– –4.91 V typ at IO = 500 µA (about a 10 kΩ load)",
+    "out_pos_headroom": "TI TLC226x datasheet SLOS177D: vs_max from Absolute Maximum Ratings (VDD± ±8 V); common-mode range from the TLC2262C ±5 V table, VICR –5 V to 4 V min; output headroom from the same table, VOM+ 4.85 V typ at IO = –400 µA and VOM– –4.91 V typ at IO = 500 µA (about a 10 kΩ load)"
+  },
+  "channels": 2,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "a.out": 1,
+      "a.-": 2,
+      "a.+": 3,
+      "V-": 4,
+      "b.+": 5,
+      "b.-": 6,
+      "b.out": 7,
+      "V+": 8
+    },
+    "source": "TI TLC226x datasheet SLOS177D, TLC2262 D, P or PW package pinout"
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 5.0
+      },
+      "datasheet": {
+        "min": 98.06,
+        "typ": 106.02,
+        "source": "https://www.ti.com/lit/ds/symlink/tlc2262.pdf",
+        "note": "TLC2262C AVD 80 V/mV min, 200 V/mV typ, ±5 V, VO = ±4 V, RL = 50 kΩ"
+      },
+      "simulated": 105.813
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 5.0
+      },
+      "datasheet": {
+        "typ": 730000.0,
+        "source": "https://www.ti.com/lit/ds/symlink/tlc2262.pdf",
+        "note": "Gain-bandwidth product 0.73 MHz typ, ±5 V, RL = 50 kΩ"
+      },
+      "simulated": 718865.0
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 5.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "typ": 0.15,
+        "max": 0.3,
+        "source": "TI TLC226x datasheet SLOS177D, TLC2262C ±5 V: VOM+ 4.85 V typ, 4.7 V min at IO = –400 µA"
+      },
+      "simulated": 0.107486
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 5.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "typ": 0.09,
+        "max": 0.15,
+        "source": "TI TLC226x datasheet SLOS177D, TLC2262C ±5 V: VOM– –4.91 V typ, –4.85 V min at IO = 500 µA"
+      },
+      "simulated": 0.0682698
+    }
+  ],
+  "fit": {
+    "sheet": "TI TLC226x data sheet SLOS177D (March 2001), TLC2262C at VDD± = ±5 V",
+    "figure": "Electrical characteristics table (±5 V, RL = 50 kΩ): AVD 200 V/mV typ, gain-bandwidth 0.73 MHz, slew rate 0.55 V/µs, phase margin at unity gain 57°, supply current 425 µA for both amplifiers; VOM+ 4.85 V typ, VOM− −4.91 V typ",
+    "points": [],
+    "method": "A small macromodel (scripts/fit_models.py opamp_card): a tanh transconductance stage limited to 10 µA into C1 sets the slew rate (C1 = 10 µA / SR), gm sets the gain-bandwidth and R1 the open-loop gain (gm·R1 = AVD); a second pole at GBW / tan(90° − phase margin) gives the phase margin, with gm raised by 1/cos(90° − PM) so the crossing stays at the sheet's GBW; diode clamps 40 mV under V+ and at V− and a 200 Ω output resistance are set so the swing into 10 kΩ lands inside the sheet's VOM limits (simulated 0.107 V and 0.068 V short of the rails, against 0.15 and 0.09 V typical); the sheet's only output-impedance figure is 220 to 240 Ω closed-loop at 100 kHz, gain 10. The supply current (425 µA for both amplifiers) is drawn from the rails. Checked closed-loop: a unity-gain buffer stepped 4 V slews at 0.548 V/µs and overshoots 21 mV",
+    "note": "Input bias, offset, noise and common-mode limits are not modelled: the input stage is ideal (1 TΩ). The 'C' grade figures at ±5 V; the swing is set for a 10 kΩ load, so a much heavier load drops more than the real part's output stage"
+  }
+}

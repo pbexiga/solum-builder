@@ -1,0 +1,1050 @@
+{
+  "schema": 23,
+  "id": "proco-rat",
+  "name": "ProCo Rat",
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "description": "ProCo Rat, from ElectroSmash's schematic: LM308 with its 30 pF compensation cap, 1N914 clippers to ground (1N4148 here, listed as a substitute on the page), 2N5458 output buffer. D3 (reverse-polarity diode) is left out.",
+  "starter": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "R10",
+      "pos": [
+        500,
+        -220
+      ],
+      "type": "resistor",
+      "value": "47"
+    },
+    {
+      "ref": "C11",
+      "pos": [
+        540,
+        -180
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "100µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "C12",
+      "pos": [
+        600,
+        -180
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "ceramic"
+    },
+    {
+      "ref": "R11",
+      "pos": [
+        660,
+        -180
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "R12",
+      "pos": [
+        660,
+        -100
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "C13",
+      "pos": [
+        720,
+        -100
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "1µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "IN",
+      "type": "guitar",
+      "volume": "250k"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        40,
+        40
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "1M"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        90,
+        0
+      ],
+      "type": "capacitor",
+      "value": "22n",
+      "kind": "film"
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        130,
+        40
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "1M"
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        170,
+        0
+      ],
+      "type": "resistor",
+      "value": "1k"
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        210,
+        40
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "1n",
+      "kind": "film"
+    },
+    {
+      "ref": "IC1",
+      "pos": [
+        290,
+        -20
+      ],
+      "model": "LM308",
+      "type": "opamp"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        290,
+        -110
+      ],
+      "type": "capacitor",
+      "value": "30p",
+      "kind": "c0g"
+    },
+    {
+      "ref": "R4",
+      "pos": [
+        190,
+        -170
+      ],
+      "rot": 180,
+      "type": "resistor",
+      "value": "47"
+    },
+    {
+      "ref": "C5",
+      "pos": [
+        170,
+        -120
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "2µ2",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "R5",
+      "pos": [
+        150,
+        -230
+      ],
+      "rot": 180,
+      "type": "resistor",
+      "value": "560"
+    },
+    {
+      "ref": "C6",
+      "pos": [
+        130,
+        -180
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "4µ7",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "VR1",
+      "pos": [
+        290,
+        -230
+      ],
+      "type": "pot",
+      "value": "100k",
+      "taper": "A",
+      "label": "Distortion"
+    },
+    {
+      "ref": "C4",
+      "pos": [
+        290,
+        -170
+      ],
+      "type": "capacitor",
+      "value": "100p",
+      "kind": "c0g"
+    },
+    {
+      "ref": "C7",
+      "pos": [
+        400,
+        -20
+      ],
+      "type": "capacitor",
+      "value": "4µ7",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "R6",
+      "pos": [
+        480,
+        -20
+      ],
+      "type": "resistor",
+      "value": "1k"
+    },
+    {
+      "ref": "D1",
+      "pos": [
+        530,
+        20
+      ],
+      "rot": 270,
+      "type": "diode",
+      "model": "1N4148"
+    },
+    {
+      "ref": "D2",
+      "pos": [
+        650,
+        20
+      ],
+      "rot": 90,
+      "type": "diode",
+      "model": "1N4148"
+    },
+    {
+      "ref": "VR2",
+      "pos": [
+        70,
+        280
+      ],
+      "type": "pot",
+      "value": "100k",
+      "taper": "A",
+      "label": "Filter"
+    },
+    {
+      "ref": "R7",
+      "pos": [
+        140,
+        240
+      ],
+      "type": "resistor",
+      "value": "1k5"
+    },
+    {
+      "ref": "C8",
+      "pos": [
+        180,
+        280
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "3n3",
+      "kind": "film"
+    },
+    {
+      "ref": "C9",
+      "pos": [
+        220,
+        240
+      ],
+      "type": "capacitor",
+      "value": "22n",
+      "kind": "film"
+    },
+    {
+      "ref": "R8",
+      "pos": [
+        260,
+        280
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "1M"
+    },
+    {
+      "ref": "Q1",
+      "pos": [
+        300,
+        240
+      ],
+      "type": "jfet",
+      "model": "2N5458"
+    },
+    {
+      "ref": "R9",
+      "pos": [
+        320,
+        300
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "C10",
+      "pos": [
+        380,
+        260
+      ],
+      "type": "capacitor",
+      "value": "1µ",
+      "kind": "film"
+    },
+    {
+      "ref": "VR3",
+      "pos": [
+        440,
+        260
+      ],
+      "rot": 180,
+      "type": "pot",
+      "value": "100k",
+      "taper": "A",
+      "rotation": 1.0,
+      "label": "Volume"
+    },
+    {
+      "ref": "OUT",
+      "pos": [
+        520,
+        300
+      ],
+      "type": "amp"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        20,
+        0
+      ],
+      "to": [
+        70,
+        0
+      ]
+    },
+    {
+      "from": [
+        40,
+        0
+      ],
+      "to": [
+        40,
+        20
+      ]
+    },
+    {
+      "from": [
+        110,
+        0
+      ],
+      "to": [
+        150,
+        0
+      ]
+    },
+    {
+      "from": [
+        130,
+        0
+      ],
+      "to": [
+        130,
+        20
+      ]
+    },
+    {
+      "from": [
+        190,
+        0
+      ],
+      "to": [
+        250,
+        0
+      ]
+    },
+    {
+      "from": [
+        210,
+        0
+      ],
+      "to": [
+        210,
+        20
+      ]
+    },
+    {
+      "from": [
+        250,
+        -40
+      ],
+      "to": [
+        230,
+        -40
+      ]
+    },
+    {
+      "from": [
+        230,
+        -40
+      ],
+      "to": [
+        230,
+        -230
+      ]
+    },
+    {
+      "from": [
+        330,
+        -20
+      ],
+      "to": [
+        350,
+        -20
+      ]
+    },
+    {
+      "from": [
+        350,
+        -20
+      ],
+      "to": [
+        350,
+        -260
+      ]
+    },
+    {
+      "from": [
+        230,
+        -170
+      ],
+      "to": [
+        270,
+        -170
+      ]
+    },
+    {
+      "from": [
+        310,
+        -170
+      ],
+      "to": [
+        350,
+        -170
+      ]
+    },
+    {
+      "from": [
+        230,
+        -230
+      ],
+      "to": [
+        270,
+        -230
+      ]
+    },
+    {
+      "from": [
+        290,
+        -250
+      ],
+      "to": [
+        290,
+        -260
+      ]
+    },
+    {
+      "from": [
+        290,
+        -260
+      ],
+      "to": [
+        350,
+        -260
+      ]
+    },
+    {
+      "from": [
+        230,
+        -170
+      ],
+      "to": [
+        210,
+        -170
+      ]
+    },
+    {
+      "from": [
+        170,
+        -170
+      ],
+      "to": [
+        170,
+        -140
+      ]
+    },
+    {
+      "from": [
+        230,
+        -230
+      ],
+      "to": [
+        170,
+        -230
+      ]
+    },
+    {
+      "from": [
+        130,
+        -230
+      ],
+      "to": [
+        130,
+        -200
+      ]
+    },
+    {
+      "from": [
+        350,
+        -20
+      ],
+      "to": [
+        380,
+        -20
+      ]
+    },
+    {
+      "from": [
+        420,
+        -20
+      ],
+      "to": [
+        460,
+        -20
+      ]
+    },
+    {
+      "from": [
+        500,
+        -20
+      ],
+      "to": [
+        690,
+        -20
+      ]
+    },
+    {
+      "from": [
+        530,
+        -20
+      ],
+      "to": [
+        530,
+        0
+      ]
+    },
+    {
+      "from": [
+        650,
+        -20
+      ],
+      "to": [
+        650,
+        0
+      ]
+    },
+    {
+      "from": [
+        30,
+        280
+      ],
+      "to": [
+        50,
+        280
+      ]
+    },
+    {
+      "from": [
+        70,
+        260
+      ],
+      "to": [
+        70,
+        240
+      ]
+    },
+    {
+      "from": [
+        70,
+        240
+      ],
+      "to": [
+        120,
+        240
+      ]
+    },
+    {
+      "from": [
+        160,
+        240
+      ],
+      "to": [
+        180,
+        240
+      ]
+    },
+    {
+      "from": [
+        180,
+        240
+      ],
+      "to": [
+        180,
+        260
+      ]
+    },
+    {
+      "from": [
+        180,
+        240
+      ],
+      "to": [
+        200,
+        240
+      ]
+    },
+    {
+      "from": [
+        240,
+        240
+      ],
+      "to": [
+        280,
+        240
+      ]
+    },
+    {
+      "from": [
+        260,
+        240
+      ],
+      "to": [
+        260,
+        260
+      ]
+    },
+    {
+      "from": [
+        320,
+        220
+      ],
+      "to": [
+        320,
+        200
+      ]
+    },
+    {
+      "from": [
+        320,
+        260
+      ],
+      "to": [
+        320,
+        280
+      ]
+    },
+    {
+      "from": [
+        320,
+        260
+      ],
+      "to": [
+        360,
+        260
+      ]
+    },
+    {
+      "from": [
+        400,
+        260
+      ],
+      "to": [
+        420,
+        260
+      ]
+    },
+    {
+      "from": [
+        440,
+        280
+      ],
+      "to": [
+        440,
+        300
+      ]
+    },
+    {
+      "from": [
+        440,
+        300
+      ],
+      "to": [
+        500,
+        300
+      ]
+    },
+    {
+      "from": [
+        520,
+        -220
+      ],
+      "to": [
+        740,
+        -220
+      ]
+    },
+    {
+      "from": [
+        540,
+        -220
+      ],
+      "to": [
+        540,
+        -200
+      ]
+    },
+    {
+      "from": [
+        600,
+        -220
+      ],
+      "to": [
+        600,
+        -200
+      ]
+    },
+    {
+      "from": [
+        660,
+        -220
+      ],
+      "to": [
+        660,
+        -200
+      ]
+    },
+    {
+      "from": [
+        660,
+        -160
+      ],
+      "to": [
+        660,
+        -120
+      ]
+    },
+    {
+      "from": [
+        660,
+        -140
+      ],
+      "to": [
+        720,
+        -140
+      ]
+    },
+    {
+      "from": [
+        720,
+        -140
+      ],
+      "to": [
+        720,
+        -120
+      ]
+    },
+    {
+      "from": [
+        720,
+        -140
+      ],
+      "to": [
+        740,
+        -140
+      ]
+    },
+    {
+      "from": [
+        270,
+        -60
+      ],
+      "to": [
+        270,
+        -110
+      ]
+    },
+    {
+      "from": [
+        310,
+        -60
+      ],
+      "to": [
+        310,
+        -110
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "in",
+      "pos": [
+        30,
+        0
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        40,
+        60
+      ]
+    },
+    {
+      "net": "VREF",
+      "pos": [
+        130,
+        60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        210,
+        60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        170,
+        -100
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        130,
+        -160
+      ]
+    },
+    {
+      "net": "u1o",
+      "pos": [
+        360,
+        -20
+      ]
+    },
+    {
+      "net": "clip",
+      "pos": [
+        690,
+        -20
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        530,
+        40
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        650,
+        40
+      ]
+    },
+    {
+      "net": "clip",
+      "pos": [
+        30,
+        280
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        180,
+        300
+      ]
+    },
+    {
+      "net": "tone",
+      "pos": [
+        180,
+        240
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        260,
+        300
+      ]
+    },
+    {
+      "net": "V+F",
+      "pos": [
+        320,
+        200
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        320,
+        320
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        460,
+        260
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        470,
+        300
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        480,
+        -220
+      ]
+    },
+    {
+      "net": "V+F",
+      "pos": [
+        740,
+        -220
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        540,
+        -160
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        600,
+        -160
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        660,
+        -80
+      ]
+    },
+    {
+      "net": "VREF",
+      "pos": [
+        740,
+        -140
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        720,
+        -80
+      ]
+    },
+    {
+      "net": "V+F",
+      "pos": [
+        290,
+        -60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        290,
+        20
+      ]
+    }
+  ],
+  "probes": {
+    "in": "in",
+    "out": "out"
+  },
+  "notes": {
+    "net:V+F": "The supply after the power filter: V+ (the 9 V jack) through R10 (47 Ω) smoothed by C11 (100 µF) and C12 (100 nF). It powers IC1 and the VREF divider.",
+    "net:VREF": "4.5 V virtual ground from R11/R12, decoupled by C13.",
+    "net:u1o": "LM308 output: gain up to ~67 dB on paper, limited by its slow slew rate and bandwidth.",
+    "net:clip": "D1/D2 to ground: hard clipping at about ±0.6 V.",
+    "part:C3": "The LM308's compensation cap: sets its bandwidth and slew rate, part of the Rat's sound.",
+    "net:tone": "Filter control: a low-pass sweeping from about 475 Hz to 32 kHz."
+  },
+  "enclosure": {
+    "size": "125B"
+  }
+}

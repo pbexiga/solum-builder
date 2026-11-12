@@ -1,0 +1,55 @@
+{
+  "id": "J113",
+  "type": "jfet",
+  "description": "J113 N-channel JFET, low cutoff voltage (Philips card)",
+  "spice_name": "J113",
+  "kind": "model",
+  "pins": [],
+  "card": "J113.lib",
+  "manufacturer": "Philips",
+  "source": {
+    "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/uncategorized/spice_complete/phil_fet.lib",
+    "retrieved": "2026-10-29",
+    "licence": "KiCad-Spice-Library collection (GPL-3.0); Philips' own JFET library (Revision 1.2, 1999), redistributed there",
+    "original": "Philips"
+  },
+  "datasheet": "https://www.electrokit.com/upload/quick/1b/7e/2b0b_41037237-tds.PDF",
+  "fixes": [],
+  "ratings": {},
+  "rating_sources": {},
+  "package": {
+    "name": "TO-92 (DSG)",
+    "pins": {
+      "D": 1,
+      "S": 2,
+      "G": 3
+    },
+    "source": "onsemi J111/J112/J113 data sheet MMBFJ113/D (Rev. 5, March 2023), page 1: leads drawn D, S, G, numbered 1-3 as onsemi's numbered TO-92 JFET sheets do (MPF102/D, MPF4392/D: Style 5, 1 drain, 2 source, 3 gate). InterFET's J111-2-3A sheet (IF35064.R00) numbers its own units 1 source, 2 drain, 3 gate; the gate is pin 3 either way, and onsemi calls source and drain interchangeable"
+  },
+  "validation": [
+    {
+      "quantity": "idss",
+      "conditions": {
+        "vds": 15.0
+      },
+      "datasheet": {
+        "source": "onsemi J111/J112/J113 data sheet MMBFJ113/D (Rev. 5, March 2023), Electrical characteristics",
+        "min": 0.002
+      },
+      "simulated": 0.021297
+    },
+    {
+      "quantity": "vp",
+      "conditions": {
+        "vds": 5.0,
+        "id": 1e-06
+      },
+      "datasheet": {
+        "source": "onsemi J111/J112/J113 data sheet MMBFJ113/D (Rev. 5, March 2023), Electrical characteristics (VGS(off) at ID = 1 µA)",
+        "max": -0.5,
+        "min": -3.0
+      },
+      "simulated": -1.275716
+    }
+  ]
+}

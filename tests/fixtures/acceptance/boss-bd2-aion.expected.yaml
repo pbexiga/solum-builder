@@ -1,0 +1,159 @@
+# Expected values for library/starters/boss-bd2-aion.json (D-019, D-213).
+# Refs follow Aion's schematic. Aion's RPD is RPD1 (D-232); the
+# dual Drive pot's gangs are VR1A (Aion's GAINA, second stage) and VR1B (GAINB, first
+# stage); VR2 Tone, VR3 Volume, VR4 Bass.
+circuit: boss-bd2-aion
+source:
+  title: Aion FX, "Sapphire Amp Overdrive" documentation 1.0.1 (2024-08-08), based on the BOSS BD-2 Blues Driver
+  url: https://aionfx.com/app/files/docs/sapphire_documentation.pdf
+  snapshot: http://web.archive.org/web/20251114170807/https://aionfx.com/app/files/docs/sapphire_documentation.pdf
+  read: 2026-11-04
+  licence: Aion FX project documentation (short quotes, for testing); the projects may be built, commercially too, without attribution (its License & Usage page)
+substitutions:
+  - >-
+    The stock BD-2 as Aion draws it, with true bypass (not drawn) and Aion's Bass pot (25kB
+    in series with R24) at 0, which leaves R24's stock 6k8 alone ("The bass boost has been
+    made variable, so it can be adjusted between the stock value and the Galaxie value").
+    Without the bypass board, LED and LEDR.
+  - >-
+    Drive is the original's 250kA dual pot, with R9 and R20 left out ("Omit these resistors
+    if using an actual 250kA pot"), as one dual pot (D-217).
+  - >-
+    Q1-Q3, Q5, Q6: Aion's 2SK209-GR ("Original uses 2SK184-GR. 2SK209-GR is the SMD
+    equivalent"), our own model from Toshiba's 2SK209 sheet (D-216): the GR grade's middle
+    Idss, its Vp from the sheet's typical curves. A real unit spreads over the grade.
+  - >-
+    Q4, Q7 2N3906, Q8-Q10 2N5088 and IC1 as RC4558, Aion's substitutes ("Original uses
+    2SA1335-GR", "Original uses 2SC2459-GR"); the JRC4558D is the RC4558 card, as in the
+    TS808. D1 1N5817 and D2-D7 1N914 as listed.
+  - The supply is an ideal 9 V into D1, as the other starters'; the checks below run at the prototype's 9.6 V.
+
+# The kit document's benchmark readings: "The following voltages are taken from our
+# prototype unit using a 9.6V supply ... if you see anything more than +/-0.5V from the
+# listed voltages, it's a good indicator of an issue". Its tolerance is used as is. Only
+# nodes a 10 MΩ meter doesn't load are checked (see omitted).
+checks:
+  - id: va
+    kind: dc
+    node: Q10.E
+    supply: 9.6
+    volts: 8.65
+    tol: 0.5
+    from: text
+    quote: "Q10 … E 8.65"
+  - id: vb
+    kind: dc
+    node: IC1A.out
+    supply: 9.6
+    volts: 4.31
+    tol: 0.5
+    from: text
+    quote: "IC1 … 1 4.31"
+  - id: q1-source
+    kind: dc
+    node: Q1.S
+    supply: 9.6
+    volts: 4.62
+    tol: 0.5
+    from: text
+    quote: "Q1 … S 4.62"
+  - id: q2-q3-sources
+    kind: dc
+    node: Q2.S
+    supply: 9.6
+    volts: 4.64
+    tol: 0.5
+    from: text
+    quote: "Q2 … S 4.64"
+  - id: q2-drain
+    kind: dc
+    node: Q2.D
+    supply: 9.6
+    volts: 7.97
+    tol: 0.5
+    from: text
+    quote: "Q2 … D 7.97"
+  - id: first-stage-output
+    kind: dc
+    node: Q4.C
+    supply: 9.6
+    volts: 4.37
+    tol: 0.5
+    from: text
+    quote: "Q4 … C 4.37"
+  - id: q5-q6-sources
+    kind: dc
+    node: Q5.S
+    supply: 9.6
+    volts: 4.65
+    tol: 0.5
+    from: text
+    quote: "Q5 … S 4.65"
+  - id: q5-drain
+    kind: dc
+    node: Q5.D
+    supply: 9.6
+    volts: 8.05
+    tol: 0.5
+    from: text
+    quote: "Q5 … D 8.05"
+  - id: second-stage-output
+    kind: dc
+    node: Q7.C
+    supply: 9.6
+    volts: 4.39
+    tol: 0.5
+    from: text
+    quote: "Q7 … C 4.39"
+  - id: gyrator-emitter
+    kind: dc
+    node: Q8.E
+    supply: 9.6
+    volts: 3.38
+    tol: 0.5
+    from: text
+    quote: "Q8 … E 3.38"
+  - id: bass-stage-output
+    kind: dc
+    node: IC1B.out
+    supply: 9.6
+    volts: 4.33
+    tol: 0.5
+    from: text
+    quote: "IC1 … 7 4.33"
+  - id: output-emitter
+    kind: dc
+    node: Q9.E
+    supply: 9.6
+    volts: 3.65
+    tol: 0.5
+    from: text
+    quote: "Q9 … E 3.65"
+
+omitted:
+  - what: "The gates and bases fed through large resistors: Q1 G 3.93 and Q5 G 3.93 (1M from VB), Q2 G 4.23 (220k), Q8 B 3.81 and IC1 pin 5 4.14 (470k), Q9 B 4.20 (100k)"
+    why: >-
+      A 10 MΩ meter loads them: 4.31 V through 1M reads 4.31 × 10/11 = 3.92 V, the
+      document's 3.93. The simulation has no meter on them (4.30 V at the 1M gates, within
+      0.4 V of the readings even so).
+  - what: The other pins of the table (drains and collectors on VA, Q10's base and collector)
+    why: >-
+      They sit on VA or the supply filter and say nothing the VA check doesn't; all are
+      within 0.1 V in the simulation.
+  - what: Gains, clipping levels, frequency curves
+    why: >-
+      Neither document publishes any. The build notes compare the stock and Galaxie parts
+      but give no figures. No published analysis with figures for the BD-2 was found.
+
+build:
+  sources:
+    - title: Aion FX, "Sapphire Amp Overdrive" kit build documentation 1.0.2 (2025-11-30)
+      url: https://aionfx.com/app/files/docs/sapphire_kit_documentation.pdf
+      snapshot: http://web.archive.org/web/20250210153517/https://aionfx.com/app/files/docs/sapphire_kit_documentation.pdf
+      read: 2026-11-04
+      licence: Aion FX kit documentation (short quotes, for testing); kits may be built and sold, commercially too, without attribution (its Resale Terms)
+  parts:
+    - "The checks' voltages are from this kit document's Troubleshooting page (1.0.2). Its Wayback snapshot is an older copy (before 1.0.2) cut off at 1 MB, without that page."
+    - "Every capacitor's type from the PCB document's parts list: the 47p, 100p and 220p caps NP0/C0G (\"MLCC capacitor, NP0/C0G\"), C28 X7R (\"MLCC capacitor, X7R\"), C23-C27 electrolytic, the rest film (\"Film capacitor\"), C11, C21 and C22 too (\"1uF Film capacitor, 7.2 x 3.5mm\")."
+    - "The electrolytics' ratings aren't given: 16 V, the app's advice on a 9 V pedal."
+    - "Enclosure 125B (\"Enclosure, die-cast aluminum\")."

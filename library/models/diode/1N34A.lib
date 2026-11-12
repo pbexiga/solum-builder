@@ -1,0 +1,3 @@
+* 1N34A germanium diode: the soft, low clipper (our fit to a published typical curve)
+* Fitted by Solum Builder to MTM Scientific, 1N34A Diode Performance (a typical forward curve, 0 to 3 mA, linear axes) (D-253)
+.model 1N34A D(is=4.977e-06 n=1.982 rs=74.83 cjo=8e-13 eg=0.67 bv=65 ibv=0.001)

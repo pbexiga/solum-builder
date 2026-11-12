@@ -1,0 +1,135 @@
+{
+  "id": "OPA2134",
+  "type": "opamp",
+  "description": "OPA2134 FET-input audio dual op-amp, ±18 V max (our model from TI's sheet)",
+  "spice_name": "OPA2134",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "OPA2134.lib",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://www.ti.com/lit/ds/symlink/opa2134.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model built from the maker's data sheet (D-162): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.ti.com/lit/ds/symlink/opa2134.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 2.5,
+    "cm_pos_headroom": 3.5,
+    "out_neg_headroom": 0.5,
+    "out_pos_headroom": 1.2
+  },
+  "rating_sources": {
+    "vs_max": "TI OPAx134 data sheet SBOS058B (revised November 2024): vs_max 36 V (Absolute Maximum Ratings); common-mode range (V–) + 2.5 V to (V+) – 3.5 V; output headroom from the swing limits at RL = 10 kΩ, (V+) – 1.2 V and (V–) + 0.5 V (the sheet gives no typical)",
+    "cm_neg_headroom": "TI OPAx134 data sheet SBOS058B (revised November 2024): vs_max 36 V (Absolute Maximum Ratings); common-mode range (V–) + 2.5 V to (V+) – 3.5 V; output headroom from the swing limits at RL = 10 kΩ, (V+) – 1.2 V and (V–) + 0.5 V (the sheet gives no typical)",
+    "cm_pos_headroom": "TI OPAx134 data sheet SBOS058B (revised November 2024): vs_max 36 V (Absolute Maximum Ratings); common-mode range (V–) + 2.5 V to (V+) – 3.5 V; output headroom from the swing limits at RL = 10 kΩ, (V+) – 1.2 V and (V–) + 0.5 V (the sheet gives no typical)",
+    "out_neg_headroom": "TI OPAx134 data sheet SBOS058B (revised November 2024): vs_max 36 V (Absolute Maximum Ratings); common-mode range (V–) + 2.5 V to (V+) – 3.5 V; output headroom from the swing limits at RL = 10 kΩ, (V+) – 1.2 V and (V–) + 0.5 V (the sheet gives no typical)",
+    "out_pos_headroom": "TI OPAx134 data sheet SBOS058B (revised November 2024): vs_max 36 V (Absolute Maximum Ratings); common-mode range (V–) + 2.5 V to (V+) – 3.5 V; output headroom from the swing limits at RL = 10 kΩ, (V+) – 1.2 V and (V–) + 0.5 V (the sheet gives no typical)"
+  },
+  "channels": 2,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "a.out": 1,
+      "a.-": 2,
+      "a.+": 3,
+      "V-": 4,
+      "b.+": 5,
+      "b.-": 6,
+      "b.out": 7,
+      "V+": 8
+    },
+    "source": "TI OPAx134 data sheet SBOS058B (revised November 2024), OPA2134 D and P package pinout"
+  },
+  "fit": {
+    "sheet": "TI OPAx134 data sheet SBOS058B (revised November 2024), at ±15 V",
+    "figure": "Electrical characteristics at ±15 V: AOL 120 dB typ, GBW 8 MHz, slew rate 20 V/µs, open-loop output impedance 10 Ω at 10 kHz, 4 mA per amplifier, swing limits (V+) − 1.2 V and (V−) + 0.5 V at 10 kΩ; phase margin about 45° read off Figure 5-9",
+    "points": [],
+    "method": "A small macromodel (scripts/fit_models.py opamp_card, D-162): a tanh transconductance stage limited to 10 µA into C1 sets the slew rate, gm the unity-gain crossing and R1 the open-loop gain; a second pole gives the phase margin; diode clamps and an output resistance set the swing; the supply current is drawn from the rails. Output resistance the sheet's 10 Ω, clamps 1.1 V under V+ and 0.4 V over V− so the swing sits inside the 10 kΩ and 2 kΩ limits (the sheet gives no typical). Checked: slews at 19.9 V/µs.",
+    "note": "Input bias, offset, noise, common-mode limits and the output's current limit are not modelled: the input stage is ideal (1 TΩ)."
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "min": 104.0,
+        "typ": 120.0,
+        "source": "TI OPAx134 data sheet SBOS058B (revised November 2024)",
+        "note": "AOL 104 dB min, 120 dB typ, RL = 10 kΩ and 2 kΩ"
+      },
+      "simulated": 119.429
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "typ": 8000000.0,
+        "source": "TI OPAx134 data sheet SBOS058B (revised November 2024)",
+        "note": "GBW 8 MHz typ; phase margin about 45° read off Figure 5-9; open-loop output impedance 10 Ω at 10 kHz"
+      },
+      "simulated": 7994330.0
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "max": 1.2,
+        "source": "TI OPAx134 data sheet SBOS058B (revised November 2024): VO ≥ (V+) – 1.2 V, RL = 10 kΩ"
+      },
+      "simulated": 1.08404
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "max": 0.5,
+        "source": "TI OPAx134 data sheet SBOS058B (revised November 2024): VO ≤ (V–) + 0.5 V, RL = 10 kΩ"
+      },
+      "simulated": 0.38474
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 2000.0
+      },
+      "datasheet": {
+        "max": 1.5,
+        "source": "TI OPAx134 data sheet SBOS058B (revised November 2024): VO ≥ (V+) – 1.5 V, RL = 2 kΩ"
+      },
+      "simulated": 1.13943
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 2000.0
+      },
+      "datasheet": {
+        "max": 1.2,
+        "source": "TI OPAx134 data sheet SBOS058B (revised November 2024): VO ≤ (V–) + 1.2 V, RL = 2 kΩ"
+      },
+      "simulated": 0.44291
+    }
+  ]
+}

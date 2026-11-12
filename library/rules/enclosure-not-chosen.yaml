@@ -1,0 +1,19 @@
+id: enclosure-not-chosen
+layer: topology
+severity: info
+check: enclosure_not_chosen
+build: true
+title: No enclosure chosen
+message: "No enclosure is chosen, so the parts list can't name one."
+why: >
+  The parts list gives the enclosure's size with the rest of the hardware. Builders name a
+  few standard sizes (1590A, 1590B, 125B, 1590BB, 1590XX); a custom box takes its own size.
+fix: "Pick one in File → Properties."
+fixtures:
+  bad:
+    - parts:
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+  good:
+    - parts:
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+      enclosure: {size: 125B}

@@ -1,0 +1,24 @@
+id: cap-over-voltage
+layer: operating_point
+severity: error
+check: cap_over_voltage
+build: true
+title: Capacitor over its voltage rating
+message: "{ref} has {volts} across it; it's rated for {limit}."
+why: >
+  Past its voltage rating a capacitor can fail: electrolytics bulge, leak or burst. Higher
+  pedal supplies make this common: 18 V or a charge pump needs higher-rated parts than 9 V.
+  Checked when the capacitor's rating is in the file.
+fix: "Use a capacitor for {ref} rated comfortably above {volts}."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, a], value: 47}
+        - {ref: C1, type: capacitor, nets: [a, GND], value: 100u, kind: electrolytic, rating_v: 6.3}
+      expect: [C1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, a], value: 47}
+        - {ref: C1, type: capacitor, nets: [a, GND], value: 100u, kind: electrolytic, rating_v: 16}

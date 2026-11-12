@@ -1,0 +1,219 @@
+{
+  "schema": 29,
+  "id": "charge-pump-both-chip-v1",
+  "name": "Charge pump · doubler and inverter, chip (LT1054)",
+  "version": {
+    "major": 1,
+    "minor": 1
+  },
+  "description": "One LT1054 doubling and inverting at once, as the Klon's IC3 does (Aion FX Refractor; Microchip TC1044S data sheet (DS21348A), Figure 9): about twice V+ less two diode drops on V18, and about -V+ on VNEG. Label the stages it powers V18 and VNEG (an op-amp's V+ and V- pins: 27 V across it). C3 and D1, D2 make the doubler, C4 the inverter (D-226); C1 and C2 are the reservoirs. The LT1054 gives up to 100 mA; a TC1044S (U1's settings) does for a few op-amps. The Klon uses 1N4001s for D1, D2; Schottkys (1N5817) drop less.",
+  "tags": [
+    "power",
+    "charge pump",
+    "chip"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "U1",
+      "type": "chargepump",
+      "model": "LT1054"
+    },
+    {
+      "ref": "D1",
+      "pos": [
+        -140,
+        -50
+      ],
+      "rot": 180,
+      "type": "diode",
+      "model": "1N5817"
+    },
+    {
+      "ref": "D2",
+      "pos": [
+        -240,
+        -50
+      ],
+      "rot": 180,
+      "type": "diode",
+      "model": "1N5817"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        -200,
+        -30
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    },
+    {
+      "ref": "C4",
+      "pos": [
+        -120,
+        10
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        140,
+        40
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        200,
+        40
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        -160,
+        -50
+      ],
+      "to": [
+        -220,
+        -50
+      ]
+    },
+    {
+      "from": [
+        -200,
+        -10
+      ],
+      "to": [
+        -40,
+        -10
+      ]
+    },
+    {
+      "from": [
+        -120,
+        30
+      ],
+      "to": [
+        -40,
+        30
+      ]
+    },
+    {
+      "from": [
+        40,
+        -30
+      ],
+      "to": [
+        40,
+        -50
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "V+",
+      "pos": [
+        40,
+        -50
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        -120,
+        -50
+      ]
+    },
+    {
+      "net": "V18",
+      "pos": [
+        -260,
+        -50
+      ]
+    },
+    {
+      "net": "V18",
+      "pos": [
+        140,
+        20
+      ]
+    },
+    {
+      "net": "VNEG",
+      "pos": [
+        200,
+        60
+      ]
+    },
+    {
+      "net": "VNEG",
+      "pos": [
+        40,
+        30
+      ],
+      "rot": 90
+    },
+    {
+      "net": "GND",
+      "pos": [
+        -40,
+        10
+      ],
+      "rot": 90
+    },
+    {
+      "net": "GND",
+      "pos": [
+        140,
+        60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        200,
+        20
+      ]
+    }
+  ],
+  "ports": {
+    "out": "V18",
+    "neg": "VNEG"
+  },
+  "notes": {
+    "part:U1": "Doubler and inverter at once: pin 2 swings between ground and V+, lifting the D1/D2 junction through C3 and pulling pin 4 below ground through C4; pin 5 (VOUT) is the negative output. Supply: pin 8 is the chip's supply input, fed from the pedal's V+ (the DC jack or the battery, through the input filter). The pump draws its current in short pulses at its switching rate; a bulk electrolytic on V+ (10-100 µF, such as the Input filter block's 47 Ω and 100 µF) supplies them close by, so they don't travel back along V+ and whine in the other stages. A pedal that already has one on V+ needs no second cap here (one close to pin 8 helps a little on a long board). A pedal with none, such as a bare battery fuzz like the Rangemaster, needs one: the \"Supply without a bulk capacitor\" warning says so.",
+    "part:C3": "Doubler's pump cap: the bigger, the lower V18's output resistance.",
+    "part:C4": "Inverter's flying cap: the bigger, the lower VNEG's output resistance.",
+    "part:D1": "D1 charges C3 from V+; D2 passes its charge on to V18.",
+    "part:C1": "V18's reservoir: holds it up between the pump's pulses.",
+    "part:C2": "VNEG's reservoir: its + side goes to ground (VNEG is below it).",
+    "net:V18": "About 17.5 V from 9 V: 2 × V+ less two diode drops and the pump's output resistance.",
+    "net:VNEG": "About -9 V: -V+ less the pump's output resistance × the current drawn."
+  }
+}

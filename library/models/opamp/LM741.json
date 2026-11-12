@@ -1,0 +1,108 @@
+{
+  "id": "LM741",
+  "type": "opamp",
+  "description": "LM741 single op-amp (TI uA741 1989 macromodel; the same part, second-sourced)",
+  "spice_name": "UA741",
+  "kind": "subckt",
+  "channels": 1,
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "LM741.lib",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Manufacturer/Texas%20Instruments/ua741.mod",
+    "retrieved": "2026-10-28",
+    "licence": "KiCad-Spice-Library collection (GPL-3.0); model by the manufacturer named, redistributed there",
+    "original": "Texas Instruments"
+  },
+  "datasheet": "https://www.ti.com/lit/ds/symlink/lm741.pdf",
+  "note": "The card clips 2.0 V from each rail, about a volt sooner than a typical part (still inside the sheet's minimum). Bias & headroom uses the sheet's typical swing, so a render can clip about a volt before the pane's limit.",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 3.0,
+    "cm_pos_headroom": 3.0,
+    "out_neg_headroom": 1.0,
+    "out_pos_headroom": 1.0
+  },
+  "rating_sources": {
+    "vs_max": "TI LM741 datasheet SNOSC25D (rev. Oct 2015): vs_max from 6.1 Absolute Maximum Ratings (LM741C ±18 V); common-mode headroom from 6.7, LM741C input voltage range ±12 V min at ±15 V",
+    "cm_neg_headroom": "TI LM741 datasheet SNOSC25D (rev. Oct 2015): vs_max from 6.1 Absolute Maximum Ratings (LM741C ±18 V); common-mode headroom from 6.7, LM741C input voltage range ±12 V min at ±15 V",
+    "cm_pos_headroom": "TI LM741 datasheet SNOSC25D (rev. Oct 2015): vs_max from 6.1 Absolute Maximum Ratings (LM741C ±18 V); common-mode headroom from 6.7, LM741C input voltage range ±12 V min at ±15 V",
+    "out_neg_headroom": "TI LM741 datasheet SNOSC25D: output headroom from Electrical Characteristics (LM741), output voltage swing ±14 V typ at RL ≥ 10 kΩ, VS = ±15 V (±12 V min)",
+    "out_pos_headroom": "TI LM741 datasheet SNOSC25D: output headroom from Electrical Characteristics (LM741), output voltage swing ±14 V typ at RL ≥ 10 kΩ, VS = ±15 V (±12 V min)"
+  },
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "null1": 1,
+      "-": 2,
+      "+": 3,
+      "V-": 4,
+      "null2": 5,
+      "out": 6,
+      "V+": 7,
+      "nc": 8
+    },
+    "source": "TI LM741 datasheet SNOSC25D (rev. Oct 2015), Pin Functions (8-pin PDIP); the same pins as TI's uA741 sheet SLOS094H, Table 4-1"
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 15.0
+      },
+      "simulated": 106.51,
+      "datasheet": {
+        "min": 86.02,
+        "typ": 106.0,
+        "source": "https://www.ti.com/lit/ds/symlink/lm741.pdf",
+        "note": "LM741C large signal voltage gain 20 V/mV min, 200 V/mV typ, ±15 V, RL ≥ 2 kΩ (6.7)"
+      }
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 15.0
+      },
+      "simulated": 979900.0,
+      "datasheet": {
+        "min": 437000.0,
+        "typ": 1500000.0,
+        "source": "https://www.ti.com/lit/ds/symlink/lm741.pdf",
+        "note": "the LM741A's bandwidth (6.6: 0.437 MHz min, 1.5 MHz typ); the LM741C table gives none"
+      }
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "max": 3.0,
+        "source": "TI LM741 datasheet SNOSC25D: output voltage swing ±14 V typ, ±12 V min, RL ≥ 10 kΩ, VS = ±15 V",
+        "typ": 1.0
+      },
+      "simulated": 1.994746
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "max": 3.0,
+        "source": "TI LM741 datasheet SNOSC25D: output voltage swing ±14 V typ, ±12 V min, RL ≥ 10 kΩ, VS = ±15 V",
+        "typ": 1.0
+      },
+      "simulated": 1.994877
+    }
+  ]
+}

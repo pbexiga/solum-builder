@@ -1,0 +1,129 @@
+{
+ "schema": 26,
+ "id": "charge-pump-inverter-chip-v1",
+ "name": "Charge pump inverter · chip (TC1044S)",
+ "version": {
+  "major": 1,
+  "minor": 0
+ },
+ "description": "A TC1044S wired as a voltage inverter (Microchip TC1044S data sheet (DS21348A), Figure 3): about −V+ (−9 V from 9 V, less 60 Ω × the current drawn) on its own net VNEG, for a ± supply. Label the stages it powers VNEG (an op-amp's negative supply, say). C1 is the reservoir (10 µF, as the datasheet's), its + side to ground. C2 is the flying cap, pin 2 (+) to pin 4 (D-226). Boost is on (about 22 kHz pump).",
+ "tags": [
+  "power",
+  "charge pump",
+  "chip"
+ ],
+ "template": true,
+ "power": {
+  "rails": {
+   "V+": 9.0
+  }
+ },
+ "parts": [
+  {
+   "ref": "U1",
+   "pos": [
+    0,
+    0
+   ],
+   "type": "chargepump",
+   "model": "TC1044S",
+   "boost": true
+  },
+  {
+   "ref": "C1",
+   "pos": [
+    100,
+    50
+   ],
+   "rot": 270,
+   "type": "capacitor",
+   "value": "10µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "C2",
+   "pos": [
+    -100,
+    10
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "10µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  }
+ ],
+ "wires": [
+  {
+   "from": [
+    -40,
+    -10
+   ],
+   "to": [
+    -100,
+    -10
+   ]
+  },
+  {
+   "from": [
+    -40,
+    30
+   ],
+   "to": [
+    -100,
+    30
+   ]
+  },
+  {
+   "from": [
+    40,
+    30
+   ],
+   "to": [
+    100,
+    30
+   ]
+  }
+ ],
+ "labels": [
+  {
+   "net": "V+",
+   "pos": [
+    40,
+    -30
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    -40,
+    10
+   ],
+   "rot": 90
+  },
+  {
+   "net": "VNEG",
+   "pos": [
+    100,
+    30
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    100,
+    70
+   ]
+  }
+ ],
+ "ports": {
+  "out": "VNEG"
+ },
+ "notes": {
+  "part:U1": "Inverter: V+ in, about −V+ out.",
+  "part:C1": "Reservoir, + to ground: VNEG is below ground.",
+  "net:VNEG": "About −9 V from a 9 V supply, less 60 Ω × the current drawn.",
+  "part:C2": "Flying cap: charged from V+, then flipped onto VNEG every cycle. + to pin 2."
+ }
+}

@@ -1,0 +1,126 @@
+{
+  "id": "1N60",
+  "type": "diode",
+  "description": "1N60 point-contact germanium diode: a very soft, low clipper (our fit to Wuxi Xuyang's sheet)",
+  "spice_name": "1N60",
+  "kind": "model",
+  "pins": [],
+  "card": "1N60.lib",
+  "manufacturer": "Wuxi Xuyang Electronic",
+  "source": {
+    "url": "https://akizukidenshi.com/goodsaffix/1N60P_1N60_point_rev.b.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own fit to the maker's datasheet curve (D-156): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://akizukidenshi.com/goodsaffix/1N60P_1N60_point_rev.b.pdf",
+  "fixes": [],
+  "ratings": {
+    "if_avg": 0.05,
+    "vr_max": 20.0
+  },
+  "rating_sources": {
+    "if_avg": "Wuxi Xuyang Electronic 1N60P/1N60 data sheet, rev. b (Point Contact Germanium Diodes), Absolute Maximum Ratings: average rectified output current 50 mA",
+    "vr_max": "Wuxi Xuyang Electronic 1N60P/1N60 data sheet, rev. b (Point Contact Germanium Diodes), Absolute Maximum Ratings: reverse voltage dc 20 V"
+  },
+  "fit": {
+    "sheet": "Wuxi Xuyang Electronic 1N60P/1N60 data sheet, rev. b (Point Contact Germanium Diodes)",
+    "figure": "Forward Characteristics (page 2), read from the PDF's vector drawing",
+    "points": [
+      [
+        0.2989,
+        0.0007963
+      ],
+      [
+        0.586,
+        0.0045721
+      ],
+      [
+        0.8431,
+        0.0100709
+      ],
+      [
+        1.0595,
+        0.0170595
+      ],
+      [
+        1.2272,
+        0.02527
+      ]
+    ],
+    "method": "IS, N and RS by least squares on V = N·Vt·ln(I/IS) + RS·I (scripts/fit_models.py fit_diode, Vt at 27 °C) over every other curve point; IS held at 50 µA, half the sheet's 100 µA reverse-current limit at 10 V (IS is the model's reverse current): left free it came out at 118 µA, over the limit, while held at 50 µA the held-out points stay within 44 mV. The sheet's typical reverse curve reads about 5 µA at 10 V, so the model leaks more than a typical unit; CJO is the sheet's 1 pF maximum at −1 V; EG 0.67 eV (germanium); BV 45 V, the peak reverse voltage",
+    "note": "The figure is linear and starts at 0.8 mA, so below that the fit follows the diode equation, not the sheet. A crude, soft curve (N 4.3): a point-contact part, and the sheet's own drawing"
+  },
+  "package": {
+    "name": "Axial glass",
+    "pins": {
+      "K": 1,
+      "A": 2
+    },
+    "source": "Wuxi Xuyang 1N60P/1N60 data sheet, rev. b (names no outline; point-contact glass); pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The band marks the cathode"
+  },
+  "validation": [
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.004
+      },
+      "simulated": 0.578016,
+      "datasheet": {
+        "max": 1.0,
+        "source": "Wuxi Xuyang Electronic 1N60P/1N60 data sheet, rev. b (Point Contact Germanium Diodes), Characteristics: forward current at least 4 mA at VF = 1 V",
+        "note": "The sheet gives a minimum current at 1 V; the same limit read as VF at 4 mA"
+      }
+    },
+    {
+      "quantity": "ir",
+      "conditions": {
+        "vr": 10.0
+      },
+      "simulated": 4.99999e-05,
+      "datasheet": {
+        "max": 0.0001,
+        "source": "Wuxi Xuyang Electronic 1N60P/1N60 data sheet, rev. b (Point Contact Germanium Diodes), Characteristics: IR at VR = 10 V, 1N60 100 µA max"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0024508
+      },
+      "simulated": 0.489885,
+      "datasheet": {
+        "source": "Wuxi Xuyang Electronic 1N60P/1N60 data sheet, rev. b (Point Contact Germanium Diodes), Forward Characteristics (page 2), read from the PDF's vector drawing",
+        "typ": 0.4454,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0133936
+      },
+      "simulated": 0.920596,
+      "datasheet": {
+        "source": "Wuxi Xuyang Electronic 1N60P/1N60 data sheet, rev. b (Point Contact Germanium Diodes), Forward Characteristics (page 2), read from the PDF's vector drawing",
+        "typ": 0.9571,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0210343
+      },
+      "simulated": 1.14067,
+      "datasheet": {
+        "source": "Wuxi Xuyang Electronic 1N60P/1N60 data sheet, rev. b (Point Contact Germanium Diodes), Forward Characteristics (page 2), read from the PDF's vector drawing",
+        "typ": 1.15,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    }
+  ]
+}

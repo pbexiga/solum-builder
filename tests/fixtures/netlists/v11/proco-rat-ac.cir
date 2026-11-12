@@ -1,0 +1,94 @@
+* ProCo Rat
+V_RAIL1 v_ 0 DC 9
+R10 v_ v_f 47
+C11 v_f 0 0.0001
+C12 v_f 0 1e-07
+R11 v_f vref 100000
+R12 vref 0 100000
+C13 vref 0 1e-06
+V_IN in 0 DC 0 AC 0.999996000016
+R1 in 0 1000000
+C1 in c1_2 2.2e-08
+R2 c1_2 vref 1000000
+R3 c1_2 u1__ 1000
+C2 u1__ 0 1e-09
+X_U1 u1__ u1___2 v_f 0 u1o u1_comp1 u1_comp2 LM308
+C3 u1_comp1 u1_comp2 3e-11
+R4 u1___2 c5_1 47
+C5 c5_1 0 2.2e-06
+R5 u1___2 c6_1 560
+C6 c6_1 0 4.7e-06
+R_DIST_a u1___2 u1o 10000
+R_DIST_b u1o dist_3 90000
+C4 u1___2 u1o 1e-10
+C7 u1o c7_2 4.7e-06
+R6 c7_2 clip 1000
+D1 0 clip 1N4148
+D2 clip 0 1N4148
+R_TONE_a clip r7_1 10000
+R_TONE_b r7_1 tone_3 90000
+R7 r7_1 tone 1500
+C8 tone 0 3.3e-09
+C9 tone q1_g 2.2e-08
+R8 q1_g 0 1000000
+J_Q1 v_f q1_g q1_s J2N5458
+R9 q1_s 0 10000
+C10 q1_s c10_2 1e-06
+R_VOLUME_a 0 out 100000
+R_VOLUME_b out c10_2 1
+R_AMP out 0 1000000
+* 1N4148 small-signal silicon diode (our fit to Diotec's and onsemi's sheets)
+* Fitted by Solum Builder to Diotec 1N4148, 1N4150, 1N4151, 1N4448 data sheet, Version 2023-08-17, Forward characteristics (typical values), Tj = 25 °C, from 2.4 mA (read from the PDF's vector drawing, centre of the drawn line) (D-156)
+.model 1N4148 D(is=2.32e-09 n=1.797 rs=0.2449 cjo=4e-12 bv=100 ibv=0.0001)
+* 2N5458 N-channel JFET (Rat output buffer; our model from onsemi's sheet)
+* Built by Solum Builder from onsemi 2N5457/D Rev. 6 (Feb 2010) (D-161)
+.model J2N5458 NJF(vto=-4.282 beta=0.0003273 lambda=0.001667 cgs=3e-12 cgd=1.5e-12)
+* LM308 op-amp with external compensation (TI macromodel): ProCo Rat
+* Source: https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Manufacturer/Texas%20Instruments/lm308.mod
+* LM308 operational amplifier "macromodel" subcircuit
+* created using Parts release 4.01 on 08/30/89 at 09:24
+* (REV N/A)
+* connections:   non-inverting input
+*                | inverting input
+*                | | positive power supply
+*                | | | negative power supply
+*                | | | | output
+*                | | | | |  compensation
+*                | | | | | / \
+.subckt LM308    1 2 3 4 5 6 7
+*
+  c1   11 12 6.887E-12
+  dc    5 53 dx
+  de   54  5 dx
+  dlp  90 91 dx
+  dln  92 90 dx
+  dp    4  3 dx
+  egnd 99  0 poly(2) (3,0) (4,0) 0 .5 .5
+  fb    7 99 poly(5) vb vc ve vlp vln 0 19.59E6 -20E6 20E6 20E6 -20E6
+  ga    6  0 11 12 122.5E-6
+  gcm   0  6 10 99 6.891E-9
+  iee  10  4 dc 6.003E-6
+  hlim 90  0 vlim 1K
+  q1   11  2 13 qx
+  q2   12  1 14 qx
+  r2    6  9 100.0E3
+  rc1   3 11 8.161E3
+  rc2   3 12 8.161E3
+  re1  13 10 -460.3
+  re2  14 10 -460.3
+  ree  10 99 33.32E6
+  ro1   8  5 125
+  ro2   7 99 125
+  rp    3  4 102.0E3
+  vb    9  0 dc 0
+  vc    3 53 dc 2.600
+  ve   54  4 dc 2.600
+  vlim  7  8 dc 0
+  vlp  91  0 dc 6
+  vln   0 92 dc 6
+.model dx D(is=800.0E-18)
+.model qx NPN(is=800.0E-18 bf=2.000E3)
+.ends
+
+.ac dec 50 10 100000
+.end

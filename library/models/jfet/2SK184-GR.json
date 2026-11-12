@@ -1,0 +1,71 @@
+{
+  "id": "2SK184-GR",
+  "type": "jfet",
+  "description": "2SK184-GR low-noise N-channel JFET, GR grade (the Boss BD-2's; our model from Toshiba's sheet)",
+  "spice_name": "J2SK184GR",
+  "kind": "model",
+  "pins": [],
+  "card": "2SK184-GR.lib",
+  "manufacturer": "Toshiba",
+  "source": {
+    "url": "https://www.rfparts.com/fileuploader/download/download/?d=0&file=custom%2Fupload%2FFile-1737740953.pdf",
+    "retrieved": "2026-11-10",
+    "licence": "Our own model built from the maker's data sheet (D-159, D-161): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.rfparts.com/fileuploader/download/download/?d=0&file=custom%2Fupload%2FFile-1737740953.pdf",
+  "fixes": [],
+  "ratings": {},
+  "package": {
+    "name": "TO-92 mini (Toshiba 2-4E1C)",
+    "pins": {
+      "D": 1,
+      "G": 2,
+      "S": 3
+    },
+    "source": "Toshiba 2SK184 data sheet (2007-11-01), page 1: 1. Drain 2. Gate 3. Source"
+  },
+  "fit": {
+    "sheet": "Toshiba 2SK184 data sheet (2007-11-01)",
+    "figure": "|Yfs| - IDSS, ID - VGS and ID - VDS (typical, page 2)",
+    "points": [
+      [
+        0.0,
+        0.0041109609582188926
+      ],
+      [
+        -0.48200336245152714,
+        0.0
+      ]
+    ],
+    "method": "Idss the geometric middle of the GR grade's 2.6-6.5 mA (4.11 mA). Vp -0.482 V from the typical |Yfs|-IDSS figure (17.1 mS at that Idss) by the square law, Vp = -2·Idss/|Yfs|, as the 2SK209-GR (D-216): the sheet's tables and figures are the 2SK209's, its |Yfs| line within 1 % of that one's. The VGS(OFF)-IDSS figure is read at 0.1 µA, in the tail a square law doesn't follow, so it isn't used. BETA = Idss/Vp². LAMBDA 0.006 as the 2SK209-GR's: the 2SK184's ID-VDS figure (low voltage region, VGS = 0) is as flat as that one's at the figure's resolution. CGD = Crss 3 pF, CGS = Ciss − Crss = 10 pF (typical).",
+    "note": "Real units spread over the grade's range; a circuit's measured Idss and Vp replace these (D-130)"
+  },
+  "validation": [
+    {
+      "quantity": "idss",
+      "conditions": {
+        "vds": 10.0
+      },
+      "simulated": 0.0043564,
+      "datasheet": {
+        "min": 0.0026,
+        "max": 0.0065,
+        "source": "Toshiba 2SK184 data sheet (2007-11-01), Electrical Characteristics: IDSS at VDS = 10 V, GR 2.6~6.5 mA"
+      }
+    },
+    {
+      "quantity": "vp",
+      "conditions": {
+        "vds": 10.0,
+        "id": 1e-07
+      },
+      "simulated": -0.479691,
+      "datasheet": {
+        "min": -1.5,
+        "max": -0.2,
+        "source": "Toshiba 2SK184 data sheet (2007-11-01), Electrical Characteristics: VGS(OFF) at VDS = 10 V, ID = 0.1 µA"
+      }
+    }
+  ]
+}

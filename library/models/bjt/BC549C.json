@@ -1,0 +1,353 @@
+{
+  "id": "BC549C",
+  "type": "bjt",
+  "description": "BC549C low-noise NPN, gain group C (hFE 420-800 at 2 mA; VCEO 30 V), our fit to onsemi's sheet",
+  "spice_name": "BC549C",
+  "kind": "model",
+  "pins": [],
+  "card": "BC549C.lib",
+  "manufacturer": "onsemi",
+  "source": {
+    "url": "https://sy-dep-epc-lpc.web.cern.ch/components/datasheets/epc-lpc%20(converters)/BC550_NPN%20BJT_On%20Semiconductor.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model fitted to the maker's data sheet (D-163): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://sy-dep-epc-lpc.web.cern.ch/components/datasheets/epc-lpc%20(converters)/BC550_NPN%20BJT_On%20Semiconductor.pdf",
+  "fixes": [],
+  "ratings": {
+    "vceo": 30.0,
+    "ic": 0.1
+  },
+  "rating_sources": {
+    "vceo": "Diotec BC546 ... BC549 data sheet (version 2026-03-30), Maximum ratings: VCEO 30 V",
+    "ic": "Diotec BC546 ... BC549 data sheet (version 2026-03-30), Maximum ratings: IC 100 mA DC"
+  },
+  "package": {
+    "name": "TO-92 (CBE)",
+    "pins": {
+      "C": 1,
+      "B": 2,
+      "E": 3
+    },
+    "source": "Diotec BC546 ... BC549 data sheet (version 2026-03-30), page 1 pin drawing"
+  },
+  "fit": {
+    "sheet": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D)",
+    "figure": "Figure 3. DC Current Gain (VCE = 5 V; one typical curve for every type and grade); Figure 2. Transfer Characteristics (IC against VBE, VCE = 5 V; read as VBE(on) against IC), moved -15.3 mV onto the table's 660 mV typical at 2 mA (the figure reads 0.727 V at 10 mA, above the table's 720 mV maximum); Figure 4. Collector-Emitter Saturation Voltage (IC = 10 IB); Electrical Characteristics: Cib 9 pF typical at VEB = 0.5 V (the sheet draws no Cib curve: one point sets CJE, with ngspice's default VJE 0.75 V and MJE 0.33); Figure 5. Output Capacitance (Cob, IE = 0, f = 1 MHz), times 1.620 onto the table's 3.5 pF typical at VCB = 10 V (the figure reads 2.16 pF there); Electrical Characteristics: fT 300 MHz typical at IC = 10 mA, VCE = 5 V (Figure 6 reads 294 MHz there); VCB = 5 V less VBE 0.73 V from Figure 2",
+    "points": [
+      [
+        0.001,
+        579.6550698475776
+      ],
+      [
+        0.002,
+        579.6550698475776
+      ],
+      [
+        0.005,
+        579.6550698475776
+      ],
+      [
+        0.01,
+        579.6550698475776
+      ],
+      [
+        0.02,
+        579.6550698475776
+      ],
+      [
+        0.05,
+        566.7208624660942
+      ],
+      [
+        0.1,
+        514.4569330181149
+      ]
+    ],
+    "curves": {
+      "vbe_on": [
+        [
+          0.0001,
+          0.5643513006607209
+        ],
+        [
+          0.0002,
+          0.5865542175167919
+        ],
+        [
+          0.0005,
+          0.6158429141890543
+        ],
+        [
+          0.001,
+          0.6379190749193872
+        ],
+        [
+          0.002,
+          0.66
+        ],
+        [
+          0.005,
+          0.6892258677070572
+        ],
+        [
+          0.01,
+          0.71136910810565
+        ],
+        [
+          0.02,
+          0.7335398097127251
+        ],
+        [
+          0.05,
+          0.7627019179344786
+        ],
+        [
+          0.1,
+          0.784651300660721
+        ]
+      ],
+      "vce_sat": [
+        [
+          0.001,
+          0.03705
+        ],
+        [
+          0.002,
+          0.036049844194085995
+        ],
+        [
+          0.005,
+          0.03952757634309031
+        ],
+        [
+          0.01,
+          0.046204660758943625
+        ],
+        [
+          0.02,
+          0.06027640483524809
+        ],
+        [
+          0.05,
+          0.093538637899214
+        ],
+        [
+          0.1,
+          0.14898172433877566
+        ]
+      ],
+      "cibo": [
+        [
+          0.5,
+          9e-12
+        ]
+      ],
+      "cobo": [
+        [
+          1.0,
+          7.764696006065684e-12
+        ],
+        [
+          1.529,
+          6.667722050283867e-12
+        ],
+        [
+          3.405,
+          5.0101085247819485e-12
+        ],
+        [
+          7.6,
+          3.79971037859433e-12
+        ],
+        [
+          17.01,
+          2.9198627301607605e-12
+        ],
+        [
+          38.23,
+          2.2814465727338238e-12
+        ],
+        [
+          50.02,
+          2.1048289048162197e-12
+        ]
+      ]
+    },
+    "method": "Gummel-Poon (scripts/fit_models.py). IS, NF, BF, ISE, NE, IKF, NKF and RE by least squares on the hFE and VBE(on) curves at VCE = 5 V together (points: the curves read at 1-2-5 steps; the hFE curve times 2.898, see note); no Early voltage (VAF left out): the sheet gives no output admittance, and its Figure 1 output curves disagree with each other (IB = 50 µA flat from 5 to 15 V; 100 µA rising 0.28 mA/V; 150 µA 0.15 mA/V), so none is set (ngspice's default). BR, ISC, NC and RC by least squares on the VCE(sat) curve, the hFE points held, NR = NF, at IC/IB = 10. CJE, VJE, MJE from Cibo and CJC, VJC, MJC from Cobo against reverse voltage. TF from fT 300 MHz at 10 mA (Electrical Characteristics: fT 300 MHz typical at IC = 10 mA, VCE = 5 V (Figure 6 reads 294 MHz there); VCB = 5 V less VBE 0.73 V from Figure 2), less the junctions' charging time. Fitted curves are matched within 1.8 % (hFE), 3.4 mV (VBE) and 2.2 mV (VCE(sat)). RB, VAR, TR and the temperature terms are ngspice's defaults: the sheet doesn't pin them",
+    "note": "The sheet draws one typical gain curve for the whole BC546-BC550 family (200 at 2 mA, flat from 1 to 20 mA) and doesn't say which grade it is drawn for (200 sits where its groups A, 110-220, and B, 200-450, meet). Its shape is kept and its level set to the geometric middle of this part's 2 mA range (gain group C: 420 to 800, so 580), as for the 2N5088/89 (D-161, D-163). The curve is drawn from 1 mA only, so below 1 mA the gain follows from the VBE(on) curve and the model's leakage term alone"
+  },
+  "validation": [
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.002,
+        "vce": 5.0
+      },
+      "simulated": 581.518,
+      "datasheet": {
+        "min": 420.0,
+        "max": 800.0,
+        "source": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D), Electrical Characteristics: hFE at VCE = 5 V, IC = 2 mA, and hFE Classification C"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.01,
+        "ib": 0.0005
+      },
+      "simulated": 0.0621683,
+      "datasheet": {
+        "max": 0.25,
+        "source": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D), Electrical Characteristics: VCE(sat) at IC = 10 mA, IB = 0.5 mA"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.1,
+        "ib": 0.005
+      },
+      "simulated": 0.165263,
+      "datasheet": {
+        "max": 0.6,
+        "source": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D), Electrical Characteristics: VCE(sat) at IC = 100 mA, IB = 5 mA"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.002,
+        "vce": 5.0
+      },
+      "simulated": 0.659288,
+      "datasheet": {
+        "min": 0.58,
+        "max": 0.7,
+        "source": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D), Electrical Characteristics: VBE(on) at VCE = 5 V, IC = 2 mA"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.01,
+        "vce": 5.0
+      },
+      "simulated": 0.710853,
+      "datasheet": {
+        "max": 0.72,
+        "source": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D), Electrical Characteristics: VBE(on) at VCE = 5 V, IC = 10 mA"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.0003,
+        "vce": 5.0
+      },
+      "simulated": 0.598816,
+      "datasheet": {
+        "typ": 0.5995,
+        "tol": 0.01,
+        "source": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D), Figure 2. Transfer Characteristics (IC against VBE, VCE = 5 V; read as VBE(on) against IC), moved -15.3 mV onto the table's 660 mV typical at 2 mA (the figure reads 0.727 V at 10 mA, above the table's 720 mV maximum)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 5.0
+      },
+      "simulated": 583.206,
+      "datasheet": {
+        "typ": 579.7,
+        "tol": 29.0,
+        "source": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D), Figure 3. DC Current Gain (VCE = 5 V; one typical curve for every type and grade)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %; the curve times 2.898 (see the fit's note)"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 5.0
+      },
+      "simulated": 0.672238,
+      "datasheet": {
+        "typ": 0.6729,
+        "tol": 0.01,
+        "source": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D), Figure 2. Transfer Characteristics (IC against VBE, VCE = 5 V; read as VBE(on) against IC), moved -15.3 mV onto the table's 660 mV typical at 2 mA (the figure reads 0.727 V at 10 mA, above the table's 720 mV maximum)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.003,
+        "ib": 0.0003
+      },
+      "simulated": 0.0386134,
+      "datasheet": {
+        "typ": 0.037,
+        "tol": 0.005,
+        "source": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D), Figure 4. Collector-Emitter Saturation Voltage (IC = 10 IB)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.03,
+        "vce": 5.0
+      },
+      "simulated": 570.68,
+      "datasheet": {
+        "typ": 578.9,
+        "tol": 28.9,
+        "source": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D), Figure 3. DC Current Gain (VCE = 5 V; one typical curve for every type and grade)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %; the curve times 2.898 (see the fit's note)"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.03,
+        "vce": 5.0
+      },
+      "simulated": 0.746651,
+      "datasheet": {
+        "typ": 0.7465,
+        "tol": 0.01,
+        "source": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D), Figure 2. Transfer Characteristics (IC against VBE, VCE = 5 V; read as VBE(on) against IC), moved -15.3 mV onto the table's 660 mV typical at 2 mA (the figure reads 0.727 V at 10 mA, above the table's 720 mV maximum)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.03,
+        "ib": 0.003
+      },
+      "simulated": 0.0694895,
+      "datasheet": {
+        "typ": 0.0722,
+        "tol": 0.0051,
+        "source": "onsemi BC546/BC547/BC548/BC549/BC550 data sheet, Rev. 2 (April 2021, BC550/D), Figure 4. Collector-Emitter Saturation Voltage (IC = 10 IB)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 7 % here, not 5 mV: the card's VCE(sat) is nearly straight against IC, the sheet's curve bends a little between 10 and 50 mA (Gummel-Poon has no quasi-saturation)"
+      }
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 581.9722,
+      "note": "Gain on the Geofex tester (D-130, D-153): 9 V, collector through 2.4 kΩ, 2.2 MΩ from base to supply; collector current less the leakage, over the base current. Where a measured transistor's form starts."
+    }
+  ]
+}

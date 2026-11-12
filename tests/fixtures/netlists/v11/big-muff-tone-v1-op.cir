@@ -1,0 +1,11 @@
+* Big Muff tone stack
+R8 in c8_1 39000
+C8 c8_1 0 1e-08
+C9 in c9_2 4e-09
+R5 c9_2 0 22000
+R_TONE_a c8_1 out 50000
+R_TONE_b out c9_2 50000
+V_JIGIN in 0 DC 0
+R_JIGLOAD out 0 1000000
+.op
+.end

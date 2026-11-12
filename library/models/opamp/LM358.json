@@ -1,0 +1,106 @@
+{
+  "id": "LM358",
+  "type": "opamp",
+  "description": "LM358 low-power dual op-amp, single-supply (inputs and output reach ground; TI 1989 macromodel)",
+  "spice_name": "LM358",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "LM358.lib",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Manufacturer/Texas%20Instruments/lm358.mod",
+    "retrieved": "2026-10-29",
+    "licence": "KiCad-Spice-Library collection (GPL-3.0); model by the manufacturer named, redistributed there",
+    "original": "Texas Instruments"
+  },
+  "datasheet": "https://www.ti.com/lit/ds/symlink/lm358.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 32.0,
+    "cm_neg_headroom": 0.0,
+    "cm_pos_headroom": 1.5,
+    "out_neg_headroom": 0.005,
+    "out_pos_headroom": 2.0
+  },
+  "rating_sources": {
+    "vs_max": "TI LM358 datasheet SLOS068AB (rev. Oct 2024): vs_max from 5.1 Absolute Maximum Ratings (32 V for LM358); common-mode range from 5.7, V– to V+ – 1.5 V; output headroom from 5.7, 2 V typ from the positive rail (VS = 30 V, RL ≥ 10 kΩ) and 5 mV typ from the negative (VS = 5 V, RL ≤ 10 kΩ)",
+    "cm_neg_headroom": "TI LM358 datasheet SLOS068AB (rev. Oct 2024): vs_max from 5.1 Absolute Maximum Ratings (32 V for LM358); common-mode range from 5.7, V– to V+ – 1.5 V; output headroom from 5.7, 2 V typ from the positive rail (VS = 30 V, RL ≥ 10 kΩ) and 5 mV typ from the negative (VS = 5 V, RL ≤ 10 kΩ)",
+    "cm_pos_headroom": "TI LM358 datasheet SLOS068AB (rev. Oct 2024): vs_max from 5.1 Absolute Maximum Ratings (32 V for LM358); common-mode range from 5.7, V– to V+ – 1.5 V; output headroom from 5.7, 2 V typ from the positive rail (VS = 30 V, RL ≥ 10 kΩ) and 5 mV typ from the negative (VS = 5 V, RL ≤ 10 kΩ)",
+    "out_neg_headroom": "TI LM358 datasheet SLOS068AB (rev. Oct 2024): vs_max from 5.1 Absolute Maximum Ratings (32 V for LM358); common-mode range from 5.7, V– to V+ – 1.5 V; output headroom from 5.7, 2 V typ from the positive rail (VS = 30 V, RL ≥ 10 kΩ) and 5 mV typ from the negative (VS = 5 V, RL ≤ 10 kΩ)",
+    "out_pos_headroom": "TI LM358 datasheet SLOS068AB (rev. Oct 2024): vs_max from 5.1 Absolute Maximum Ratings (32 V for LM358); common-mode range from 5.7, V– to V+ – 1.5 V; output headroom from 5.7, 2 V typ from the positive rail (VS = 30 V, RL ≥ 10 kΩ) and 5 mV typ from the negative (VS = 5 V, RL ≤ 10 kΩ)"
+  },
+  "channels": 2,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "a.out": 1,
+      "a.-": 2,
+      "a.+": 3,
+      "V-": 4,
+      "b.+": 5,
+      "b.-": 6,
+      "b.out": 7,
+      "V+": 8
+    },
+    "source": "TI LM358 datasheet SLOS068AB (rev. Oct 2024), Table 4-1, Pin Functions (SOIC, PDIP and others)"
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "min": 87.96,
+        "typ": 100.0,
+        "source": "https://www.ti.com/lit/ds/symlink/lm358.pdf",
+        "note": "LM358 AOL 25 V/mV min, 100 V/mV typ, VS = 15 V, RL ≥ 2 kΩ (SLOS068AB 5.7)"
+      },
+      "simulated": 99.876726
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "typ": 700000.0,
+        "source": "https://www.ti.com/lit/ds/symlink/lm358.pdf",
+        "note": "GBW 0.7 MHz typ (SLOS068AB 5.7); the card reads higher"
+      },
+      "simulated": 890526.058461
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "typ": 2.0,
+        "max": 3.0,
+        "source": "TI LM358 datasheet SLOS068AB (rev. Oct 2024), 5.7: positive rail 2 V typ, 3 V max, VS = 30 V, RL ≥ 10 kΩ"
+      },
+      "simulated": 1.504717
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "typ": 0.005,
+        "max": 0.02,
+        "source": "TI LM358 datasheet SLOS068AB (rev. Oct 2024), 5.7: negative rail 5 mV typ, 20 mV max (0–70 °C), RL ≤ 10 kΩ"
+      },
+      "simulated": 0.004587
+    }
+  ]
+}

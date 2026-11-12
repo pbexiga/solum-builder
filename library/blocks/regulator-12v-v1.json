@@ -1,0 +1,308 @@
+{
+  "schema": 29,
+  "id": "regulator-12v-v1",
+  "name": "12 V supply · charge pump and regulator (78L12)",
+  "version": {
+    "major": 1,
+    "minor": 1
+  },
+  "description": "The TC1044S doubler (about 17.5 V on V18) with a 78L12 after it, holding V12 at 12 V (onsemi MC78L00A/D, Figure 2: 0.33 µF in, 0.1 µF out). Unlike a zener, it holds 12 V whatever the circuit draws, as long as V18 stays above 13.7 V (with 10 mA drawn it still sits at 16.5 V). The regulator takes 4.2 mA itself, from the pump. For a heavier load, pick an LT1054 in U1's settings. Label the stages it powers V12.",
+  "tags": [
+    "power",
+    "charge pump",
+    "regulator",
+    "chip"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "U1",
+      "type": "chargepump",
+      "model": "TC1044S"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        100,
+        -50
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        -120,
+        -70
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    },
+    {
+      "ref": "D1",
+      "pos": [
+        -160,
+        -90
+      ],
+      "type": "diode",
+      "model": "1N5817"
+    },
+    {
+      "ref": "D2",
+      "pos": [
+        -20,
+        -90
+      ],
+      "type": "diode",
+      "model": "1N5817"
+    },
+    {
+      "ref": "U2",
+      "pos": [
+        220,
+        -90
+      ],
+      "type": "regulator",
+      "model": "78L12"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        140,
+        -50
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "330n",
+      "kind": "film"
+    },
+    {
+      "ref": "C4",
+      "pos": [
+        300,
+        -50
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "film"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        -40,
+        -10
+      ],
+      "to": [
+        -120,
+        -10
+      ]
+    },
+    {
+      "from": [
+        -120,
+        -10
+      ],
+      "to": [
+        -120,
+        -50
+      ]
+    },
+    {
+      "from": [
+        -140,
+        -90
+      ],
+      "to": [
+        -40,
+        -90
+      ]
+    },
+    {
+      "from": [
+        0,
+        -90
+      ],
+      "to": [
+        100,
+        -90
+      ]
+    },
+    {
+      "from": [
+        100,
+        -90
+      ],
+      "to": [
+        100,
+        -70
+      ]
+    },
+    {
+      "from": [
+        100,
+        -90
+      ],
+      "to": [
+        180,
+        -90
+      ]
+    },
+    {
+      "from": [
+        140,
+        -90
+      ],
+      "to": [
+        140,
+        -70
+      ]
+    },
+    {
+      "from": [
+        260,
+        -90
+      ],
+      "to": [
+        300,
+        -90
+      ]
+    },
+    {
+      "from": [
+        300,
+        -90
+      ],
+      "to": [
+        300,
+        -70
+      ]
+    },
+    {
+      "from": [
+        40,
+        -30
+      ],
+      "to": [
+        40,
+        -50
+      ]
+    },
+    {
+      "from": [
+        -40,
+        -30
+      ],
+      "to": [
+        -40,
+        -50
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "V+",
+      "pos": [
+        40,
+        -50
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        -40,
+        10
+      ],
+      "rot": 90
+    },
+    {
+      "net": "GND",
+      "pos": [
+        40,
+        30
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        -180,
+        -90
+      ]
+    },
+    {
+      "net": "V18",
+      "pos": [
+        100,
+        -90
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        100,
+        -30
+      ]
+    },
+    {
+      "net": "V12",
+      "pos": [
+        300,
+        -90
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        140,
+        -30
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        220,
+        -50
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        300,
+        -30
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        -40,
+        -50
+      ]
+    }
+  ],
+  "ports": {
+    "out": "V12"
+  },
+  "notes": {
+    "part:U1": "Doubler: V+ in, about 2 × V+ out. Pin 2 swings C2 between ground and V+, lifting the D1/D2 junction; pin 5 goes to ground. Supply: pin 8 is the chip's supply input, fed from the pedal's V+ (the DC jack or the battery, through the input filter). The pump draws its current in short pulses at its switching rate; a bulk electrolytic on V+ (10-100 µF, such as the Input filter block's 47 Ω and 100 µF) supplies them close by, so they don't travel back along V+ and whine in the other stages. A pedal that already has one on V+ needs no second cap here (one close to pin 8 helps a little on a long board). A pedal with none, such as a bare battery fuzz like the Rangemaster, needs one: the \"Supply without a bulk capacitor\" warning says so.",
+    "part:C1": "Reservoir: holds V18 up between the pump's pulses. Bigger means less ripple.",
+    "net:V18": "About 17.5 V from a 9 V supply: 2 × 9 V less two diode drops and the pump's output resistance.",
+    "part:C2": "Pump cap: the bigger, the lower the pump's output resistance (1/(f × C) of it).",
+    "part:D1": "D1 charges C2 from V+; D2 passes its charge on to V18. Schottkys (1N5817) drop the least.",
+    "part:U2": "78L12: holds V12 at 12 V while V18 stays above about 13.7 V (12 V plus its 1.7 V dropout), up to 100 mA. It takes 4.2 mA itself, load or not.",
+    "part:C3": "Input cap, 0.33 µF as onsemi's sheet shows: keeps the regulator steady when it sits away from C1.",
+    "part:C4": "Output cap, 0.1 µF as the sheet shows: not needed for stability, but it helps when the load changes quickly.",
+    "net:V12": "12 V, steady whatever the circuit draws up to the pump's limit."
+  }
+}

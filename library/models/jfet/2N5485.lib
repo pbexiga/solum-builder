@@ -1,0 +1,5 @@
+* 2N5485 N-channel JFET (Philips card)
+* Source: https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/uncategorized/spice_complete/phil_fet.lib
+.model 2N5485 NJF(vto=-2.2776E+000 beta=1.16245E-003 lambda=1.74427E-002
++ rd=5.28684E+000 rs=5.28684E+000 is=1.71027E-016 cgs=2.68000E-012 cgd=2.28000E-012
++ pb=1.02676E+000 fc=5.00000E-001)

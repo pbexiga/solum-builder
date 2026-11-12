@@ -1,0 +1,139 @@
+{
+  "id": "NE5532",
+  "type": "opamp",
+  "description": "NE5532 low-noise bipolar dual op-amp, ±18 V max (our model from onsemi's and TI's sheets)",
+  "spice_name": "NE5532",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "NE5532.lib",
+  "manufacturer": "onsemi / Texas Instruments",
+  "source": {
+    "url": "https://www.ti.com/lit/ds/symlink/ne5532.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model built from the maker's data sheet (D-162): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.ti.com/lit/ds/symlink/ne5532.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 3.0,
+    "cm_pos_headroom": 3.0,
+    "out_neg_headroom": 1.5,
+    "out_pos_headroom": 1.5
+  },
+  "rating_sources": {
+    "vs_max": "TI NE5532 data sheet SLOS075K (revised December 2025): vs_max ±18 V (Absolute Maximum Ratings; onsemi allows ±22 V); common-mode range VICR ±12 V min at ±15 V; output headroom from onsemi NE5532/D Rev. 2 (September 2013): VOUT ±13.5 V typ at RL ≥ 2 kΩ (no 10 kΩ row)",
+    "cm_neg_headroom": "TI NE5532 data sheet SLOS075K (revised December 2025): vs_max ±18 V (Absolute Maximum Ratings; onsemi allows ±22 V); common-mode range VICR ±12 V min at ±15 V; output headroom from onsemi NE5532/D Rev. 2 (September 2013): VOUT ±13.5 V typ at RL ≥ 2 kΩ (no 10 kΩ row)",
+    "cm_pos_headroom": "TI NE5532 data sheet SLOS075K (revised December 2025): vs_max ±18 V (Absolute Maximum Ratings; onsemi allows ±22 V); common-mode range VICR ±12 V min at ±15 V; output headroom from onsemi NE5532/D Rev. 2 (September 2013): VOUT ±13.5 V typ at RL ≥ 2 kΩ (no 10 kΩ row)",
+    "out_neg_headroom": "TI NE5532 data sheet SLOS075K (revised December 2025): vs_max ±18 V (Absolute Maximum Ratings; onsemi allows ±22 V); common-mode range VICR ±12 V min at ±15 V; output headroom from onsemi NE5532/D Rev. 2 (September 2013): VOUT ±13.5 V typ at RL ≥ 2 kΩ (no 10 kΩ row)",
+    "out_pos_headroom": "TI NE5532 data sheet SLOS075K (revised December 2025): vs_max ±18 V (Absolute Maximum Ratings; onsemi allows ±22 V); common-mode range VICR ±12 V min at ±15 V; output headroom from onsemi NE5532/D Rev. 2 (September 2013): VOUT ±13.5 V typ at RL ≥ 2 kΩ (no 10 kΩ row)"
+  },
+  "channels": 2,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "a.out": 1,
+      "a.-": 2,
+      "a.+": 3,
+      "V-": 4,
+      "b.+": 5,
+      "b.-": 6,
+      "b.out": 7,
+      "V+": 8
+    },
+    "source": "TI NE5532 data sheet SLOS075K (revised December 2025), D/P/PS package pinout (onsemi's N/D8 the same)"
+  },
+  "fit": {
+    "sheet": "onsemi NE5532/D Rev. 2 (September 2013) and TI NE5532 data sheet SLOS075K (revised December 2025), NE5532 at ±15 V",
+    "figure": "onsemi electrical characteristics at ±15 V: AVOL 100 V/mV typ, GBW 10 MHz, slew rate 9 V/µs, follower overshoot 10 % (100 mVp-p, CL 100 pF, RL 600 Ω), supply current 8 mA for both amplifiers, VOUT ±13.5 V typ at RL ≥ 2 kΩ and ±13 V at 600 Ω",
+    "points": [],
+    "method": "A small macromodel (scripts/fit_models.py opamp_card, D-162): a tanh transconductance stage limited to 10 µA into C1 sets the slew rate, gm the unity-gain crossing and R1 the open-loop gain; a second pole gives the phase margin; diode clamps and an output resistance set the swing; the supply current is drawn from the rails. Phase margin 65.3° fitted so a follower at the sheet's load (600 Ω, 100 pF) overshoots 10 % (.claude/skills/fit-model/tools/opamp_pm_fit.py); output resistance 33.5 Ω and clamps 1.27 V from each rail fitted to both swing rows (simulated 1.47 V at 2 kΩ, 1.97 V at 600 Ω). Checked: slews at 8.85 V/µs.",
+    "note": "Input bias, offset, noise, common-mode limits and the output's current limit are not modelled: the input stage is ideal (1 TΩ)."
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "min": 87.95880017344075,
+        "typ": 100.0,
+        "source": "TI NE5532 data sheet SLOS075K (revised December 2025)",
+        "note": "AVD 25 V/mV min, 100 V/mV typ, ±15 V, RL ≥ 2 kΩ, VO = ±10 V (onsemi the same)"
+      },
+      "simulated": 99.9474
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "typ": 10000000.0,
+        "source": "onsemi NE5532/D Rev. 2 (September 2013)",
+        "note": "GBW 10 MHz typ, CL = 100 pF, RL = 600 Ω; 10 % follower overshoot at the same load, so phase margin 65.3° fitted to it; TI's Rev K gives 12 MHz unity-gain bandwidth but still says 10 MHz in its description"
+      },
+      "simulated": 9971390.0
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 2000.0
+      },
+      "datasheet": {
+        "typ": 1.5,
+        "max": 2.0,
+        "source": "onsemi NE5532/D Rev. 2 (September 2013): VOUT ±13.5 V typ, ±13 V min, RL ≥ 2 kΩ"
+      },
+      "simulated": 1.46679
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 2000.0
+      },
+      "datasheet": {
+        "typ": 1.5,
+        "max": 2.0,
+        "source": "onsemi NE5532/D Rev. 2 (September 2013): VOUT ±13.5 V typ, ±13 V min, RL ≥ 2 kΩ"
+      },
+      "simulated": 1.46679
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 600.0
+      },
+      "datasheet": {
+        "typ": 2.0,
+        "max": 3.0,
+        "source": "onsemi NE5532/D Rev. 2 (September 2013): VOUT ±13 V typ, ±12 V min, RL ≥ 600 Ω"
+      },
+      "simulated": 1.96774
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 600.0
+      },
+      "datasheet": {
+        "typ": 2.0,
+        "max": 3.0,
+        "source": "onsemi NE5532/D Rev. 2 (September 2013): VOUT ±13 V typ, ±12 V min, RL ≥ 600 Ω"
+      },
+      "simulated": 1.96774
+    }
+  ]
+}

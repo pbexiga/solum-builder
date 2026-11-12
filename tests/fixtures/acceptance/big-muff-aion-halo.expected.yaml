@@ -1,0 +1,60 @@
+# Expected values for library/starters/big-muff-aion-halo.json (D-019, D-213).
+# Refs follow Aion's schematic: Q1 is the input booster, Q2 and Q3 the clipping stages,
+# Q4 the output. Aion's RPD is RPD1 (D-232).
+circuit: big-muff-aion-halo
+source:
+  title: Aion FX, "Halo Distortion / Sustainer" documentation 2.1.0 (2025-11-04), based on the Electro-Harmonix Big Muff Pi
+  url: https://aionfx.com/app/files/docs/halo_documentation.pdf
+  snapshot: http://web.archive.org/web/20260305210252/https://aionfx.com/app/files/docs/halo_documentation.pdf
+  read: 2026-11-04
+  licence: Aion FX project documentation (short quotes, for testing); the projects may be built, commercially too, without attribution (its License & Usage page)
+substitutions:
+  - >-
+    Drawn with the document's default values, the "Gilmour '73 Ram's Head" ("The parts list
+    is taken from the "Gilmour '73 Ram's Head" version"), and its Midrange switch (DPDT
+    on-on-on, drawn as Aion wires it: "1 (A1-2, B1-2): Stock (Mid Scoop), 2 (A2-3, B1-2):
+    Flat Mids, 3 (A2-3, B2-3): Mid Hump"). Our DPDT on-on-on closes the same lugs in each
+    position. Without the bypass board and LED.
+  - >-
+    C10 is the parts list's 3n9; Aion's Big Muff Versions sheet gives the original's 4n
+    (0.004 µF) for this version.
+  - The supply is an ideal 9 V into D1, as the other starters'.
+  - >-
+    The text blocks list each version's differences from this drawing, from Aion's Big
+    Muff Versions sheet (https://docs.google.com/spreadsheets/d/1w3P91n2c6XolAe49RRIlzV8doR-R-MnS5foYAaRC8VA,
+    read 2026-11-04, linked from the document), leaving out R24 (a jumper on every version
+    before the V3; the Halo always fits its supply filter) and the transistors (Aion: "for
+    all versions, the transistors, diodes and potentiometers are the same").
+
+# Aion's document gives no voltages, gains or frequencies, and no other source gives
+# figures for these values (see omitted). Waiting on the user's choice (D-214).
+checks: []
+
+omitted:
+  - what: ElectroSmash's clipping level, peaks held within ±0.6 V (Big Muff Pi Analysis, the V3)
+    why: >-
+      Doesn't hold for these values. The diodes sit in series with C6 and C9, 100 nF here
+      and 1 µF in the V3: at the check's 200 Hz the cap's 8K drops much of the clamp, and
+      the stages swing ±1.28 V (Q2) and ±1.09 V (Q3). With 1 µF the same drawing reads
+      ±0.53 V and ±0.44 V.
+  - what: Bias voltages, stage gains, frequency corners
+    why: >-
+      Aion's document publishes none ("There's no biasing or gain sorting for the
+      transistors"). ElectroSmash's figures are for the V3's values (15K collectors, 150 Ω
+      emitters, 1 µF coupling), which differ from these; Kit Rae's pages give values only.
+  - what: The tone stack's corners for the Ram's Head '73
+    why: >-
+      Coda Effects' table gives 482 / 1206 Hz for a '73 Ram's Head with 10n and 4n; the
+      Gilmour version's C11 is 12n, so its figures don't apply.
+  - what: The Midrange switch's three responses
+    why: >-
+      The document describes them in words only: "At the 12:00 setting, the bass and treble
+      are flat, and the midrange tone response is based on the setting of the Midrange
+      switch"; "The EQ response will still be flat in the middle". Nothing to check a
+      number against.
+
+build:
+  parts:
+    - "Every capacitor's type from the document's parts list: the 470 pF Miller caps NP0/C0G (\"MLCC capacitor, NP0/C0G\"), C15 X7R (\"MLCC capacitor, X7R\"), the rest film (\"Film capacitor\"), C14 electrolytic."
+    - "C14's rating isn't given: 16 V, the app's advice on a 9 V pedal."
+    - "Enclosure 125B (\"Enclosure, die-cast aluminum\")."

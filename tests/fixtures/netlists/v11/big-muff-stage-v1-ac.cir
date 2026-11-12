@@ -1,0 +1,23 @@
+* Big Muff gain stage
+V_RAIL1 v_ 0 DC 9
+C5 in c5_2 1e-07
+R19 c5_2 q3_b 10000
+R20 q3_b 0 100000
+R17 q3c q3_b 470000
+C12 q3c q3_b 4.7e-10
+R18 v_ q3c 10000
+Q3 q3c q3_b q3_e 2N5089
+R21 q3_e 0 150
+C6 q3_b c6_2 1e-06
+D3 c6_2 q3c 1N4148
+D4 q3c c6_2 1N4148
+V_JIGIN in 0 DC 0 AC 1
+R_JIGLOAD q3c 0 1000000
+* 1N4148 small-signal silicon diode (our fit to Diotec's and onsemi's sheets)
+* Fitted by Solum Builder to Diotec 1N4148, 1N4150, 1N4151, 1N4448 data sheet, Version 2023-08-17, Forward characteristics (typical values), Tj = 25 °C, from 2.4 mA (read from the PDF's vector drawing, centre of the drawn line) (D-156)
+.model 1N4148 D(is=2.32e-09 n=1.797 rs=0.2449 cjo=4e-12 bv=100 ibv=0.0001)
+* 2N5089 high-gain, low-noise NPN (hFE 400-1200 at 100 µA; VCEO 25 V), our fit to Fairchild's sheet
+* Fitted by Solum Builder to Fairchild 2N5088/2N5089/MMBT5088/MMBT5089 data sheet, Rev A (2001; onsemi's copy), its typical curves (D-163)
+.model 2N5089 NPN(is=7.732e-14 nf=1.055 bf=857.7 ise=3.478e-15 ne=1.395 ikf=0.1245 br=2.767 re=0.06934 rc=1.265 cje=4.058e-12 vje=0.9692 mje=0.3484 cjc=4.637e-12 vjc=1.2 mjc=0.4718 tf=8.733e-10 nkf=0.8647 nr=1.055)
+.ac dec 50 10 100000
+.end

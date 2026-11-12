@@ -1,0 +1,5 @@
+* LND150 N-channel depletion MOSFET, 500 V 30 mA (our model from Microchip's sheet)
+* Built by Solum Builder from Microchip LND150/LND250 data sheet DS20005454A (2018) (D-178)
+.model LND150 VDMOS(vto=-1.2748 kp=0.0021146 ksubthres=0.16338 mtriode=0.52403
++ lambda=0.005317 rs=17.537 rd=1e-06 cgs=7.1957e-12 cgdmax=6.8769e-12 cgdmin=4.032e-14
++ a=0.25989 cjo=4.6761e-12 m=0.2 vj=0.13176)

@@ -1,0 +1,138 @@
+# Expected values for library/starters/ts808.json (D-019, D-034).
+# Every value is read from the page text (formulas count: their LaTeX is in the HTML).
+# Tolerances were set from what each number is, before simulating (D-034).
+circuit: ts808
+source:
+  title: ElectroSmash, "Tube Screamer Circuit Analysis"
+  url: https://www.electrosmash.com/tube-screamer-analysis
+  snapshot: http://web.archive.org/web/20260513101245/https://www.electrosmash.com/tube-screamer-analysis
+  read: 2026-10-20
+  licence: CC BY-NC 3.0 (its figures, said in our own words)
+substitutions:
+  - RC4558 for JRC4558 and 1N4148 for MA150; the page lists these as alternatives. Q1 and Q3 are the page's 2SC1815 (D-187; a 2N5089 until then).
+
+checks:
+  - id: bias-rail
+    kind: dc
+    node: VREF
+    volts: 4.5
+    tol: 0.45
+    from: text
+    says: "A resistor divider (R32, R33) makes the 4.5 V bias voltage."
+  - id: opamp-pins-at-vref
+    kind: dc
+    node: [IC1B.+, IC1B.-, IC1B.out, IC1A.+, IC1A.-, IC1A.out]
+    volts: 4.5
+    tol: 0.45
+    from: text
+    says: "The 4.5 V from the divider biases several stages."
+    note: Both op-amps are biased from VREF with DC feedback, so every pin sits at VREF (Phase 1 "op-amp version" check).
+
+  - id: gain-min
+    kind: gain
+    node: IC1B.out
+    ref: IC1B.+
+    hz: 3000
+    db: 21.6
+    tol_db: 1.0
+    set: {VR1: {rotation: 0.0}}
+    from: text
+    says: "The least gain: 1 + 51k/4.7k = 12, which is 21 dB."
+    note: 20·log10(12) = 21.6 dB. 3 kHz sits between the 720 Hz and 61.2 kHz corners, so the formula's mid-band gain applies; small signal, so the diodes are off.
+  - id: gain-max
+    known_gap: >-
+      Simulated 39.2 dB. The formula ignores C3, C4 and the op-amp's finite gain; by hand C3/C4 alone give 40.4 dB at 2 kHz and the RC4558's loop gain (~13 there) takes off another ~0.6 dB, so ~39.8 dB is expected. The page's number is an idealisation, not a measurement.
+    kind: peak_gain
+    node: IC1B.out
+    ref: IC1B.+
+    db: 41.4
+    tol_db: 2.0
+    set: {VR1: {rotation: 1.0}}
+    from: text
+    says: "The most gain: 1 + (51k + 500k)/4.7k = 118, which is 41 dB."
+    note: 20·log10(118) = 41.4 dB. Wider tolerance because at full Distortion the 720 Hz and 5.6 kHz corners are only 3 octaves apart and the formula ignores both (hand estimate at 2 kHz is 40.4 dB).
+  - id: feedback-high-pass
+    kind: corner
+    side: low
+    node: IC1B.out
+    ref: IC1B.+
+    hz: 720
+    tol_pct: 10
+    set: {VR1: {rotation: 0.0}}
+    from: text
+    says: "The high-pass corner: 1/(2π x 4.7k x 47 nF) = 720 Hz."
+  - id: c4-low-pass-min-distortion
+    known_gap: >-
+      Simulated 45.8 kHz. At 61 kHz the RC4558 (3.16 MHz GBW) has an open-loop gain of only ~52 against a closed-loop gain of 12, so the op-amp's own roll-off pulls the corner down; the page's formula ignores the op-amp.
+    kind: corner
+    side: high
+    node: IC1B.out
+    ref: IC1B.+
+    hz: 61200
+    tol_pct: 10
+    set: {VR1: {rotation: 0.0}}
+    from: text
+    says: "The low-pass corner at least Distortion, from R6 plus the pot with C4: 1/(2π x 51k x 51 pF) = 61.2 kHz."
+  - id: c4-low-pass-max-distortion
+    kind: corner
+    side: high
+    node: IC1B.out
+    ref: IC1B.+
+    hz: 5600
+    tol_pct: 10
+    set: {VR1: {rotation: 1.0}}
+    from: text
+    says: "The low-pass corner at most Distortion: 1/(2π x 551k x 51 pF) = 5.6 kHz."
+  - id: passive-low-pass
+    kind: corner
+    side: high
+    node: IC1A.+
+    ref: IC1B.out
+    hz: 723.4
+    tol_pct: 15
+    from: text
+    says: "The passive low-pass filter's corner is 723.4 Hz."
+    note: Wider than the ±10 % formula tolerance because the formula leaves out R9 (10K to VREF), which by hand moves the corner to 1/(2π·(1K∥10K)·0.22µF) = 796 Hz.
+
+  - id: diode-clipping
+    kind: clip
+    node: IC1B.out
+    minus: IC1B.-
+    level: med
+    set: {VR1: {rotation: 1.0}}
+    volts: 0.41
+    tol: 0.06
+    from: image
+    image: "scratch/datasheets/1N4148.pdf (onsemi 1N914/D Rev. 6, Figure 3, page 3; user-supplied, not committed)"
+    confirmed: 2026-10-20
+    says: "A diode conducts once the op-amp's output and its - input differ, either way, by more than the diode's forward voltage."
+    note: >-
+      The page gives the rule (clips at VF) but only the MA150's VF (1 V). VF for the 1N4148
+      comes from onsemi's typical curve at this circuit's diode current. By hand: at 200 Hz the
+      feedback leg R4 + C3 is |4.7K - j16.9K| = 17.6K, about 0.29 V reaches IC1B's inputs at the
+      med level, so the peak diode current is about 16.5 µA, where Figure 3 reads
+      272 + 115·log10(16.5) = 412 mV. Tolerance: ±0.05 V part spread (the sheet's 1N4448
+      window at 5 mA is 100 mV wide) plus ±0.01 V for the current estimate.
+
+omitted:
+  - what: Input impedance 446K and output impedance 1.2K
+    why: Phase 1 has no impedance measure; add when Phase 6's calculators can measure it.
+  - what: The Tone control shunting the feedback above 3.2 kHz
+    why: Describes the R10/C6 network inside the tone circuit, not a -3 dB point of any node's response.
+  - what: Clean below an input of about 90 mV peak
+    why: Worked out with the MA150's 1 V VF; with 1N4148s the threshold is different and the page gives no value for them.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  sources:
+    - title: Aion FX, "Stratus Classic Overdrive" documentation 1.0.2 (2025-12-02; the snapshot is an earlier revision), based on the TS-9 with TS-808 values
+      url: https://aionfx.com/app/files/docs/stratus_documentation.pdf
+      snapshot: http://web.archive.org/web/20250321044817/https://aionfx.com/app/files/docs/stratus_documentation.pdf
+      read: 2026-11-04
+      licence: Aion FX project documentation (short quotes, for testing); the projects may be built, commercially too, without attribution (its License & Usage page)
+  parts:
+    - "Capacitor types and ratings from the main source's parts list: C17 100 µF 10 V, C16 47 µF 10 V, C9 10 µF 16 V, C2 and C7 1 µF non-polarised 50 V; the film and ceramic caps are untyped there."
+    - "C16 and C17 are rated 16 V, not the original's 10 V: C17 has the full 9 V across it, past the app's 80 % margin on a 10 V part (cap-rating-close), and one rating keeps the parts list to one line."
+    - "C2 and C7 (1 µF non-polarised electrolytic in the original) are film, as the Aion Stratus lists them (\"1uF Film capacitor\"); the app has no non-polarised electrolytic kind."
+    - "C1, C3, C5, C6, C8 film and C4 (51 pF) C0G, as the Stratus lists the same parts."
+    - "Enclosure 125B, as the Stratus."

@@ -1,0 +1,28 @@
+id: model-missing
+layer: topology
+severity: error
+check: model_missing
+stops_sim: true
+title: Model not in the library
+message: "Can't simulate yet: {ref} names the model {model}, which isn't in the library."
+why: >
+  A transistor, diode, LED or chip is simulated from its model: a card that says how that
+  part behaves. This circuit names one that this copy of Solum Builder doesn't have. Some
+  makers' cards can't be passed on with the app, and a circuit from someone else may name
+  a model they added themselves.
+fix: >
+  Add the model with Tools → Add a model (Tools → Parts and datasheets lists the cards
+  that aren't included and where to get each one), or open {ref} and choose another model.
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, d], value: 10k}
+        - {ref: Q1, type: jfet, nets: [d, GND, GND], model: J999}
+        - {ref: D1, type: diode, nets: [d, GND], model: 1N4148}
+      expect: [Q1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, d], value: 10k}
+        - {ref: Q1, type: jfet, nets: [d, GND, GND], model: J201}

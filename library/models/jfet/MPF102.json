@@ -1,0 +1,83 @@
+{
+  "id": "MPF102",
+  "type": "jfet",
+  "description": "MPF102 N-channel JFET (our model from onsemi's sheet)",
+  "spice_name": "MPF102",
+  "kind": "model",
+  "pins": [],
+  "card": "MPF102.lib",
+  "manufacturer": "onsemi",
+  "source": {
+    "url": "https://www.rlocman.ru/i/File/2025/11/27/MPF102-D.PDF",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model built from the maker's data sheet (D-159, D-161): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.rlocman.ru/i/File/2025/11/27/MPF102-D.PDF",
+  "fixes": [],
+  "ratings": {},
+  "package": {
+    "name": "TO-92 (DSG)",
+    "pins": {
+      "D": 1,
+      "S": 2,
+      "G": 3
+    },
+    "source": "onsemi MPF102/D Rev. 3, page 1: TO-92 Style 5, 1 drain, 2 source, 3 gate"
+  },
+  "fit": {
+    "sheet": "onsemi MPF102/D Rev. 3 (January 2006)",
+    "figure": "Electrical characteristics (no typical DC curve on the sheet)",
+    "points": [
+      [
+        0.0,
+        0.006324555320336759
+      ],
+      [
+        -1.9364916731037085,
+        0.0002
+      ]
+    ],
+    "method": "Idss the geometric middle of 2-20 mA (6.32 mA); VGS at 0.2 mA the middle of -0.5 to -7.5 V (-1.94 V), so Vp -2.36 V (square law); BETA = Idss/Vp²; CGD = Crss 3 pF, CGS = Ciss − Crss = 4 pF (the sheet's maxima: it gives no typicals); no LAMBDA (the sheet gives output conductance only at 100 MHz)",
+    "note": "Real units spread over the sheet's whole range; a circuit's measured Idss and Vp replace these (D-130)"
+  },
+  "validation": [
+    {
+      "quantity": "idss",
+      "conditions": {
+        "vds": 15.0
+      },
+      "simulated": 0.00632247,
+      "datasheet": {
+        "min": 0.002,
+        "max": 0.02,
+        "source": "onsemi MPF102/D Rev. 3 (January 2006), Electrical Characteristics: IDSS"
+      }
+    },
+    {
+      "quantity": "vp",
+      "conditions": {
+        "vds": 15.0,
+        "id": 0.0002
+      },
+      "simulated": -1.93615,
+      "datasheet": {
+        "min": -7.5,
+        "max": -0.5,
+        "source": "onsemi MPF102/D Rev. 3 (January 2006), Electrical Characteristics: VGS at ID = 0.2 mA"
+      }
+    },
+    {
+      "quantity": "vp",
+      "conditions": {
+        "vds": 15.0,
+        "id": 2e-09
+      },
+      "simulated": -2.35368,
+      "datasheet": {
+        "min": -8.0,
+        "source": "onsemi MPF102/D Rev. 3 (January 2006), Electrical Characteristics: VGS(off) at ID = 2 nA, -8 V max"
+      }
+    }
+  ]
+}

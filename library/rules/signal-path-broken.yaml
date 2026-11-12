@@ -1,0 +1,22 @@
+id: signal-path-broken
+layer: topology
+severity: warning
+check: signal_path_broken
+title: Signal path broken
+message: "Nothing connects the input ({input}) to the output ({output})."
+why: >
+  The guitar's signal can't get from the input to the amp: a part or a wire is missing on
+  the way, so the output is silent.
+fix: Follow the signal from the input and wire the gap. Probing nets along the way shows where it stops.
+fixtures:
+  bad:
+    - parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, GND], value: 1M}
+        - {ref: R2, type: resistor, nets: [out, GND], value: 10k}
+        - {ref: OUT, type: amp, nets: [out]}
+  good:
+    - starter: ts808
+    - starter: big-muff-pi-v3
+    - starter: fuzz-face
+    - starter: proco-rat

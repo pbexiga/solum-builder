@@ -1,0 +1,161 @@
+{
+  "id": "BAT41",
+  "type": "diode",
+  "description": "BAT41 small-signal Schottky (100 V): a low clipper, between germanium and silicon (our fit to Vishay's sheet)",
+  "spice_name": "BAT41",
+  "kind": "subckt",
+  "pins": [
+    "A",
+    "K"
+  ],
+  "card": "BAT41.lib",
+  "manufacturer": "Vishay",
+  "source": {
+    "url": "https://wwwlegacy.vishay.com/docs/85659/bat41.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own fit to the maker's datasheet curve (D-156): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://wwwlegacy.vishay.com/docs/85659/bat41.pdf",
+  "fixes": [],
+  "ratings": {
+    "if_avg": 0.1,
+    "vr_max": 100.0
+  },
+  "rating_sources": {
+    "if_avg": "Vishay BAT41 data sheet, Rev. 2.1, 07-Nov-2024 (doc 85659): Forward continuous current 100 mA",
+    "vr_max": "Vishay BAT41 data sheet, Rev. 2.1, 07-Nov-2024 (doc 85659): Repetitive peak reverse voltage 100 V"
+  },
+  "fit": {
+    "sheet": "Vishay BAT41 data sheet, Rev. 2.1, 07-Nov-2024 (doc 85659)",
+    "figure": "Fig. 3 - Typical Forward Current vs. Forward Voltage, Tj = 25 °C (blue), read from the PDF's vector drawing",
+    "points": [
+      [
+        0.1267,
+        1.0039999999999998e-06
+      ],
+      [
+        0.172,
+        5.677e-06
+      ],
+      [
+        0.2467,
+        7.537e-05
+      ],
+      [
+        0.3169,
+        0.0003968
+      ],
+      [
+        0.3892,
+        0.0009979
+      ],
+      [
+        0.5299,
+        0.0025099999999999996
+      ],
+      [
+        0.6688,
+        0.006314
+      ],
+      [
+        0.7436,
+        0.015880000000000002
+      ],
+      [
+        0.8119,
+        0.039520000000000007
+      ],
+      [
+        0.8948,
+        0.09939
+      ]
+    ],
+    "method": "Two diodes in parallel (scripts/fit_models.py fit_diode_pair, D-159): the first fitted, as one diode is, to the points up to 4 mA; the second to the current the points above that carry beyond the first; Both IS held under the sheet's 100 nA reverse-current limit at 50 V; CJO is the sheet's 2 pF at 1 V; BV 100 V at 100 µA, the sheet's breakdown test, on the first diode",
+    "note": "The sheet's curve rises 0.32 V from 1 to 10 mA but only 0.18 V from 10 to 100 mA, which one diode can't follow (97 mV off at best), so the model is two diodes in parallel (D-159). A subcircuit, like the zeners: its current isn't read at the operating point (D-155)"
+  },
+  "package": {
+    "name": "DO-35 (DO-204AH)",
+    "pins": {
+      "K": 1,
+      "A": 2
+    },
+    "source": "Vishay BAT41 data sheet, Rev. 2.1: DO-35 (DO-204AH); pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The band marks the cathode"
+  },
+  "validation": [
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.001
+      },
+      "simulated": 0.388134,
+      "datasheet": {
+        "typ": 0.4,
+        "tol": 0.05,
+        "max": 0.45,
+        "source": "Vishay BAT41 data sheet, Rev. 2.1, 07-Nov-2024 (doc 85659), Electrical characteristics: VF at IF = 1 mA"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.2
+      },
+      "simulated": 0.994419,
+      "datasheet": {
+        "max": 1.0,
+        "source": "Vishay BAT41 data sheet, Rev. 2.1, 07-Nov-2024 (doc 85659), Electrical characteristics: VF at IF = 200 mA"
+      }
+    },
+    {
+      "quantity": "ir",
+      "conditions": {
+        "vr": 50.0
+      },
+      "simulated": 9.872e-09,
+      "datasheet": {
+        "max": 1e-07,
+        "source": "Vishay BAT41 data sheet, Rev. 2.1, 07-Nov-2024 (doc 85659), Electrical characteristics: IR at VR = 50 V, Tj = 25 °C"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 1.585e-06
+      },
+      "simulated": 0.138213,
+      "datasheet": {
+        "source": "Vishay BAT41 data sheet, Rev. 2.1, 07-Nov-2024 (doc 85659), Fig. 3 - Typical Forward Current vs. Forward Voltage, Tj = 25 °C (blue), read from the PDF's vector drawing",
+        "typ": 0.1381,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.001575
+      },
+      "simulated": 0.44401,
+      "datasheet": {
+        "source": "Vishay BAT41 data sheet, Rev. 2.1, 07-Nov-2024 (doc 85659), Fig. 3 - Typical Forward Current vs. Forward Voltage, Tj = 25 °C (blue), read from the PDF's vector drawing",
+        "typ": 0.4478,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.06301
+      },
+      "simulated": 0.849197,
+      "datasheet": {
+        "source": "Vishay BAT41 data sheet, Rev. 2.1, 07-Nov-2024 (doc 85659), Fig. 3 - Typical Forward Current vs. Forward Voltage, Tj = 25 °C (blue), read from the PDF's vector drawing",
+        "typ": 0.8509,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    }
+  ]
+}

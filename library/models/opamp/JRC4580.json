@@ -1,0 +1,126 @@
+{
+  "id": "JRC4580",
+  "type": "opamp",
+  "description": "JRC4580 (NJM4580) low-noise bipolar dual op-amp, ±18 V max (our model from Nisshinbo's sheet)",
+  "spice_name": "JRC4580",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "JRC4580.lib",
+  "manufacturer": "Nisshinbo (New Japan Radio)",
+  "source": {
+    "url": "https://www.nisshinbo-microdevices.co.jp/en/pdf/datasheet/NJM4580_E.pdf",
+    "retrieved": "2026-11-02",
+    "licence": "Our own model built from the maker's data sheet (D-162): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.nisshinbo-microdevices.co.jp/en/pdf/datasheet/NJM4580_E.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 3.0,
+    "cm_pos_headroom": 3.0,
+    "out_neg_headroom": 1.0,
+    "out_pos_headroom": 1.0
+  },
+  "rating_sources": {
+    "vs_max": "Nisshinbo Micro Devices NJM4580 data sheet (Ver. 20260723): vs_max ±18 V (Absolute Maximum Ratings); common-mode range VICM ±12 V min; output headroom about 1.0 V from each rail at RL = 10 kΩ, read off the Maximum Output Voltage vs. Load Resistance graph (the table gives ±13.5 V typ at RL ≥ 2 kΩ)",
+    "cm_neg_headroom": "Nisshinbo Micro Devices NJM4580 data sheet (Ver. 20260723): vs_max ±18 V (Absolute Maximum Ratings); common-mode range VICM ±12 V min; output headroom about 1.0 V from each rail at RL = 10 kΩ, read off the Maximum Output Voltage vs. Load Resistance graph (the table gives ±13.5 V typ at RL ≥ 2 kΩ)",
+    "cm_pos_headroom": "Nisshinbo Micro Devices NJM4580 data sheet (Ver. 20260723): vs_max ±18 V (Absolute Maximum Ratings); common-mode range VICM ±12 V min; output headroom about 1.0 V from each rail at RL = 10 kΩ, read off the Maximum Output Voltage vs. Load Resistance graph (the table gives ±13.5 V typ at RL ≥ 2 kΩ)",
+    "out_neg_headroom": "Nisshinbo Micro Devices NJM4580 data sheet (Ver. 20260723): vs_max ±18 V (Absolute Maximum Ratings); common-mode range VICM ±12 V min; output headroom about 1.0 V from each rail at RL = 10 kΩ, read off the Maximum Output Voltage vs. Load Resistance graph (the table gives ±13.5 V typ at RL ≥ 2 kΩ)",
+    "out_pos_headroom": "Nisshinbo Micro Devices NJM4580 data sheet (Ver. 20260723): vs_max ±18 V (Absolute Maximum Ratings); common-mode range VICM ±12 V min; output headroom about 1.0 V from each rail at RL = 10 kΩ, read off the Maximum Output Voltage vs. Load Resistance graph (the table gives ±13.5 V typ at RL ≥ 2 kΩ)"
+  },
+  "channels": 2,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "a.out": 1,
+      "a.-": 2,
+      "a.+": 3,
+      "V-": 4,
+      "b.+": 5,
+      "b.-": 6,
+      "b.out": 7,
+      "V+": 8
+    },
+    "source": "Nisshinbo Micro Devices NJM4580 data sheet (Ver. 20260723), pin configuration (DIP8, SOP8 and others the same)"
+  },
+  "fit": {
+    "sheet": "Nisshinbo Micro Devices NJM4580 data sheet (Ver. 20260723), at ±15 V; phase margin assumed (D-169)",
+    "figure": "Electrical characteristics at ±15 V: AV 110 dB typ, GB 15 MHz at 10 kHz, slew rate 5 V/µs, supply current 6 mA, VOM ±13.5 V typ at RL ≥ 2 kΩ; Maximum Output Voltage vs. Load Resistance graph, about ±14 V at 10 kΩ. No phase margin",
+    "points": [],
+    "method": "A small macromodel (scripts/fit_models.py opamp_card, D-162): a tanh transconductance stage limited to 10 µA into C1 sets the slew rate, gm the unity-gain crossing and R1 the open-loop gain; a second pole gives the phase margin; diode clamps and an output resistance set the swing; the supply current is drawn from the rails. The gain at 10 kHz held to the sheet's GB (the crossing set to 15 MHz × cos 30°); phase margin 60° assumed, as the user chose (D-169): the sheet's only phase data, a 40 dB closed-loop graph, fits a slower part (9.3 MHz, about 31°) that disagrees with its own table. Output resistance 93 Ω and clamps 0.87 V from each rail fitted to the 2 kΩ row and the 10 kΩ graph point.",
+    "note": "Input bias, offset, noise, common-mode limits and the output's current limit are not modelled: the input stage is ideal (1 TΩ)."
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "min": 90.0,
+        "typ": 110.0,
+        "source": "Nisshinbo Micro Devices NJM4580 data sheet (Ver. 20260723)",
+        "note": "AV 90 dB min, 110 dB typ, RL ≥ 2 kΩ, VO = ±10 V"
+      },
+      "simulated": 109.881
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "typ": 15000000.0,
+        "source": "Nisshinbo Micro Devices NJM4580 data sheet (Ver. 20260723)",
+        "note": "GB 15 MHz typ at f = 10 kHz (gain there times 10 kHz), held in the model; the sheet gives no phase margin, 60° assumed (the user, D-169), so the gain crosses 1 near 13 MHz. Its 40 dB gain/phase graph fits a slower part (9.3 MHz, ~31°)"
+      },
+      "simulated": 12893300.0
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 2000.0
+      },
+      "datasheet": {
+        "typ": 1.5,
+        "max": 3.0,
+        "source": "Nisshinbo Micro Devices NJM4580 data sheet (Ver. 20260723): VOM ±13.5 V typ, ±12 V min, RL ≥ 2 kΩ"
+      },
+      "simulated": 1.46929
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 2000.0
+      },
+      "datasheet": {
+        "typ": 1.5,
+        "max": 3.0,
+        "source": "Nisshinbo Micro Devices NJM4580 data sheet (Ver. 20260723): VOM ±13.5 V typ, ±12 V min, RL ≥ 2 kΩ"
+      },
+      "simulated": 1.46929
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "typ": 1.0,
+        "tol": 0.3,
+        "source": "Nisshinbo Micro Devices NJM4580 data sheet (Ver. 20260723): Maximum Output Voltage vs. Load Resistance graph, about +14.0 V at 10 kΩ (read off the figure)"
+      },
+      "simulated": 0.970581
+    }
+  ]
+}

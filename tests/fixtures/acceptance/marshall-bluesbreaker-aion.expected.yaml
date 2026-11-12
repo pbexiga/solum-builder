@@ -1,0 +1,106 @@
+# Expected values for library/starters/marshall-bluesbreaker-aion.json (D-019, D-213).
+# Refs follow Aion's Cerulean schematic, except the pots and switches, numbered as the app
+# numbers them: VR1 Drive, VR2 Tone, VR3 Volume; SW1 Clipping, SW2 Mode, SW3 the Gain DIP
+# (SW3A its switch 1, SW3B its switch 2). Aion's RPD is RPD1.
+circuit: marshall-bluesbreaker-aion
+source:
+  title: Aion FX, "Cerulean Amp Overdrive" kit build documentation 2.0.2 (2025-11-30), based on the Marshall Bluesbreaker
+  url: https://aionfx.com/app/files/docs/cerulean_kit_documentation.pdf
+  snapshot: http://web.archive.org/web/20251221232043/https://aionfx.com/app/files/docs/cerulean_kit_documentation.pdf
+  read: 2026-11-09
+  licence: Aion FX kit documentation (short quotes, for testing); kits may be built and sold, commercially too, without attribution (its Resale Terms)
+substitutions:
+  - >-
+    The circuit is the PCB document's schematic and parts list (2.0.1), with true bypass
+    (not drawn), without LED and LEDR. Drawn with Clipping at Soft ("soft clipping (stock
+    Bluesbreaker)"), Mode at V1 (the pre-1995 values, R4 27k and R6 33k) and the Gain DIP at
+    Normal ("In normal mode, it's equivalent to the stock Bluesbreaker circuit": position 1
+    on, 2 off, as its figure shows). C6 is drawn ("it's recommended to include it").
+  - >-
+    The Gain DIP is the app's 2-position DIP switch (D-238), its four settings named from
+    Aion's figure: High (both off), Normal (1 on), Medium (2 on), Normal (both on, "Position
+    1 overrides position 2").
+  - IC1 TL072, D1 1N5817, D2-D9 1N914 as listed.
+  - The supply is an ideal 9 V into D1, as the other starters'; the checks below run at the prototype's 9.6 V.
+
+# The kit document's benchmark readings: "The following voltages are taken from our
+# prototype unit using a 9.60V supply ... if you see anything more than +/-0.5V from the
+# listed voltages, it's a good indicator of an issue". Its tolerance is used as is. Every
+# pot and switch as drawn: none moves a DC level, the op-amps' inputs and outputs all
+# sitting at VB.
+checks:
+  - id: va
+    kind: dc
+    node: VA
+    supply: 9.6
+    volts: 8.91
+    tol: 0.5
+    from: text
+    quote: "IC1 … 8 8.91V"
+    note: Pin 8, V+ after D1 and R15.
+  - id: first-stage-output
+    kind: dc
+    node: IC1A.out
+    supply: 9.6
+    volts: 4.45
+    tol: 0.5
+    from: text
+    quote: "IC1 … 1 4.45V"
+  - id: first-stage-inverting-input
+    kind: dc
+    node: IC1A.-
+    supply: 9.6
+    volts: 4.45
+    tol: 0.5
+    from: text
+    quote: "IC1 … 2 4.45V"
+  - id: bias-reference
+    kind: dc
+    node: IC1B.+
+    supply: 9.6
+    volts: 4.45
+    tol: 0.5
+    from: text
+    quote: "IC1 … 5 4.45V"
+    note: Pin 5 is VB, R13 and R14 halving VA.
+  - id: second-stage-inverting-input
+    kind: dc
+    node: IC1B.-
+    supply: 9.6
+    volts: 4.45
+    tol: 0.5
+    from: text
+    quote: "IC1 … 6 4.45V"
+  - id: second-stage-output
+    kind: dc
+    node: IC1B.out
+    supply: 9.6
+    volts: 4.45
+    tol: 0.5
+    from: text
+    quote: "IC1 … 7 4.45V"
+
+omitted:
+  - what: "IC1 pin 3 (4.05V)"
+    why: >-
+      Fed from VB through R1 (1M), so a 10 MΩ meter loads it: VB x 10M / 11M is 4.05 V from
+      the kit's 4.45 V, its reading exactly. The circuit itself puts pin 3 at VB.
+  - what: "IC1 pin 4 (0V)"
+    why: Ground.
+  - what: Gains, clipping levels, frequency curves
+    why: >-
+      Neither Aion document publishes any, and ElectroSmash has no Bluesbreaker analysis.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  sources:
+    - title: Aion FX, "Cerulean Amp Overdrive" documentation 2.0.1 (2022-12-13)
+      url: https://aionfx.com/app/files/docs/cerulean_documentation.pdf
+      snapshot: http://web.archive.org/web/20251116102545/https://aionfx.com/app/files/docs/cerulean_documentation.pdf
+      read: 2026-11-09
+      licence: Aion FX project documentation (short quotes, for testing); the projects may be built, commercially too, without attribution (its License & Usage page)
+  parts:
+    - "The circuit and every value are from this document's schematic and parts list; the Gain DIP's settings from its build notes' figure."
+    - "Capacitor types from its parts list: C2 and C6 NP0/C0G (\"MLCC capacitor, NP0/C0G\"), C12 X7R (\"MLCC capacitor, X7R\"), C10 and C11 electrolytic, the rest film (\"Film capacitor\"), the 1µ C9 too (\"Film capacitor, 7.2 x 3.5mm\")."
+    - "The electrolytics' ratings aren't given: 16 V, the app's advice on a 9 V pedal."
+    - "Enclosure 125B (\"Enclosure, die-cast aluminum\")."

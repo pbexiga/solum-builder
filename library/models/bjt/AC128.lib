@@ -1,0 +1,3 @@
+* AC128 germanium PNP (hFE 55-175 at 50 mA), our fit to Valvo's sheet
+* Fitted by Solum Builder to Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), its mean curves (D-170)
+.model AC128 PNP(is=2.909e-05 nf=1.063 bf=107.8 ise=2.836e-07 ne=1.384 ikf=10 vaf=29 br=9.225 vje=0.75 mje=0.33 cjc=1.958e-10 vjc=0.75 mjc=0.33 tf=1.058e-07 nkf=0.9495 nr=1.063 rb=25 eg=0.67)

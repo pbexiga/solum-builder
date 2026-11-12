@@ -1,0 +1,18 @@
+id: diode-over-reverse
+layer: operating_point
+severity: error
+check: diode_over_reverse
+title: Diode over its reverse rating
+message: "{ref} is reverse biased by {volts}; the {model} is rated for {limit}."
+why: Past its reverse voltage rating a diode breaks down and conducts backwards, and can be damaged.
+fix: "Pick a diode for {ref} with a higher reverse voltage rating, or lower the supply."
+fixtures:
+  bad:
+    - rails: {V+: 100}
+      parts:
+        - {ref: D1, type: diode, nets: [GND, V+], model: 1N4148}
+      expect: [D1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: D1, type: diode, nets: [GND, V+], model: 1N4148}

@@ -1,0 +1,3 @@
+* PF5102 N-channel JFET (our model from Fairchild's sheet)
+* Built by Solum Builder from Fairchild PF5102 data sheet, Rev. B0 (2011) (D-161)
+.model PF5102 NJF(vto=-1.058 beta=0.007986 cgs=1e-11 cgd=6e-12)

@@ -1,0 +1,3 @@
+* 2N1308 germanium NPN (TI alloy junction, high-frequency computer switching; the 2N1309 is its PNP twin), our fit to TI's sheet
+* Fitted by Solum Builder to TI 2N1302-2N1309 data sheet (bulletin DL-S 1136, August 1959), its table's design centres and the family's design curves (germanium study, .claude/skills/fit-model/worked/germanium/NOTES.md)
+.model 2N1308 NPN(is=2.915e-06 nf=1.094 bf=360.6 ise=8.736e-08 ne=1.451 ikf=1.022 br=9.185 isc=2.04e-06 nc=4 rc=1.28 cje=1.958e-11 vje=0.75 mje=0.33 cjc=4.091e-11 vjc=0.6081 mjc=0.3176 tf=6.278e-09 nkf=0.8915 nr=1.094 eg=0.67)

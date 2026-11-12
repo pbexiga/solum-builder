@@ -1,0 +1,39 @@
+id: transistor-input-unbiased
+layer: topology
+severity: warning
+check: transistor_input_unbiased
+title: Transistor not biased
+message: "{ref}'s {pin} has no DC path to a set voltage."
+why: >
+  A transistor's base (or a JFET's or MOSFET's gate) needs a DC path that sets its
+  voltage. Fed only through capacitors it floats, and the stage sits wherever leakage puts it.
+fix: >
+  Add a bias resistor at {ref}'s {pin}: to ground for a JFET gate (1M to 2M2 is usual),
+  a divider for a MOSFET gate, or a divider or a resistor from the collector for a BJT
+  base.
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, g], value: 100n}
+        - {ref: Q1, type: jfet, nets: [d, g, GND], model: J201}
+        - {ref: R1, type: resistor, nets: [V+, d], value: 4k7}
+      expect: [Q1]
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, g], value: 100n}
+        - {ref: Q1, type: mosfet, nets: [d, g, GND], model: 2N7000}
+        - {ref: R1, type: resistor, nets: [V+, d], value: 4k7}
+      expect: [Q1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, g], value: 100n}
+        - {ref: R2, type: resistor, nets: [g, GND], value: 1M}
+        - {ref: Q1, type: jfet, nets: [d, g, GND], model: J201}
+        - {ref: R1, type: resistor, nets: [V+, d], value: 4k7}
+    - starter: big-muff-pi-v3
+    - starter: fuzz-face

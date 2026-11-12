@@ -1,0 +1,27 @@
+id: bjt-cut-off
+layer: operating_point
+severity: warning
+check: bjt_cut_off
+title: Transistor cut off
+message: "{ref} is cut off: no collector current flows."
+why: >
+  With its base-emitter junction not forward biased the transistor is off: small signals
+  vanish and big ones come out as half-waves.
+fix: >
+  Check {ref}'s base bias: it needs a DC path that holds the base about 0.6 V beyond the
+  emitter for silicon (less for germanium).
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: bjt, nets: [c, b, GND], model: 2N5089}
+        - {ref: R1, type: resistor, nets: [V+, c], value: 10k}
+        - {ref: R2, type: resistor, nets: [b, GND], value: 100k}
+      expect: [Q1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: bjt, nets: [c, b, GND], model: 2N5089}
+        - {ref: R1, type: resistor, nets: [V+, c], value: 10k}
+        - {ref: R2, type: resistor, nets: [c, b], value: 1M}
+    - starter: fuzz-face

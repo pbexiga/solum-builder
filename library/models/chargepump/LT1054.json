@@ -1,0 +1,61 @@
+{
+  "id": "LT1054",
+  "type": "chargepump",
+  "description": "LT1054 charge pump (bipolar, 100 mA, 25 kHz; lower output resistance, more quiescent current)",
+  "kind": "behavioural",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://www.ti.com/lit/ds/symlink/lt1054.pdf",
+    "retrieved": "2026-10-22",
+    "licence": "values read from the manufacturer's data sheet",
+    "original": "Texas Instruments"
+  },
+  "datasheet": "https://www.ti.com/lit/ds/symlink/lt1054.pdf",
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "cap+": 2,
+      "gnd": 3,
+      "cap-": 4,
+      "out": 5,
+      "in": 8
+    },
+    "source": "TI LT1054 data sheet SLVS033G (rev. July 2015), Pin Functions, PDIP: FB/SHDN 1, CAP+ 2, GND 3, CAP- 4, VOUT 5, VREF 6, OSC 7, VCC 8. The pump's caps and diodes are drawn parts (D-226)."
+  },
+  "note": "A behavioural model, not the chip's circuit: the figures read from the maker's sheet (pump frequency, output resistance, voltage drop, supply current) drive Solum Builder's own model of a charge pump, switching ripple included (D-093).",
+  "ratings": {
+    "vs_max": 16.0
+  },
+  "rating_sources": {
+    "vs_max": "Texas Instruments LT1054 data sheet, SLVS033G (rev. July 2015): Absolute Maximum Ratings, supply voltage 16 V for unregulated circuits (recommended 3.5 V to 15 V)"
+  },
+  "params": {
+    "f_pump": 25000.0,
+    "r_out": 10.0,
+    "v_drop": 0.25,
+    "i_q": 0.0025,
+    "c_pump": 0.0001
+  },
+  "param_sources": {
+    "f_pump": "Texas Instruments LT1054 data sheet, SLVS033G (rev. July 2015): oscillator 25 kHz typ (Electrical Characteristics, 15-35 kHz); the oscillator's Q and not-Q drive the switches directly (Functional Block Diagram), so the pump runs at the oscillator frequency",
+    "r_out": "Texas Instruments LT1054 data sheet, SLVS033G (rev. July 2015): output resistance 10 ohms typ, slope for I_O = 10 mA to 100 mA (Electrical Characteristics)",
+    "v_drop": "Texas Instruments LT1054 data sheet, SLVS033G (rev. July 2015): voltage loss 0.35 V typ at I_O = 10 mA (Electrical Characteristics, C_IN = C_OUT = 100 uF tantalum) less 10 mA x 10 ohms: the bipolar switches' own drop",
+    "i_q": "Texas Instruments LT1054 data sheet, SLVS033G (rev. July 2015): supply current 2.5 mA typ at I_O = 0, V_CC = 3.5 V (Electrical Characteristics)",
+    "c_pump": "Texas Instruments LT1054 data sheet, SLVS033G (rev. July 2015): CI = CO = 100 uF tantalum for the voltage loss tests (Electrical Characteristics; TI calls the flying cap CIN, from CAP+ to CAP-)"
+  },
+  "validation": [
+    {
+      "quantity": "vout",
+      "conditions": {
+        "supply": 7.0,
+        "load": 0.1
+      },
+      "simulated": -5.75,
+      "datasheet": {
+        "typ": -5.9,
+        "tol": 0.2,
+        "source": "Texas Instruments LT1054 data sheet, SLVS033G (rev. July 2015): voltage loss 1.1 V typ at I_O = 100 mA (Electrical Characteristics), so -5.9 V from 7 V"
+      }
+    }
+  ]
+}

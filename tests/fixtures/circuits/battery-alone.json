@@ -1,0 +1,114 @@
+{
+  "schema": 21,
+  "id": "battery-alone",
+  "name": "Battery alone",
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "IN",
+      "type": "guitar",
+      "pos": [
+        100,
+        100
+      ]
+    },
+    {
+      "ref": "R1",
+      "type": "resistor",
+      "pos": [
+        300,
+        100
+      ],
+      "value": "10k"
+    },
+    {
+      "ref": "R2",
+      "type": "resistor",
+      "pos": [
+        500,
+        100
+      ],
+      "value": "10k"
+    },
+    {
+      "ref": "BAT1",
+      "type": "battery",
+      "pos": [
+        700,
+        100
+      ],
+      "volts": 9
+    },
+    {
+      "ref": "OUT",
+      "type": "amp",
+      "pos": [
+        900,
+        100
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "in",
+      "pos": [
+        120,
+        100
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        280,
+        100
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        320,
+        100
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        480,
+        100
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        520,
+        100
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        700,
+        80
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        700,
+        120
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        880,
+        100
+      ]
+    }
+  ],
+  "probes": {}
+}

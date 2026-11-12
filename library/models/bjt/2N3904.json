@@ -1,0 +1,507 @@
+{
+  "id": "2N3904",
+  "type": "bjt",
+  "description": "2N3904 general-purpose NPN (switching and small-signal; pairs with the 2N3906), our fit to onsemi's sheet",
+  "spice_name": "2N3904",
+  "kind": "model",
+  "pins": [],
+  "card": "2N3904.lib",
+  "manufacturer": "onsemi",
+  "source": {
+    "url": "https://www.farnell.com/datasheets/3770732.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model fitted to the maker's data sheet (D-163): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.farnell.com/datasheets/3770732.pdf",
+  "fixes": [],
+  "ratings": {
+    "vceo": 40.0,
+    "ic": 0.2
+  },
+  "rating_sources": {
+    "vceo": "onsemi 2N3903/2N3904 data sheet, Rev. 9 (August 2021), Maximum Ratings: V_CEO 40 V",
+    "ic": "onsemi 2N3903/2N3904 data sheet, Rev. 9 (August 2021), Maximum Ratings: I_C 200 mA continuous"
+  },
+  "package": {
+    "name": "TO-92 (EBC)",
+    "pins": {
+      "E": 1,
+      "B": 2,
+      "C": 3
+    },
+    "source": "Diotec 2N3904 data sheet (version 2026-03-10), page 1 pin drawing"
+  },
+  "fit": {
+    "sheet": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D)",
+    "figure": "Figure 1. Typical Pulsed Current Gain vs. Collector Current (25 °C); Figure 4. Base-Emitter On Voltage vs. Collector Current (25 °C); Figure 2. Collector-Emitter Saturation Voltage vs. Collector Current (β = 10, 25 °C); Figure 6. Capacitance vs. Reverse Bias Voltage (Cibo); Figure 6 (Cobo); Figure 9 (Current Gain and Phase Angle vs. Frequency): |hfe| reaches 0 dB at 590 MHz, IC = 10 mA, VCE = 40 V; the table gives 300 MHz minimum at 20 V",
+    "points": [
+      [
+        0.0001,
+        231.4
+      ],
+      [
+        0.0002,
+        230.83424380715545
+      ],
+      [
+        0.0005,
+        230.08635480097772
+      ],
+      [
+        0.001,
+        229.52059860813318
+      ],
+      [
+        0.002,
+        228.95484241528862
+      ],
+      [
+        0.005,
+        226.90815575424583
+      ],
+      [
+        0.01,
+        222.72550152587417
+      ],
+      [
+        0.02,
+        214.38495200136808
+      ],
+      [
+        0.05,
+        193.67677016509583
+      ],
+      [
+        0.1,
+        159.1
+      ]
+    ],
+    "curves": {
+      "vbe_on": [
+        [
+          0.0001,
+          0.608
+        ],
+        [
+          0.0002,
+          0.6257935773019794
+        ],
+        [
+          0.0005,
+          0.6493154559043761
+        ],
+        [
+          0.001,
+          0.6671654596624719
+        ],
+        [
+          0.002,
+          0.6850132779981618
+        ],
+        [
+          0.005,
+          0.7085925982249753
+        ],
+        [
+          0.01,
+          0.7272648874271599
+        ],
+        [
+          0.02,
+          0.7463829812614562
+        ],
+        [
+          0.05,
+          0.7745083539082197
+        ],
+        [
+          0.1,
+          0.7968621706854159
+        ]
+      ],
+      "vce_sat": [
+        [
+          0.0001,
+          0.07621
+        ],
+        [
+          0.0002,
+          0.06950443737473443
+        ],
+        [
+          0.0005,
+          0.0604665206430602
+        ],
+        [
+          0.001,
+          0.05362832922361548
+        ],
+        [
+          0.002,
+          0.05060117220840229
+        ],
+        [
+          0.005,
+          0.051152750003581667
+        ],
+        [
+          0.01,
+          0.051570002498110404
+        ],
+        [
+          0.02,
+          0.05601858453682817
+        ],
+        [
+          0.05,
+          0.08719049173314537
+        ],
+        [
+          0.1,
+          0.1347
+        ]
+      ],
+      "cibo": [
+        [
+          0.09999,
+          4.291e-12
+        ],
+        [
+          0.1571,
+          4.258e-12
+        ],
+        [
+          0.2531,
+          4.2009999999999996e-12
+        ],
+        [
+          0.5508,
+          3.977e-12
+        ],
+        [
+          0.9992,
+          3.697e-12
+        ],
+        [
+          1.791,
+          3.3509999999999998e-12
+        ],
+        [
+          3.186,
+          3e-12
+        ],
+        [
+          5.659,
+          2.6829999999999998e-12
+        ],
+        [
+          8.011,
+          2.498e-12
+        ]
+      ],
+      "cobo": [
+        [
+          0.09999,
+          3.446e-12
+        ],
+        [
+          0.1855,
+          3.39e-12
+        ],
+        [
+          0.3021,
+          3.297e-12
+        ],
+        [
+          0.4889,
+          3.157e-12
+        ],
+        [
+          0.7517,
+          3e-12
+        ],
+        [
+          1.289,
+          2.735e-12
+        ],
+        [
+          2.025,
+          2.498e-12
+        ],
+        [
+          3.05,
+          2.267e-12
+        ],
+        [
+          4.991,
+          2e-12
+        ],
+        [
+          6.641,
+          1.853e-12
+        ],
+        [
+          8.219,
+          1.746e-12
+        ],
+        [
+          10.22,
+          1.635e-12
+        ],
+        [
+          12.43,
+          1.566e-12
+        ],
+        [
+          15.33,
+          1.4959999999999999e-12
+        ],
+        [
+          18.89,
+          1.4499999999999999e-12
+        ],
+        [
+          23.38,
+          1.419e-12
+        ],
+        [
+          29.22,
+          1.393e-12
+        ],
+        [
+          34.29,
+          1.3779999999999998e-12
+        ],
+        [
+          40.08,
+          1.3779999999999998e-12
+        ]
+      ]
+    },
+    "method": "Gummel-Poon (scripts/fit_models.py). IS, NF, BF, ISE, NE, IKF, NKF and RE by least squares on the hFE and VBE(on) curves at VCE = 5 V together (points: the curves read at 1-2-5 steps); VAF 105.1 V, from Figure 16 (Output Admittance): hoe 8.69 µS at 1 mA, VCE = 10 V, so VAF = IC/hoe − VCE. BR, ISC, NC and RC by least squares on the VCE(sat) curve, the hFE points held, NR = NF, at IC/IB = 10. CJE, VJE, MJE from Cibo and CJC, VJC, MJC from Cobo against reverse voltage. TF from fT 590 MHz at 10 mA (Figure 9 (Current Gain and Phase Angle vs. Frequency): |hfe| reaches 0 dB at 590 MHz, IC = 10 mA, VCE = 40 V; the table gives 300 MHz minimum at 20 V), less the junctions' charging time. Fitted curves are matched within 0.4 % (hFE), 0.9 mV (VBE) and 2.5 mV (VCE(sat)). RB, VAR, TR and the temperature terms are ngspice's defaults: the sheet doesn't pin them"
+  },
+  "validation": [
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.0001,
+        "vce": 1.0
+      },
+      "simulated": 222.256,
+      "datasheet": {
+        "min": 40.0,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Electrical Characteristics: hFE at IC = 0.1 mA, VCE = 1 V"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.001,
+        "vce": 1.0
+      },
+      "simulated": 221.421,
+      "datasheet": {
+        "min": 70.0,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Electrical Characteristics: hFE at IC = 1 mA, VCE = 1 V"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.01,
+        "vce": 1.0
+      },
+      "simulated": 214.341,
+      "datasheet": {
+        "min": 100.0,
+        "max": 300.0,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Electrical Characteristics: hFE at IC = 10 mA, VCE = 1 V"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.05,
+        "vce": 1.0
+      },
+      "simulated": 184.685,
+      "datasheet": {
+        "min": 60.0,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Electrical Characteristics: hFE at IC = 50 mA, VCE = 1 V"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.1,
+        "vce": 1.0
+      },
+      "simulated": 150.822,
+      "datasheet": {
+        "min": 30.0,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Electrical Characteristics: hFE at IC = 100 mA, VCE = 1 V"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.01,
+        "ib": 0.001
+      },
+      "simulated": 0.0509859,
+      "datasheet": {
+        "max": 0.2,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Electrical Characteristics: VCE(sat) at IC = 10 mA, IB = 1 mA"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.05,
+        "ib": 0.005
+      },
+      "simulated": 0.0860529,
+      "datasheet": {
+        "max": 0.3,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Electrical Characteristics: VCE(sat) at IC = 50 mA, IB = 5 mA"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.0003,
+        "vce": 5.0
+      },
+      "simulated": 230.467,
+      "datasheet": {
+        "typ": 230.5,
+        "tol": 11.5,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Figure 1. Typical Pulsed Current Gain vs. Collector Current (25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.0003,
+        "vce": 5.0
+      },
+      "simulated": 0.635962,
+      "datasheet": {
+        "typ": 0.6362,
+        "tol": 0.01,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Figure 4. Base-Emitter On Voltage vs. Collector Current (25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.0003,
+        "ib": 3e-05
+      },
+      "simulated": 0.0648497,
+      "datasheet": {
+        "typ": 0.0656,
+        "tol": 0.005,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Figure 2. Collector-Emitter Saturation Voltage vs. Collector Current (β = 10, 25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 5.0
+      },
+      "simulated": 228.238,
+      "datasheet": {
+        "typ": 228.3,
+        "tol": 11.4,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Figure 1. Typical Pulsed Current Gain vs. Collector Current (25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 5.0
+      },
+      "simulated": 0.695807,
+      "datasheet": {
+        "typ": 0.6954,
+        "tol": 0.01,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Figure 4. Base-Emitter On Voltage vs. Collector Current (25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.003,
+        "ib": 0.0003
+      },
+      "simulated": 0.0497033,
+      "datasheet": {
+        "typ": 0.0508,
+        "tol": 0.005,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Figure 2. Collector-Emitter Saturation Voltage vs. Collector Current (β = 10, 25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.03,
+        "vce": 5.0
+      },
+      "simulated": 207.633,
+      "datasheet": {
+        "typ": 206.8,
+        "tol": 10.3,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Figure 1. Typical Pulsed Current Gain vs. Collector Current (25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.03,
+        "vce": 5.0
+      },
+      "simulated": 0.758194,
+      "datasheet": {
+        "typ": 0.7586,
+        "tol": 0.01,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Figure 4. Base-Emitter On Voltage vs. Collector Current (25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.03,
+        "ib": 0.003
+      },
+      "simulated": 0.0673389,
+      "datasheet": {
+        "typ": 0.0649,
+        "tol": 0.005,
+        "source": "onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), Figure 2. Collector-Emitter Saturation Voltage vs. Collector Current (β = 10, 25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 233.8953,
+      "note": "Gain on the Geofex tester (D-130, D-153): 9 V, collector through 2.4 kΩ, 2.2 MΩ from base to supply; collector current less the leakage, over the base current. Where a measured transistor's form starts."
+    }
+  ]
+}

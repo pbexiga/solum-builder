@@ -1,0 +1,86 @@
+Big Muff Pi, representative netlist for `solum bench` (timing only)
+* NOT an acceptance fixture. Part values follow the ElectroSmash parts list for the
+* American V3 (https://www.electrosmash.com/big-muff-pi-analysis, read via the
+* mirror https://electrosmash.mas-effects.com/big-muff-pi-analysis.html); the wiring
+* is the standard four-stage topology. Pots are fixed at 50 %.
+* The Phase 1 acceptance version is authored from the schematic, with sources.
+* The bench appends the input source settings, .save lines and one analysis.
+
+VCC vcc 0 DC 9
+
+* Input booster (Q1)
+C1   in   n1   1u
+R2   n1   b1   39k
+R3   b1   0    100k
+R9   c1   b1   470k
+C10  c1   b1   470p
+R6   vcc  c1   15k
+R22  e1   0    100
+Q1   c1   b1   e1   Q2N5089
+
+* Sustain (100k lin at 50 %)
+C2   c1   s1   100n
+RS1  s1   sw   50k
+RS2  sw   0    50k
+C4   sw   n2   1u
+R23  n2   b2   1k
+
+* Clipping stage 1 (Q2)
+R11  b2   0    100k
+R15  c2   b2   470k
+C11  c2   b2   470p
+R12  vcc  c2   15k
+R21  e2   0    150
+C6   c2   d1   1u
+XD1  d1   b2   D1N4148
+XD2  b2   d1   D1N4148
+Q2   c2   b2   e2   Q2N5089
+
+* Clipping stage 2 (Q3)
+C5   c2   n3   100n
+R13  n3   b3   10k
+R20  b3   0    100k
+R17  c3   b3   470k
+C12  c3   b3   470p
+R18  vcc  c3   15k
+R10  e3   0    150
+C7   c3   d3   1u
+XD3  d3   b3   D1N4148
+XD4  b3   d3   D1N4148
+Q3   c3   b3   e3   Q2N5089
+
+* Tone stack (100k lin at 50 %)
+R8   c3   tl   39k
+C8   tl   0    10n
+C9   c3   th   4n
+R5   th   0    22k
+RT1  tl   tw   50k
+RT2  tw   th   50k
+
+* Output booster (Q4)
+C13  tw   b4   100n
+R14  vcc  b4   470k
+R16  b4   0    100k
+R19  vcc  c4   15k
+R4   e4   0    3.3k
+Q4   c4   b4   e4   Q2N5089
+
+* Volume (100k lin at 50 %) into a 1M amp input
+C3   c4   out  1u
+RV1  out  vw   50k
+RV2  vw   0    50k
+RL   vw   0    1Meg
+
+* 2N5089: Fairchild card as distributed in the KiCad Spice Library
+* (Models/Transistor/BJT/BJT.lib); LTspice-only Vceo/Icrating/mfg removed.
+.model Q2N5089 NPN(Is=5.911f Xti=3 Eg=1.11 Vaf=62.37 Bf=1.434K Ne=1.421 Ise=5.911f
++ Ikf=15.4m Xtb=1.5 Br=1.262 Nc=2 Isc=0 Ikr=0 Rc=1.61 Cjc=4.017p Mjc=.3174 Vjc=.75
++ Fc=.5 Cje=4.973p Mje=.4146 Vje=.75 Tr=4.671n Tf=822.3p Itf=.35 Vtf=4 Xtf=7 Rb=10)
+
+* 1N4148: NXP Semiconductors PSpice model (pins: anode, cathode)
+.SUBCKT D1N4148 1 2
+R1 1 2 5.827E+9
+D1 1 2 DN4148
+.MODEL DN4148 D(IS=4.352E-9 N=1.906 BV=110 IBV=0.0001 RS=0.6458 CJO=7.048E-13
++ VJ=0.869 M=0.03 FC=0.5 TT=3.48E-9)
+.ENDS

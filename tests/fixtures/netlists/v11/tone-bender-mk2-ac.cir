@@ -1,0 +1,41 @@
+* Tone Bender MkII (germanium)
+V_RAIL1 v_ 0 DC -9
+V_IN in 0 DC 0 AC 0.999996000016
+C1 in 0 1e-08
+C2 in q1_b 5e-06
+R1 q1_b 0 100000
+Q1 q1_c q1_b 0 OC81D_Q1
+I_Q1_leak q1_b q1_c DC 8.02225352113e-07
+R2 v_ q1_c 10000
+C3 q1_c q2_b 1e-07
+Q2 q2_c q2_b 0 OC81D_Q2
+I_Q2_leak q2_b q2_c DC -2.54112676056e-07
+R3 v_ q2_c 100000
+Q3 q3_c q2_c q3_e OC81D_Q3
+I_Q3_leak q2_c q3_c DC 3.16415841584e-07
+R4 c6_1 q3_c 8200
+R5 v_ c6_1 470
+C6 c6_1 c6_2 1e-08
+R_VR1_a 0 out 100000
+R_VR1_b out c6_2 1
+R6 q2_b q3_e 100000
+R_VR2_a 0 c5_2 1000
+R_VR2_b c5_2 q3_e 1
+C5 0 c5_2 5e-06
+R_OUT out 0 1000000
+* OC81D germanium PNP (Mullard, audio driver), estimated from our OC75 fit: no OC81D sheet
+* Estimated by Solum Builder (D-186): the OC75 card (D-184) scaled by the OC81D's row
+* against the OC75's in the transistor cross-reference book, page 242 (data/spec-sheets/Germanium_OC_crossref.pdf; datasheetarchive.com DSA841000-11):
+* base current x 55/20 (hFE min), CJC x 40/50 (Cob max), TF x 1/2 (fT min).
+.model OC81D PNP(is=1.654e-05 nf=1.029 bf=49.64 ise=8.283e-07 ne=1.295 ikf=0.291 vaf=22 br=3.844 re=2.377 vje=0.75 mje=0.33 cjc=8.256e-11 vjc=0.75 mjc=0.33 tf=8.775e-08 nkf=1 nr=1.029 eg=0.67)
+.model OC81D_Q1 PNP(is=1.654e-05 nf=1.029 bf=70 ise=5.87383028571e-07 ne=1.295 ikf=0.291
++ vaf=22 br=3.844 re=2.377 vje=0.75 mje=0.33 cjc=8.256e-11 vjc=0.75 mjc=0.33 tf=8.775e-08
++ nkf=1 nr=1.029 eg=0.67)
+.model OC81D_Q2 PNP(is=1.654e-05 nf=1.029 bf=70 ise=5.87383028571e-07 ne=1.295 ikf=0.291
++ vaf=22 br=3.844 re=2.377 vje=0.75 mje=0.33 cjc=8.256e-11 vjc=0.75 mjc=0.33 tf=8.775e-08
++ nkf=1 nr=1.029 eg=0.67)
+.model OC81D_Q3 PNP(is=1.654e-05 nf=1.029 bf=100 ise=4.1116812e-07 ne=1.295 ikf=0.291
++ vaf=22 br=3.844 re=2.377 vje=0.75 mje=0.33 cjc=8.256e-11 vjc=0.75 mjc=0.33 tf=8.775e-08
++ nkf=1 nr=1.029 eg=0.67)
+.ac dec 50 10 100000
+.end

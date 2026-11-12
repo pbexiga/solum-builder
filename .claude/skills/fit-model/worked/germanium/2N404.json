@@ -1,0 +1,273 @@
+{
+  "id": "2N404",
+  "type": "bjt",
+  "description": "2N404 germanium PNP (RCA alloy junction, medium-speed computer switching), our fit to RCA's sheet",
+  "spice_name": "2N404",
+  "kind": "model",
+  "pins": [],
+  "card": "2N404.lib",
+  "manufacturer": "RCA",
+  "source": {
+    "url": "https://bitsavers.mirrorservice.org/components/rca/SPD-100_RCA_Semiconductor_Products_Databook_1969/2N.pdf (RCA SPD-100, 1969; File No. 15, pages 39-44 extracted, kept as data/spec-sheets/2N404_RCA.pdf)",
+    "retrieved": "2026-11-03",
+    "licence": "Our own model fitted to the maker's data sheet (D-163): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "fixes": [],
+  "ratings": {
+    "vceo": 24.0,
+    "ic": 0.1
+  },
+  "rating_sources": {
+    "vceo": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 1: maximum ratings: VCEV (VEB = 1 V) -24 V (no VCEO given; VCBO -25 V)",
+    "ic": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 1: maximum ratings: collector current -100 mA"
+  },
+  "package": {
+    "name": "TO-5 (EBC)",
+    "pins": {
+      "E": 1,
+      "B": 2,
+      "C": 3
+    },
+    "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 6: terminal diagram (bottom view): lead 1 emitter, 2 base, 3 collector"
+  },
+  "fit": {
+    "sheet": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969)",
+    "figure": "page 2 table (typical hFE, VCE(sat), VBE(sat), ICBO, IEBO, fhfb, Cob); Fig. 2 minimum hFE, its shape to 30 mA; Figs. 3 and 4 minimum and maximum collector characteristics, their geometric middle's shape",
+    "points": [
+      [
+        0.012,
+        50.0
+      ],
+      [
+        0.024,
+        40.0
+      ],
+      [
+        0.02223976482094065,
+        44.4795296418813
+      ],
+      [
+        0.03840851691175548,
+        38.40851691175548
+      ],
+      [
+        0.054507092665208895,
+        27.253546332604447
+      ],
+      [
+        0.07074591854344085,
+        23.581972847813617
+      ],
+      [
+        0.09283424494661513,
+        23.208561236653782
+      ]
+    ],
+    "curves": {
+      "cobo": [
+        [
+          6.0,
+          1.2e-11
+        ]
+      ],
+      "vce_sat": [
+        [
+          0.012,
+          0.1
+        ],
+        [
+          0.024,
+          0.12
+        ]
+      ],
+      "vbe_sat": [
+        [
+          0.012,
+          0.25
+        ],
+        [
+          0.024,
+          0.32
+        ]
+      ]
+    },
+    "method": ".claude/skills/fit-model/worked/germanium/alloy.py: the table's typicals (x3 weight) with the shape of the middle of Figs. 3/4 (up to a free factor, 0.799), at the sheet's own VCE (0.15-0.68 V), leakage included; IS, NF, BF, ISE, NE, IKF, NKF, RE, BR, ISC, NC, RC free, NR = NF. Below the table's 12 mA the leakage-free gain is held flat (0.5 to 12 mA, its level free): the sheet's one lower figure, Fig. 2, contradicts the table (see the note). No rbb' on the sheet, so RB 0; no output curves above 0.7 V, so no VAF. CJC from Cob 12 pF at 6 V (one point), TF from fhfb 13 MHz taken as fT. Fitted points within 5.3 % (hFE), 11.2 mV (VCE(sat)) and 16.5 mV (VBE(sat)) of the table; ICBO 1.40 µA, IEBO 1.41 µA. Curves read off the raster by pixel (.claude/skills/fit-model/worked/germanium/pix.py)",
+    "note": "Our own fit by pixel from RCA's sheet. The sheet has no typical curves: the card is its table's typicals (12 and 24 mA, near saturation) with the shape of the middle of its minimum and maximum curves to 110 mA. Nothing on the sheet goes below 12 mA that agrees with the table (Fig. 2 contradicts it), so the gain is held flat below 12 mA: at a pedal's 0.3-2 mA, and on the tester, the figure is the card's extrapolation. Germanium units vary widely (hFE 30 min at 12 mA, no max): give a measured hFE and leakage (D-130)."
+  },
+  "validation": [
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.012,
+        "vce": 0.15
+      },
+      "simulated": 47.4307,
+      "datasheet": {
+        "min": 30.0,
+        "typ": 50.0,
+        "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 2: electrical characteristics at 25 °C, hFE at VCE -0.15 V, IC -12 mA: 30 min, 50 typ"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.024,
+        "vce": 0.2
+      },
+      "simulated": 41.9258,
+      "datasheet": {
+        "min": 24.0,
+        "typ": 40.0,
+        "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 2: electrical characteristics at 25 °C, hFE at VCE -0.2 V, IC -24 mA: 24 min, 40 typ"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.012,
+        "ib": 0.0004
+      },
+      "simulated": 0.107551,
+      "datasheet": {
+        "typ": 0.1,
+        "max": 0.15,
+        "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 2: electrical characteristics at 25 °C, VCE(sat) at IC -12 mA, IB -0.4 mA: 0.1 typ, 0.15 max V"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.024,
+        "ib": 0.001
+      },
+      "simulated": 0.131122,
+      "datasheet": {
+        "typ": 0.12,
+        "max": 0.2,
+        "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 2: electrical characteristics at 25 °C, VCE(sat) at IC -24 mA, IB -1 mA: 0.12 typ, 0.2 max V"
+      }
+    },
+    {
+      "quantity": "vbe_sat",
+      "conditions": {
+        "ic": 0.012,
+        "ib": 0.0004
+      },
+      "simulated": 0.255266,
+      "datasheet": {
+        "typ": 0.25,
+        "max": 0.35,
+        "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 2: electrical characteristics at 25 °C, VBE(sat) at IC -12 mA, IB -0.4 mA: 0.25 typ, 0.35 max V"
+      }
+    },
+    {
+      "quantity": "vbe_sat",
+      "conditions": {
+        "ic": 0.024,
+        "ib": 0.001
+      },
+      "simulated": 0.303447,
+      "datasheet": {
+        "typ": 0.32,
+        "max": 0.4,
+        "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 2: electrical characteristics at 25 °C, VBE(sat) at IC -24 mA, IB -1 mA: 0.32 typ, 0.4 max V"
+      }
+    },
+    {
+      "quantity": "icbo",
+      "conditions": {
+        "vcb": 12.0
+      },
+      "simulated": 1.40494e-06,
+      "datasheet": {
+        "typ": 2e-06,
+        "max": 5e-06,
+        "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 2: electrical characteristics at 25 °C, ICBO at VCB -12 V, IE 0: 2 typ, 5 max µA"
+      },
+      "note": "Fitted with the saturation and the IEBO; a measured unit's leakage replaces it (D-130)"
+    },
+    {
+      "quantity": "vbe_sat",
+      "conditions": {
+        "ic": 0.0125,
+        "ib": 0.0005
+      },
+      "simulated": 0.258529,
+      "datasheet": {
+        "min": 0.2569,
+        "max": 0.2989,
+        "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 4: Figs. 7 (maximum) and 8 (minimum) base characteristics, VBE against IC at fixed IB (by pixel)"
+      }
+    },
+    {
+      "quantity": "vbe_sat",
+      "conditions": {
+        "ic": 0.0125,
+        "ib": 0.001
+      },
+      "simulated": 0.263909,
+      "datasheet": {
+        "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 4: Figs. 7 (maximum) and 8 (minimum) base characteristics, VBE against IC at fixed IB (by pixel)",
+        "note": "Outside the sheet's line (min 276.1 mV, max 329.8 mV): the sheet gives no rbb', so RB is 0 (D-163) and VBE(sat) rises less with the base current than Figs. 7/8 draw: 12-16 mV under Fig. 8's minimum at IB 1-4 mA, under 1 mV at a pedal's base current"
+      }
+    },
+    {
+      "quantity": "vbe_sat",
+      "conditions": {
+        "ic": 0.0275,
+        "ib": 0.001
+      },
+      "simulated": 0.314321,
+      "datasheet": {
+        "min": 0.3016,
+        "max": 0.3639,
+        "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 4: Figs. 7 (maximum) and 8 (minimum) base characteristics, VBE against IC at fixed IB (by pixel)"
+      }
+    },
+    {
+      "quantity": "vbe_sat",
+      "conditions": {
+        "ic": 0.0275,
+        "ib": 0.002
+      },
+      "simulated": 0.320132,
+      "datasheet": {
+        "min": 0.3176,
+        "max": 0.3836,
+        "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 4: Figs. 7 (maximum) and 8 (minimum) base characteristics, VBE against IC at fixed IB (by pixel)"
+      }
+    },
+    {
+      "quantity": "vbe_sat",
+      "conditions": {
+        "ic": 0.0275,
+        "ib": 0.004
+      },
+      "simulated": 0.330373,
+      "datasheet": {
+        "source": "RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), page 4: Figs. 7 (maximum) and 8 (minimum) base characteristics, VBE against IC at fixed IB (by pixel)",
+        "note": "Outside the sheet's line (min 346.8 mV, max 428.3 mV): the sheet gives no rbb', so RB is 0 (D-163) and VBE(sat) rises less with the base current than Figs. 7/8 draw: 12-16 mV under Fig. 8's minimum at IB 1-4 mA, under 1 mV at a pedal's base current"
+      }
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 67.1476,
+      "note": "The card's own gain on the tester (where a measured form starts)"
+    },
+    {
+      "quantity": "iceo",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0
+      },
+      "simulated": 9.30015e-05,
+      "note": "The card's own leakage on the tester"
+    }
+  ]
+}

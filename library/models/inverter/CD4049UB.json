@@ -1,0 +1,154 @@
+{
+  "id": "CD4049UB",
+  "type": "inverter",
+  "description": "CD4049UB unbuffered hex CMOS inverter (our VDMOS pair fitted to TI's sheet)",
+  "spice_name": "CD4049UB_INV",
+  "kind": "subckt",
+  "pins": [
+    "in",
+    "out",
+    "V+",
+    "V-"
+  ],
+  "card": "CD4049UB.lib",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://www.ti.com/lit/ds/symlink/cd4049ub.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model built from the maker's data sheet (D-180): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.ti.com/lit/ds/symlink/cd4049ub.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 20.0
+  },
+  "rating_sources": {
+    "vs_max": "TI CD4049UB data sheet SCHS046L (August 1998, revised February 2026): Absolute Maximum Ratings, VCC −0.5 V to 20 V"
+  },
+  "validation": [
+    {
+      "quantity": "v_switch",
+      "conditions": {
+        "supply": 5.0
+      },
+      "simulated": 2.566260635,
+      "datasheet": {
+        "min": 1.096,
+        "max": 3.986,
+        "note": "Figure 5-1, minimum and maximum voltage transfer characteristics at VCC = 5 V, where each crosses VO = VI",
+        "source": "https://www.ti.com/lit/ds/symlink/cd4049ub.pdf"
+      }
+    },
+    {
+      "quantity": "v_switch",
+      "conditions": {
+        "supply": 9.0
+      },
+      "simulated": 3.930082402,
+      "note": "The pedal supply: where a biased stage (feedback resistor in to out) sits."
+    },
+    {
+      "quantity": "iol",
+      "conditions": {
+        "supply": 5.0,
+        "vout": 0.4
+      },
+      "simulated": 0.005562166,
+      "datasheet": {
+        "min": 0.0032,
+        "note": "IOL 3.2 mA min (6.4 typ), VCC = 5 V, VOUT = 0.4 V",
+        "source": "https://www.ti.com/lit/ds/symlink/cd4049ub.pdf"
+      }
+    },
+    {
+      "quantity": "iol",
+      "conditions": {
+        "supply": 15.0,
+        "vout": 1.5
+      },
+      "simulated": 0.055644889,
+      "datasheet": {
+        "min": 0.024,
+        "note": "IOL 24 mA min (48 typ), VCC = 15 V, VOUT = 1.5 V",
+        "source": "https://www.ti.com/lit/ds/symlink/cd4049ub.pdf"
+      }
+    },
+    {
+      "quantity": "ioh",
+      "conditions": {
+        "supply": 5.0,
+        "vout": 4.6
+      },
+      "simulated": 0.002198602,
+      "datasheet": {
+        "min": 0.00065,
+        "note": "IOH 0.65 mA min, VCC = 5 V, VOUT = 4.6 V (the table's typical is ignored: it sits on Figure 5-6's minimum curve)",
+        "source": "https://www.ti.com/lit/ds/symlink/cd4049ub.pdf"
+      }
+    },
+    {
+      "quantity": "ioh",
+      "conditions": {
+        "supply": 10.0,
+        "vout": 9.5
+      },
+      "simulated": 0.004000366,
+      "datasheet": {
+        "min": 0.00165,
+        "note": "IOH 1.65 mA min, VCC = 10 V, VOUT = 9.5 V",
+        "source": "https://www.ti.com/lit/ds/symlink/cd4049ub.pdf"
+      }
+    }
+  ],
+  "channels": 6,
+  "package": {
+    "name": "16-pin DIP (CD4049UBE)",
+    "pins": {
+      "V+": 1,
+      "a.out": 2,
+      "a.in": 3,
+      "b.out": 4,
+      "b.in": 5,
+      "c.out": 6,
+      "c.in": 7,
+      "V-": 8,
+      "d.in": 9,
+      "d.out": 10,
+      "e.in": 11,
+      "e.out": 12,
+      "f.in": 14,
+      "f.out": 15
+    },
+    "source": "TI CD4049UB data sheet SCHS046L (August 1998, revised February 2026), Figure 4-1 and Pin Functions (p.3): VCC 1, VSS 8; 13 and 16 not connected"
+  },
+  "fit": {
+    "sheet": "TI CD4049UB data sheet SCHS046L (August 1998, revised February 2026)",
+    "figure": "Figures 5-3 and 5-5, typical output sink and source current (p.12); Figure 5-7, voltage transfer characteristic (p.13); Figure 5-9, power per inverter",
+    "points": [
+      [
+        0.00603,
+        0.32
+      ],
+      [
+        0.01187,
+        0.78
+      ],
+      [
+        0.01609,
+        1.42
+      ],
+      [
+        0.01875,
+        2.31
+      ],
+      [
+        0.01969,
+        4.97
+      ]
+    ],
+    "method": "Two ngspice VDMOS (N and P), each source on its rail, fitted to the typical sink and source curves at 5, 10 and 15 V with the thresholds started from Figure 5-7's switching points; capacitances from Figure 5-9's power at 100 kHz; input protection diodes as the p.1 schematic, at ngspice's defaults. Scripts .claude/skills/fit-model/worked/cd4049/ (fit.py, write_lib.py, check.py).",
+    "note": "Figure 5-7 draws only −55 °C and 125 °C; 25 °C is taken 80/180 of the way between them. The table's typical IOH is ignored (it contradicts Figure 5-5 and the switching points). Every min/max line of the table is met; the typical curves within 20 % but at 5 V (sink −25 %, source +36 % at the ends). The small-signal gain (32 at 9 V) follows the drawn slope, the sheet has no gain figure; the model switches about twice as fast as the AC table's typicals (inside every max).",
+    "curves": {}
+  }
+}

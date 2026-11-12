@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 680 350" class="wiring" role="img" aria-labelledby="fs-title">
+  <title id="fs-title">3PDT footswitch, true bypass with a status LED, seen from the lugs</title>
+  <!-- rows: the effect's throw, the commons, the bypass throw; columns: the poles -->
+  <text class="w-note" x="20" y="104">effect throw</text>
+  <text class="w-note" x="20" y="174">commons</text>
+  <text class="w-note" x="20" y="244">bypass throw</text>
+  <text class="w-note" x="260" y="335" text-anchor="middle">input pole</text>
+  <text class="w-note" x="360" y="335" text-anchor="middle">LED pole</text>
+  <text class="w-note" x="460" y="335" text-anchor="middle">output pole</text>
+  <!-- wires -->
+  <path class="w-wire" d="M260 100 V40"/>
+  <text class="w-text" x="260" y="30" text-anchor="middle">to the board's input</text>
+  <path class="w-wire" d="M360 100 V62"/>
+  <text class="w-text" x="360" y="56" text-anchor="middle">LED cathode (−)</text>
+  <path class="w-wire" d="M460 100 V40"/>
+  <text class="w-text" x="460" y="30" text-anchor="middle">from the board's output</text>
+  <path class="w-wire" d="M260 170 H200"/>
+  <text class="w-text" x="194" y="166" text-anchor="end">input</text>
+  <text class="w-text" x="194" y="182" text-anchor="end">jack tip</text>
+  <path class="w-wire" d="M360 170 L405 135 H530"/>
+  <text class="w-text" x="536" y="139">ground</text>
+  <path class="w-wire" d="M460 170 H530"/>
+  <text class="w-text" x="536" y="174">output jack tip</text>
+  <path class="w-jumper" d="M260 240 Q360 290 460 240"/>
+  <text class="w-note" x="360" y="304" text-anchor="middle">bypass jumper</text>
+  <!-- lugs -->
+  <g class="w-lug">
+    <circle cx="260" cy="100" r="9"/><circle cx="360" cy="100" r="9"/><circle cx="460" cy="100" r="9"/>
+    <circle cx="260" cy="170" r="9"/><circle cx="360" cy="170" r="9"/><circle cx="460" cy="170" r="9"/>
+    <circle cx="260" cy="240" r="9"/><circle cx="360" cy="240" r="9"/><circle cx="460" cy="240" r="9"/>
+  </g>
+</svg>

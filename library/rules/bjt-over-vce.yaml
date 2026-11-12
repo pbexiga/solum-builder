@@ -1,0 +1,25 @@
+id: bjt-over-vce
+layer: operating_point
+severity: error
+check: bjt_over_vce
+title: Transistor over its voltage rating
+message: "{ref} has {vce} between collector and emitter; the {model} is rated for {limit}."
+why: >
+  Past its collector-emitter rating (Vceo) a transistor can break down and be damaged. A
+  stage that's switched off puts the whole supply across it, so a higher supply (18 V, a
+  charge pump) is where this bites.
+fix: "Lower the supply, or pick a transistor with a higher Vceo for {ref}."
+fixtures:
+  bad:
+    - rails: {V+: 30}
+      parts:
+        - {ref: Q1, type: bjt, nets: [c, b, GND], model: 2N5089}
+        - {ref: R1, type: resistor, nets: [V+, c], value: 10k}
+        - {ref: R2, type: resistor, nets: [b, GND], value: 100k}
+      expect: [Q1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: bjt, nets: [c, b, GND], model: 2N5089}
+        - {ref: R1, type: resistor, nets: [V+, c], value: 10k}
+        - {ref: R2, type: resistor, nets: [b, GND], value: 100k}

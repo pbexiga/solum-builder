@@ -1,0 +1,13 @@
+* Diode clipper to ground
+V_RAIL1 v_ 0 DC 9
+R1 in out 1000
+D1 out 0 1N4148
+D2 0 out 1N4148
+V_JIGIN in 0 DC 0
+R_JIGLOAD out 0 1000000
+* 1N4148 small-signal silicon diode (our fit to Diotec's and onsemi's sheets)
+* Fitted by Solum Builder to Diotec 1N4148, 1N4150, 1N4151, 1N4448 data sheet, Version 2023-08-17, Forward characteristics (typical values), Tj = 25 °C, from 2.4 mA (read from the PDF's vector drawing, centre of the drawn line) (D-156)
+.model 1N4148 D(is=2.32e-09 n=1.797 rs=0.2449 cjo=4e-12 bv=100 ibv=0.0001)
+.save all @d1[id] @d2[id]
+.op
+.end

@@ -1,0 +1,20 @@
+id: opamp-output-on-supply
+layer: topology
+severity: error
+check: opamp_output_on_supply
+title: Op-amp output on a supply
+message: "{ref}'s output is wired straight to {net}."
+why: >
+  An op-amp output drives its own voltage. Tied to a supply or ground it fights it: a real
+  op-amp overheats or limits its current, and nothing reaches the next stage.
+fix: "Disconnect {ref}'s output from {net} and feed it to the next stage through a capacitor or resistor."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, GND], value: 1M}
+        - {ref: U1, type: opamp, nets: [in, GND, GND], model: TL072}
+      expect: [U1]
+  good:
+    - starter: ts808

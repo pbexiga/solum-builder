@@ -1,0 +1,2183 @@
+{
+ "schema": 29,
+ "id": "klon-centaur",
+ "name": "Klon Centaur",
+ "version": {
+  "major": 1,
+  "minor": 0
+ },
+ "description": "Klon Centaur Professional Overdrive (1994) as ElectroSmash's analysis draws it: an input buffer, then a dual Gain pot that turns up a gain stage clipping into two 1N34A germaniums while it turns down two clean paths; a summing amp adds them, then Treble and Level. A MAX1044 doubles and inverts the 9 V to about 16 V and -8.6 V for the summing and treble amps. The buffered bypass path stays connected through R243, as in the pedal; the footswitch is drawn at effect on.",
+ "tags": [
+  "overdrive"
+ ],
+ "starter": true,
+ "power": {
+  "rails": {
+   "V+": 9.0
+  }
+ },
+ "parts": [
+  {
+   "ref": "C17",
+   "pos": [
+    60,
+    -360
+   ],
+   "type": "capacitor",
+   "value": "47µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0,
+   "rot": 90
+  },
+  {
+   "ref": "R29",
+   "pos": [
+    160,
+    -400
+   ],
+   "type": "resistor",
+   "value": "27k"
+  },
+  {
+   "ref": "R30",
+   "pos": [
+    220,
+    -360
+   ],
+   "type": "resistor",
+   "value": "27k",
+   "rot": 90
+  },
+  {
+   "ref": "C18",
+   "pos": [
+    280,
+    -360
+   ],
+   "type": "capacitor",
+   "value": "47µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0,
+   "rot": 90
+  },
+  {
+   "ref": "D4",
+   "pos": [
+    -60,
+    -360
+   ],
+   "type": "diode",
+   "model": "1N4742A",
+   "rot": 270
+  },
+  {
+   "ref": "U3",
+   "pos": [
+    540,
+    -400
+   ],
+   "type": "chargepump",
+   "model": "MAX1044"
+  },
+  {
+   "ref": "D7",
+   "pos": [
+    400,
+    -450
+   ],
+   "type": "diode",
+   "model": "1N4001",
+   "rot": 180
+  },
+  {
+   "ref": "D8",
+   "pos": [
+    300,
+    -450
+   ],
+   "type": "diode",
+   "model": "1N4001",
+   "rot": 180
+  },
+  {
+   "ref": "C20",
+   "pos": [
+    340,
+    -430
+   ],
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "electrolytic",
+   "rating_v": 25.0,
+   "rot": 90
+  },
+  {
+   "ref": "C22",
+   "pos": [
+    420,
+    -390
+   ],
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "electrolytic",
+   "rating_v": 25.0,
+   "rot": 90
+  },
+  {
+   "ref": "C21",
+   "pos": [
+    680,
+    -360
+   ],
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "electrolytic",
+   "rating_v": 25.0,
+   "rot": 90
+  },
+  {
+   "ref": "C19",
+   "pos": [
+    740,
+    -360
+   ],
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0,
+   "rot": 90
+  },
+  {
+   "ref": "U1C",
+   "pos": [
+    840,
+    -380
+   ],
+   "type": "powerunit",
+   "model": "TL072"
+  },
+  {
+   "ref": "U2C",
+   "pos": [
+    920,
+    -380
+   ],
+   "type": "powerunit",
+   "model": "TL072"
+  },
+  {
+   "ref": "R1",
+   "pos": [
+    80,
+    0
+   ],
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "C1",
+   "pos": [
+    140,
+    0
+   ],
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "R2",
+   "pos": [
+    180,
+    -40
+   ],
+   "type": "resistor",
+   "value": "1M",
+   "rot": 90
+  },
+  {
+   "ref": "U1A",
+   "pos": [
+    240,
+    -20
+   ],
+   "type": "opamp",
+   "model": "TL072",
+   "half": "a"
+  },
+  {
+   "ref": "C3",
+   "pos": [
+    340,
+    -20
+   ],
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "R6",
+   "pos": [
+    420,
+    -20
+   ],
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "C5",
+   "pos": [
+    420,
+    -80
+   ],
+   "type": "capacitor",
+   "value": "68n",
+   "kind": "film"
+  },
+  {
+   "ref": "R7",
+   "pos": [
+    420,
+    -200
+   ],
+   "type": "resistor",
+   "value": "1k5"
+  },
+  {
+   "ref": "C16",
+   "pos": [
+    460,
+    -160
+   ],
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "film",
+   "rot": 90
+  },
+  {
+   "ref": "R19",
+   "pos": [
+    500,
+    -200
+   ],
+   "type": "resistor",
+   "value": "15k"
+  },
+  {
+   "ref": "VR1A",
+   "pos": [
+    560,
+    -100
+   ],
+   "type": "pot",
+   "value": "100k",
+   "taper": "B",
+   "rotation": 0.5,
+   "label": "Gain",
+   "gang": "a"
+  },
+  {
+   "ref": "R10",
+   "pos": [
+    620,
+    -100
+   ],
+   "type": "resistor",
+   "value": "2k"
+  },
+  {
+   "ref": "R11",
+   "pos": [
+    680,
+    -100
+   ],
+   "type": "resistor",
+   "value": "15k"
+  },
+  {
+   "ref": "C7",
+   "pos": [
+    680,
+    -160
+   ],
+   "type": "capacitor",
+   "value": "82n",
+   "kind": "film"
+  },
+  {
+   "ref": "R12",
+   "pos": [
+    780,
+    -100
+   ],
+   "type": "resistor",
+   "value": "422k"
+  },
+  {
+   "ref": "C8",
+   "pos": [
+    780,
+    -160
+   ],
+   "type": "capacitor",
+   "value": "390p",
+   "kind": "c0g"
+  },
+  {
+   "ref": "U1B",
+   "pos": [
+    760,
+    0
+   ],
+   "type": "opamp",
+   "model": "TL072",
+   "half": "b"
+  },
+  {
+   "ref": "C9",
+   "pos": [
+    880,
+    0
+   ],
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "film"
+  },
+  {
+   "ref": "R13",
+   "pos": [
+    940,
+    0
+   ],
+   "type": "resistor",
+   "value": "1k"
+  },
+  {
+   "ref": "D3",
+   "pos": [
+    1040,
+    40
+   ],
+   "type": "diode",
+   "model": "1N34A",
+   "rot": 90
+  },
+  {
+   "ref": "D2",
+   "pos": [
+    960,
+    40
+   ],
+   "type": "diode",
+   "model": "1N34A",
+   "rot": 270
+  },
+  {
+   "ref": "C10",
+   "pos": [
+    1080,
+    0
+   ],
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "film"
+  },
+  {
+   "ref": "R16",
+   "pos": [
+    1160,
+    0
+   ],
+   "type": "resistor",
+   "value": "47k"
+  },
+  {
+   "ref": "C11",
+   "pos": [
+    1120,
+    60
+   ],
+   "type": "capacitor",
+   "value": "2n2",
+   "kind": "film",
+   "rot": 90
+  },
+  {
+   "ref": "R15",
+   "pos": [
+    1120,
+    140
+   ],
+   "type": "resistor",
+   "value": "22k",
+   "rot": 90
+  },
+  {
+   "ref": "R5",
+   "pos": [
+    300,
+    300
+   ],
+   "type": "resistor",
+   "value": "5k1",
+   "rot": 90
+  },
+  {
+   "ref": "C4",
+   "pos": [
+    360,
+    300
+   ],
+   "type": "capacitor",
+   "value": "68n",
+   "kind": "film",
+   "rot": 90
+  },
+  {
+   "ref": "R8",
+   "pos": [
+    300,
+    380
+   ],
+   "type": "resistor",
+   "value": "1k5",
+   "rot": 90
+  },
+  {
+   "ref": "C6",
+   "pos": [
+    360,
+    380
+   ],
+   "type": "capacitor",
+   "value": "390n",
+   "kind": "film",
+   "rot": 90
+  },
+  {
+   "ref": "R9",
+   "pos": [
+    360,
+    440
+   ],
+   "type": "resistor",
+   "value": "1k",
+   "rot": 90
+  },
+  {
+   "ref": "VR1B",
+   "pos": [
+    440,
+    340
+   ],
+   "type": "pot",
+   "value": "100k",
+   "taper": "B",
+   "rotation": 0.5,
+   "label": "Gain",
+   "gang": "b"
+  },
+  {
+   "ref": "R17",
+   "pos": [
+    1220,
+    140
+   ],
+   "type": "resistor",
+   "value": "27k",
+   "rot": 90
+  },
+  {
+   "ref": "C12",
+   "pos": [
+    1280,
+    80
+   ],
+   "type": "capacitor",
+   "value": "27n",
+   "kind": "film",
+   "rot": 90
+  },
+  {
+   "ref": "R18",
+   "pos": [
+    1280,
+    140
+   ],
+   "type": "resistor",
+   "value": "12k",
+   "rot": 90
+  },
+  {
+   "ref": "U2A",
+   "pos": [
+    1360,
+    20
+   ],
+   "type": "opamp",
+   "model": "TL072",
+   "half": "a"
+  },
+  {
+   "ref": "R20",
+   "pos": [
+    1360,
+    -60
+   ],
+   "type": "resistor",
+   "value": "392k"
+  },
+  {
+   "ref": "C13",
+   "pos": [
+    1360,
+    -120
+   ],
+   "type": "capacitor",
+   "value": "820p",
+   "kind": "c0g"
+  },
+  {
+   "ref": "R22",
+   "pos": [
+    1520,
+    20
+   ],
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "U2B",
+   "pos": [
+    1700,
+    40
+   ],
+   "type": "opamp",
+   "model": "TL072",
+   "half": "b"
+  },
+  {
+   "ref": "R24",
+   "pos": [
+    1680,
+    -40
+   ],
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "R21",
+   "pos": [
+    1480,
+    220
+   ],
+   "type": "resistor",
+   "value": "1k8"
+  },
+  {
+   "ref": "VR2",
+   "pos": [
+    1560,
+    160
+   ],
+   "type": "pot",
+   "value": "10k",
+   "taper": "B",
+   "rotation": 0.5,
+   "label": "Treble",
+   "rot": 90
+  },
+  {
+   "ref": "R23",
+   "pos": [
+    1660,
+    120
+   ],
+   "type": "resistor",
+   "value": "4k7"
+  },
+  {
+   "ref": "C14",
+   "pos": [
+    1600,
+    80
+   ],
+   "type": "capacitor",
+   "value": "3n9",
+   "kind": "film",
+   "rot": 90
+  },
+  {
+   "ref": "C15",
+   "pos": [
+    1800,
+    40
+   ],
+   "type": "capacitor",
+   "value": "4.7µ",
+   "kind": "electrolytic",
+   "rating_v": 25.0
+  },
+  {
+   "ref": "R25",
+   "pos": [
+    1860,
+    40
+   ],
+   "type": "resistor",
+   "value": "560"
+  },
+  {
+   "ref": "VR3",
+   "pos": [
+    1900,
+    80
+   ],
+   "type": "pot",
+   "value": "10k",
+   "taper": "B",
+   "rotation": 0.5,
+   "label": "Level",
+   "rot": 270
+  },
+  {
+   "ref": "OUT",
+   "pos": [
+    2000,
+    120
+   ],
+   "type": "amp"
+  },
+  {
+   "ref": "IN",
+   "type": "guitar",
+   "volume": "250k"
+  },
+  {
+   "ref": "C2",
+   "pos": [
+    1720,
+    240
+   ],
+   "type": "capacitor",
+   "value": "4.7µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "R3",
+   "pos": [
+    1760,
+    280
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "R4",
+   "pos": [
+    1800,
+    240
+   ],
+   "type": "resistor",
+   "value": "560"
+  },
+  {
+   "ref": "R243",
+   "pos": [
+    1880,
+    240
+   ],
+   "type": "resistor",
+   "value": "68k"
+  },
+  {
+   "ref": "R28",
+   "pos": [
+    1960,
+    160
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100k"
+  }
+ ],
+ "wires": [
+  {
+   "from": [
+    0,
+    -400
+   ],
+   "to": [
+    140,
+    -400
+   ]
+  },
+  {
+   "from": [
+    60,
+    -400
+   ],
+   "to": [
+    60,
+    -380
+   ]
+  },
+  {
+   "from": [
+    0,
+    -400
+   ],
+   "to": [
+    -60,
+    -400
+   ]
+  },
+  {
+   "from": [
+    -60,
+    -400
+   ],
+   "to": [
+    -60,
+    -380
+   ]
+  },
+  {
+   "from": [
+    180,
+    -400
+   ],
+   "to": [
+    280,
+    -400
+   ]
+  },
+  {
+   "from": [
+    220,
+    -400
+   ],
+   "to": [
+    220,
+    -380
+   ]
+  },
+  {
+   "from": [
+    280,
+    -400
+   ],
+   "to": [
+    280,
+    -380
+   ]
+  },
+  {
+   "from": [
+    380,
+    -450
+   ],
+   "to": [
+    320,
+    -450
+   ]
+  },
+  {
+   "from": [
+    340,
+    -410
+   ],
+   "to": [
+    500,
+    -410
+   ]
+  },
+  {
+   "from": [
+    420,
+    -370
+   ],
+   "to": [
+    500,
+    -370
+   ]
+  },
+  {
+   "from": [
+    20,
+    0
+   ],
+   "to": [
+    60,
+    0
+   ]
+  },
+  {
+   "from": [
+    100,
+    0
+   ],
+   "to": [
+    120,
+    0
+   ]
+  },
+  {
+   "from": [
+    160,
+    0
+   ],
+   "to": [
+    200,
+    0
+   ]
+  },
+  {
+   "from": [
+    180,
+    -20
+   ],
+   "to": [
+    180,
+    0
+   ]
+  },
+  {
+   "from": [
+    200,
+    -40
+   ],
+   "to": [
+    200,
+    -80
+   ]
+  },
+  {
+   "from": [
+    200,
+    -80
+   ],
+   "to": [
+    300,
+    -80
+   ]
+  },
+  {
+   "from": [
+    300,
+    -80
+   ],
+   "to": [
+    300,
+    -20
+   ]
+  },
+  {
+   "from": [
+    280,
+    -20
+   ],
+   "to": [
+    300,
+    -20
+   ]
+  },
+  {
+   "from": [
+    300,
+    -20
+   ],
+   "to": [
+    320,
+    -20
+   ]
+  },
+  {
+   "from": [
+    360,
+    -20
+   ],
+   "to": [
+    400,
+    -20
+   ]
+  },
+  {
+   "from": [
+    380,
+    -20
+   ],
+   "to": [
+    380,
+    -80
+   ]
+  },
+  {
+   "from": [
+    380,
+    -80
+   ],
+   "to": [
+    400,
+    -80
+   ]
+  },
+  {
+   "from": [
+    440,
+    -80
+   ],
+   "to": [
+    460,
+    -80
+   ]
+  },
+  {
+   "from": [
+    460,
+    -80
+   ],
+   "to": [
+    460,
+    -20
+   ]
+  },
+  {
+   "from": [
+    440,
+    -20
+   ],
+   "to": [
+    460,
+    -20
+   ]
+  },
+  {
+   "from": [
+    380,
+    -80
+   ],
+   "to": [
+    380,
+    -200
+   ]
+  },
+  {
+   "from": [
+    380,
+    -200
+   ],
+   "to": [
+    400,
+    -200
+   ]
+  },
+  {
+   "from": [
+    440,
+    -200
+   ],
+   "to": [
+    460,
+    -200
+   ]
+  },
+  {
+   "from": [
+    460,
+    -200
+   ],
+   "to": [
+    460,
+    -180
+   ]
+  },
+  {
+   "from": [
+    460,
+    -200
+   ],
+   "to": [
+    480,
+    -200
+   ]
+  },
+  {
+   "from": [
+    520,
+    -200
+   ],
+   "to": [
+    1220,
+    -200
+   ]
+  },
+  {
+   "from": [
+    1220,
+    -200
+   ],
+   "to": [
+    1220,
+    0
+   ]
+  },
+  {
+   "from": [
+    460,
+    -20
+   ],
+   "to": [
+    460,
+    20
+   ]
+  },
+  {
+   "from": [
+    460,
+    20
+   ],
+   "to": [
+    720,
+    20
+   ]
+  },
+  {
+   "from": [
+    540,
+    -100
+   ],
+   "to": [
+    540,
+    20
+   ]
+  },
+  {
+   "from": [
+    580,
+    -100
+   ],
+   "to": [
+    600,
+    -100
+   ]
+  },
+  {
+   "from": [
+    640,
+    -100
+   ],
+   "to": [
+    660,
+    -100
+   ]
+  },
+  {
+   "from": [
+    640,
+    -100
+   ],
+   "to": [
+    640,
+    -160
+   ]
+  },
+  {
+   "from": [
+    640,
+    -160
+   ],
+   "to": [
+    660,
+    -160
+   ]
+  },
+  {
+   "from": [
+    700,
+    -160
+   ],
+   "to": [
+    720,
+    -160
+   ]
+  },
+  {
+   "from": [
+    700,
+    -100
+   ],
+   "to": [
+    720,
+    -100
+   ]
+  },
+  {
+   "from": [
+    720,
+    -160
+   ],
+   "to": [
+    720,
+    -100
+   ]
+  },
+  {
+   "from": [
+    720,
+    -100
+   ],
+   "to": [
+    720,
+    -20
+   ]
+  },
+  {
+   "from": [
+    720,
+    -160
+   ],
+   "to": [
+    760,
+    -160
+   ]
+  },
+  {
+   "from": [
+    720,
+    -100
+   ],
+   "to": [
+    760,
+    -100
+   ]
+  },
+  {
+   "from": [
+    800,
+    -160
+   ],
+   "to": [
+    840,
+    -160
+   ]
+  },
+  {
+   "from": [
+    840,
+    -160
+   ],
+   "to": [
+    840,
+    0
+   ]
+  },
+  {
+   "from": [
+    800,
+    -100
+   ],
+   "to": [
+    840,
+    -100
+   ]
+  },
+  {
+   "from": [
+    800,
+    0
+   ],
+   "to": [
+    840,
+    0
+   ]
+  },
+  {
+   "from": [
+    840,
+    0
+   ],
+   "to": [
+    860,
+    0
+   ]
+  },
+  {
+   "from": [
+    900,
+    0
+   ],
+   "to": [
+    920,
+    0
+   ]
+  },
+  {
+   "from": [
+    960,
+    0
+   ],
+   "to": [
+    1060,
+    0
+   ]
+  },
+  {
+   "from": [
+    1040,
+    0
+   ],
+   "to": [
+    1040,
+    20
+   ]
+  },
+  {
+   "from": [
+    960,
+    0
+   ],
+   "to": [
+    960,
+    20
+   ]
+  },
+  {
+   "from": [
+    1100,
+    0
+   ],
+   "to": [
+    1140,
+    0
+   ]
+  },
+  {
+   "from": [
+    1120,
+    0
+   ],
+   "to": [
+    1120,
+    40
+   ]
+  },
+  {
+   "from": [
+    1120,
+    80
+   ],
+   "to": [
+    1120,
+    120
+   ]
+  },
+  {
+   "from": [
+    1120,
+    160
+   ],
+   "to": [
+    1120,
+    200
+   ]
+  },
+  {
+   "from": [
+    300,
+    -20
+   ],
+   "to": [
+    300,
+    280
+   ]
+  },
+  {
+   "from": [
+    300,
+    260
+   ],
+   "to": [
+    360,
+    260
+   ]
+  },
+  {
+   "from": [
+    360,
+    260
+   ],
+   "to": [
+    360,
+    280
+   ]
+  },
+  {
+   "from": [
+    300,
+    320
+   ],
+   "to": [
+    300,
+    340
+   ]
+  },
+  {
+   "from": [
+    300,
+    340
+   ],
+   "to": [
+    360,
+    340
+   ]
+  },
+  {
+   "from": [
+    360,
+    340
+   ],
+   "to": [
+    360,
+    320
+   ]
+  },
+  {
+   "from": [
+    300,
+    340
+   ],
+   "to": [
+    300,
+    360
+   ]
+  },
+  {
+   "from": [
+    360,
+    340
+   ],
+   "to": [
+    360,
+    360
+   ]
+  },
+  {
+   "from": [
+    360,
+    400
+   ],
+   "to": [
+    360,
+    420
+   ]
+  },
+  {
+   "from": [
+    360,
+    340
+   ],
+   "to": [
+    420,
+    340
+   ]
+  },
+  {
+   "from": [
+    440,
+    320
+   ],
+   "to": [
+    440,
+    200
+   ]
+  },
+  {
+   "from": [
+    440,
+    200
+   ],
+   "to": [
+    1280,
+    200
+   ]
+  },
+  {
+   "from": [
+    1180,
+    0
+   ],
+   "to": [
+    1320,
+    0
+   ]
+  },
+  {
+   "from": [
+    1220,
+    0
+   ],
+   "to": [
+    1220,
+    120
+   ]
+  },
+  {
+   "from": [
+    1220,
+    40
+   ],
+   "to": [
+    1280,
+    40
+   ]
+  },
+  {
+   "from": [
+    1280,
+    40
+   ],
+   "to": [
+    1280,
+    60
+   ]
+  },
+  {
+   "from": [
+    1280,
+    100
+   ],
+   "to": [
+    1280,
+    120
+   ]
+  },
+  {
+   "from": [
+    1220,
+    160
+   ],
+   "to": [
+    1220,
+    200
+   ]
+  },
+  {
+   "from": [
+    1280,
+    160
+   ],
+   "to": [
+    1280,
+    200
+   ]
+  },
+  {
+   "from": [
+    1300,
+    0
+   ],
+   "to": [
+    1300,
+    -120
+   ]
+  },
+  {
+   "from": [
+    1300,
+    -120
+   ],
+   "to": [
+    1340,
+    -120
+   ]
+  },
+  {
+   "from": [
+    1300,
+    -60
+   ],
+   "to": [
+    1340,
+    -60
+   ]
+  },
+  {
+   "from": [
+    1380,
+    -120
+   ],
+   "to": [
+    1420,
+    -120
+   ]
+  },
+  {
+   "from": [
+    1420,
+    -120
+   ],
+   "to": [
+    1420,
+    20
+   ]
+  },
+  {
+   "from": [
+    1380,
+    -60
+   ],
+   "to": [
+    1420,
+    -60
+   ]
+  },
+  {
+   "from": [
+    1400,
+    20
+   ],
+   "to": [
+    1420,
+    20
+   ]
+  },
+  {
+   "from": [
+    1420,
+    20
+   ],
+   "to": [
+    1500,
+    20
+   ]
+  },
+  {
+   "from": [
+    1540,
+    20
+   ],
+   "to": [
+    1660,
+    20
+   ]
+  },
+  {
+   "from": [
+    1600,
+    20
+   ],
+   "to": [
+    1600,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1600,
+    -40
+   ],
+   "to": [
+    1660,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1700,
+    -40
+   ],
+   "to": [
+    1760,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1760,
+    -40
+   ],
+   "to": [
+    1760,
+    40
+   ]
+  },
+  {
+   "from": [
+    1740,
+    40
+   ],
+   "to": [
+    1760,
+    40
+   ]
+  },
+  {
+   "from": [
+    1440,
+    20
+   ],
+   "to": [
+    1440,
+    220
+   ]
+  },
+  {
+   "from": [
+    1440,
+    220
+   ],
+   "to": [
+    1460,
+    220
+   ]
+  },
+  {
+   "from": [
+    1500,
+    220
+   ],
+   "to": [
+    1560,
+    220
+   ]
+  },
+  {
+   "from": [
+    1560,
+    220
+   ],
+   "to": [
+    1560,
+    180
+   ]
+  },
+  {
+   "from": [
+    1560,
+    140
+   ],
+   "to": [
+    1560,
+    120
+   ]
+  },
+  {
+   "from": [
+    1560,
+    120
+   ],
+   "to": [
+    1640,
+    120
+   ]
+  },
+  {
+   "from": [
+    1680,
+    120
+   ],
+   "to": [
+    1760,
+    120
+   ]
+  },
+  {
+   "from": [
+    1760,
+    120
+   ],
+   "to": [
+    1760,
+    40
+   ]
+  },
+  {
+   "from": [
+    1580,
+    160
+   ],
+   "to": [
+    1600,
+    160
+   ]
+  },
+  {
+   "from": [
+    1600,
+    160
+   ],
+   "to": [
+    1600,
+    100
+   ]
+  },
+  {
+   "from": [
+    1600,
+    60
+   ],
+   "to": [
+    1600,
+    20
+   ]
+  },
+  {
+   "from": [
+    1760,
+    40
+   ],
+   "to": [
+    1780,
+    40
+   ]
+  },
+  {
+   "from": [
+    1820,
+    40
+   ],
+   "to": [
+    1840,
+    40
+   ]
+  },
+  {
+   "from": [
+    1880,
+    40
+   ],
+   "to": [
+    1900,
+    40
+   ]
+  },
+  {
+   "from": [
+    1900,
+    40
+   ],
+   "to": [
+    1900,
+    60
+   ]
+  },
+  {
+   "from": [
+    1880,
+    80
+   ],
+   "to": [
+    1880,
+    120
+   ]
+  },
+  {
+   "from": [
+    1880,
+    120
+   ],
+   "to": [
+    1980,
+    120
+   ]
+  },
+  {
+   "from": [
+    580,
+    -430
+   ],
+   "to": [
+    580,
+    -450
+   ]
+  },
+  {
+   "from": [
+    500,
+    -430
+   ],
+   "to": [
+    500,
+    -450
+   ]
+  },
+  {
+   "from": [
+    300,
+    -80
+   ],
+   "to": [
+    300,
+    -100
+   ]
+  },
+  {
+   "from": [
+    1740,
+    240
+   ],
+   "to": [
+    1780,
+    240
+   ]
+  },
+  {
+   "from": [
+    1760,
+    240
+   ],
+   "to": [
+    1760,
+    260
+   ]
+  },
+  {
+   "from": [
+    1820,
+    240
+   ],
+   "to": [
+    1860,
+    240
+   ]
+  },
+  {
+   "from": [
+    1900,
+    240
+   ],
+   "to": [
+    1920,
+    240
+   ]
+  },
+  {
+   "from": [
+    1920,
+    240
+   ],
+   "to": [
+    1920,
+    120
+   ]
+  },
+  {
+   "from": [
+    1960,
+    120
+   ],
+   "to": [
+    1960,
+    140
+   ]
+  }
+ ],
+ "labels": [
+  {
+   "net": "V+",
+   "pos": [
+    0,
+    -400
+   ]
+  },
+  {
+   "net": "VR",
+   "pos": [
+    280,
+    -400
+   ]
+  },
+  {
+   "net": "V+",
+   "pos": [
+    580,
+    -450
+   ]
+  },
+  {
+   "net": "V+",
+   "pos": [
+    840,
+    -420
+   ]
+  },
+  {
+   "net": "V+",
+   "pos": [
+    420,
+    -450
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    280,
+    -450
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    680,
+    -380
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    920,
+    -420
+   ]
+  },
+  {
+   "net": "-VA",
+   "pos": [
+    740,
+    -340
+   ],
+   "rot": 180
+  },
+  {
+   "net": "-VA",
+   "pos": [
+    920,
+    -340
+   ],
+   "rot": 180
+  },
+  {
+   "net": "-VA",
+   "pos": [
+    580,
+    -370
+   ],
+   "rot": 90
+  },
+  {
+   "net": "GND",
+   "pos": [
+    500,
+    -390
+   ],
+   "rot": 90
+  },
+  {
+   "net": "GND",
+   "pos": [
+    60,
+    -340
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    -60,
+    -340
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    220,
+    -340
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    280,
+    -340
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    680,
+    -340
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    840,
+    -340
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    740,
+    -380
+   ],
+   "rot": 180
+  },
+  {
+   "net": "in",
+   "pos": [
+    20,
+    0
+   ]
+  },
+  {
+   "net": "VR",
+   "pos": [
+    180,
+    -60
+   ]
+  },
+  {
+   "net": "VR",
+   "pos": [
+    560,
+    -120
+   ]
+  },
+  {
+   "net": "clip",
+   "pos": [
+    960,
+    0
+   ]
+  },
+  {
+   "net": "VR",
+   "pos": [
+    460,
+    340
+   ]
+  },
+  {
+   "net": "VR",
+   "pos": [
+    300,
+    400
+   ],
+   "rot": 180
+  },
+  {
+   "net": "VR",
+   "pos": [
+    360,
+    460
+   ],
+   "rot": 180
+  },
+  {
+   "net": "VR",
+   "pos": [
+    1320,
+    40
+   ]
+  },
+  {
+   "net": "VR",
+   "pos": [
+    1660,
+    60
+   ]
+  },
+  {
+   "net": "out",
+   "pos": [
+    1880,
+    120
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1040,
+    60
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    960,
+    60
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1900,
+    100
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    460,
+    -140
+   ]
+  },
+  {
+   "net": "V+",
+   "pos": [
+    500,
+    -450
+   ]
+  },
+  {
+   "net": "dry",
+   "pos": [
+    300,
+    -100
+   ]
+  },
+  {
+   "net": "dry",
+   "pos": [
+    1700,
+    240
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1760,
+    300
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1960,
+    180
+   ]
+  }
+ ],
+ "texts": [
+  {
+   "title": "Source",
+   "pos": [
+    -60,
+    520
+   ],
+   "text": "Drawn from ElectroSmash's \"Klon Centaur Analysis\" (schematic and parts,\npart numbers as there). SW1 is drawn at effect on: the Level wiper goes\nstraight to the output, so R242 (across SW1 then) isn't drawn.\nhttps://www.electrosmash.com/klon-centaur-analysis"
+  }
+ ],
+ "notes": {
+  "part:R1": "Protects the input buffer from static on the input jack.",
+  "part:U1A": "Input buffer: R2 biases it at VR, so the guitar sees about 1M.",
+  "part:VR1A": "Gain, first gang: it sets the gain stage's gain, from about 0 dB to 40 dB, the most around 1 kHz.",
+  "part:VR1B": "Gain, second gang: it turns the second clean path down as the first gang turns the gain up, so the mix of clean and clipped stays balanced.",
+  "part:D2": "D2 and D3 clip the gain stage's output to ground: germaniums, at about 0.35 V, a soft knee.",
+  "part:C16": "With R7, the first clean path's low-pass (about 106 Hz): it adds low end under the clipped signal.",
+  "part:U2A": "Summing amp: adds the clipped signal and both clean paths; R20 and C13 roll it off above about 500 Hz. It runs from VB to -VA, so it has 27 V of headroom.",
+  "part:VR2": "Treble: a shelf above about 400 Hz, from about -8 dB to +18 dB, flat in the middle.",
+  "part:U3": "Charge pump: doubles V+ through D7 and D8 for VB, and inverts it for -VA, both at once. Pin 1 on V+ is the MAX1044's boost, which raises its switching frequency.",
+  "part:D4": "A 12 V zener across the supply: it conducts only if too much voltage is plugged in, protecting the charge pump.",
+  "part:R243": "The buffered bypass signal reaches the output through R243 even with the effect on (ElectroSmash: \"around 1dB\"). Simulated, it lowers the output by 0.1 to 0.3 dB: the summing amp turns the effect upside down, so the clean bleed takes a little off it. With the pedal off, R242 lets the effect into the clean signal the same way.",
+  "part:R29": "R29 and R30 halve the supply for VR, the 4.5 V the op-amps are biased at."
+ },
+ "probes": {
+  "in": "in",
+  "out": "out"
+ },
+ "enclosure": {
+  "size": "125B"
+ }
+}

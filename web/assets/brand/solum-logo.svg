@@ -1,0 +1,14 @@
+<svg viewBox="0 0 164 164" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="sr" gradientUnits="userSpaceOnUse" x1="28" y1="92" x2="136" y2="92">
+      <stop offset="0" stop-color="#b0b8bd" stop-opacity="0"/>
+      <stop offset="0.08" stop-color="#b0b8bd" stop-opacity="1"/>
+      <stop offset="0.92" stop-color="#b0b8bd" stop-opacity="1"/>
+      <stop offset="1" stop-color="#b0b8bd" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <circle cx="82" cy="82" r="72" fill="none" stroke="#b0b8bd" stroke-width="0.9"/>
+  <circle cx="82" cy="82" r="64" fill="none" stroke="#b0b8bd" stroke-width="0.4"/>
+  <text x="82" y="88" font-family="'Fahkwang', sans-serif" font-weight="400" font-size="20" letter-spacing="6" fill="#b0b8bd" text-anchor="middle">SOLUM</text>
+  <line x1="28" y1="98" x2="136" y2="98" stroke="url(#sr)" stroke-width="0.75"/>
+</svg>

@@ -1,0 +1,22 @@
+id: led-no-resistor
+layer: topology
+severity: error
+check: led_no_resistor
+title: LED without a resistor
+message: "{ref} sits straight across {anode} and {cathode}, with no resistor to limit its current."
+why: >
+  An LED's current rises steeply with its voltage. Across a supply with nothing in series
+  it draws far more than it's rated for and burns out, and it can take the supply down
+  with it.
+fix: "Put a resistor in series with {ref}: (supply voltage − LED voltage) ÷ the current you want."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: LED1, type: led, nets: [V+, GND], model: RED}
+      expect: [LED1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, a], value: 4k7}
+        - {ref: LED1, type: led, nets: [a, GND], model: RED}

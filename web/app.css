@@ -1,0 +1,1089 @@
+/* Layout and component styles. Colours only via theme.css tokens (DESIGN.md). */
+
+* { box-sizing: border-box; }
+[hidden] { display: none !important; }
+
+html, body {
+  margin: 0;
+  height: 100%;
+  background: var(--surface-0);
+  color: var(--text);
+  font-family: var(--font-ui);
+  font-size: 13px;
+}
+
+body { display: flex; flex-direction: column; }
+
+button, select, input { font: inherit; color: inherit; }
+
+button {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 3px 10px;
+  cursor: pointer;
+}
+button:hover { border-color: var(--accent); color: var(--accent-hi); }
+button[aria-checked="true"], button.active { background: var(--accent); border-color: var(--accent); color: var(--text); }
+
+select {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 3px 6px;
+}
+
+/* Header (DESIGN.md) */
+header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 16px;
+  border-bottom: 1px solid var(--border);
+  background: var(--surface-0);
+}
+header .logo { width: 30px; height: 30px; }
+#about .about-head { display: flex; align-items: center; gap: 16px; margin-bottom: 8px; }
+#about .about-head p { margin-top: 0; }
+#about .about-brand { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+#about .about-logo { width: 104px; height: 104px; }
+#about a { color: var(--accent-hi); }
+.theme-options { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.theme-option { display: flex; flex-direction: column; align-items: flex-start; gap: 4px; padding: 10px; text-align: left; white-space: normal; height: auto; }
+.theme-option[aria-pressed="true"] { border-color: var(--accent); background: var(--info-bg); }
+.theme-swatch { position: relative; display: block; width: 100%; height: 64px; border: 1px solid var(--border); background: var(--surface-0); border-radius: 3px; overflow: hidden; margin-bottom: 4px; }
+.theme-swatch-panel { position: absolute; right: 0; top: 0; bottom: 0; width: 34%; background: var(--surface-1); }
+.theme-swatch-text { position: absolute; left: 10px; top: 8px; font-family: var(--font-display); font-size: 20px; color: var(--text); }
+.theme-swatch-accent { position: absolute; left: 10px; bottom: 10px; width: 40px; height: 6px; border-radius: 3px; background: var(--accent); }
+.theme-name { color: var(--text); font-weight: 600; }
+.theme-about { color: var(--text-2); font-size: 12px; }
+.hotkey-groups { columns: 2 320px; column-gap: 32px; }
+.hotkey-groups section { break-inside: avoid; display: inline-block; width: 100%; margin: 0 0 16px; }
+.hotkey-groups h3 { margin: 0 0 6px; }
+.hotkey-groups table { width: 100%; table-layout: fixed; margin: 0; }
+.hotkey-groups td.values { width: 42%; padding-right: 16px; }
+/* the header stays one line: its controls never wrap; the circuit name is what gives way */
+header > *, .menus button, .run-group button, .autorun { white-space: nowrap; flex-shrink: 0; }
+.wordmark { font-family: var(--font-display); letter-spacing: 0.25em; text-transform: uppercase; font-size: 15px; }
+.wordmark .solum { color: var(--text); font-weight: 300; }
+.wordmark .builder { color: var(--text-2); font-weight: 200; }
+.menus { display: flex; gap: 2px; }
+header .sep { width: 1px; align-self: stretch; margin: 2px 0; background: var(--border); }
+.menus button { background: transparent; border-color: transparent; color: var(--text-2); }
+.menus button:hover, .menus button[aria-expanded="true"] { border-color: var(--border); background: var(--surface-2); color: var(--text); }
+.power { display: flex; align-items: center; gap: 8px; color: var(--text-2); }
+/* who powers the pedal when the drawing has a battery or a DC jack (D-145) */
+.power-chip { color: var(--text-2); font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--border); border-radius: 3px; padding: 0 5px; white-space: nowrap; flex: none; } /* as the Not saved chip */
+.power-chip.battery { color: var(--accent-hi); border-color: var(--accent-hi); }
+.power-chip[hidden] { display: none; }
+.power select:disabled { opacity: 0.5; cursor: not-allowed; }
+.power-draw { font-variant-numeric: tabular-nums; white-space: nowrap; color: var(--text-2); }
+.power-draw.stale { opacity: 0.5; }
+.run-group { display: flex; align-items: center; gap: 10px; }
+.run.stale { background: var(--accent); border-color: var(--accent); color: var(--text); }
+.autorun { display: flex; align-items: center; gap: 5px; color: var(--text-2); font-size: 13px; cursor: pointer; }
+.stale-note { margin: 8px 12px 0; padding: 6px 10px; border: 1px solid var(--accent); border-radius: 4px; color: var(--text-2); font-size: 13px; }
+header > .title { display: flex; align-items: baseline; gap: 10px; min-width: 0; flex-shrink: 1; }
+.menu {
+  position: fixed;
+  z-index: 40; /* over the expanded Frequency panel (30), under dialogs (50) */
+  min-width: 220px;
+  display: flex;
+  flex-direction: column;
+  padding: 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  overflow-y: auto;
+}
+.menu button { display: flex; justify-content: space-between; gap: 24px; text-align: left; background: transparent; border-color: transparent; padding: 5px 10px; }
+.menu button:disabled { border-color: transparent; }
+.menu button:hover:not(:disabled) { background: var(--info-bg); border-color: transparent; color: var(--text); }
+.menu button[aria-checked="true"] { background: transparent; color: inherit; border-color: transparent; }
+.menu button[aria-checked="true"] .menu-label::before { content: "✓ "; color: var(--accent-hi); }
+.menu button[aria-checked="false"] .menu-label::before { content: "✓ "; visibility: hidden; }
+.menu .menu-hint { color: var(--text-3); font-family: var(--font-mono); font-size: 11px; }
+.menu hr { border: none; border-top: 1px solid var(--border); margin: 4px 2px; width: auto; align-self: stretch; }
+.search {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 3px 8px;
+  width: 240px;
+}
+a.button {
+  display: inline-block;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 3px 10px;
+  color: inherit;
+  text-decoration: none;
+}
+a.button:hover { border-color: var(--accent); color: var(--accent-hi); }
+a.button[hidden] { display: none; }
+button:disabled { opacity: 0.45; cursor: default; border-color: var(--border); color: var(--text-3); }
+button.primary { background: var(--accent); border-color: var(--accent); color: var(--text); }
+button[aria-pressed="true"] { background: var(--accent); border-color: var(--accent); color: var(--text); }
+.dirty { color: var(--warning); font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--warning); border-radius: 3px; padding: 0 5px; white-space: nowrap; flex: none; }
+.dirty[hidden] { display: none; }
+.badges { display: inline-flex; gap: 6px; flex: none; }
+.badge { font-family: var(--font-mono); font-size: 11px; color: var(--text-2); border: 1px solid var(--border); border-radius: 3px; padding: 0 5px; white-space: nowrap; }
+.badge.block { color: var(--accent-hi); border-color: var(--accent); text-transform: uppercase; letter-spacing: 0.08em; }
+.badge.readonly { color: var(--text-3); }
+kbd {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--accent-hi);
+  border: 1px solid var(--border);
+  border-radius: 2px;
+  padding: 0 4px;
+  min-width: 1.6em;
+  display: inline-block;
+  text-align: center;
+}
+
+/* Palette (left): tiles with the part's symbol, dragged onto the canvas */
+.palette {
+  width: 184px;
+  flex: none;
+  overflow-y: auto;
+  background: var(--surface-1);
+  border-right: 1px solid var(--border);
+  padding: 6px 8px 16px;
+}
+.palette h2 {
+  font-family: var(--font-display);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 10px;
+  color: var(--text-3);
+  margin: 10px 2px 6px;
+}
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; }
+.tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 2px 5px;
+  background: var(--surface-0);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  color: var(--text-2);
+  font-size: 11.5px;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+.tile:hover { border-color: var(--accent); color: var(--text); }
+.tile.active, .tile[aria-pressed="true"] { background: var(--info-bg); border-color: var(--accent); color: var(--text); }
+.tile svg { width: 56px; height: 34px; overflow: visible; pointer-events: none; }
+.tile svg line, .tile svg path, .tile svg rect, .tile svg circle { stroke: var(--sch-line); stroke-width: 1.3; fill: none; vector-effect: non-scaling-stroke; }
+.tile svg .filled { fill: var(--sch-line); stroke: none; }
+.tile svg text { fill: var(--sch-line); font-family: var(--font-ui); }
+.tile:hover svg line, .tile:hover svg path, .tile:hover svg circle { stroke: var(--accent-hi); }
+.tile:hover svg .filled { fill: var(--accent-hi); }
+body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
+
+/* Popup forms: inspector, label, circuit dialogs */
+.popup {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  z-index: 5;
+  width: 340px;
+  max-height: calc(100% - 24px);
+  overflow-y: auto;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 4px;
+  padding: 12px 14px;
+}
+.popup-title { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
+.popup-title .name { font-family: var(--font-mono); font-size: 15px; color: var(--text); }
+.popup-title .kind { color: var(--text-3); }
+.form-row { display: grid; grid-template-columns: 112px 1fr 26px; gap: 2px 8px; align-items: center; margin-bottom: 8px; }
+.form-row label { color: var(--text-2); }
+.form-row input, .form-row select, .form-row textarea, .sweep-row input, .custom-grid input, .custom-grid select {
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: 3px;
+  padding: 3px 6px;
+  font-family: var(--font-mono);
+  min-width: 0;
+}
+/* a text box gets its own full-width row under its label, so it fits the popup */
+.form-row:has(textarea:not(.readonly-text)) { grid-template-columns: 1fr; }
+.form-row:has(textarea:not(.readonly-text)) .unit:empty { display: none; }
+.form-row:has(textarea:not(.readonly-text)) .hint-text { grid-column: 1 / -1; }
+.form-row textarea { font-family: var(--font-ui); color: var(--text); resize: vertical; min-height: 6em; width: 100%; box-sizing: border-box; }
+.form-row input:focus, .form-row select:focus, .form-row textarea:focus, .sweep-row input:focus, .search:focus { outline: 1px solid var(--accent); }
+/* read-only (a targeted trimmer's Rotation, D-127): greyed, nothing to type */
+.form-row input:read-only { background: var(--surface-2); border-style: dashed; color: var(--text-3); cursor: default; }
+/* a value to read (an op-amp's chip and pins): wraps onto as many lines as it needs */
+.form-row textarea.readonly-text { font-family: var(--font-mono); background: var(--surface-2); border-style: dashed; color: var(--text-3); cursor: default; resize: none; min-height: 0; field-sizing: content; overflow: hidden; }
+.form-row input:read-only:focus { outline: none; }
+.form-row .unit { color: var(--text-3); font-family: var(--font-mono); }
+.form-row .hint-text { grid-column: 2 / -1; color: var(--text-3); font-size: 12px; }
+.form-row .field-remove { grid-column: 2 / -1; justify-self: start; padding: 1px 8px; font-size: 11px; } /* Remove target (D-127) */
+.form-row.locked + .slider-row { display: none; } /* a trimmer's turn while its target holds (round 3b) */
+/* The inspector's value slider (D-081): the range under the value, its ends and a snap button below */
+.form-row input[type="range"] { padding: 0; border: none; background: none; accent-color: var(--accent); }
+.form-row input[type="range"]:focus { outline: none; }
+.slider-row .slider-ends { grid-column: 2; color: var(--text-3); font-family: var(--font-mono); font-size: 12px; }
+/* a step running: the slider greyed until it's drawn, its keys held (D-127) */
+.slider-row.running input[type="range"] { opacity: 0.4; filter: grayscale(1); cursor: progress; }
+.slider-row.running .slider-ends { opacity: 0.5; }
+.slider-row .slider-snap { grid-column: 2; justify-self: start; font-family: var(--font-mono); font-size: 12px; padding: 0 4px; color: var(--accent-hi); }
+.popup .error { margin: 0 0 10px; }
+.popup-buttons { display: flex; justify-content: flex-end; gap: 8px; }
+.sweep-row { display: grid; grid-template-columns: 1fr auto; gap: 6px 8px; margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--border); }
+.sweep-row label { grid-column: 1 / -1; color: var(--text-2); }
+.sweep-tools { color: var(--text-2); }
+.spacer { flex: 1; }
+
+
+/* Workspace: canvas gets the space, panels on the right */
+.workspace { flex: 1; display: flex; min-height: 0; }
+.canvas { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+.circuit-name {
+  margin: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+  font-family: var(--font-display);
+  font-weight: 300;
+  font-size: 13px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--text);
+}
+/* the name renamed in place (D-287): a pencil after it, the box and a tick while editing */
+.name-edit { position: relative; display: inline-flex; min-width: 0; }
+.name-edit:has(> .name-box[hidden]) { display: none; }
+.name-box { width: 22ch; max-width: 40vw; padding: 2px 6px; font-size: 13px; }
+.name-error { position: absolute; top: calc(100% + 6px); left: 0; z-index: 45; width: max-content; max-width: 360px; padding: 6px 8px; background: var(--surface-2); border: 1px solid var(--error); border-radius: 3px; color: var(--text); font-size: 12px; }
+.rename-button { display: inline-flex; align-items: center; justify-content: center; align-self: center; flex-shrink: 0; width: 20px; height: 20px; padding: 0; background: none; border-color: transparent; color: var(--text-3); }
+.rename-button:hover, .rename-button[data-editing="true"] { color: var(--accent-hi); border-color: var(--border); }
+.rename-button svg { fill: none; stroke: currentColor; stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.rename-button[data-editing="true"] .pencil, .rename-button:not([data-editing="true"]) .tick { display: none; }
+.hint { margin: 0; padding: 6px 16px; color: var(--text-3); border-top: 1px solid var(--border); }
+#hint { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; } /* one line: the canvas keeps its size as the hint changes */
+
+.canvas-body { flex: 1; position: relative; min-height: 0; display: flex; }
+#schematic {
+  flex: 1;
+  width: 100%;
+  min-height: 0;
+  background-color: var(--surface-0);
+  cursor: default;
+  touch-action: none;
+  user-select: none;
+}
+#schematic.panning { cursor: grabbing; }
+#schematic.placing, #schematic.wiring { cursor: crosshair; }
+#schematic .grid { pointer-events: none; }
+#schematic .grid-dot { fill: var(--grid-dot); }
+.zoom { position: absolute; right: 12px; bottom: 12px; display: flex; gap: 4px; }
+.zoom button { min-width: 30px; height: 28px; background: var(--surface-2); font-size: 14px; line-height: 1; }
+.zoom #fit-button { font-size: 12px; }
+
+/* Schematic elements */
+.schematic line, .schematic path, .schematic rect, .schematic circle {
+  stroke: var(--sch-line);
+  stroke-width: 1.5;
+  fill: none;
+  vector-effect: non-scaling-stroke;
+}
+.schematic .filled { fill: var(--sch-line); stroke: none; }
+.schematic .sym-text { fill: var(--sch-line); font-family: var(--font-ui); }
+.schematic text { font-size: 10px; font-family: var(--font-ui); fill: var(--text); }
+.schematic .part-text .value { fill: var(--text-2); font-family: var(--font-mono); font-size: 9px; }
+.schematic .part-text .cap-type { fill: var(--sch-type); } /* View → Capacitor types (D-144, D-147) */
+.schematic .part-text .cap-type.unset { fill: var(--text-3); font-style: italic; } /* no type yet: "not-set" */
+.schematic .part-text .ref { fill: var(--text); }
+.schematic .part-text .pin-number { fill: var(--text-3); font-family: var(--font-mono); font-size: 7px; } /* a chip's datasheet pin numbers, D-140 */
+.schematic .part.unused { opacity: 0.5; } /* a chip's spare half: not simulated */
+.schematic .net-label text { fill: var(--text-2); font-family: var(--font-mono); font-size: 9px; cursor: pointer; }
+.schematic .net-label.rail text { fill: var(--sch-supply); font-size: 9px; }
+.schematic .net-label.ground, .schematic .net-label.rail { cursor: pointer; }
+.schematic .net-label.probed line { stroke: var(--sch-probed); stroke-width: 2; }
+.schematic .net-label.selected line { stroke: var(--sch-selected); stroke-width: 2.4; }
+.schematic .net-label .pin-dot { fill: var(--sch-line); }
+.schematic .junction { fill: var(--sch-line); }
+.schematic .hit, .schematic .pin-hit { stroke: transparent; fill: transparent; stroke-width: 8; pointer-events: all; cursor: pointer; }
+.schematic .part-hit { stroke: none; fill: transparent; pointer-events: all; cursor: pointer; }
+.schematic .part:hover line, .schematic .part:hover path, .schematic .part:hover rect:not(.part-hit), .schematic .part:hover circle:not(.pin-hit) { stroke: var(--accent-hi); }
+
+.schematic .wire.probed { stroke: var(--sch-probed); stroke-width: 2; }
+.schematic .net-label.probed text { fill: var(--sch-probed); font-weight: 600; }
+.schematic .net-label.probed .pin-dot { fill: var(--sch-probed); r: 3; }
+.schematic .pin-hit.probed { fill: var(--sch-probed-fill); stroke: var(--sch-probed); stroke-width: 1; }
+.schematic .part.selected line, .schematic .part.selected path, .schematic .part.selected rect:not(.part-hit), .schematic .part.selected circle:not(.pin-hit) { stroke: var(--sch-selected); stroke-width: 2; }
+.schematic .part.selected .filled { fill: var(--sch-selected); }
+.schematic .part-text.selected text { fill: var(--sch-selected); }
+.schematic .wire.selected { stroke: var(--sch-selected); stroke-width: 2.4; }
+#schematic .found-ring { fill: none; stroke: var(--sch-selected); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; animation: found-ring 1.6s ease-out forwards; }
+@keyframes found-ring { 0%, 50% { opacity: 1; } 100% { opacity: 0; } }
+@media (prefers-reduced-motion: reduce) { #schematic .found-ring { animation: none; } }
+.schematic .net-label.selected text { fill: var(--sch-selected); }
+.schematic .part[data-drag] { opacity: 0.8; }
+/* text blocks (D-091): notes on the sheet, not part of the circuit */
+.schematic .sheet-text, .overlay .ghost .sheet-text { fill: var(--text-2); font-family: var(--font-ui); font-size: 10px; white-space: pre; pointer-events: none; }
+.schematic .text-hit { stroke: none; fill: transparent; pointer-events: all; cursor: move; }
+.schematic .text-block:hover .text-hit { stroke: var(--border); stroke-width: 1; stroke-dasharray: 3 2; }
+.schematic .text-block.selected .text-hit { stroke: var(--sch-selected); stroke-width: 1.2; stroke-dasharray: 3 2; }
+.schematic .text-block.selected .sheet-text { fill: var(--text); }
+.schematic .sheet-title, .overlay .ghost .sheet-title { font-weight: 700; font-size: 11px; fill: var(--text); }
+.schematic .text-block[data-drag] { opacity: 0.8; }
+/* wire ends (D-062): a ball on a pin or label, an open ball on a loose end; every end has a drag handle */
+.schematic .wire-end { fill: var(--sch-line); stroke: none; }
+.schematic .wire-end.loose { fill: var(--surface-0); stroke: var(--sch-line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.schematic .end-hit { fill: transparent; stroke: none; pointer-events: all; cursor: move; }
+.schematic .end-hit:hover { fill: var(--sch-probed-fill); stroke: var(--sch-selected); stroke-width: 1; vector-effect: non-scaling-stroke; }
+#schematic.wiring .end-hit { cursor: crosshair; }
+.overlay .wire-target { fill: var(--sch-probed-fill); stroke: var(--sch-selected); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.overlay .wire-path line { stroke-dasharray: none; }
+/* wires crossing without connecting: a hop on the horizontal one (D-063) */
+.schematic .hop-mask { stroke: var(--surface-0); stroke-width: 3; vector-effect: non-scaling-stroke; pointer-events: none; }
+.schematic path.wire { fill: none; }
+.schematic .relaying { visibility: hidden; } /* re-laid while dragging: the ghost shows where it goes */
+.overlay .relay line { stroke-dasharray: none; opacity: 0.85; }
+.overlay .ghost line, .overlay .ghost path, .overlay .ghost rect, .overlay .ghost circle {
+  stroke: var(--sch-selected); stroke-width: 1.2; fill: none; vector-effect: non-scaling-stroke; stroke-dasharray: 3 2;
+}
+.overlay .ghost .filled { fill: var(--sch-selected); stroke: none; }
+.overlay .ghost text { fill: var(--sch-selected); font-family: var(--font-mono); font-size: 8px; }
+.overlay { pointer-events: none; }
+.schematic .dc { fill: var(--sch-dc); font-family: var(--font-mono); font-size: 8px; font-variant-numeric: tabular-nums; pointer-events: none; }
+.schematic .dc.held { fill: var(--sch-held); pointer-events: auto; cursor: default; } /* held to a target: its own colour, its tooltip the target and the turn (D-127) */
+.schematic .dc.unmet { fill: var(--warning); }
+.schematic .impedance { fill: var(--sch-impedance); font-family: var(--font-mono); font-size: 9px; cursor: default; } /* View → Impedance (D-127) */
+.schematic .impedance.unmet { fill: var(--warning); }
+.schematic .impedance.sub { font-size: 8px; } /* a pickup's resonance under Zin (D-241) */
+/* problem marks (D-176): by severity, as the Problems panel's ■ ▲ ●; outlined in the canvas colour to stand off the lines */
+.schematic .problem-mark { cursor: pointer; }
+.schematic .problem-mark > * { stroke: var(--surface-0); stroke-width: 1; }
+.schematic .problem-mark.sev-error > * { fill: var(--error); }
+.schematic .problem-mark.sev-warning > * { fill: var(--warning); }
+.schematic .problem-mark.sev-info > * { fill: var(--text-3); }
+
+/* Panels */
+.panels {
+  width: 440px;
+  flex: none;
+  overflow-y: auto;
+  background: var(--surface-1);
+  border-left: 1px solid var(--border);
+}
+.panels details { border-bottom: 1px solid var(--border); }
+/* a pane holds its last height while a reload fills it, so the list's scroll comes back (D-121) */
+.panels > details:not(.large-view) { min-height: var(--reserve, 0px); }
+.panels:not([data-ready]) > * { visibility: hidden; } /* until the scroll is put back */
+.panels summary {
+  font-family: var(--font-display);
+  font-weight: 300;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 12px;
+  padding: 10px 16px;
+  cursor: pointer;
+  color: var(--text);
+  list-style-position: inside;
+}
+.panels details[open] > summary { background: var(--surface-2); }
+.panels summary { position: relative; }
+.panels .grip { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 2px 4px; color: var(--text-3); letter-spacing: -0.05em; font-size: 14px; cursor: grab; touch-action: none; user-select: none; }
+.panels .grip:hover, .panels .grip:focus-visible { color: var(--accent-hi); outline: none; }
+.panels details.moving { opacity: 0.5; }
+.panels .pane-drop { height: 2px; background: var(--accent-hi); }
+body:has(.panels details.moving) { cursor: grabbing; }
+.panel-body { padding: 12px 16px 16px; }
+.panel-tools { display: flex; gap: 8px; align-items: center; margin-bottom: 10px; flex-wrap: wrap; }
+.segmented { display: inline-flex; }
+.segmented button { border-radius: 0; margin-left: -1px; }
+.segmented button:first-child { border-radius: 3px 0 0 3px; margin-left: 0; } /* only joins overlap: the first would poke out (clipped in a scrolling column) */
+.segmented button:last-child { border-radius: 0 3px 3px 0; }
+.segmented button:only-child { border-radius: 3px; margin-left: 0; }
+
+.plot { width: 100%; }
+.plot.invalid { opacity: 0.45; }
+/* Readings off the Frequency curve (D-081); greyed while a slider's live curve is ahead of them */
+.readings { display: flex; flex-wrap: wrap; gap: 4px 14px; margin-top: 6px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.readings[hidden] { display: none; }
+.readings .readings-net { color: var(--text-2); font-family: var(--font-mono); }
+.reading .label { color: var(--text-3); margin-right: 4px; }
+.reading .value { color: var(--text); font-family: var(--font-mono); }
+.readings.stale .value { color: var(--text-3); }
+.uplot, .uplot .u-legend { font-family: var(--font-ui); color: var(--text-2); }
+.uplot .u-legend { font-size: 11px; text-align: left; }
+.uplot .u-legend .u-marker { border-radius: 1px; }
+/* The values at the cursor's dots (plots.js hoverReadout) */
+.plot-hover {
+  position: absolute; left: 0; top: 0; z-index: 2; pointer-events: none; white-space: nowrap;
+  padding: 4px 7px; border: 1px solid var(--border); border-radius: 3px;
+  background: var(--surface-2); color: var(--text); font-size: 11px; font-variant-numeric: tabular-nums;
+}
+.plot-hover[hidden] { display: none; }
+.plot-hover-x { color: var(--text-2); font-family: var(--font-mono); margin-bottom: 2px; }
+.plot-hover-mark { display: inline-block; width: 8px; height: 2px; margin-right: 5px; vertical-align: middle; }
+.plot-hover-name { color: var(--text-2); margin-right: 8px; }
+.plot-hover-value { font-family: var(--font-mono); float: right; }
+
+.error, .warning {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  border-radius: 3px;
+  background: var(--info-bg);
+}
+.error { margin: 12px 16px 0; color: var(--text); border-left: 3px solid var(--error); white-space: pre-line; }
+.error::before { content: "■ "; color: var(--error); }
+.warning { border-left: 3px solid var(--warning); color: var(--text); }
+.warning::before { content: "▲ "; color: var(--warning); }
+
+/* Problems (D-077) */
+.panels summary .count { font-family: var(--font-ui); text-transform: none; letter-spacing: 0; color: var(--text-2); margin-left: 6px; }
+.problem-list, .dc-list { overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
+.problem-list { max-height: 300px; } /* about six problems */
+.dc-list { max-height: 200px; } /* about the Harmonics plot */
+.dc-end { color: var(--text-3); font-size: 11px; }
+.problem { border-left: 3px solid var(--border); margin: 0 0 6px; padding: 4px 0 4px 8px; }
+.problem:has(.sev-error) { border-left-color: var(--error); }
+.problem:has(.sev-warning) { border-left-color: var(--warning); }
+.problem > summary { cursor: pointer; display: flex; gap: 8px; align-items: baseline; flex-wrap: wrap; list-style: none; }
+.problem > summary::-webkit-details-marker { display: none; }
+.problem .severity { font-size: 11px; color: var(--text-2); }
+.problem .sev-error::before { content: "■ "; color: var(--error); }
+.problem .sev-warning::before { content: "▲ "; color: var(--warning); }
+.problem .sev-info::before { content: "● "; color: var(--text-3); }
+/* File → Export (D-203): the Ready to build list wears the Problems panel's marks */
+.export-list, .export-outputs { list-style: none; margin: 0 0 10px; padding: 0; }
+.export-row { display: flex; gap: 8px; padding: 4px 0; border-bottom: 1px solid var(--border); }
+.export-row.pick { cursor: pointer; }
+.export-row.pick:hover { color: var(--text); }
+.export-row .severity { flex: 0 0 72px; font-size: 11px; color: var(--text-2); }
+.export-row .sev-error::before { content: "■ "; color: var(--error); }
+.export-row .sev-warning::before { content: "▲ "; color: var(--warning); }
+.export-row .sev-info::before { content: "● "; color: var(--text-3); }
+.export-outputs li { padding: 3px 0; }
+.problem-title { color: var(--text); }
+.problem-where { font-family: var(--font-mono); font-size: 12px; color: var(--text-2); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.problem[open] .problem-where { white-space: normal; } /* one line until opened, so about six problems fit */
+.problem-message { margin: 6px 0; color: var(--text); }
+.problem-body .note { margin-bottom: 6px; }
+.problem-body b { font-style: normal; font-weight: 600; color: var(--text-2); }
+.problem-actions { margin: 0 0 4px; font-size: 12px; }
+/* dismissed problems (D-176): under the list, quieter */
+.dismissed { margin-top: 8px; }
+.dismissed > summary { cursor: pointer; color: var(--text-2); font-size: 12px; margin-bottom: 6px; }
+.dismissed .problem-title { color: var(--text-2); }
+
+/* Probe card */
+.probe-title { display: flex; align-items: baseline; gap: 10px; margin: 0 0 6px; }
+.probe-title .name { font-family: var(--font-mono); font-size: 15px; color: var(--text); }
+.probe-title .kind { color: var(--text-3); }
+.note { font-family: var(--font-prose); font-style: italic; color: var(--text-2); line-height: 1.45; margin: 0 0 10px; font-size: 13.5px; }
+.note.clip-limits { font-family: var(--font-mono); font-style: normal; font-size: 11px; color: var(--text-3); margin: 2px 0 8px; }
+.empty { color: var(--text-3); margin: 0; }
+
+table.readout { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+table.readout th, table.readout td { text-align: left; padding: 3px 6px 3px 0; font-weight: normal; }
+table.readout th { color: var(--text-3); }
+table.readout td { font-family: var(--font-mono); color: var(--text); }
+table.readout thead th { color: var(--text-2); border-bottom: 1px solid var(--border); }
+table.readout tr.clickable { cursor: pointer; }
+table.readout tr.clickable:hover td { color: var(--accent-hi); }
+table.readout tr.rail th { color: var(--text-2); }
+.sweep-summary { margin: 4px 0 10px; }
+.sweep-summary table { font-size: 12px; margin-bottom: 6px; }
+.sweep-summary .note { font-size: 12.5px; margin-bottom: 4px; }
+.subplot { margin-top: 12px; }
+.flag-ok::before { content: "● "; color: var(--ok); }
+.flag-warn::before { content: "▲ "; color: var(--warning); }
+
+/* Knobs */
+.knob { display: grid; grid-template-columns: 1fr auto; gap: 2px 10px; margin-bottom: 12px; }
+.knob .name { color: var(--text); }
+.knob .meta { color: var(--text-3); font-family: var(--font-mono); text-align: right; }
+.knob input[type="range"] { grid-column: 1 / -1; width: 100%; accent-color: var(--accent); }
+.knob .segmented { grid-column: 1 / -1; }
+.knobs-tools { margin-top: 10px; }
+.knobs-tools [hidden] { display: none; }
+
+/* Open dialog */
+.open-list { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); max-height: 320px; overflow-y: auto; }
+.open-list button { text-align: left; background: transparent; border-color: transparent; }
+.open-list button:hover:not(:disabled) { background: var(--info-bg); color: var(--text); border-color: transparent; }
+
+/* blocks (D-072) */
+.overlay .select-box { fill: var(--sch-probed-fill); stroke: var(--sch-selected); stroke-width: 1; stroke-dasharray: 4 3; vector-effect: non-scaling-stroke; }
+.block-list { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; padding-top: 10px; border-top: 1px solid var(--border); max-height: 360px; overflow-y: auto; }
+.block-row { display: flex; align-items: center; gap: 6px; }
+.block-row .insert { flex: 1; text-align: left; background: transparent; border-color: transparent; }
+.block-row .tag, .open-list .tag { color: var(--text-3); font-family: var(--font-mono); font-size: 11px; white-space: nowrap; }
+.open-list .tag { margin-left: 10px; }
+.block-row .insert:hover { background: var(--info-bg); color: var(--text); border-color: transparent; }
+.block-row button:not(.insert) { padding: 2px 8px; font-size: 12px; }
+.block-row button.danger:hover { border-color: var(--error); color: var(--text); }
+.block-bar { display: flex; flex-wrap: wrap; gap: 12px; margin-top: 10px; }
+.block-section { margin: 8px 0 2px; font-size: 11px; font-weight: 600; color: var(--text-3); text-transform: uppercase; letter-spacing: 0.04em; }
+.block-section:first-child { margin-top: 0; }
+.block-list .empty { margin: 2px 0 6px; color: var(--text-3); font-size: 13px; }
+.port-list { display: flex; flex-direction: column; gap: 6px; margin: 4px 0 10px; }
+.port-row { display: flex; align-items: center; gap: 8px; }
+.port-row input { width: 9em; }
+.port-row .net { color: var(--text-3); font-family: var(--font-mono); font-size: 12px; }
+.change-list { margin: 0 0 10px; padding-left: 18px; color: var(--text-2); max-width: 44em; }
+.change-list li { margin: 2px 0; }
+
+/* Properties (D-075) */
+.file-info { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 12px 0 0; padding-top: 10px; border-top: 1px solid var(--border); font-size: 13px; }
+.file-info dt { color: var(--text-3); }
+.file-info dd { margin: 0; color: var(--text-2); font-family: var(--font-mono); font-size: 12px; overflow-wrap: anywhere; }
+.file-actions { margin-top: 10px; }
+
+/* The save prompt and other questions (ask, D-075) */
+.ask-shade { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--scrim); z-index: 50; padding: 16px; }
+.ask { max-width: 440px; width: 100%; background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; padding: 18px 18px 14px; }
+.ask-title { margin: 0 0 6px; color: var(--text); font-weight: 600; }
+.ask-text { margin: 0 0 16px; color: var(--text-2); }
+.ask-buttons { display: flex; gap: 8px; justify-content: flex-end; }
+.ask-buttons .aside { margin-right: auto; }
+
+/* Audio panel (D-083) */
+.audio-row { display: grid; grid-template-columns: 52px minmax(0, 1fr) auto auto; gap: 6px; align-items: center; margin-bottom: 8px; }
+.audio-row > .name { color: var(--text-2); }
+.audio-row select { min-width: 0; }
+.audio-row input[type="text"] { background: var(--surface-1); border: 1px solid var(--border); border-radius: 3px; padding: 3px 6px; min-width: 0; }
+.audio-row .segmented { grid-column: 2 / -1; }
+.audio-row button[hidden], #audio-body button[hidden] { display: none; }
+.audio-status { margin: 0 0 10px; color: var(--text-2); min-height: 1.3em; }
+.audio-stale, .audio-sweep-stale { margin: 0 0 8px; color: var(--text); border-left: 3px solid var(--accent-hi); padding-left: 8px; }
+.audio-stale[hidden], .audio-sweep-stale[hidden] { display: none; }
+.panels button.primary.stale { box-shadow: 0 0 0 2px var(--accent-hi); }
+.audio-meter { margin: -6px 0 10px; color: var(--text-2); white-space: pre-line; }
+.audio-meter:empty { display: none; }
+.audio-input input:disabled { opacity: 0.5; }
+/* the signal chain (D-096): four chips, one drawer open under them */
+.audio-chain { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); margin-bottom: 10px; }
+.audio-chain .chip { position: relative; border: 1px solid var(--border); background: var(--surface-1); padding: 6px 8px 7px; text-align: left; border-radius: 0; margin-left: -1px; min-width: 0; }
+.audio-chain .chip:first-child { border-radius: 3px 0 0 3px; margin-left: 0; }
+.audio-chain .chip:last-child { border-radius: 0 3px 3px 0; }
+.audio-chain .chip .t { display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); }
+.audio-chain .chip .v { display: block; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.audio-chain .chip .s { display: block; color: var(--text-3); font-size: 12px; min-height: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.audio-chain .chip[aria-expanded="true"] { background: var(--surface-2); border-color: var(--accent); z-index: 1; }
+.audio-chain .chip:not(:last-child)::after { content: "▸"; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); color: var(--text-3); z-index: 2; font-size: 11px; }
+.audio-chain .gauge { display: flex; align-items: center; gap: 6px; margin-top: 3px; }
+.audio-chain .gauge .bar { flex: 1; height: 5px; background: var(--surface-0); border-radius: 3px; overflow: hidden; }
+.audio-chain .gauge .bar i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--ok), var(--warning) 70%, var(--error)); }
+.audio-chain .gauge .n { font-family: var(--font-mono); font-size: 11px; color: var(--text-3); }
+#audio-body .drawer { border: 1px solid var(--accent); border-top: none; background: var(--surface-2); padding: 10px 10px 2px; margin: -11px 0 12px; border-radius: 0 0 3px 3px; }
+#audio-body .drawer[hidden] { display: none; }
+#audio-body .note { color: var(--text-3); font-size: 12px; margin: 0 0 8px; }
+.audio-listen { border-top: 1px solid var(--border); padding-top: 10px; }
+.audio-render .push { margin-left: auto; display: inline-flex; gap: 8px; align-items: center; }
+/* the downloads' place: while a render runs its progress bar covers them, the same width,
+   so nothing in the row moves (the user, D-134) */
+.audio-downloads { position: relative; flex: 1; display: inline-flex; gap: 8px; align-items: center; }
+.audio-downloads > progress { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); width: auto; }
+.audio-downloads.busy > :not(progress) { visibility: hidden; }
+/* every large view's Expand / Collapse: the last item in its tool row, at the far right */
+/* the sweep's setup lines up over its takes: positions over the first three take buttons,
+   Render sweep over the last two, the pot dropdown (the row's label) takes the rest */
+#audio-body { --sweep-take: 54px; }
+.audio-sweep-set { grid-template-columns: minmax(0, 1fr) auto auto; }
+.audio-sweep-set input[type="text"] { width: calc(3 * var(--sweep-take) - 2px); box-sizing: border-box; }
+.audio-sweep-set button { width: calc(2 * var(--sweep-take) - 8px); box-sizing: border-box; white-space: nowrap; padding-inline: 4px; }
+.audio-sweep [data-slot] { width: var(--sweep-take); box-sizing: border-box; white-space: nowrap; padding-inline: 2px; }
+.audio-sweep .name { color: var(--text-2); min-width: 48px; }
+.audio-sweep .segmented { margin-left: auto; } /* the takes keep their place on the right */
+.audio-sweep button.rendering { background: linear-gradient(90deg, var(--accent) var(--done, 0%), var(--surface-2) var(--done, 0%)); }
+.audio-sweep button.failed { border-color: var(--error); }
+.audio-sweep button.stuck { border-color: var(--warning); }
+/* the Trimmers fold (D-198): a row per trimmer; one its bias target sets is greyed */
+#audio-trimmers[hidden] { display: none; }
+.trim-list { list-style: none; margin: 4px 0 8px; padding: 0; }
+.trim-list li { display: flex; align-items: baseline; gap: 8px; padding: 3px 0; }
+.trim-list li > button[data-trim-render] { margin-left: auto; }
+.trim-list li.held .trim-name { color: var(--text-3); }
+.trim-list li.held .hint { color: var(--text-3); margin: 0; }
+.audio-sweep button.stale:not(:disabled) { box-shadow: inset 0 -2px 0 var(--accent-hi); }
+.audio-ab .ab-apart { margin-left: 12px; }
+.audio-ab .segmented.ab-apart { margin-left: auto; }
+.audio-fold > summary { color: var(--text-2); cursor: pointer; margin: 10px 0 6px; }
+/* the Audio pane's large view (D-110): the spectrum left (its fold's title hidden: the view is
+   the spectrum), the whole player right */
+#panel-audio.large-view #audio-spectrum > summary { display: none; }
+#panel-audio.large-view .audio-player .audio-chain { margin-top: 0; }
+.audio-legend { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 6px 0 4px; font-size: 12px; color: var(--text-2); }
+.audio-legend label { display: inline-flex; gap: 4px; align-items: center; }
+.audio-legend label[hidden] { display: none; }
+.audio-legend .swatch { display: inline-block; width: 14px; height: 0; border-top: 2px solid var(--plot-current); }
+.audio-legend .swatch.dry { border-top: 1px dashed var(--plot-input); }
+.audio-legend .swatch.snapshot { border-top-style: dashed; border-top-color: var(--plot-snapshot); }
+.audio-legend .swatch.expected { border-top-style: dashed; border-top-color: var(--plot-marker); }
+.audio-legend .swatch.clip { border-top: 1px dashed var(--plot-marker); }
+.audio-legend .swatch.live { height: 8px; border-top: 1px solid var(--plot-live); background: var(--plot-live-fill); }
+.audio-status.failed { color: var(--text); border-left: 3px solid var(--error); padding-left: 8px; }
+.panels progress { flex: 1; accent-color: var(--accent); height: 6px; }
+.panels progress[hidden] { display: none; }
+.panels audio { width: 100%; margin-bottom: 8px; color-scheme: dark; }
+
+/* Sheets: Help pages and Tools (D-095) */
+.sheet { max-width: 560px; width: 100%; max-height: calc(100vh - 32px); display: flex; flex-direction: column; background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; }
+.sheet.wide { max-width: 900px; }
+.sheet-tools { display: flex; align-items: center; gap: 8px; }
+/* Help → Documentation (D-290): the guide's pages framed in a large window */
+#manual.sheet { max-width: 1200px; height: calc(100vh - 32px); }
+#manual .sheet-body { flex: 1; padding: 0; overflow: hidden; display: flex; }
+.manual-frame { flex: 1; width: 100%; border: 0; background: var(--surface-0); }
+.sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px 10px; border-bottom: 1px solid var(--border); }
+.sheet-title { margin: 0; font-family: var(--font-display); font-weight: 300; text-transform: uppercase; letter-spacing: 0.2em; font-size: 14px; color: var(--text); }
+.sheet-body { padding: 14px 18px 18px; overflow-y: auto; color: var(--text-2); }
+.sheet-body p { margin: 0 0 10px; }
+.sheet-body h3 { margin: 16px 0 8px; font-size: 13px; color: var(--text); font-weight: 600; }
+.sheet-body table { width: 100%; border-collapse: collapse; font-size: 13px; margin-bottom: 10px; }
+.sheet-body th { text-align: left; color: var(--text); font-weight: 600; padding: 6px 8px; border-bottom: 1px solid var(--border); vertical-align: bottom; }
+.sheet-body td { padding: 7px 8px; border-bottom: 1px solid var(--border); vertical-align: top; }
+.sheet-body td:first-child { color: var(--text); }
+.sheet-body .values { font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
+.sheet-body code { font-family: var(--font-mono); font-size: 12px; color: var(--text); }
+.sheet .form-row { grid-template-columns: 130px 1fr 10px; }
+.sheet .form-row input, .sheet .form-row select { min-width: 0; }
+/* Tools → Parts and datasheets (9c) */
+.sheet .form-row.parts-find { grid-template-columns: 130px 1fr auto; }
+.parts-list h3:first-child { margin-top: 6px; }
+.part-entry { border-bottom: 1px solid var(--border); }
+.part-entry > summary { display: flex; gap: 10px; align-items: baseline; padding: 6px 2px; cursor: pointer; list-style: none; }
+.part-entry > summary::-webkit-details-marker { display: none; }
+.part-entry[open] > summary { background: var(--surface-2); }
+.part-entry > .part-row { display: flex; gap: 10px; align-items: baseline; padding: 6px 2px; } /* a card not included: no body, an ⓘ (9c) */
+.part-row .info-button { margin: 0; align-self: center; }
+.part-id { font-family: var(--font-mono); font-size: 12px; color: var(--text); min-width: 96px; }
+.part-desc { flex: 1; font-size: 13px; }
+.part-origin { font-size: 11px; color: var(--text-3); white-space: nowrap; }
+.part-origin.origin-estimate { color: var(--warning); }
+.part-sheet { font-size: 12px; color: var(--accent-hi); white-space: nowrap; }
+.part-body { padding: 4px 2px 10px 106px; font-size: 13px; }
+.part-unchecked { margin: 0 0 10px; padding-left: 18px; }
+.part-unchecked li { margin-bottom: 4px; }
+.part-unchecked strong { color: var(--text); font-weight: 600; }
+@media (max-width: 640px) { .part-entry > summary, .part-entry > .part-row { flex-wrap: wrap; } .part-body { padding-left: 2px; } }
+/* Tools → Add a model (9c) */
+#new-model .button-row { display: flex; gap: 8px; justify-content: flex-end; margin: 4px 0 12px; }
+#new-model tr.odd td { color: var(--warning); }
+#new-model .model-comment { font-family: var(--font-mono); font-size: 11px; color: var(--text-2); background: var(--surface-2); border: 1px solid var(--border); border-radius: 3px; padding: 6px 8px; margin: 0 0 10px; white-space: pre-wrap; overflow-wrap: anywhere; max-height: 12em; overflow-y: auto; }
+#new-model .ok { color: var(--text); border-left: 3px solid var(--accent); padding-left: 10px; }
+.sheet .form-row[hidden] { display: none; }
+.sheet .error { margin: 0 0 10px; }
+.tool-result { margin-top: 6px; }
+.tool-result table { width: auto; min-width: 220px; }
+.tool-result td.values { text-align: right; color: var(--text); }
+.tool-value { font-family: var(--font-mono); font-size: 18px; color: var(--text); margin: 4px 0 8px; }
+.tool-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; align-items: start; }
+.band-picks { display: grid; grid-template-columns: 1fr; gap: 6px; margin: 4px 0 10px; }
+.band-pick { display: grid; grid-template-columns: 130px 1fr; gap: 8px; align-items: center; }
+.band-pick select { min-width: 0; }
+.resistor-drawing { width: 100%; max-width: 320px; height: auto; display: block; margin: 4px 0 10px; }
+.resistor-drawing .lead { stroke: var(--sch-line); stroke-width: 3; }
+.resistor-drawing .body { fill: var(--band-body); }
+.resistor-drawing rect[data-band] { stroke: var(--surface-0); stroke-width: 0.5; }
+.resistor-drawing .band-role { fill: var(--text-3); font-size: 9px; text-anchor: middle; font-family: var(--font-ui); }
+.resistor-drawing .band-says { fill: var(--text); font-size: 9px; text-anchor: middle; font-family: var(--font-mono); }
+/* Help → Resistor colour code: the chart, each row painted its colour, like the paper card */
+.band-examples { display: flex; flex-wrap: wrap; gap: 8px 24px; }
+.band-example { margin: 0; flex: 1 1 260px; max-width: 340px; }
+.band-example figcaption { color: var(--text-2); font-family: var(--font-mono); font-size: 12px; }
+.colour-chart { width: 100%; border-collapse: collapse; margin: 6px 0 14px; font-family: var(--font-mono); font-size: 12px; }
+.colour-chart thead th { text-align: center; color: var(--text-2); font-family: var(--font-ui); font-weight: 600; padding: 4px 6px; }
+.colour-chart tbody th, .colour-chart tbody td { padding: 3px 6px; text-align: center; color: var(--band-white); border-bottom: 1px solid var(--surface-0); }
+.colour-chart tbody th { text-transform: uppercase; letter-spacing: 0.06em; font-family: var(--font-ui); font-weight: 600; }
+.colour-chart tbody td + td { border-left: 1px solid var(--surface-0); }
+/* dark ink on the light colours */
+.colour-chart tr:is([data-colour="orange"], [data-colour="yellow"], [data-colour="grey"], [data-colour="white"], [data-colour="gold"], [data-colour="silver"]) :is(th, td) { color: var(--band-black); }
+@media (max-width: 720px) { .tool-grid { grid-template-columns: 1fr; } }
+/* a selected wire can be dragged to move it (D-095) */
+.schematic .wires line.wire.selected + line.hit { cursor: move; }
+
+/* Frequency tools (Phase 8b, D-097): layers' lists, a part lit from its influence row, Expand */
+.schematic .part.lit line, .schematic .part.lit path, .schematic .part.lit rect:not(.part-hit), .schematic .part.lit circle:not(.pin-hit) { stroke: var(--sch-selected); stroke-width: 2.6; }
+.schematic .part.lit .filled { fill: var(--sch-selected); }
+.schematic .part-text.lit text { fill: var(--sch-selected); }
+/* a stage picked in Bias & headroom (D-127): its parts, block, card and chip in copper */
+.schematic .part.picked line, .schematic .part.picked path, .schematic .part.picked rect:not(.part-hit), .schematic .part.picked circle:not(.pin-hit) { stroke: var(--sch-picked); stroke-width: 2.6; }
+.schematic .part.picked .filled { fill: var(--sch-picked); }
+.schematic .part-text.picked text { fill: var(--sch-picked); }
+/* hovered (a knob in use, a block) over the picked stage: the hover shows, so you see what's active (round 3) */
+.schematic .part.picked.lit line, .schematic .part.picked.lit path, .schematic .part.picked.lit rect:not(.part-hit), .schematic .part.picked.lit circle:not(.pin-hit) { stroke: var(--sch-selected); }
+.schematic .part.picked.lit .filled { fill: var(--sch-selected); }
+.schematic .part-text.picked.lit text { fill: var(--sch-selected); }
+.plot .u-over.pickable { cursor: crosshair; }
+.layers { margin-top: 10px; display: flex; flex-direction: column; gap: 10px; font-size: 12px; }
+.layers[hidden] { display: none; }
+.layers .hint { padding: 0; border: 0; }
+.layer-list h4 { margin: 0 0 4px; font: 300 11px var(--font-display, inherit); letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-2); }
+.layer-list ul { list-style: none; margin: 0; padding: 0; }
+.layer-list li { padding: 3px 4px; border-radius: 3px; }
+.layer-list li:hover, .layer-list li.open { background: var(--surface-2); }
+.layer-list .label { color: var(--text-3); }
+.layer-list .value { color: var(--text); font-family: var(--font-mono); }
+.influence-pick { display: grid; grid-template-columns: 3.5em 4.5em 1fr auto; gap: 8px; width: 100%; padding: 0; border: 0; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.influence-pick .ref { font-family: var(--font-mono); color: var(--accent-hi); }
+.influence-pick .size { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.influence-pick .what { color: var(--text-2); }
+.influence-pick .tag { color: var(--warning); font-size: 11px; white-space: nowrap; }
+.influence-at { margin: 0 0 4px; color: var(--text-2); }
+button.link { padding: 0; border: 0; background: none; color: var(--accent-hi); font: inherit; text-decoration: underline; cursor: pointer; }
+.influence-slider .slider-row { margin: 6px 0 2px; }
+/* the ranked parts scroll at the DC list's height, so the plot stays in view (D-102) */
+.influence-rows { max-height: 200px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
+#curve-edit .influence-rows { max-height: 28vh; }
+.edit-head { display: flex; align-items: center; gap: 12px; margin-bottom: 6px; }
+.edit-head h4 { margin: 0; }
+.edit-head .segmented button { padding: 1px 8px; font-size: 11px; }
+/* Edit curve (expanded only): handles on the plot, their rows beside it */
+.plot.grabbable .u-over { cursor: ew-resize; } /* a plain drag moves a dot sideways, Shift+drag up or down */
+.plot.grabbable.shift .u-over { cursor: ns-resize; }
+.plot.dragging .u-over { cursor: grabbing; }
+#handle-rows li { cursor: pointer; }
+#handle-rows li.active { background: var(--surface-2); cursor: default; }
+#handle-rows .handle-way { display: block; margin: 2px 0 0 12px; color: var(--text-2); font-size: 11px; }
+#handle-rows .handle-way select { margin-left: 6px; font-size: 12px; }
+#handle-rows .was { margin-left: 8px; color: var(--text-3); font-family: var(--font-mono); font-size: 11px; }
+.handle-note { margin: 2px 0 0; font-family: var(--font-mono); font-size: 11px; color: var(--text-2); }
+.handle-note:empty { display: none; }
+/* Keep as snapshot: the Snapshot button lights and fades, so a replaced snapshot shows */
+@keyframes kept { from { background: var(--accent); color: var(--surface-0); } }
+[data-slot].kept { animation: kept 0.9s ease-out; }
+.panel-tools .edit-tools { display: flex; gap: 8px; margin-left: 16px; padding-left: 16px; border-left: 1px solid var(--border); }
+/* while editing the side pane is one height: rows, a line, the changes (scrolling on their own), the help at the bottom */
+#curve-edit { flex: 1 0 auto; display: flex; flex-direction: column; }
+#curve-edit hr { width: 100%; margin: 10px 0 6px; border: 0; border-top: 1px solid var(--border); }
+.curve-changes { margin: 0; max-height: 9em; overflow: auto; font-family: var(--font-mono); font-size: 11px; color: var(--text-2); }
+.layer-list .curve-changes li { padding: 1px 4px; }
+.layer-list .curve-changes li:hover { background: none; }
+.curve-changes .put-back { margin-left: 4px; text-decoration: none; }
+.curve-changes li.room-made { color: var(--warning); } /* parts moved to make room (D-124): hover lights them */
+.fix-option .room-note { color: var(--warning); }
+#handle-rows li.lost { color: var(--text-3); cursor: default; }
+#handle-rows li.lost:hover { background: none; }
+#handle-rows .handle-lost { display: block; margin: 2px 0 0 12px; color: var(--text-3); font-size: 11px; }
+/* any pane's large view (`setLargeView`, D-102): over the canvas, one size, editing or not;
+   shrunk by its title to just the title bar, ringed in the accent so it isn't missed
+   (`bottom` is set as the bars stack) */
+/* a large view is one fixed height, anchored to the bottom (D-127): the window's size doesn't stretch it */
+:root { --large-h: 560px; }
+.large-view { position: fixed; z-index: 30; left: 16px; right: 16px; bottom: 16px; height: var(--large-h); overflow: auto; background: var(--surface-1); border: 1px solid var(--border); }
+.large-view:not([open]) { height: auto; border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); }
+.large-view > summary .grip { display: none; } /* a large view isn't moved among the panels */
+/* a shrunk bar's Collapse, pinned right (where the grip was); only on a shrunk bar */
+.large-collapse { display: none; position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 2px 10px; font: 12px var(--font-ui); letter-spacing: 0; text-transform: none; }
+.large-view:not([open]) > summary .large-collapse { display: inline-block; }
+.large-collapse:disabled { opacity: 0.4; cursor: not-allowed; }
+.large-chip { display: inline-block; margin-left: 12px; padding: 0 8px; border: 1px solid var(--accent); border-radius: 10px; font: 11px/12px var(--font-ui); letter-spacing: 0.04em; text-transform: none; color: var(--accent-hi); vertical-align: middle; }
+/* every large view's layout (`largeView`, D-107): the main column left, a side column right
+   that fits the view's height and scrolls on its own, its notes pinned to the bottom; the
+   view itself never scrolls */
+.large-view[open] { overflow: hidden; }
+.large-view .large-split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(340px, 32%); column-gap: 20px; align-items: start; }
+.large-view .large-split > * { grid-column: 1; }
+.large-view .large-split > .large-side:not([hidden]) { grid-column: 2; grid-row: 1 / span 12; margin-top: 0; height: calc(var(--large-h) - 70px); overflow: auto; display: flex; flex-direction: column; }
+.large-side > * { flex: none; }
+.large-side > .large-notes { flex: 0 1 auto; min-height: 4em; overflow: auto; margin-top: auto; padding-top: 10px; }
+
+/* History (D-101): the header button and its pane, newest first */
+.history-wrap { position: relative; }
+.history-pane { white-space: normal; position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; width: 320px; max-height: 320px; overflow: auto; padding: 8px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); font-size: 12px; }
+.history-pane[hidden] { display: none; }
+.history-hint { margin: 0 0 6px; color: var(--text-3); font-size: 11px; }
+.history-rows { list-style: none; margin: 0; padding: 0; }
+.history-heading { margin: 6px 0 2px; color: var(--text-2); font: 300 11px var(--font-display, inherit); letter-spacing: 0.1em; text-transform: uppercase; }
+.history-step { display: flex; gap: 8px; align-items: baseline; width: 100%; padding: 3px 6px; border: 0; border-radius: 3px; background: none; color: var(--text); font: inherit; text-align: left; cursor: pointer; }
+.history-step:hover:not(:disabled) { background: var(--surface-2); }
+.history-step.current { background: var(--surface-2); color: var(--accent-hi); cursor: default; }
+.history-step.undone { color: var(--text-3); }
+.history-step.start { color: var(--text-2); font-style: italic; }
+.history-step:disabled { color: var(--text-3); opacity: 0.6; cursor: not-allowed; }
+.history-step .tag, .curve-changes .tag { color: var(--warning); font-size: 10px; white-space: nowrap; }
+/* Edit curve is on (D-101): the History button outlined (a card on hover says why) and the schematic outlined, so an edit made there shows it goes into Keep or Discard */
+body[data-frequency-editing="true"] #history-button { border-color: var(--accent); box-shadow: 0 0 0 1px var(--accent); color: var(--accent-hi); }
+#history-button.noting { animation: kept 0.9s ease-out; }
+.history-tip { white-space: normal; position: absolute; top: calc(100% + 6px); right: 0; z-index: 41; width: 260px; padding: 8px 10px; background: var(--surface-1); border: 1px solid var(--accent); border-radius: 4px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); font-size: 12px; color: var(--text); }
+.history-tip[hidden] { display: none; }
+.history-tip strong { display: block; color: var(--accent-hi); font-weight: 600; }
+.history-tip p { margin: 4px 0 0; color: var(--text-2); }
+.history-tip .history-tip-more { color: var(--text-3); font-size: 11px; }
+body[data-frequency-editing="true"] #schematic { outline: 2px solid var(--accent); outline-offset: -2px; }
+/* Changed: a dot on a part changed along with others (hover says which; they light up together) */
+.curve-changes .linked-dot { display: inline-block; width: 6px; height: 6px; margin-right: 5px; border-radius: 50%; background: var(--accent-hi); vertical-align: middle; }
+.curve-changes li.partner { background: var(--surface-2); }
+.curve-others { margin: 4px 0 0; color: var(--text-2); font-size: 11px; }
+
+/* Bias & headroom (Phase 8c, D-106, D-122): the tone picker, the stage chain, a block's card */
+.stage-tones { display: flex; flex-wrap: wrap; gap: 6px 8px; align-items: center; margin: 0 0 8px; font-size: 12px; }
+.stage-tones .segmented button { padding: 1px 7px; font-size: 11px; }
+.stage-tones .segmented button.unmeasured { color: var(--text-3); border-style: dashed; }
+.stage-tones .segmented button[aria-checked="true"] { border-style: solid; }
+#stages-measure-all { padding: 1px 8px; font-size: 11px; }
+/* what to do or all done, or the bar of a tone being measured, in the room right of the chips (round 3) */
+.stage-tones .tone-state { flex: 1; display: flex; justify-content: center; min-width: max-content; }
+#stages-tone-note { margin: 0; padding: 0; border: 0; font-size: 11px; }
+.stages-summary { margin: 0 0 8px; color: var(--text); font-size: 13px; }
+#stages-settling { margin: -4px 0 8px; font-size: 12px; }
+.stage-chain { list-style: none; margin: 0 0 10px; padding: 0; display: flex; flex-wrap: wrap; justify-content: center; align-items: stretch; gap: 6px 0; font-size: 12px; }
+.stage-chain > li { display: flex; align-items: center; }
+.chain-end { color: var(--text-3); font-size: 11px; }
+.chain-arrow { padding: 0 5px; color: var(--text-2); }
+/* an arrow with a head, not a thin line (Phase 8d) */
+.arrow-glyph { position: relative; flex: none; width: 20px; height: 10px; }
+.arrow-glyph::before { content: ""; position: absolute; left: 0; right: 6px; top: 4px; height: 2px; background: currentColor; }
+.arrow-glyph::after { content: ""; position: absolute; right: 0; top: 0; border-left: 8px solid currentColor; border-top: 5px solid transparent; border-bottom: 5px solid transparent; }
+.stage-chain > .chain-block { flex-direction: column; align-items: flex-start; gap: 1px; padding: 4px 7px; border: 1px solid var(--border); border-radius: 3px; background: var(--surface-1); cursor: pointer; min-width: 64px; }
+.chain-block:hover { background: var(--surface-2); }
+.chain-block:focus-visible { outline: 1px solid var(--accent-hi); outline-offset: 1px; }
+.chain-block[aria-pressed="true"] { border-color: var(--picked); }
+.chain-block[aria-pressed="true"] .block-head .ref { color: var(--picked); }
+/* clipping at a hard pick isn't an error (a fuzz is meant to): it takes the accent */
+.chain-block.clips { border-left: 3px solid var(--accent-hi); }
+.chain-block[data-kind="clipper"] { border-style: dashed; }
+.chain-block[aria-pressed="true"][data-kind="clipper"] { border-style: solid; }
+.chain-block.clips[data-kind="clipper"] { border-left-style: solid; } /* the hard-pick bar stays solid on a dashed clipper */
+.block-head { display: flex; gap: 6px; align-items: baseline; }
+.block-head .ref { font-family: var(--font-mono); font-weight: 400; color: var(--accent-hi); }
+.block-gain { font-family: var(--font-mono); font-size: 11px; color: var(--text-2); }
+.chain-block .role { color: var(--text-2); font-size: 11px; }
+.block-marks { display: flex; flex-wrap: wrap; gap: 3px; }
+.mark { padding: 0 4px; border: 1px solid var(--border); border-radius: 2px; font-size: 10px; line-height: 14px; color: var(--text-2); }
+.mark.tone-clip, .mark.tone-over { color: var(--accent-hi); border-color: var(--accent); }
+.mark.tone-near { color: var(--warning); }
+.block-worst { font-size: 10px; color: var(--text-3); }
+/* a pot's chip (D-122): on the block it acts on, or over the arrow between two */
+.block-chips, .arrow-chips { display: flex; flex-wrap: wrap; gap: 3px; }
+.block-chips { margin-top: 2px; }
+.chain-arrow.has-chips { flex-direction: column; justify-content: center; gap: 2px; }
+/* an arrow's loss at the tone (D-123), over its arrow */
+.arrow-loss { font: 10px/12px var(--font-mono); color: var(--text-2); white-space: nowrap; }
+.pot-chip { padding: 0 5px; border: 1px solid var(--border); border-radius: 8px; background: var(--surface-2); color: var(--text-2); font: 10px/14px var(--font-ui); white-space: nowrap; }
+.pot-chip:hover { border-color: var(--accent); color: var(--accent-hi); }
+.pot-chip[aria-expanded="true"] { border-color: var(--picked); color: var(--picked); }
+/* the card (D-123): one thing at a time, a block (its knobs in it) or an arrow's pot */
+.stage-card-box { margin: 0 0 10px; padding: 6px 8px; border: 1px solid var(--picked); border-radius: 3px; background: var(--surface-1); font-size: 12px; display: flex; flex-direction: column; gap: 6px; }
+.stage-card-box[hidden], .pot-pop[hidden] { display: none; }
+/* a card's Probe, in the large view: its waveform under the card (D-127) */
+/* a card's Waveform section (D-127): shut at first, the three picks overlaid and a table */
+/* the picked block's Waveform, under the tones: a title bar like a pane's (D-127) */
+.card-waves { margin: 0 0 8px; border: 1px solid var(--border); border-radius: 3px; font-size: 12px; }
+.panels .card-waves > summary { padding: 6px 10px; background: var(--surface-2); font: 300 11px var(--font-display); letter-spacing: 0.2em; text-transform: uppercase; color: var(--text); }
+.card-waves > summary .wave-of { margin-left: 6px; font: 12px var(--font-mono); letter-spacing: 0; text-transform: none; color: var(--picked, var(--text-2)); }
+.panels .card-waves[open] > summary { border-bottom: 1px solid var(--border); }
+.card-waves > :not(summary) { margin-left: 10px; margin-right: 10px; }
+/* "Readings": a fold inside the Waveform section, shut at first (round 3b) */
+.panels .wave-readings { margin-top: 2px; margin-bottom: 4px; }
+.panels .wave-readings > summary, .panels .wave-readings[open] > summary { padding: 2px 0; background: none; font: 12px var(--font-ui); letter-spacing: 0; text-transform: none; color: var(--text-2); }
+.card-waves .stages-wave-plot { position: relative; }
+.card-waves .wave-loading { position: absolute; inset: 0 0 24px; display: flex; align-items: center; justify-content: center; margin: 0; pointer-events: none; }
+.card-waves table { margin-bottom: 8px; }
+.card-waves .stages-wave-plot { margin: 4px 0; }
+.wave-table .wave-pick { border-bottom: 2px solid var(--line); color: var(--text-2); }
+.stage-card-box p { margin: 0; }
+.card-part:empty { display: none; }
+.stage-card, .stage-card-more, .pot-card { display: flex; flex-direction: column; gap: 4px; }
+.pot-pop { display: flex; flex-direction: column; gap: 4px; padding: 4px 0; border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); }
+.pot-pop .knob { margin-bottom: 0; }
+.card-text { color: var(--text-2); }
+.card-at { color: var(--text-3); font-size: 11px; }
+.card-buttons { display: flex; gap: 6px; justify-content: flex-end; }
+.card-buttons button { padding: 1px 8px; font-size: 11px; }
+.stage-tones-table { border-collapse: collapse; font-size: 11px; }
+.stage-tones-table th, .stage-tones-table td { padding: 1px 8px 1px 0; text-align: left; font-weight: 400; }
+.stage-tones-table thead th { color: var(--text-3); }
+.stage-tones-table tbody th { color: var(--text-2); white-space: nowrap; }
+.stage-tones-table td { font-family: var(--font-mono); }
+.stage-tones-table tr.here th { color: var(--accent-hi); }
+.stage-head { display: flex; gap: 8px; align-items: center; margin-bottom: 2px; }
+.stage-head .ref { font-family: var(--font-mono); color: var(--accent-hi); }
+.stage-head .role { color: var(--text-2); min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.bias-line { display: inline-flex; gap: 6px; align-items: center; margin-left: auto; flex: none; }
+.bias-bar { position: relative; flex: none; width: 56px; height: 6px; border-radius: 3px; background: var(--surface-2); border: 1px solid var(--border); }
+.bias-bar i { position: absolute; top: -3px; width: 2px; height: 12px; margin-left: -1px; background: var(--ok); }
+.bias-bar.tone-near i { background: var(--warning); }
+.bias-bar.tone-over i { background: var(--error); }
+.bias-place { color: var(--text-2); min-width: 5.5em; }
+/* Bias to… (D-123): in the large view the mark can be dragged; the aim shows hollow */
+.bias-bar i.aim { background: none; border: 1px solid var(--accent-hi); width: 4px; margin-left: -2px; box-sizing: border-box; }
+.bias-bar i.aim[hidden] { display: none; }
+.bias-bar.aimable { width: 140px; height: 8px; cursor: ew-resize; touch-action: none; }
+.bias-bar.aimable:focus-visible { outline: 1px solid var(--accent-hi); outline-offset: 3px; }
+/* what no part next to the stage reaches (D-123): hatched, the aim stops at its edge */
+.bias-bar b.out-of-reach { position: absolute; top: 0; bottom: 0; background: repeating-linear-gradient(135deg, var(--border) 0 2px, transparent 2px 4px); }
+.bias-aim { margin: 0; font-family: var(--font-mono); font-size: 11px; }
+/* Try changes in a block's card, and the box a fix opens */
+.try-changes-box { display: flex; flex-direction: column; gap: 4px; padding-top: 6px; border-top: 1px solid var(--border); }
+.try-head, .fix-title { margin: 0; color: var(--text-2); font-size: 11px; letter-spacing: 0.06em; text-transform: uppercase; }
+.try-line { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
+.try-line > b { min-width: 3.5em; font-weight: 400; color: var(--text-3); }
+.try-line button { padding: 1px 8px; font-size: 11px; }
+.try-line .hint { font-size: 11px; }
+#gain-change { width: 5em; font-size: 12px; }
+.fix-box { display: flex; flex-direction: column; gap: 4px; padding: 6px; border: 1px solid var(--accent); border-radius: 3px; }
+.fix-option { display: flex; gap: 8px; align-items: baseline; justify-content: space-between; }
+.fix-option button { flex: none; padding: 1px 8px; font-size: 11px; }
+.fix-option button[aria-pressed="true"] { border-color: var(--accent); color: var(--accent-hi); }
+.fix-parts-head { color: var(--text-3); font-size: 11px; }
+.fix-parts { display: flex; flex-direction: column; gap: 10px; font-size: 11px; color: var(--text-2); }
+/* the gain box's sliders (D-125): a part's values placed by the gain each gives, marks where something starts clipping */
+.gain-part { display: flex; flex-direction: column; gap: 4px; }
+.gain-part.gain-cap { align-items: flex-start; }
+.gain-head { display: flex; gap: 8px; align-items: baseline; }
+.gain-head .gain-value { font-family: var(--font-mono); color: var(--text); }
+.gain-scaled { display: flex; flex-direction: column; gap: 3px; max-width: 320px; }
+.gain-bar { position: relative; height: 8px; margin-top: 18px; border-radius: 4px; background: var(--surface-2); border: 1px solid var(--border); cursor: ew-resize; touch-action: none; }
+.gain-bar.busy { cursor: progress; opacity: 0.6; }
+.gain-bar:focus-visible { outline: 1px solid var(--accent-hi); outline-offset: 3px; }
+.gain-bar i { position: absolute; top: -3px; width: 2px; height: 12px; margin-left: -1px; }
+.gain-bar i.gain-knob { width: 6px; margin-left: -3px; border-radius: 2px; background: var(--accent-hi); }
+.gain-bar i.gain-was { background: var(--text-3); }
+/* S / M / H (D-125), made to stand out (D-127): a tag over a tick through the bar, and the bar
+   tinted on the side where that pick clips, so a mark near an end still shows */
+.gain-bar s.clip-zone { position: absolute; top: 0; bottom: 0; border-radius: 3px; text-decoration: none; }
+.gain-bar s.clip-soft { background: var(--clip-zone-soft); }
+.gain-bar s.clip-med { background: var(--clip-zone-med); }
+.gain-bar s.clip-hard { background: var(--clip-zone-hard); }
+.gain-bar b.clip-mark { position: absolute; bottom: calc(100% + 4px); transform: translateX(-50%); padding: 0 3px; border: 1px solid currentColor; border-radius: 2px; background: var(--surface-1); font: 600 11px/13px var(--font-mono); color: var(--warning); }
+.gain-bar b.clip-mark::after { content: ""; position: absolute; left: 50%; top: 100%; width: 2px; height: 13px; margin-left: -1px; background: currentColor; }
+.gain-bar b.clip-hard { color: var(--text-2); }
+.gain-bar b.clip-soft { color: var(--error); }
+.gain-ends { display: flex; justify-content: space-between; gap: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+.gain-read { margin: 0; }
+.gain-read .gain-chain { color: var(--text-3); }
+.fix-buttons { display: flex; gap: 6px; justify-content: flex-end; }
+.fix-buttons button { padding: 1px 8px; font-size: 11px; }
+.bias-place sup { color: var(--text-3); margin-left: 1px; }
+.stage-head .clamp-text { margin-left: auto; flex: none; font-family: var(--font-mono); font-size: 11px; color: var(--text-2); }
+.stage-levels { display: flex; flex-wrap: wrap; gap: 4px 14px; font-family: var(--font-mono); font-size: 11px; }
+.stage-cell b { font-family: var(--font-ui); font-weight: 400; color: var(--text-3); }
+.stage-cell.tone-ok { color: var(--ok); }
+.stage-cell.tone-near { color: var(--warning); }
+/* clipping isn't an error (a fuzz's stages are meant to): over and a clipper's drive share the accent */
+.stage-cell.tone-over, .stage-cell.tone-clip { color: var(--accent-hi); }
+.stage-cell.tone-held, .stage-cell.tone-off { color: var(--text-3); }
+#stages-body[data-loading] #stages-chain-body > *, #stages-body[data-loading] #stage-strip > *, #stages-body[data-loading] #stages-plot { opacity: 0.45; transition: opacity 0s linear 0.2s; } /* the last circuit's chain, while the new one is measured; not for an answer that comes straight back (D-281, as BUSY_AFTER_MS) */
+/* the large view (D-122): the chain is a strip over the chart, not in the side column */
+.large-view #stages-side .stage-chain { display: none; }
+/* one layout over both charts, centred, framed apart from the chart (Phase 8d) */
+.stage-strip { margin: 0 0 6px; padding: 6px 8px 0; border: 1px solid var(--border); border-radius: 3px; }
+.stage-strip:empty { display: none; }
+.stage-strip .stage-chain { margin-bottom: 6px; }
+/* over the level in → out curve the strip is its key: each block in its line's colour */
+/* the line's colour over the curve: a shadow above the box, so nothing moves between the charts */
+.stage-chain.keyed > .chain-block, .stage-chain.keyed > .chain-end { box-shadow: 0 -3px 0 var(--line, transparent); }
+.stage-chain.keyed > .line-off { opacity: 0.35; } /* its line hidden in the curve's legend */
+
+/* a pane's ⓘ (`paneInfo`, D-109): in its title bar after the name; the explanations pop up under it */
+.info-button { display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin: 0 0 0 8px; padding: 0; border: 1px solid var(--border); border-radius: 50%; background: none; color: var(--text-2); font: italic 600 11px/1 var(--font-prose); letter-spacing: 0; text-transform: none; vertical-align: 1px; cursor: pointer; }
+.info-button:hover, .info-button[aria-expanded="true"] { border-color: var(--accent); color: var(--accent-hi); }
+.info-pop { position: fixed; z-index: 45; overflow: auto; padding: 10px 12px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
+.info-pop.in-sheet { z-index: 55; } /* over the sheet its buttons are in (the parts list, 9c) */
+.info-pop[hidden] { display: none; }
+.info-pop h4 { margin: 0 0 8px; color: var(--text-2); font: 300 11px var(--font-display, inherit); letter-spacing: 0.1em; text-transform: uppercase; }
+.info-pop h4 + h5 { margin-top: 0; }
+.popup-title .info-button { margin-left: auto; align-self: center; } /* the form's ⓘ, at the title bar's end */
+.info-pop h5 { margin: 10px 0 4px; color: var(--text-2); font: 600 12px var(--font-ui); }
+.info-pop .note { color: var(--text-2); font-size: 13px; margin: 0 0 8px; }
+/* Bias & headroom's key, at the top of its ⓘ: a small block drawn as the chain draws it (TODO 2026-11-09) */
+.chain-key { display: grid; gap: 5px; margin: 0 0 10px; padding: 0 0 8px; border-bottom: 1px solid var(--border); font-size: 12px; color: var(--text-2); }
+.chain-key .key-row { display: grid; grid-template-columns: 92px 1fr; gap: 8px; align-items: center; }
+.chain-key .key-block { display: inline-flex; justify-self: start; padding: 2px 7px; min-width: 40px; border: 1px solid var(--border); border-radius: 3px; background: var(--surface-1); }
+.chain-key .key-block[aria-pressed="true"] { border-color: var(--picked); }
+.chain-key .key-block[data-kind="clipper"] { border-style: dashed; }
+.chain-key .key-block.clips { border-left: 3px solid var(--accent-hi); }
+.chain-key .key-block.discrete { border-style: double; border-width: 3px; }
+/* a discrete op-amp (D-224): one block, a double outline, its transistors' jobs inside */
+.stage-chain > .chain-block.discrete { border-style: double; border-width: 3px; }
+.stage-chain > .chain-block.discrete.clips { border-left: 3px solid var(--accent-hi); }
+.discrete-parts { display: flex; gap: 6px; font-size: 10px; color: var(--text-2); }
+.discrete-part b { font-family: var(--font-mono); font-weight: 400; color: var(--text); }
+.chain-key .key-marks { display: inline-flex; gap: 3px; }
+.chain-key .key-arrow { font-weight: 400; font-size: 11px; color: var(--text-2); white-space: nowrap; }
+.info-pop .note:last-child { margin-bottom: 0; }
+.large-view:not([open]) > summary .info-button { display: none; } /* a large view shrunk to its bar */
+
+/* Expand on a pane's title bar (`largeView`, D-110): left of the grip; large, it's Collapse at the far right */
+.panels summary > .large-toggle { position: absolute; right: 34px; top: 50%; transform: translateY(-50%); padding: 1px 8px; font: 11px var(--font-ui); letter-spacing: 0; text-transform: none; }
+/* large: Collapse at the title bar's far right, where a shrunk bar's is (round 3); shrunk, that one shows instead */
+.panels .large-view > summary > .large-toggle { right: 10px; padding: 2px 10px; font-size: 12px; }
+.panels .large-view:not([open]) > summary > .large-toggle { display: none; }
+/* controls a shrunk bar keeps (the Audio pane's Render, play, Dry / Pedal / Snapshot) */
+.large-bar-tools { display: none; }
+/* in the middle of the bar (D-111) */
+.large-view:not([open]) > summary .large-bar-tools:not(:empty) { display: inline-flex; gap: 8px; align-items: center; position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); line-height: 1; font: 12px var(--font-ui); letter-spacing: 0; text-transform: none; cursor: default; }
+.large-bar-tools button { padding: 2px 8px; font-size: 12px; line-height: 16px; }
+/* Play / Pause: both words stacked, one hidden, so the button never changes width (D-116) */
+#audio-bar-play, button.flip { display: inline-grid; justify-items: center; }
+button.flip > span { grid-area: 1 / 1; }
+button.flip.cancel > [data-label="go"], button.flip:not(.cancel) > [data-label="stop"] { visibility: hidden; }
+#audio-bar-play > span { grid-area: 1 / 1; }
+#audio-bar-play[data-playing] > [data-label="play"], #audio-bar-play:not([data-playing]) > [data-label="pause"] { visibility: hidden; }
+/* the render's progress, left of Render, outside the centred row: it doesn't push the buttons */
+.large-bar-tools progress { position: absolute; right: calc(100% + 10px); top: 50%; transform: translateY(-50%); width: 80px; }
+.large-bar-tools .bar-rule { align-self: stretch; width: 1px; margin: 0 4px; background: var(--border); }
+
+/* Try changes' Changed list, at the top of the Bias & headroom side column (D-123) */
+#try-changed { position: sticky; top: 0; z-index: 2; padding: 6px 8px; margin-bottom: 8px; border: 1px solid var(--accent); border-radius: 3px; background: var(--surface-1); }
+#try-changed h4 { margin: 0 0 4px; font: 300 11px var(--font-display, inherit); letter-spacing: 0.15em; text-transform: uppercase; color: var(--text-2); }
+#try-changed ul { list-style: none; padding: 0; }
+#try-changed li { padding: 1px 0; }
+
+/* the progress bars of a fix's search and the level in → out sweep (D-123) */
+#fix-box progress.fix-progress { display: block; flex: none; width: 100%; height: 6px; margin: 2px 0 6px; accent-color: var(--accent); }
+#stages-progress { display: flex; align-items: center; gap: 10px; }
+#stages-progress progress { flex: none; width: 160px; height: 6px; accent-color: var(--accent); }
+#stages-progress progress[hidden] { display: none; }
+/* a tone being measured (D-127), under the line saying which */
+#stages-tone-progress { display: block; flex: none; width: min(160px, 100%); height: 6px; margin: 0; accent-color: var(--accent); }
+#stages-tone-progress[hidden] { display: none; }
+
+/* the bias bar's ends in volts, under it, in the large view (D-123) */
+.bias-scaled { display: inline-flex; flex-direction: column; gap: 3px; }
+.bias-scale { display: flex; justify-content: space-between; gap: 6px; font-family: var(--font-mono); font-size: 10px; color: var(--text-3); }
+
+/* the custom switch editor (9c): a row per position, a column per pole */
+#custom-switch .form-row { grid-template-columns: 90px 1fr; max-width: 360px; }
+.custom-grid { border-collapse: collapse; margin: 10px 0; }
+.custom-grid th { padding: 2px 6px; color: var(--text-3); font-weight: normal; text-align: left; }
+.custom-grid td { padding: 2px 6px 2px 0; }
+.custom-grid input { width: 120px; }
+
+/* Notes pane (9d4) */
+.notes-tools { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+.notes-empty { padding: 0; border: 0; }
+.notes-scroll { height: 260px; overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; } /* one height for both tabs, notes or none: the pane never jumps */
+.notes-list { list-style: none; margin: 0; padding: 0; }
+.note-item { border-top: 1px solid var(--border); }
+.note-item:last-child { border-bottom: 1px solid var(--border); }
+.note-head { display: flex; gap: 8px; align-items: baseline; width: 100%; text-align: left; border: 0; border-radius: 0; background: none; padding: 6px 2px; color: var(--text); cursor: pointer; min-width: 0; }
+.note-head:hover { background: var(--surface-2); }
+.note-caret { color: var(--text-3); width: 1em; flex: none; }
+.note-name { font-weight: 600; flex: none; }
+.note-kind { color: var(--text-3); font-size: 12px; flex: none; }
+.note-preview { color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; min-width: 0; }
+.note-item.open .note-preview { display: none; }
+.note-title, .note-text { display: block; width: 100%; box-sizing: border-box; margin: 0 0 6px; font-family: var(--font-ui); color: var(--text); background: var(--surface-1); border: 1px solid var(--border); border-radius: 3px; padding: 4px 6px; }
+.note-title { font-weight: 600; }
+.note-text { resize: vertical; min-height: 6em; line-height: 1.4; }
+.note-title:focus, .note-text:focus { outline: 1px solid var(--accent); }
+.note-buttons { display: flex; justify-content: flex-end; margin-bottom: 8px; }
+
+/* the notice after renaming something notes mention (9d4) */
+/* over the middle of the drawing, in the dialogs' style (D-271) */
+.rename-notice { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 5; width: min(560px, calc(100% - 32px)); max-height: calc(100% - 32px); display: flex; }
+.rename-notice .sheet { max-height: 100%; box-shadow: 0 0 0 1px var(--accent); }
+.rename-notice .link-button { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline; font: inherit; }
+.rename-notice .mentions { list-style: none; margin: 6px 0 0; padding: 0; }
+.rename-notice .mentions li { margin: 4px 0; }
+.rename-notice .mention-text { color: var(--text-3); }
+.rename-notice mark { background: none; color: var(--text); font-weight: 600; }

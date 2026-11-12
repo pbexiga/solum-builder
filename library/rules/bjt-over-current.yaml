@@ -1,0 +1,17 @@
+id: bjt-over-current
+layer: operating_point
+severity: error
+check: bjt_over_current
+title: Transistor over its current rating
+message: "{ref} carries {current} of collector current; the {model} is rated for {limit}."
+why: Past its collector current rating a transistor overheats and can be damaged.
+fix: "Add or raise {ref}'s collector or emitter resistor to limit its current."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: bjt, nets: [V+, b, GND], model: 2N5089}
+        - {ref: R2, type: resistor, nets: [V+, b], value: 1k}
+      expect: [Q1]
+  good:
+    - starter: big-muff-pi-v3

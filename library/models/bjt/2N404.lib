@@ -1,0 +1,3 @@
+* 2N404 germanium PNP (RCA alloy junction, medium-speed computer switching), our fit to RCA's sheet
+* Fitted by Solum Builder to RCA 2N404, 2N404A, 2N581, 2N582 data sheet (File No. 15, 9-66; RCA SPD-100 Semiconductor Products Databook, 1969), its table's typicals and the middle of its minimum and maximum curves (germanium study, .claude/skills/fit-model/worked/germanium/NOTES.md)
+.model 2N404 PNP(is=3.101e-06 nf=1.047 bf=100.8 ise=2.048e-08 ne=1.114 ikf=0.04757 br=4.385 isc=6.474e-07 nc=4 re=1.805 vje=0.75 mje=0.33 cjc=2.478e-11 vjc=0.75 mjc=0.33 tf=1.192e-08 nkf=0.5669 nr=1.047 eg=0.67)

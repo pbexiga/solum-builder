@@ -1,0 +1,57 @@
+id: chip-unit-unused
+layer: topology
+severity: warning
+check: chip_unit_unused
+title: Chip unit not used
+message: "{ref}, one of {chip}'s {units} ({model}), is wired to nothing."
+why: >
+  The chip has all its units whether you use them or not. A CMOS inverter's input left
+  floating sits half-way between the supplies, where both its transistors conduct: it
+  draws current, can oscillate and puts noise on the supply. An OTA's spare half is
+  quietest with its inputs grounded and no bias current. It isn't simulated while unused.
+fix: "{how}"
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:   # a 4049 with one inverter biased as an amplifier, five left floating
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, a], value: 100n}
+        - {ref: R1, type: resistor, nets: [a, o], value: 1M}
+        - {ref: IC1A, type: inverter, nets: [a, o], model: CD4049UB, half: a}
+        - {ref: IC1B, type: inverter, model: CD4049UB, half: b}
+        - {ref: IC1C, type: inverter, model: CD4049UB, half: c}
+        - {ref: IC1D, type: inverter, model: CD4049UB, half: d}
+        - {ref: IC1E, type: inverter, model: CD4049UB, half: e}
+        - {ref: IC1F, type: inverter, model: CD4049UB, half: f}
+        - {ref: C2, type: capacitor, nets: [o, out], value: 1u}
+        - {ref: R2, type: resistor, nets: [out, GND], value: 100k}
+        - {ref: OUT, type: amp, nets: [out]}
+      expect: [IC1B, IC1C, IC1D, IC1E, IC1F]
+    - rails: {V+: 9}
+      parts:   # an LM13700 with half b spare
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [V+, in], value: 100k}
+        - {ref: R2, type: resistor, nets: [in, GND], value: 100k}
+        - {ref: R3, type: resistor, nets: [V+, m], value: 100k}
+        - {ref: R4, type: resistor, nets: [m, GND], value: 100k}
+        - {ref: IC1A, type: ota, nets: [in, m, o, ib], model: LM13700, half: a}
+        - {ref: IC1B, type: ota, model: LM13700, half: b}
+        - {ref: R5, type: resistor, nets: [V+, ib], value: 33k}
+        - {ref: R6, type: resistor, nets: [o, m], value: 10k}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [IC1B]
+  good:
+    - rails: {V+: 9}
+      parts:   # the spare inverters' inputs tied to ground
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, a], value: 100n}
+        - {ref: R1, type: resistor, nets: [a, o], value: 1M}
+        - {ref: IC1A, type: inverter, nets: [a, o], model: CD4049UB, half: a}
+        - {ref: IC1B, type: inverter, nets: [GND], model: CD4049UB, half: b}
+        - {ref: IC1C, type: inverter, nets: [GND], model: CD4049UB, half: c}
+        - {ref: IC1D, type: inverter, nets: [GND], model: CD4049UB, half: d}
+        - {ref: IC1E, type: inverter, nets: [GND], model: CD4049UB, half: e}
+        - {ref: IC1F, type: inverter, nets: [GND], model: CD4049UB, half: f}
+        - {ref: C2, type: capacitor, nets: [o, out], value: 1u}
+        - {ref: R2, type: resistor, nets: [out, GND], value: 100k}
+        - {ref: OUT, type: amp, nets: [out]}

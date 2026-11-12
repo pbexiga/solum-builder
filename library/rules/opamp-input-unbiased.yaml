@@ -1,0 +1,25 @@
+id: opamp-input-unbiased
+layer: topology
+severity: error
+check: opamp_input_unbiased
+title: Op-amp input not biased
+message: "{ref}'s {input} input has no DC path to a set voltage."
+why: >
+  An op-amp input takes almost no current, so with only a capacitor feeding it nothing
+  sets its DC voltage. In a real pedal it drifts until the output sticks at a rail, and the
+  simulation's answer for it means little.
+fix: >
+  Add a resistor from {ref}'s {input} input to the bias voltage (VREF, half the supply), or
+  to ground on a ± supply. 1M is common on the + input.
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, p], value: 100n}
+        - {ref: U1, type: opamp, nets: [p, o, o], model: TL072}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [U1]
+  good:
+    - starter: ts808
+    - starter: proco-rat

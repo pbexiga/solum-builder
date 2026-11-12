@@ -1,0 +1,126 @@
+{
+  "id": "M5218AL",
+  "type": "opamp",
+  "description": "M5218AL dual low-noise op-amp (Mitsubishi; a 4558 type, SIL-8): the Boss BD-2's (our model from Mitsubishi's M5218AL/P/FP sheet)",
+  "spice_name": "M5218AL",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "M5218AL.lib",
+  "manufacturer": "Mitsubishi (Renesas)",
+  "source": {
+    "url": "https://www.retroamplis.com/WebRoot/StoreES2/Shops/62070367/65CC/B1C0/F3AA/400F/9D14/0A0C/6D0E/C92F/MITSUBISHI_M5218P_DATASHEET_-_RETROAMPLIS.pdf (Retroamplis' copy)",
+    "retrieved": "2026-11-10",
+    "licence": "Our own model built from the maker's data sheet (D-162): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.retroamplis.com/WebRoot/StoreES2/Shops/62070367/65CC/B1C0/F3AA/400F/9D14/0A0C/6D0E/C92F/MITSUBISHI_M5218P_DATASHEET_-_RETROAMPLIS.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 1.0,
+    "cm_pos_headroom": 1.0,
+    "out_neg_headroom": 1.0,
+    "out_pos_headroom": 1.0
+  },
+  "rating_sources": {
+    "vs_max": "Mitsubishi M5218AL/P/FP data sheet (data book pages 2-467 to 2-471, with the 8P2S-A outline of March 1998): vs_max ±18 V (Absolute Maximum Ratings); common input voltage range ±14 V typ at ±15 V (1 V from each rail); maximum output voltage ±14 V typ at RL ≥ 10 kΩ",
+    "cm_neg_headroom": "Mitsubishi M5218AL/P/FP data sheet (data book pages 2-467 to 2-471, with the 8P2S-A outline of March 1998): vs_max ±18 V (Absolute Maximum Ratings); common input voltage range ±14 V typ at ±15 V (1 V from each rail); maximum output voltage ±14 V typ at RL ≥ 10 kΩ",
+    "cm_pos_headroom": "Mitsubishi M5218AL/P/FP data sheet (data book pages 2-467 to 2-471, with the 8P2S-A outline of March 1998): vs_max ±18 V (Absolute Maximum Ratings); common input voltage range ±14 V typ at ±15 V (1 V from each rail); maximum output voltage ±14 V typ at RL ≥ 10 kΩ",
+    "out_neg_headroom": "Mitsubishi M5218AL/P/FP data sheet (data book pages 2-467 to 2-471, with the 8P2S-A outline of March 1998): vs_max ±18 V (Absolute Maximum Ratings); common input voltage range ±14 V typ at ±15 V (1 V from each rail); maximum output voltage ±14 V typ at RL ≥ 10 kΩ",
+    "out_pos_headroom": "Mitsubishi M5218AL/P/FP data sheet (data book pages 2-467 to 2-471, with the 8P2S-A outline of March 1998): vs_max ±18 V (Absolute Maximum Ratings); common input voltage range ±14 V typ at ±15 V (1 V from each rail); maximum output voltage ±14 V typ at RL ≥ 10 kΩ"
+  },
+  "channels": 2,
+  "package": {
+    "name": "8-pin SIL",
+    "pins": {
+      "a.out": 1,
+      "a.-": 2,
+      "a.+": 3,
+      "V-": 4,
+      "b.+": 5,
+      "b.-": 6,
+      "b.out": 7,
+      "V+": 8
+    },
+    "source": "Mitsubishi M5218AL/P/FP data sheet (data book pages 2-467 to 2-471, with the 8P2S-A outline of March 1998), pin configuration, outline 8P5 (AL): 1 output 1, 2 inverted input 1, 3 non-inverted input 1, 4 (−) power supply, 5 non-inverted input 2, 6 inverted input 2, 7 output 2, 8 (+) power supply"
+  },
+  "fit": {
+    "sheet": "Mitsubishi M5218AL/P/FP data sheet (data book pages 2-467 to 2-471, with the 8P2S-A outline of March 1998), at ±15 V; phase margin assumed (D-169)",
+    "figure": "Electrical characteristics at ±15 V: GVO 110 dB typ (86 min, RL ≥ 2 kΩ), fT 7 MHz, SR 3.0 V/µs (GV = 0 dB, RL = 2 kΩ), ICC 3.0 mA (both amplifiers), VOM ±14 V typ at RL ≥ 10 kΩ and ±13 V at RL ≥ 2 kΩ, VCM ±14 V typ. The voltage gain vs frequency figure falls at 20 dB a decade to 0 dB near 7 MHz. No phase margin",
+    "points": [],
+    "method": "A small macromodel (scripts/fit_models.py opamp_card, D-162): a tanh transconductance stage limited to 10 µA into C1 sets the slew rate, gm the unity-gain crossing and R1 the open-loop gain; a second pole gives the phase margin; diode clamps and an output resistance set the swing; the supply current is drawn from the rails. The sheet names the M5218AL (SIL-8, outline 8P5) with the P and FP. Gain bandwidth 7 MHz and slew rate 3.0 V/µs as the table gives them (Mitsubishi's 1984 data book gave 2.2 V/µs for the M5218L), phase margin 60° assumed (D-169). The output clamps 0.8 V from each rail behind 180 Ω, so it swings to 1.05 V of the rails into 10 kΩ and 1.97 V into 2 kΩ (the table's ±14 V and ±13 V typ).",
+    "note": "Input bias, offset, noise, common-mode limits and the output's current limit are not modelled: the input stage is ideal (1 TΩ)."
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "min": 86.0,
+        "typ": 110.0,
+        "source": "Mitsubishi M5218AL/P/FP data sheet (data book pages 2-467 to 2-471, with the 8P2S-A outline of March 1998)",
+        "note": "GVO 86 dB min, 110 dB typ, RL ≥ 2 kΩ, VO = ±10 V"
+      },
+      "simulated": 109.804
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "typ": 7000000.0,
+        "source": "Mitsubishi M5218AL/P/FP data sheet (data book pages 2-467 to 2-471, with the 8P2S-A outline of March 1998)",
+        "note": "gain bandwidth product fT 7 MHz typ; no phase margin given, 60° assumed (D-169)"
+      },
+      "simulated": 6900390.0
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "typ": 1.0,
+        "max": 3.0,
+        "source": "Mitsubishi M5218AL/P/FP data sheet (data book pages 2-467 to 2-471, with the 8P2S-A outline of March 1998): VOM ±14 V typ, ±12 V min, RL ≥ 10 kΩ"
+      },
+      "simulated": 1.02172
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "typ": 1.0,
+        "max": 3.0,
+        "source": "Mitsubishi M5218AL/P/FP data sheet (data book pages 2-467 to 2-471, with the 8P2S-A outline of March 1998): VOM ±14 V typ, ±12 V min, RL ≥ 10 kΩ"
+      },
+      "simulated": 1.02172
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 2000.0
+      },
+      "datasheet": {
+        "typ": 2.0,
+        "max": 5.0,
+        "source": "Mitsubishi M5218AL/P/FP data sheet (data book pages 2-467 to 2-471, with the 8P2S-A outline of March 1998): VOM ±13 V typ, ±10 V min, RL ≥ 2 kΩ"
+      },
+      "simulated": 1.94505
+    }
+  ]
+}

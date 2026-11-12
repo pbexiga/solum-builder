@@ -1,0 +1,118 @@
+# Expected values for library/starters/proco-rat.json (D-019, D-034).
+circuit: proco-rat
+source:
+  title: ElectroSmash, "ProCo Rat Analysis"
+  url: https://electrosmash.com/proco-rat
+  snapshot: http://web.archive.org/web/20260518121947/https://electrosmash.com/proco-rat
+  read: 2026-10-20
+  licence: CC BY-NC 3.0 (its figures, said in our own words)
+substitutions:
+  - 1N4148 for 1N914 (listed as a substitute on the page). LM308 and 2N5458 as on the schematic.
+
+checks:
+  - id: virtual-ground
+    kind: dc
+    node: VREF
+    volts: 4.5
+    tol: 0.45
+    from: text
+    says: "A voltage divider (R11, R12) makes the 4.5 V used as virtual ground."
+  - id: opamp-pins-at-vref
+    kind: dc
+    node: [IC1.+, IC1.-, IC1.out]
+    volts: 4.5
+    tol: 0.45
+    from: text
+    says: "A voltage divider (R11, R12) makes the 4.5 V used as virtual ground."
+    note: The op-amp is biased from VREF through R2 with DC feedback, so its inputs and output sit at VREF (Phase 1 "op-amp version" check).
+
+  - id: input-high-pass
+    kind: corner
+    side: low
+    node: C1.2
+    hz: 7.2
+    tol_pct: 10
+    sweep: {start: 0.5}
+    from: text
+    says: "The input corner is R2 with C1: 1/(2π x 1M x 22 nF) = 7.2 Hz."
+  - id: gain-min
+    kind: gain
+    node: IC1.out
+    ref: IC1.+
+    hz: 1000
+    db: 0.0
+    tol_db: 1.0
+    set: {VR1: {rotation: 0.0}}
+    from: text
+    says: "The least gain: 1 + 0/(47 ∥ 560) = 1, which is 0 dB."
+  - id: slew-limited-gain
+    known_gap: >-
+      Simulated 36 dB. National's LM308 data sheet (Dec 1994, Typical Performance
+      Characteristics, Open Loop Frequency Response, Cf = 30 pF) shows about 34 dB open-loop
+      gain at 10 kHz (gain-bandwidth about 0.48 MHz), so the page's ceiling of 30 dB is
+      stricter than the maker's typical curve. Our model is about 1.5 dB above that curve
+      (590 kHz gain-bandwidth). The page's figure includes slew-rate limiting, which a
+      small-signal check doesn't see.
+    kind: gain
+    node: IC1.out
+    ref: IC1.+
+    hz: 10000
+    max_db: 30.0
+    set: {VR1: {rotation: 1.0}}
+    from: text
+    says: "The Rat's most gain is 67 dB, but the op-amp can't give it at every frequency: at 10 kHz it gives 30 dB at most."
+    note: An upper bound, not a target. Small signal, so this checks the LM308's bandwidth with its 30 pF compensation (the page's figure includes slew rate).
+  - id: filter-min
+    kind: corner
+    side: high
+    node: C8.1
+    ref: D1.K
+    hz: 475
+    tol_pct: 10
+    set: {VR2: {rotation: 1.0}}
+    from: text
+    says: "The Filter's lowest corner: 1/(2π x (100k + 1.5k) x 3.3 nF) = 475 Hz."
+  - id: filter-max
+    kind: corner
+    side: high
+    node: C8.1
+    ref: D1.K
+    hz: 32000
+    tol_pct: 10
+    set: {VR2: {rotation: 0.0}}
+    from: text
+    says: "The Filter's highest corner: 1/(2π x (0 + 1.5k) x 3.3 nF) = 32 kHz."
+  - id: diode-clipping
+    kind: clip
+    node: D1.K
+    level: soft
+    volts: 0.6
+    tol: 0.15
+    set: {VR1: {rotation: 1.0}}
+    from: text
+    says: "D1 clips the positive half of the wave at its forward voltage and D2 the negative half at the same, below ground."
+    note: VF of the 1N4148 is about 0.6 V; the page gives no number.
+
+omitted:
+  - what: Input impedance 494K
+    why: Phase 1 has no impedance measure; add with Phase 6's calculators.
+  - what: Gain-leg corners fc2 1539 Hz and fc3 60 Hz
+    why: They're corners of the R4/C5 and R5/C6 legs; inside the feedback loop they aren't -3 dB points of any node's response.
+  - what: C4 low-pass 16 kHz at full Distortion
+    why: At full gain the LM308's bandwidth rolls off well below 16 kHz (the page says so too), so the corner can't be seen on its own.
+  - what: Slew-rate limit 5.3 kHz at 9 V peak
+    why: A large-signal limit; Phase 1's transient runs at 200 Hz only.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  sources:
+    - title: Aion FX, "Helios Distortion" documentation 1.1.0 (2024-09-25), based on the Pro Co RAT
+      url: https://aionfx.com/app/files/docs/helios_documentation.pdf
+      snapshot: http://web.archive.org/web/20260317062217/https://aionfx.com/app/files/docs/helios_documentation.pdf
+      read: 2026-11-04
+      licence: Aion FX project documentation (short quotes, for testing); the projects may be built, commercially too, without attribution (its License & Usage page)
+  parts:
+    - "Capacitor types from the Aion Helios, which numbers the RAT's parts as the main source does: C1, C2, C8, C9, C10 film; C3 (\"33pF here if using a LM308N\") and C4 NP0/C0G; C5, C6, C7 electrolytic."
+    - "The supply caps by role, as the main source numbers them (C11 and C12 on 9 V, C13 on 4.5 V): the 100 µF and 1 µF electrolytic, the 100 nF X7R ceramic, as the Helios's \"100n MLCC capacitor, X7R, power supply filter capacitor\"."
+    - "Electrolytics rated 16 V: the sources give no rating, so this is the app's own advice for a 9 V circuit (the smallest rating sold with the supply under 80 % of it, D-203)."
+    - "Enclosure 125B, as the Helios."

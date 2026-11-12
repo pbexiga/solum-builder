@@ -1,0 +1,90 @@
+{
+  "id": "OC81D",
+  "type": "bjt",
+  "description": "OC81D germanium PNP (Mullard, audio driver), estimated from our OC75 fit: no OC81D sheet",
+  "spice_name": "OC81D",
+  "kind": "model",
+  "pins": [],
+  "card": "OC81D.lib",
+  "manufacturer": "Mullard",
+  "source": {
+    "url": "https://www.datasheetarchive.com (DSA841000-11, kept as data/spec-sheets/Germanium_OC_crossref.pdf)",
+    "retrieved": "2026-11-02",
+    "licence": "Our own estimate (D-186): the values are Solum Builder's",
+    "original": "Solum Builder estimate"
+  },
+  "datasheet": "https://www.datasheetarchive.com",
+  "fixes": [],
+  "ratings": {
+    "vceo": 16.0,
+    "ic": 0.01
+  },
+  "rating_sources": {
+    "vceo": "transistor cross-reference book, page 242 (data/spec-sheets/Germanium_OC_crossref.pdf; datasheetarchive.com DSA841000-11): OC81D row: VCE max 16 V",
+    "ic": "transistor cross-reference book, page 242 (data/spec-sheets/Germanium_OC_crossref.pdf; datasheetarchive.com DSA841000-11): OC81D row: IC max 10 mA"
+  },
+  "package": {
+    "name": "X02 (lead code L03, e b c in a line, as the OC75)",
+    "pins": {
+      "E": 1,
+      "B": 2,
+      "C": 3
+    },
+    "source": "transistor cross-reference book, page 242 (data/spec-sheets/Germanium_OC_crossref.pdf; datasheetarchive.com DSA841000-11): OC81D row: package X02, lead info L03 (the OC75, OC71 and OC44 rows are L03 too)"
+  },
+  "fit": {
+    "sheet": "no OC81D curve sheet: our OC75 fit (D-184) scaled by the cross-reference book's OC81D row",
+    "figure": "transistor cross-reference book, page 242 (data/spec-sheets/Germanium_OC_crossref.pdf; datasheetarchive.com DSA841000-11): the OC75 and OC81D rows (hFE min and its bias, Cob max, fT min)",
+    "points": [],
+    "method": ".claude/skills/fit-model/worked/germanium/estimate_oc81d.py: the OC75 card with base current x 55/20 (BF x 20/55, ISE x 55/20: hFE min 20 at 5 mA against 55 at 10 mA), CJC x 40/50 (Cob max 40 pF against 50), TF x 1/2 (fT min 200 kHz against 100 kHz); VBE, leakage, VAF and RE kept",
+    "note": "Estimated, not fitted: no OC81D sheet with curves was found, so this is the OC75's shape at the OC81D's lower gain. Give a measured hFE and leakage (D-130)."
+  },
+  "validation": [
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.005,
+        "vce": 4.5
+      },
+      "simulated": 33.3946,
+      "datasheet": {
+        "min": 20.0,
+        "source": "transistor cross-reference book, page 242 (data/spec-sheets/Germanium_OC_crossref.pdf): OC81D row, hFE 20 min at IC 5 mA (no VCE given; the OC75's 4.5 V assumed)"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 4.5
+      },
+      "simulated": 0.14137
+    },
+    {
+      "quantity": "icbo",
+      "conditions": {
+        "vcb": 4.5
+      },
+      "simulated": 5.36585e-06
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 29.7042,
+      "note": "The card's own gain on the tester (where a measured form starts)"
+    },
+    {
+      "quantity": "iceo",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0
+      },
+      "simulated": 0.000143042,
+      "note": "The card's own leakage on the tester"
+    }
+  ]
+}

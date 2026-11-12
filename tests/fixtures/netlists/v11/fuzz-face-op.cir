@@ -1,0 +1,31 @@
+* Fuzz Face (AC128)
+V_RAIL1 v_ 0 DC -9
+V_IN in 0 DC 0
+C1 in q1_b 2.2e-06
+Q1 q1c q1_b 0 AC128_Q1
+I_Q1_leak q1_b q1c DC -3.55074418605e-06
+R1 v_ q1c 33000
+Q2 q2c q1c q2_e AC128_Q2
+I_Q2_leak q1c q2c DC -2.48895867769e-06
+R3 q2c c3_1 8200
+R2 c3_1 v_ 470
+R4 q1_b q2_e 100000
+R_VR1_a 0 c2_1 500
+R_VR1_b c2_1 q2_e 500
+C2 c2_1 0 2e-05
+C3 c3_1 c3_2 1e-08
+R_VR2_a 0 out 500000
+R_VR2_b out c3_2 1
+R_OUT out 0 1000000
+* AC128 germanium PNP (hFE 55-175 at 50 mA), our fit to Valvo's sheet
+* Fitted by Solum Builder to Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), its mean curves (D-170)
+.model AC128 PNP(is=2.909e-05 nf=1.063 bf=107.8 ise=2.836e-07 ne=1.384 ikf=10 vaf=29 br=9.225 vje=0.75 mje=0.33 cjc=1.958e-10 vjc=0.75 mjc=0.33 tf=1.058e-07 nkf=0.9495 nr=1.063 rb=25 eg=0.67)
+.model AC128_Q1 PNP(is=2.909e-05 nf=1.063 bf=85 ise=3.59671529412e-07 ne=1.384 ikf=10
++ vaf=29 br=9.225 vje=0.75 mje=0.33 cjc=1.958e-10 vjc=0.75 mjc=0.33 tf=1.058e-07
++ nkf=0.9495 nr=1.063 rb=25 eg=0.67)
+.model AC128_Q2 PNP(is=2.909e-05 nf=1.063 bf=120 ise=2.54767333333e-07 ne=1.384 ikf=10
++ vaf=29 br=9.225 vje=0.75 mje=0.33 cjc=1.958e-10 vjc=0.75 mjc=0.33 tf=1.058e-07
++ nkf=0.9495 nr=1.063 rb=25 eg=0.67)
+.save all @q1[ic] @q1[ib] @q2[ic] @q2[ib]
+.op
+.end

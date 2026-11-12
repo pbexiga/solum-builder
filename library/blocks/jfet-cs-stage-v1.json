@@ -1,0 +1,302 @@
+{
+  "schema": 29,
+  "id": "jfet-cs-stage-v1",
+  "name": "Gain stage · JFET (Fetzer Valve)",
+  "version": {
+    "major": 1,
+    "minor": 4
+  },
+  "description": "JFET common-source gain stage: Run Off Groove's Fetzer Valve, a JFET in place of the first 12AX7 stage of a Fender amp (runoffgroove.com/fetzervalve.html, Fig. 1, v1.1, © 2004 runoffgroove.com, CC BY-NC-SA 3.0): C1 100n in (ours: the source has none), R3 68k, R1 1M gate to ground, R2 1k5 source with C3 22µ across it, TR1 100k trimmer as the drain load, C2 22n out to a 100k audio Volume (VR1). TR1 is solved to put Q1's drain at 4.5 V, as the drawing says (\"adjust trim for 4.5v at drain\"): the usual way to bias a JFET whose Idss and Vp vary from part to part. A J201, the page's main example.",
+  "tags": [
+    "gain",
+    "jfet",
+    "fetzer valve"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "C1",
+      "pos": [
+        -20,
+        0
+      ],
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "film"
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        40,
+        0
+      ],
+      "type": "resistor",
+      "value": "68k"
+    },
+    {
+      "ref": "Q1",
+      "pos": [
+        140,
+        0
+      ],
+      "type": "jfet",
+      "model": "J201"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        90,
+        40
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "1M"
+    },
+    {
+      "ref": "TR1",
+      "pos": [
+        160,
+        -60
+      ],
+      "rot": 90,
+      "type": "trimmer",
+      "value": "100k",
+      "bias_target": {
+        "node": "Q1.D",
+        "volts": 4.5
+      }
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        160,
+        60
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "1k5"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        220,
+        60
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "22µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        260,
+        -20
+      ],
+      "type": "capacitor",
+      "value": "22n",
+      "kind": "film"
+    },
+    {
+      "ref": "VR1",
+      "pos": [
+        340,
+        -20
+      ],
+      "rot": 180,
+      "type": "pot",
+      "value": "100k",
+      "taper": "A",
+      "label": "Volume"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        0,
+        0
+      ],
+      "to": [
+        20,
+        0
+      ]
+    },
+    {
+      "from": [
+        60,
+        0
+      ],
+      "to": [
+        120,
+        0
+      ]
+    },
+    {
+      "from": [
+        90,
+        0
+      ],
+      "to": [
+        90,
+        20
+      ]
+    },
+    {
+      "from": [
+        160,
+        -40
+      ],
+      "to": [
+        160,
+        -20
+      ]
+    },
+    {
+      "from": [
+        180,
+        -60
+      ],
+      "to": [
+        180,
+        -40
+      ]
+    },
+    {
+      "from": [
+        180,
+        -40
+      ],
+      "to": [
+        160,
+        -40
+      ]
+    },
+    {
+      "from": [
+        160,
+        20
+      ],
+      "to": [
+        160,
+        40
+      ]
+    },
+    {
+      "from": [
+        160,
+        40
+      ],
+      "to": [
+        220,
+        40
+      ]
+    },
+    {
+      "from": [
+        160,
+        -20
+      ],
+      "to": [
+        240,
+        -20
+      ]
+    },
+    {
+      "from": [
+        280,
+        -20
+      ],
+      "to": [
+        320,
+        -20
+      ]
+    },
+    {
+      "from": [
+        360,
+        -20
+      ],
+      "to": [
+        380,
+        -20
+      ]
+    },
+    {
+      "from": [
+        340,
+        0
+      ],
+      "to": [
+        340,
+        40
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "in",
+      "pos": [
+        -40,
+        0
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        90,
+        60
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        160,
+        -80
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        160,
+        80
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        220,
+        80
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        380,
+        -20
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        340,
+        40
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "out": "out"
+  },
+  "notes": {
+    "part:TR1": "Run Off Groove: \"adjust trim for 4.5v at drain\". The app solves it to that for the J201 card; set it on the bench for your own JFET.",
+    "part:R3": "R3 (68k) and R1 (1M) as the Fetzer Valve's input.",
+    "part:C3": "Bypasses R2, so the source sits at AC ground: more gain. Without it the gain falls to about Rd/Rs.",
+    "part:C1": "Not in the Fetzer Valve, which takes the guitar straight to the gate: added so the block works after any stage, whatever DC it sits at (the user, 9d3). 100n into R3 + R1 rolls off below about 1.5 Hz."
+  }
+}

@@ -1,0 +1,27 @@
+id: jfet-gate-forward
+layer: operating_point
+severity: warning
+check: jfet_gate_forward
+title: JFET gate conducting
+message: "{ref}'s gate is {vgs} above its source: the gate junction conducts."
+why: >
+  A JFET's gate is a diode to its channel. Forward biased it draws current, loads the stage
+  before it and distorts.
+fix: >
+  Keep {ref}'s gate at or below its source: return the gate to ground (1M) and let the
+  source resistor lift the source.
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: jfet, nets: [d, g, GND], model: J201}
+        - {ref: R1, type: resistor, nets: [V+, d], value: 4k7}
+        - {ref: R2, type: resistor, nets: [V+, g], value: 1k}
+      expect: [Q1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: jfet, nets: [d, g, s], model: J201}
+        - {ref: R1, type: resistor, nets: [V+, d], value: 4k7}
+        - {ref: R2, type: resistor, nets: [g, GND], value: 1M}
+        - {ref: R3, type: resistor, nets: [s, GND], value: 1k}

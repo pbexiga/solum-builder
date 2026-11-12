@@ -1,0 +1,25 @@
+id: pump-supply-over-max
+layer: operating_point
+severity: error
+check: pump_supply_over_max
+title: Charge pump supply too high
+message: "{ref} gets {volts} on its supply pin; the {model}'s absolute maximum is {limit}."
+why: >
+  Above its absolute maximum supply voltage a charge-pump chip can be destroyed. This
+  catches out 18 V adapters: most pump chips are made for 9-12 V (the TC1044S is rated
+  13 V, the ICL7660 10.5 V), so a pump meant to make 18 V from 9 V can't be run from 18 V.
+fix: "Run {ref} from 9 V, or use a pump chip rated above {volts} (the LT1054: 16 V)."
+fixtures:
+  bad:
+    - rails: {V+: 18}
+      parts:
+        - {ref: U1, type: chargepump, supply: V+, double: V36, model: TC1044S, boost: true}
+        - {ref: C1, type: capacitor, nets: [V36, GND], value: 10u}
+        - {ref: R1, type: resistor, nets: [V36, GND], value: 10k}
+      expect: [U1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: U1, type: chargepump, supply: V+, double: V18, model: TC1044S, boost: true}
+        - {ref: C1, type: capacitor, nets: [V18, GND], value: 10u}
+        - {ref: R1, type: resistor, nets: [V18, GND], value: 10k}

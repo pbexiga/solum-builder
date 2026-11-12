@@ -1,0 +1,165 @@
+{
+  "schema": 29,
+  "id": "jfet-source-follower-v1",
+  "name": "Buffer · JFET (ProCo Rat)",
+  "version": {
+    "major": 1,
+    "minor": 2
+  },
+  "description": "The Rat's output buffer: a 2N5458 source follower, gain just under 1, with a low output impedance to drive a volume pot and a cable. R8 (1M) holds the gate at ground, so the source sits at the JFET's own Vgs (a volt or two up, varying part to part). Values and refs from ElectroSmash's \"ProCo Rat Analysis\" (electrosmash.com/proco-rat), as the Rat starter; its drain is on V+ here (V+F in the Rat).",
+  "tags": [
+    "buffer",
+    "jfet",
+    "rat"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "C9",
+      "pos": [
+        220,
+        240
+      ],
+      "type": "capacitor",
+      "value": "22n",
+      "kind": "film"
+    },
+    {
+      "ref": "R8",
+      "pos": [
+        260,
+        280
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "1M"
+    },
+    {
+      "ref": "Q1",
+      "pos": [
+        300,
+        240
+      ],
+      "type": "jfet",
+      "model": "2N5458"
+    },
+    {
+      "ref": "R9",
+      "pos": [
+        320,
+        300
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "C10",
+      "pos": [
+        380,
+        260
+      ],
+      "type": "capacitor",
+      "value": "1µ",
+      "kind": "film"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        240,
+        240
+      ],
+      "to": [
+        280,
+        240
+      ]
+    },
+    {
+      "from": [
+        260,
+        240
+      ],
+      "to": [
+        260,
+        260
+      ]
+    },
+    {
+      "from": [
+        320,
+        220
+      ],
+      "to": [
+        320,
+        200
+      ]
+    },
+    {
+      "from": [
+        320,
+        260
+      ],
+      "to": [
+        320,
+        280
+      ]
+    },
+    {
+      "from": [
+        320,
+        260
+      ],
+      "to": [
+        360,
+        260
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "GND",
+      "pos": [
+        260,
+        300
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        320,
+        200
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        320,
+        320
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        200,
+        240
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        400,
+        260
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "out": "out"
+  }
+}

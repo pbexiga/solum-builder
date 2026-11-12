@@ -1,0 +1,204 @@
+{
+  "schema": 29,
+  "id": "charge-pump-doubler-chip-v1",
+  "name": "Charge pump · doubler, chip (TC1044S)",
+  "version": {
+    "major": 1,
+    "minor": 1
+  },
+  "description": "A TC1044S wired as a voltage doubler (Microchip TC1044S data sheet (DS21348A), Figure 8): about twice V+ less two Schottky diode drops (about 17.5 V from 9 V at a few mA, 18 V unloaded) on its own net V18. Label the stages it powers V18. C1 is the reservoir (10 µF, as the datasheet's). Boost is on, so it pumps at about 22 kHz, above hearing; turn it off to hear the 5 kHz whine. C2 is the pump cap and D1, D2 the diodes, as on the datasheet (D-226); pick another chip in U1's settings.",
+  "tags": [
+    "power",
+    "charge pump",
+    "chip"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "U1",
+      "type": "chargepump",
+      "model": "TC1044S"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        100,
+        -50
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        -120,
+        -70
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    },
+    {
+      "ref": "D1",
+      "pos": [
+        -160,
+        -90
+      ],
+      "type": "diode",
+      "model": "1N5817"
+    },
+    {
+      "ref": "D2",
+      "pos": [
+        -20,
+        -90
+      ],
+      "type": "diode",
+      "model": "1N5817"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        -40,
+        -10
+      ],
+      "to": [
+        -120,
+        -10
+      ]
+    },
+    {
+      "from": [
+        -120,
+        -10
+      ],
+      "to": [
+        -120,
+        -50
+      ]
+    },
+    {
+      "from": [
+        -140,
+        -90
+      ],
+      "to": [
+        -40,
+        -90
+      ]
+    },
+    {
+      "from": [
+        0,
+        -90
+      ],
+      "to": [
+        100,
+        -90
+      ]
+    },
+    {
+      "from": [
+        100,
+        -90
+      ],
+      "to": [
+        100,
+        -70
+      ]
+    },
+    {
+      "from": [
+        40,
+        -30
+      ],
+      "to": [
+        40,
+        -50
+      ]
+    },
+    {
+      "from": [
+        -40,
+        -30
+      ],
+      "to": [
+        -40,
+        -50
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "V+",
+      "pos": [
+        40,
+        -50
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        -40,
+        10
+      ],
+      "rot": 90
+    },
+    {
+      "net": "GND",
+      "pos": [
+        40,
+        30
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        -180,
+        -90
+      ]
+    },
+    {
+      "net": "V18",
+      "pos": [
+        100,
+        -90
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        100,
+        -30
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        -40,
+        -50
+      ]
+    }
+  ],
+  "ports": {
+    "out": "V18"
+  },
+  "notes": {
+    "part:U1": "Doubler: V+ in, about 2 × V+ out. Pin 2 swings C2 between ground and V+, lifting the D1/D2 junction; pin 5 goes to ground. Supply: pin 8 is the chip's supply input, fed from the pedal's V+ (the DC jack or the battery, through the input filter). The pump draws its current in short pulses at its switching rate; a bulk electrolytic on V+ (10-100 µF, such as the Input filter block's 47 Ω and 100 µF) supplies them close by, so they don't travel back along V+ and whine in the other stages. A pedal that already has one on V+ needs no second cap here (one close to pin 8 helps a little on a long board). A pedal with none, such as a bare battery fuzz like the Rangemaster, needs one: the \"Supply without a bulk capacitor\" warning says so.",
+    "part:C1": "Reservoir: holds V18 up between the pump's pulses. Bigger means less ripple.",
+    "net:V18": "About 17.5 V from a 9 V supply: 2 × 9 V less two diode drops and the pump's output resistance.",
+    "part:C2": "Pump cap: the bigger, the lower the pump's output resistance (1/(f × C) of it).",
+    "part:D1": "D1 charges C2 from V+; D2 passes its charge on to V18. Schottkys (1N5817) drop the least."
+  }
+}

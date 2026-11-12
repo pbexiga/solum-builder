@@ -1,0 +1,89 @@
+# Expected values for library/starters/boss-bd2.json (D-019, D-239, D-256, D-258).
+# Refs follow Boss's service schematic. The dual Drive pot's gangs are VR1A (first stage,
+# CN1-3/CN1-4 on the schematic) and VR1B (second stage); VR2 Tone, VR3 Volume (the schematic names no knobs; the labels are the Aion version's).
+circuit: boss-bd2
+source:
+  title: Boss, BD-2 Blues Driver service schematic (BD-2 MT board, ASSY 70567645; VR boards 1 and 2, LED board), as Schematics Online serves it
+  url: https://schematicsonline.com/wp-content/uploads/2022/11/Boss-BD-2-Blues-Driver.pdf
+  snapshot: http://web.archive.org/web/20240707001519/https://schematicsonline.com/wp-content/uploads/2022/11/Boss-BD-2-Blues-Driver.pdf
+  read: 2026-11-10
+  licence: >-
+    Boss's (Roland's) drawing, served by Schematics Online "for educational purposes only"
+    ("The schematics on this website are not created by us, but rather were sourced from
+    other websites and forums"). Used to draw the circuit; the file isn't copied into the
+    project. The same scan is on archive.org (https://archive.org/details/boss_BD-2_SCHEMATICS,
+    uploaded 2016-01-25): its image is pixel for pixel the same, so the two "copies" can't
+    check each other. Hobby Hour's copy (the third link) refuses scripted reads.
+    Cross-checked against kanengomibako's trace of a BD-2 board with the same assembly number
+    ("ASSY 70567645, Made in Taiwan in Nov. 2009, Traced by kanengomibako June 2022"), from
+    the ReverseEngineering repository on GitHub (Unlicense; the repository is gone, snapshot
+    of its index http://web.archive.org/web/20260307004343/https://github.com/kanengomibako/ReverseEngineering);
+    the user sent the image, with the trace's 2017 SMD board and the BD-2W (2026-11-10).
+    Every part and value matches Boss's drawing; its refs settle the labels the scan blurs.
+substitutions:
+  - >-
+    Boss's JFET switching is left out: the switching JFETs Q6 (input) and Q4 (effect output)
+    are drawn closed, as wires, so their drain resistors (R17, R22; R11, R8) and coupling
+    caps (C15, C18; C7, C6) stay as the effect-on signal sees them. Q8 and the dry path
+    (Q5, C13, R16, R12, C12, R14), the flip-flop (Q15, Q16 and their parts), the LED board
+    and the footswitch aren't drawn.
+  - >-
+    Q3, Q10, Q11, Q13, Q14 2SK184-GR, our own card from Toshiba's 2SK184 sheet (D-255): the
+    GR grade's middle Idss, its Vp from the sheet's typical |Yfs| line, as the 2SK209-GR
+    (D-216). A real unit spreads over the grade.
+  - >-
+    Q1, Q2, Q7 2SC2459 (GR on the schematic), our own card from Toshiba's sheet (D-255).
+    The blurry part numbers are read with Aion's Sapphire document, which names the
+    original's parts ("Original uses 2SK184-GR", "Original uses 2SA1335-GR", "Original uses
+    2SC2459-GR").
+  - >-
+    Q2 2SC2458 (GR on the schematic and on the 2009 board), our own card from Toshiba's sheet
+    (D-258). The sheet's typical gain line is about 140, a Y-grade unit; Q2 is the supply's
+    emitter follower, where the gain moves VA by a few tens of millivolts.
+  - >-
+    Q9, Q12 2N3906 for the 2SA1335-GR (as read on Boss's scan; the 2009 board has
+    2SA1049-GRs): the only 2SA1335 sheet found is one line of Toshiba's selector table (hFE
+    200-700, VCE(sat) 0.3 V max, fT 100 MHz), too little to fit a card, so the PNP Aion's
+    Sapphire uses here stands in. How much it matters, checked in the simulation (2026-11-10): the
+    2N3906 card's hFE is 153 at 2 mA, against the GR grade's 200-400. Raising the card's gain
+    to 280 (BF 164 -> 380, everything else the same) leaves the DC levels within 2 mV and moves the
+    1 kHz gain by +0.1 dB (first stage) and +0.3 dB (both stages) at Drive noon, +0.5 dB and
+    +1.1 dB at full Drive: in each discrete op-amp the PNP sits inside the feedback loop, so
+    its gain barely shows. Noise (the 2SA1335 is a low-noise part) isn't simulated, and the
+    2N3906's higher fT only matters far above the audio band. A good stand-in.
+  - >-
+    IC1 M5218AL, our own card from Mitsubishi's M5218AL/P/FP sheet (D-255, D-258). The 2009
+    board has an NJM4558LD.
+  - >-
+    D1, D3, D7-D10 1SS133 as drawn. D2, the reverse-polarity shunt, as a 1N4001: its part
+    number can't be read on Boss's scan, the 2009 board has a 1N4004, and the 1N4001 card
+    stands in for it (one sheet covers the 1N4001-1N4007, which differ only in voltage
+    rating).
+  - >-
+    Labels the scan's 72 dpi blurs (6, 8 and 9 look alike) are taken from the 2009 trace:
+    R6 2.2k on Q2's base, R8 100k at Q4's drain, R9 6.8k across IC1B; R38 100k before C34,
+    R36 4.7k under Q14 and Q13; C16 56n at Q7's base, C9 56n to IC1B's input, C8 2.2n across
+    IC1B.
+  - The supply is an ideal 9 V, as the other starters'.
+
+# The service schematic prints no voltages, gains or frequencies, and no published analysis
+# of the BD-2 with figures was found (D-214 lets a faithful copy ship with none).
+checks: []
+
+omitted:
+  - what: Bias voltages
+    why: >-
+      The schematic gives none. Aion's Sapphire prototype readings (checked on
+      boss-bd2-aion) are of Aion's own parts (2SK209-GR, 2N5088, a series 1N5817) at 9.6 V,
+      so they aren't this circuit's. For comparison, at 9 V the simulation reads VA 8.29 V,
+      VB 4.14 V, Q3's source 4.47 V, both discrete op-amps' outputs 4.20 V.
+  - what: Gains, clipping levels, frequency curves
+    why: >-
+      Not on the schematic; no analysis with figures for the BD-2 was found (ElectroSmash has
+      none).
+
+build:
+  parts:
+    - "The circuit and every value are from the service schematic, with its part numbers."
+    - "Capacitor types: C1-C7, C11 and C15 electrolytic with their printed ratings (10/16, 47/16, 100/16; C2 and C11 47/6.3, on VB); the 47p, 100p and 220p caps NP0/C0G and the rest film, as the Aion version's parts list has them. C22 and C24 are tantalum on the schematic (0.15/35T, 1/35T); they're drawn film, the app's advice for the signal path and what Aion's Sapphire fits (it sounds the same, and film doesn't fail as a short)."
+    - "Enclosure 125B, a builder's choice (the Boss pedal has its own case), as the Aion version's."

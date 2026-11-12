@@ -1,0 +1,3 @@
+* 2SC2459 audio NPN (Toshiba; hFE 200-700 in grades GR, BL; VCEO 120 V): the Boss BD-2's, our fit to Toshiba's sheet
+* Fitted by Solum Builder to Toshiba 2SC2459 data sheet (2003-03-27, 3 pages), its typical curves (D-163)
+.model 2SC2459 NPN(is=1e-11 nf=1.193 bf=326.6 ise=6.211e-10 ne=3.517 ikf=0.3868 br=3.857 isc=1e-08 nc=2.172 re=0.2507 rc=0.1649 vje=0.75 mje=0.33 cjc=7.223e-12 vjc=0.75 mjc=0.33 tf=1.484e-09 nkf=0.3 nr=1.193)

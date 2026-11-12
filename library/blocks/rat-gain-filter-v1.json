@@ -1,0 +1,620 @@
+{
+  "schema": 29,
+  "id": "rat-gain-filter-v1",
+  "name": "Distortion stage · ProCo Rat (gain, clipper, filter)",
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "description": "The Rat's gain stage, hard clipper and Filter: an LM308 non-inverting stage with up to about 67 dB of gain (Distortion VR1; R4/C5 and R5/C6 its legs to ground), two 1N4148 to ground after R6, then the Filter knob's low-pass (VR2, R7, C8). Values and refs from ElectroSmash's \"ProCo Rat Analysis\" (electrosmash.com/proco-rat), as the Rat starter (1N4148 for the 1N914, a listed substitute). The LM308's supply is V+ here (V+F, after the filter, in the Rat). Biased from a reference voltage (vref port).",
+  "tags": [
+    "gain",
+    "clipping",
+    "tone",
+    "opamp",
+    "rat"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "C1",
+      "pos": [
+        90,
+        0
+      ],
+      "type": "capacitor",
+      "value": "22n",
+      "kind": "film"
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        130,
+        40
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "1M"
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        170,
+        0
+      ],
+      "type": "resistor",
+      "value": "1k"
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        210,
+        40
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "1n",
+      "kind": "film"
+    },
+    {
+      "ref": "IC1",
+      "pos": [
+        290,
+        -20
+      ],
+      "model": "LM308",
+      "type": "opamp"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        290,
+        -110
+      ],
+      "type": "capacitor",
+      "value": "30p",
+      "kind": "c0g"
+    },
+    {
+      "ref": "R4",
+      "pos": [
+        190,
+        -170
+      ],
+      "rot": 180,
+      "type": "resistor",
+      "value": "47"
+    },
+    {
+      "ref": "C5",
+      "pos": [
+        170,
+        -120
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "2µ2",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "R5",
+      "pos": [
+        150,
+        -230
+      ],
+      "rot": 180,
+      "type": "resistor",
+      "value": "560"
+    },
+    {
+      "ref": "C6",
+      "pos": [
+        130,
+        -180
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "4µ7",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "VR1",
+      "pos": [
+        290,
+        -230
+      ],
+      "type": "pot",
+      "value": "100k",
+      "taper": "A",
+      "label": "Distortion"
+    },
+    {
+      "ref": "C4",
+      "pos": [
+        290,
+        -170
+      ],
+      "type": "capacitor",
+      "value": "100p",
+      "kind": "c0g"
+    },
+    {
+      "ref": "C7",
+      "pos": [
+        400,
+        -20
+      ],
+      "type": "capacitor",
+      "value": "4µ7",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "R6",
+      "pos": [
+        480,
+        -20
+      ],
+      "type": "resistor",
+      "value": "1k"
+    },
+    {
+      "ref": "D1",
+      "pos": [
+        530,
+        20
+      ],
+      "rot": 270,
+      "type": "diode",
+      "model": "1N4148"
+    },
+    {
+      "ref": "D2",
+      "pos": [
+        650,
+        20
+      ],
+      "rot": 90,
+      "type": "diode",
+      "model": "1N4148"
+    },
+    {
+      "ref": "VR2",
+      "pos": [
+        70,
+        280
+      ],
+      "type": "pot",
+      "value": "100k",
+      "taper": "A",
+      "label": "Filter"
+    },
+    {
+      "ref": "R7",
+      "pos": [
+        140,
+        240
+      ],
+      "type": "resistor",
+      "value": "1k5"
+    },
+    {
+      "ref": "C8",
+      "pos": [
+        180,
+        280
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "3n3",
+      "kind": "film"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        110,
+        0
+      ],
+      "to": [
+        150,
+        0
+      ]
+    },
+    {
+      "from": [
+        130,
+        0
+      ],
+      "to": [
+        130,
+        20
+      ]
+    },
+    {
+      "from": [
+        190,
+        0
+      ],
+      "to": [
+        250,
+        0
+      ]
+    },
+    {
+      "from": [
+        210,
+        0
+      ],
+      "to": [
+        210,
+        20
+      ]
+    },
+    {
+      "from": [
+        250,
+        -40
+      ],
+      "to": [
+        230,
+        -40
+      ]
+    },
+    {
+      "from": [
+        230,
+        -40
+      ],
+      "to": [
+        230,
+        -230
+      ]
+    },
+    {
+      "from": [
+        330,
+        -20
+      ],
+      "to": [
+        350,
+        -20
+      ]
+    },
+    {
+      "from": [
+        350,
+        -20
+      ],
+      "to": [
+        350,
+        -260
+      ]
+    },
+    {
+      "from": [
+        230,
+        -170
+      ],
+      "to": [
+        270,
+        -170
+      ]
+    },
+    {
+      "from": [
+        310,
+        -170
+      ],
+      "to": [
+        350,
+        -170
+      ]
+    },
+    {
+      "from": [
+        230,
+        -230
+      ],
+      "to": [
+        270,
+        -230
+      ]
+    },
+    {
+      "from": [
+        290,
+        -250
+      ],
+      "to": [
+        290,
+        -260
+      ]
+    },
+    {
+      "from": [
+        290,
+        -260
+      ],
+      "to": [
+        350,
+        -260
+      ]
+    },
+    {
+      "from": [
+        230,
+        -170
+      ],
+      "to": [
+        210,
+        -170
+      ]
+    },
+    {
+      "from": [
+        170,
+        -170
+      ],
+      "to": [
+        170,
+        -140
+      ]
+    },
+    {
+      "from": [
+        230,
+        -230
+      ],
+      "to": [
+        170,
+        -230
+      ]
+    },
+    {
+      "from": [
+        130,
+        -230
+      ],
+      "to": [
+        130,
+        -200
+      ]
+    },
+    {
+      "from": [
+        350,
+        -20
+      ],
+      "to": [
+        380,
+        -20
+      ]
+    },
+    {
+      "from": [
+        420,
+        -20
+      ],
+      "to": [
+        460,
+        -20
+      ]
+    },
+    {
+      "from": [
+        500,
+        -20
+      ],
+      "to": [
+        690,
+        -20
+      ]
+    },
+    {
+      "from": [
+        530,
+        -20
+      ],
+      "to": [
+        530,
+        0
+      ]
+    },
+    {
+      "from": [
+        650,
+        -20
+      ],
+      "to": [
+        650,
+        0
+      ]
+    },
+    {
+      "from": [
+        30,
+        280
+      ],
+      "to": [
+        50,
+        280
+      ]
+    },
+    {
+      "from": [
+        70,
+        260
+      ],
+      "to": [
+        70,
+        240
+      ]
+    },
+    {
+      "from": [
+        70,
+        240
+      ],
+      "to": [
+        120,
+        240
+      ]
+    },
+    {
+      "from": [
+        160,
+        240
+      ],
+      "to": [
+        180,
+        240
+      ]
+    },
+    {
+      "from": [
+        180,
+        240
+      ],
+      "to": [
+        180,
+        260
+      ]
+    },
+    {
+      "from": [
+        270,
+        -60
+      ],
+      "to": [
+        270,
+        -110
+      ]
+    },
+    {
+      "from": [
+        310,
+        -60
+      ],
+      "to": [
+        310,
+        -110
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "VREF",
+      "pos": [
+        130,
+        60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        210,
+        60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        170,
+        -100
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        130,
+        -160
+      ]
+    },
+    {
+      "net": "u1o",
+      "pos": [
+        360,
+        -20
+      ]
+    },
+    {
+      "net": "clip",
+      "pos": [
+        690,
+        -20
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        530,
+        40
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        650,
+        40
+      ]
+    },
+    {
+      "net": "clip",
+      "pos": [
+        30,
+        280
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        180,
+        300
+      ]
+    },
+    {
+      "net": "tone",
+      "pos": [
+        180,
+        240
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        290,
+        -60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        290,
+        20
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        70,
+        0
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "out": "tone",
+    "vref": "VREF"
+  },
+  "notes": {
+    "part:C3": "The LM308's compensation cap: sets its bandwidth and slew rate, part of the Rat's sound."
+  }
+}

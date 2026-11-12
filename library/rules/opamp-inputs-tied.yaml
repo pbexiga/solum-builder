@@ -1,0 +1,21 @@
+id: opamp-inputs-tied
+layer: topology
+severity: warning
+check: opamp_inputs_tied
+title: Op-amp inputs joined
+message: "{ref}'s + and − inputs are on the same net."
+why: >
+  An op-amp amplifies the difference between its inputs. Joined, there is none, so the
+  stage passes no signal.
+fix: "Separate {ref}'s inputs: the signal goes to one, the feedback to the other."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, GND], value: 1M}
+        - {ref: U1, type: opamp, nets: [in, in, o], model: TL072}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [U1]
+  good:
+    - starter: ts808

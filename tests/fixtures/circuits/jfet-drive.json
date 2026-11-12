@@ -1,0 +1,244 @@
+{
+  "schema": 2,
+  "id": "example-jfet-drive",
+  "name": "Example JFET drive",
+  "power": {
+    "mode": "ideal",
+    "rails": {
+      "V+": 16.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "IN",
+      "type": "guitar",
+      "pos": [
+        0,
+        100
+      ]
+    },
+    {
+      "ref": "C1",
+      "type": "capacitor",
+      "value": "22n",
+      "kind": "film",
+      "pos": [
+        60,
+        100
+      ]
+    },
+    {
+      "ref": "R1",
+      "type": "resistor",
+      "value": "1M",
+      "pos": [
+        100,
+        140
+      ],
+      "rot": 90
+    },
+    {
+      "ref": "Q1",
+      "type": "jfet",
+      "model": "J201",
+      "measured": {
+        "idss": 0.0006,
+        "vp": -0.8
+      },
+      "pos": [
+        120,
+        100
+      ]
+    },
+    {
+      "ref": "RT1",
+      "type": "trimmer",
+      "value": "50k",
+      "bias_target": {
+        "node": "Q1.D",
+        "volts": 9.0
+      },
+      "pos": [
+        140,
+        40
+      ],
+      "rot": 90
+    },
+    {
+      "ref": "RS",
+      "type": "resistor",
+      "value": "1k5",
+      "pos": [
+        140,
+        160
+      ],
+      "rot": 90
+    },
+    {
+      "ref": "C2",
+      "type": "capacitor",
+      "value": "1u",
+      "pos": [
+        180,
+        80
+      ]
+    },
+    {
+      "ref": "VR1",
+      "type": "pot",
+      "value": "100k",
+      "taper": "A",
+      "rotation": 0.7,
+      "label": "Volume",
+      "pos": [
+        220,
+        120
+      ],
+      "rot": 90
+    },
+    {
+      "ref": "AMP",
+      "type": "amp",
+      "pos": [
+        260,
+        100
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        20,
+        100
+      ],
+      "to": [
+        40,
+        100
+      ]
+    },
+    {
+      "from": [
+        80,
+        100
+      ],
+      "to": [
+        100,
+        100
+      ]
+    },
+    {
+      "from": [
+        100,
+        100
+      ],
+      "to": [
+        100,
+        120
+      ]
+    },
+    {
+      "from": [
+        140,
+        80
+      ],
+      "to": [
+        160,
+        80
+      ]
+    },
+    {
+      "from": [
+        160,
+        40
+      ],
+      "to": [
+        160,
+        80
+      ]
+    },
+    {
+      "from": [
+        140,
+        120
+      ],
+      "to": [
+        140,
+        140
+      ]
+    },
+    {
+      "from": [
+        200,
+        80
+      ],
+      "to": [
+        220,
+        80
+      ]
+    },
+    {
+      "from": [
+        220,
+        80
+      ],
+      "to": [
+        220,
+        100
+      ]
+    },
+    {
+      "from": [
+        240,
+        100
+      ],
+      "to": [
+        240,
+        120
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "V+",
+      "pos": [
+        140,
+        20
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        100,
+        160
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        140,
+        180
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        220,
+        140
+      ]
+    },
+    {
+      "net": "OUT",
+      "pos": [
+        240,
+        100
+      ]
+    }
+  ],
+  "probes": {
+    "in": "IN.out",
+    "out": "OUT"
+  },
+  "notes": {
+    "net:Q1.D": "Main clipper."
+  }
+}

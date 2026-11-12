@@ -1,0 +1,21 @@
+id: diode-across-supply
+layer: topology
+severity: error
+check: diode_across_supply
+title: Diode across the supply
+message: "{ref} conducts straight from {anode} to {cathode}: it shorts the supply."
+why: >
+  A diode fitted forwards across a supply conducts as hard as the supply allows. Turned
+  the other way (cathode to the positive side) it's the usual polarity-protection diode,
+  which does nothing until the supply is plugged in backwards.
+fix: "Turn {ref} round, or put it in series with the supply instead."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: D1, type: diode, nets: [V+, GND], model: 1N4148}
+      expect: [D1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: D1, type: diode, nets: [GND, V+], model: 1N4148}

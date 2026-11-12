@@ -1,0 +1,3 @@
+* J201 low-pinch-off N-channel JFET (our model from Fairchild's and InterFET's sheets)
+* Built by Solum Builder from Fairchild J201/J202 data sheet (1997); InterFET J201/J202 data sheet IF35018.R00 (June 2019) (D-161)
+.model J201 NJF(vto=-0.6708 beta=0.0009938 lambda=0.002236 cgs=3e-12 cgd=1e-12)

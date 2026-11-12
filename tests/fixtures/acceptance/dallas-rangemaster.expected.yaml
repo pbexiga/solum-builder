@@ -1,0 +1,105 @@
+# Expected values for library/starters/dallas-rangemaster.json (D-019, D-034).
+circuit: dallas-rangemaster
+source:
+  title: ElectroSmash, "Dallas Rangemaster Treble Booster Analysis"
+  url: https://www.electrosmash.com/dallas-rangemaster
+  snapshot: http://web.archive.org/web/20251214230739/https://electrosmash.com/dallas-rangemaster
+  read: 2026-10-28
+  licence: CC BY-NC 3.0 (its figures, said in our own words)
+substitutions:
+  - >-
+    Q1: the pedal's Mullard OC44 is our own fit to Mullard's sheet (D-184; no maker's SPICE
+    card exists), given the page's gain as measured, hFE 100 (the page says every graph of its was made with a Q1 of gain 100). That is
+    the simulation's BF; a measured gain is what the Geofex tester reads (D-153), 91.6 for
+    that unit on the page's own card (ElectroSmash's Fuzz Face AC128, BF 100), so the
+    starter gives 91.6, with that card's low leakage, 9.8 µA.
+
+checks:
+  # Bias, from the bias-points diagram (dallas-rangemaster-bias-points.png), values
+  # referenced to ground (the orange figures).
+  - id: q1-base
+    kind: dc
+    node: Q1.B
+    volts: -1.0
+    tol: 0.15
+    from: image
+    image: http://web.archive.org/web/20251214230739im_/https://electrosmash.com/images/tech/rangemaster/dallas-rangemaster-bias-points.png
+    confirmed: 2026-10-28
+    says: "The bias reckoned to sound best has the base at about 8 V and the collector at about 2 V."
+    note: The text's figures are referred to the +9 V side; the diagram gives -1 V to ground.
+  - id: q1-emitter
+    kind: dc
+    node: Q1.E
+    volts: -0.8
+    tol: 0.15
+    from: image
+    image: http://web.archive.org/web/20251214230739im_/https://electrosmash.com/images/tech/rangemaster/dallas-rangemaster-bias-points.png
+    confirmed: 2026-10-28
+  - id: q1-collector
+    kind: dc
+    node: Q1.C
+    volts: -7.0
+    tol: 0.7
+    from: text
+    says: >-
+      The bias most builders agree on puts Q1's collector at -7.0 V; anything from -6.9 V
+      to -7.1 V is as good.
+    note: >-
+      The ±0.1 V is the page's taste window for a trimmed pedal; the tolerance here is the
+      10 % used for the other bias checks (the stock 470k/68k divider, a model card).
+
+  - id: input-high-pass
+    kind: corner
+    side: low
+    node: out
+    ref: C1.1
+    hz: 2600
+    tol_pct: 10
+    from: text
+    says: "C1 with the stage's 12k input impedance makes a high-pass filter: 1/(2π x 5 nF x 12k) = 2.6 kHz."
+    note: Volume at max. Measured against C1's input side, so the guitar's pickup doesn't count.
+    known_gap: >-
+      Simulated 3016 Hz, 16 % high. The page's 2.6 kHz takes Zin as 12K, the top of its
+      own 10K-12K estimate (omitted below); 3016 Hz with C1's 5 nF means Zin 10.6K, inside
+      it. With the AC128 stand-in (D-170) it read 1304 Hz, its 100 pF collector-base
+      capacitance loading the input through the Miller effect; the OC44 card has Mullard's
+      10.5 pF, the page's own model 3.75 pF.
+  - id: gain-volume-max
+    kind: gain
+    node: out
+    ref: C1.1
+    hz: 20000
+    db: 34.4
+    tol_db: 1.5
+    from: image
+    image: http://web.archive.org/web/20251214230739im_/https://electrosmash.com/images/tech/rangemaster/dallas-rangemaster-standard-frequency-response.png
+    confirmed: 2026-10-28
+    note: The top curve (Volume at max) at 20 kHz, read off the page's simulated response.
+    known_gap: >-
+      Simulated 36.3 dB, 1.9 dB over the page's curve and between it and the page's hand
+      estimate of 38 dB (omitted below). The page simulated with its own card (its Fuzz
+      Face AC128, 3.75 pF); the cause of the 1.9 dB is not traced. With the AC128
+      stand-in (D-170) it read 29.2 dB (its 100 pF, as above).
+
+omitted:
+  - what: Voltage gain 38 dB (Gv = gm x Rc = 0.008 x 10K)
+    why: >-
+      A hand estimate that leaves out the emitter's 3.9K and the output load; the page's
+      own simulated response (checked above) tops out at about 34 dB.
+  - what: Input impedance 10K-12K
+    why: An estimate from rπ at β = 100; acceptance files have no impedance check yet.
+  - what: C2 15.9 Hz and C3 0.8 Hz high-passes
+    why: The page notes both are below the audio band; not a -3 dB point of the response.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  sources:
+    - title: Aion FX, "Solaris Germanium Fuzz" documentation 1.0.1 (2024-08-08), based on the Dallas-Arbiter Fuzz Face
+      url: https://aionfx.com/app/files/docs/solaris_documentation.pdf
+      snapshot: http://web.archive.org/web/20251116032332/https://aionfx.com/app/files/docs/solaris_documentation.pdf
+      read: 2026-11-04
+      licence: Aion FX project documentation (short quotes, for testing); the projects may be built, commercially too, without attribution (its License & Usage page)
+  parts:
+    - "Capacitor types from the main source: the 47 µF is an aluminium electrolytic, the 5 nF and 10 nF are film."
+    - "Electrolytics rated 16 V: the sources give no rating, so this is the app's own advice for a 9 V circuit (the smallest rating sold with the supply under 80 % of it, D-203)."
+    - "Enclosure 125B, the size Aion FX's kits of the germanium circuits use (the Solaris, the Deimos)."

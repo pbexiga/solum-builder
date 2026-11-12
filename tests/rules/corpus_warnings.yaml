@@ -1,0 +1,14 @@
+# Warnings a starter is allowed to raise, each with the reason (tests/rules/test_mutations.py).
+# A starter is drawn as its source publishes it: a warning that is true of the real
+# circuit stays, listed here, rather than a part the source doesn't have (D-135).
+# Only warnings may be listed; an entry the starter no longer raises fails the test.
+
+- circuit: tone-bender-mk2-mode
+  rule: switch-pulldown-missing
+  reason: "Aion's Deimos has no pull-downs on its Mode switch, so the switched-out capacitors (C2/C1's input side and C3's output in 1.5 mode, C4 in MkII mode) float and can pop. 1M to ground on each stops it but moves Q2's bias (Q3.C -8.05 V to -7.89 V)."
+- circuit: big-muff-aion-halo
+  rule: switch-pulldown-missing
+  reason: "Aion's Halo has no pull-downs on its Midrange switch: the capacitor each pole leaves out (C16 or C10 on SW1A, C17 or C11 on SW1B) floats and can click when switched. Aion's document doesn't mention it; 1M from each switched lug to ground would stop it."
+- circuit: mxr-dyna-comp-aion
+  rule: switch-pulldown-missing
+  reason: "Aion's Aurora has no pull-downs on its Treble switch: the capacitor it leaves out (C11 or C12, both in the middle position) floats on its switch side and can click when switched. 1M from each to VB would stop it."

@@ -1,0 +1,128 @@
+* chips
+V_RAIL1 v_ 0 DC 9
+V_IN in 0 DC 0
+C1 in a 1e-07
+R1 a x 1000000
+X_IC1A a x v_ 0 CD4049UB_INV
+X_IC1B 0 ic1b_out v_ 0 CD4049UB_INV
+X_IC1C 0 ic1c_out v_ 0 CD4049UB_INV
+X_IC1D 0 ic1d_out v_ 0 CD4049UB_INV
+X_IC1E 0 ic1e_out v_ 0 CD4049UB_INV
+X_IC1F 0 ic1f_out v_ 0 CD4049UB_INV
+R2 v_ vref 10000
+R3 vref 0 10000
+R4 x p 10000
+R5 p vref 470
+X_IC2A p vref o ib d o y v_ 0 LM13700_OTA
+R6 v_ ib 33000
+R7 v_ d 4700
+R8 o vref 10000
+R9 y 0 10000
+X_IC3 y vref out ib3 v_ 0 CA3080
+R10 v_ ib3 100000
+R11 out vref 10000
+R_OUT out 0 1000000
+* CA3080 operational transconductance amplifier (our model from the sheet)
+* Built by Solum Builder from Intersil CA3080/CA3080A data sheet File Number 475.4
+* (September 1998), typical figures at 25 degC, +-15 V. Behavioural core: Iout =
+* Iabc*tanh(Vd/2VT); bias pin a junction to V-.
+.subckt CA3080 inp inn out iabc vp vn
+Vsense iabc ib0 0
+Dbias ib0 vn DBIAS
+* Iabc as a voltage (1 V per A) for the expressions
+Bia ia 0 V=max(i(Vsense),0)
+* input-pair window: the common-mode range
+Bw w 0 V=((pwr(max(v(vp)-1.4-(0.5*(v(inp)+v(inn))),0),2)/(pwr(max(v(vp)-1.4-(0.5*(v(inp)+v(inn))),0),2)+0.0025))*(pwr(max((0.5*(v(inp)+v(inn)))-v(vn)-0.4,0),2)/(pwr(max((0.5*(v(inp)+v(inn)))-v(vn)-0.4,0),2)+0.0025)))
+* the pair's halves I5 (to the output's source mirror) and I4 (to the sink), then the
+* open-loop bandwidth pole (2 MHz) on each, in the mirrors (after the tanh,
+* so a large step slews at Iabc/C instead of winding up a filtered input voltage)
+Bi5 i5r 0 V=v(ia)*v(w)*0.5*(1+tanh((v(inp)-v(inn))/(2*(8.617333e-5*(temper+273.15)))))
+Bi4 i4r 0 V=v(ia)*v(w)*0.5*(1-tanh((v(inp)-v(inn))/(2*(8.617333e-5*(temper+273.15)))))
+R5 i5r i5 1k
+C5 i5 0 7.95775e-11
+R4 i4r i4 1k
+C4 i4 0 7.95775e-11
+* output: source from V+, sink to V-, each stopping at the swing limit; Early sets Rout
+Bsrc vp out I=v(i5)*(pwr(max(v(vp)-(1.09515+(0.15)*log10(max(v(ia),1e-7)/1e-6))-v(out),0),2)/(pwr(max(v(vp)-(1.09515+(0.15)*log10(max(v(ia),1e-7)/1e-6))-v(out),0),2)+0.0025))*(1+max(v(vp)-v(out),0)/7500)
+Bsnk out vn I=v(i4)*(pwr(max(v(out)-v(vn)-(0.465051+(0.05)*log10(max(v(ia),1e-7)/1e-6)),0),2)/(pwr(max(v(out)-v(vn)-(0.465051+(0.05)*log10(max(v(ia),1e-7)/1e-6)),0),2)+0.0025))*(1+max(v(out)-v(vn),0)/7500)
+Cout out vn 5.6e-12
+Rleak out vn 2.4e+11
+Rleak2 out vp 2.4e+11
+* input bias currents: the pair's base currents (unfiltered Vd), into the tail at V-
+Bbp inp vn I=v(ia)*v(w)*0.5*(1+tanh((v(inp)-v(inn))/(2*(8.617333e-5*(temper+273.15)))))/(0.5*pwr(10,log10(min(max(v(ia),1e-7),1e-3)))/pwr(10,(0.863627)*log10(min(max(v(ia),1e-7),1e-3))+(-2.85139)))
+Bbn inn vn I=v(ia)*v(w)*0.5*(1-tanh((v(inp)-v(inn))/(2*(8.617333e-5*(temper+273.15)))))/(0.5*pwr(10,log10(min(max(v(ia),1e-7),1e-3)))/pwr(10,(0.863627)*log10(min(max(v(ia),1e-7),1e-3))+(-2.85139)))
+Rdiff inp inn 5e+11
+Cinp inp vn 3.6e-12
+Cinn inn vn 3.6e-12
+* quiescent: V+ draws 2 x Iabc at balance (Iabc/2 of it is the output pair);
+* none unpowered, so a V+ left open still solves (D-237)
+Bq vp vn I=1.5*v(ia)*(pwr(max(v(vp)-v(vn),0),2)/(pwr(max(v(vp)-v(vn),0),2)+0.0025))
+Cio inn out 2.4e-14
+.model DBIAS D(IS=1.17975e-16 N=0.939612 RS=15.9617)
+.ends CA3080
+* CD4049UB, one inverter of six (unbuffered hex inverter), for linear (biased) use
+* Our own fit to TI's CD4049UB/CD4050B data sheet SCHS046L (Aug 1998, rev. Feb 2026), 25 C typical
+* Pins: in out vdd vss. Per chip (PDIP-16 CD4049UBE): VCC 1, VSS 8; inputs A3 B5 C7 D9 E11 F14,
+* outputs G2 H4 I6 J10 K12 L15; 13 and 16 not connected.
+* N and P channel: ngspice VDMOS, source on its rail; body diodes are the output's drain-bulk diodes.
+* DIN: the input diode to VSS (sheet p. 1 schematic); DSUP: the VSS->VDD diode; ngspice default values.
+.subckt CD4049UB_INV in out vdd vss
+MN out in vss CD4049UB_N
+MP out in vdd CD4049UB_P
+DIN vss in CD4049UB_D
+DSUP vss vdd CD4049UB_D
+.model CD4049UB_N VDMOS(vto=1.3915 kp=0.0031091 theta=0.048075 mtriode=1.7236 lambda=0.0094943
++ rs=1.2486 rd=0.01 ksubthres=0.1 cgs=2.463e-12 cgdmax=5.0373e-12 cgdmin=5.0373e-12 cjo=4.6998e-12)
+.model CD4049UB_P VDMOS(pchan vto=-0.43687 kp=0.0012393 theta=0.12275 mtriode=1.9884
++ lambda=0.031518 rs=27.07 rd=0.01 ksubthres=0.1 cgs=2.463e-12 cgdmax=5.0373e-12 cgdmin=5.0373e-12
++ cjo=4.6998e-12)
+.model CD4049UB_D D
+.ends CD4049UB_INV
+* LM13700 operational transconductance amplifier, one of two (our model from the sheet)
+* Built by Solum Builder from TI LM13700 data sheet SNOSBW2F (November 1999,
+* revised November 2015), typical figures at 25 degC, +-15 V. Behavioural core:
+* Iout = Iabc*tanh(Vd/2VT); bias pin two junctions to V-; linearising diodes and the
+* Darlington buffer as junctions. The dual is two instances on shared vp/vn.
+.subckt LM13700_OTA inp inn out iabc dbias bufin bufout vp vn
+Vsense iabc ib0 0
+Dbias ib0 vn DBIAS
+* Iabc as a voltage (1 V per A) for the expressions
+Bia ia 0 V=max(i(Vsense),0)
+* input-pair window: the common-mode range
+Bw w 0 V=((pwr(max(v(vp)-1.5-(0.5*(v(inp)+v(inn))),0),2)/(pwr(max(v(vp)-1.5-(0.5*(v(inp)+v(inn))),0),2)+0.0025))*(pwr(max((0.5*(v(inp)+v(inn)))-v(vn)-1.5,0),2)/(pwr(max((0.5*(v(inp)+v(inn)))-v(vn)-1.5,0),2)+0.0025)))
+* the pair's halves I5 (to the output's source mirror) and I4 (to the sink), then the
+* open-loop bandwidth pole (2 MHz) on each, in the mirrors (after the tanh,
+* so a large step slews at Iabc/C instead of winding up a filtered input voltage)
+Bi5 i5r 0 V=v(ia)*v(w)*0.5*(1+tanh((v(inp)-v(inn))/(2*(8.617333e-5*(temper+273.15)))))
+Bi4 i4r 0 V=v(ia)*v(w)*0.5*(1-tanh((v(inp)-v(inn))/(2*(8.617333e-5*(temper+273.15)))))
+R5 i5r i5 1k
+C5 i5 0 7.95775e-11
+R4 i4r i4 1k
+C4 i4 0 7.95775e-11
+* output: source from V+, sink to V-, each stopping at the swing limit; Early sets Rout
+Bsrc vp out I=v(i5)*(pwr(max(v(vp)-0.8-v(out),0),2)/(pwr(max(v(vp)-0.8-v(out),0),2)+0.0025))*(1+max(v(vp)-v(out),0)/1503.96)
+Bsnk out vn I=v(i4)*(pwr(max(v(out)-v(vn)-0.6,0),2)/(pwr(max(v(out)-v(vn)-0.6,0),2)+0.0025))*(1+max(v(out)-v(vn),0)/1503.96)
+Cout out vn 4.75e-12
+Rleak out vn 3e+11
+Rleak2 out vp 3e+11
+* input bias currents: the pair's base currents (unfiltered Vd), into the tail at V-
+Bbp inp vn I=v(ia)*v(w)*0.5*(1+tanh((v(inp)-v(inn))/(2*(8.617333e-5*(temper+273.15)))))/(0.5*pwr(10,log10(min(max(v(ia),1e-7),1e-3)))/pwr(10,((0.041643)*log10(min(max(v(ia),1e-7),1e-3))+(1.24808))*log10(min(max(v(ia),1e-7),1e-3))+(-2.03586)))
+Bbn inn vn I=v(ia)*v(w)*0.5*(1-tanh((v(inp)-v(inn))/(2*(8.617333e-5*(temper+273.15)))))/(0.5*pwr(10,log10(min(max(v(ia),1e-7),1e-3)))/pwr(10,((0.041643)*log10(min(max(v(ia),1e-7),1e-3))+(1.24808))*log10(min(max(v(ia),1e-7),1e-3))+(-2.03586)))
+Rdiff inp inn 2.462e+11
+Cinp inp vn 5.96e-12
+Cinn inn vn 5.96e-12
+* quiescent: V+ draws 2.6 x Iabc at balance (Iabc/2 of it is the output pair);
+* none unpowered, so a V+ left open still solves (D-237)
+Bq vp vn I=2.1*v(ia)*(pwr(max(v(vp)-v(vn),0),2)/(pwr(max(v(vp)-v(vn),0),2)+0.0025))
+* linearising diodes D2 (to -input) and D3 (to +input), anodes on the diode-bias pin
+D2 dbias inn DLIN
+D3 dbias inp DLIN
+* Darlington buffer Q12, Q13, collectors on V+
+Q12 vp bufin q13b QBUF
+Q13 vp q13b bufout QBUF
+.model DBIAS D(IS=2.39893e-15 N=2.1709 RS=0)
+.model DLIN D(IS=2.65763e-16 N=1)
+.model QBUF NPN(IS=2.65763e-16 BF=104.3)
+.ends LM13700_OTA
+.op
+.end

@@ -1,0 +1,61 @@
+{
+  "id": "78L12",
+  "type": "regulator",
+  "description": "78L12 fixed 12 V regulator, 100 mA (onsemi MC78L12A): 12 V for a pedal from a charge pump's 18 V",
+  "kind": "behavioural",
+  "manufacturer": "onsemi",
+  "source": {
+    "url": "https://www.onsemi.com/pdf/datasheet/mc78l00a-d.pdf",
+    "retrieved": "2026-11-09",
+    "licence": "values read from the manufacturer's data sheet",
+    "original": "onsemi"
+  },
+  "datasheet": "https://www.onsemi.com/pdf/datasheet/mc78l00a-d.pdf",
+  "note": "A behavioural model, not the chip's circuit: the sheet's typical figures (output voltage, dropout, bias current, line and load regulation) drive Solum Builder's own model of a regulator (D-227). Not modelled: its current limit and thermal shutdown (the sheet gives no figure for either), and ripple rejection falling at high frequencies (the sheet gives 120 Hz only). Its bias current, 4.2 mA, flows to ground whatever the load: from a charge pump, count it in the pump's current.",
+  "ratings": {
+    "vi_max": 35.0
+  },
+  "rating_sources": {
+    "vi_max": "onsemi MC78L00A/D, Rev. 21 (2025): Absolute Maximum Ratings, Input Voltage (12 V-18 V) 35 Vdc"
+  },
+  "package": {
+    "name": "TO-92",
+    "pins": {
+      "out": 1,
+      "gnd": 2,
+      "in": 3
+    },
+    "source": "onsemi MC78L00A/D, Rev. 21 (2025), page 1: TO-92 (P suffix, case 29-10), Pin 1 Output, 2 Ground, 3 Input. The SOIC-8 and SOT-89 are numbered differently."
+  },
+  "params": {
+    "v_out": 12.0,
+    "v_in_ref": 19.0,
+    "line": 0.0096,
+    "r_out": 0.202,
+    "v_dropout": 1.7,
+    "i_bias": 0.0042
+  },
+  "param_sources": {
+    "v_out": "onsemi MC78L00A/D, Rev. 21 (2025), Electrical Characteristics MC78L12AC, AB (VI = 19 V, IO = 40 mA): Output Voltage 12 V typ (11.5 min, 12.5 max) at TJ = 25 C",
+    "v_in_ref": "the same table's test condition, VI = 19 V, where the output voltage is given",
+    "line": "the same table: Line Regulation 120 mV typ over 14.5 V <= VI <= 27 V at IO = 40 mA, so 0.12 / 12.5 = 0.0096 V per input volt (-40 dB; the table's Ripple Rejection, 42 dB typ at 120 Hz, agrees within 2 dB)",
+    "r_out": "the same table: Load Regulation 20 mV typ over 1.0 mA <= IO <= 100 mA, so 0.020 / 0.099 = 0.202 ohms",
+    "v_dropout": "the same table: Dropout Voltage (VI - VO) 1.7 V typ at TJ = 25 C; Figure 2's note: the input must stay typically 2.0 V above the output, ripple troughs included",
+    "i_bias": "the same table: Input Bias Current 4.2 mA typ (6.5 max) at TJ = 25 C"
+  },
+  "validation": [
+    {
+      "quantity": "vout",
+      "conditions": {
+        "supply": 19.0,
+        "load": 0.04
+      },
+      "simulated": 11.992,
+      "datasheet": {
+        "typ": 12.0,
+        "tol": 0.5,
+        "source": "onsemi MC78L00A/D, Rev. 21 (2025), Electrical Characteristics MC78L12AC, AB: Output Voltage 11.5-12.5 V at VI = 19 V, IO = 40 mA, TJ = 25 C"
+      }
+    }
+  ]
+}

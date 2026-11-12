@@ -1,0 +1,3 @@
+* 2SK209-GR low-noise N-channel JFET, GR grade (the BD-2's 2SK184-GR in SMD; our model from Toshiba's sheet)
+* Built by Solum Builder from Toshiba 2SK209 data sheet (2014-03-01) (D-161, D-216)
+.model J2SK209GR NJF(vto=-0.4875 beta=0.0173 lambda=0.006 cgs=1e-11 cgd=3e-12)

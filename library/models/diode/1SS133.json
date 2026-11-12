@@ -1,0 +1,137 @@
+{
+  "id": "1SS133",
+  "type": "diode",
+  "description": "1SS133 small-signal switching diode (our fit to ROHM's sheet)",
+  "spice_name": "1SS133",
+  "kind": "model",
+  "pins": [],
+  "card": "1SS133.lib",
+  "manufacturer": "ROHM",
+  "source": {
+    "url": "https://wdv.com/Electronics/Radiolocation/RegenRadio/SiliconDiode1ss133.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own fit to the maker's datasheet curve (D-156): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://wdv.com/Electronics/Radiolocation/RegenRadio/SiliconDiode1ss133.pdf",
+  "fixes": [],
+  "ratings": {
+    "if_avg": 0.13,
+    "vr_max": 80.0
+  },
+  "rating_sources": {
+    "if_avg": "ROHM 1SS133 data sheet, Absolute maximum ratings: mean rectifying current IO 130 mA",
+    "vr_max": "ROHM 1SS133 data sheet, Absolute maximum ratings: DC reverse voltage VR 80 V"
+  },
+  "fit": {
+    "sheet": "ROHM 1SS133 data sheet",
+    "figure": "Fig.1 Forward characteristics, Ta = 25 °C, from 0.2 mA (read from the PDF's vector drawing)",
+    "points": [
+      [
+        0.5339,
+        0.0002
+      ],
+      [
+        0.5668,
+        0.0005979
+      ],
+      [
+        0.6104,
+        0.001771
+      ],
+      [
+        0.6661,
+        0.005186
+      ],
+      [
+        0.7252,
+        0.01289
+      ],
+      [
+        0.8161,
+        0.036359999999999996
+      ],
+      [
+        0.901,
+        0.08047
+      ],
+      [
+        0.9255,
+        0.09999
+      ]
+    ],
+    "method": "IS, N and RS by least squares on V = N·Vt·ln(I/IS) + RS·I (scripts/fit_models.py fit_diode, Vt at 27 °C) over every other curve point, the curve's last point always included; IS held under the sheet's 0.5 µA reverse-current limit at 80 V; CJO is the sheet's 2 pF maximum at 0.5 V; BV 90 V, the peak reverse voltage",
+    "note": "The figure starts at 0.2 mA; below that the fit follows the diode equation"
+  },
+  "validation": [
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.1
+      },
+      "simulated": 0.933418,
+      "datasheet": {
+        "max": 1.2,
+        "source": "ROHM 1SS133 data sheet, Electrical characteristics: VF at IF = 100 mA"
+      }
+    },
+    {
+      "quantity": "ir",
+      "conditions": {
+        "vr": 80.0
+      },
+      "simulated": 1.603e-09,
+      "datasheet": {
+        "max": 5e-07,
+        "source": "ROHM 1SS133 data sheet, Electrical characteristics: IR at VR = 80 V"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0003456
+      },
+      "simulated": 0.546875,
+      "datasheet": {
+        "source": "ROHM 1SS133 data sheet, Fig.1 Forward characteristics, Ta = 25 °C, from 0.2 mA (read from the PDF's vector drawing)",
+        "typ": 0.5494,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.008845
+      },
+      "simulated": 0.702083,
+      "datasheet": {
+        "source": "ROHM 1SS133 data sheet, Fig.1 Forward characteristics, Ta = 25 °C, from 0.2 mA (read from the PDF's vector drawing)",
+        "typ": 0.698,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.04875
+      },
+      "simulated": 0.831938,
+      "datasheet": {
+        "source": "ROHM 1SS133 data sheet, Fig.1 Forward characteristics, Ta = 25 °C, from 0.2 mA (read from the PDF's vector drawing)",
+        "typ": 0.8441,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    }
+  ],
+  "package": {
+    "name": "DO-34",
+    "pins": {
+      "K": 1,
+      "A": 2
+    },
+    "source": "ROHM 1SS133 data sheet: DO-34; pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The band marks the cathode"
+  }
+}

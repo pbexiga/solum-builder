@@ -1,0 +1,127 @@
+{
+  "id": "CA3260",
+  "type": "opamp",
+  "description": "CA3260 BiMOS dual op-amp, MOSFET input and CMOS rail-to-rail output, 16 V max (our model from Intersil's sheet)",
+  "spice_name": "CA3260",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "CA3260.lib",
+  "manufacturer": "Intersil (Renesas)",
+  "source": {
+    "url": "https://www.renesas.com/ja-jp/www/doc/datasheet/ca3260.pdf",
+    "retrieved": "2026-11-02",
+    "licence": "Our own model built from the maker's data sheet (D-162): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.renesas.com/ja-jp/www/doc/datasheet/ca3260.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 16.0,
+    "cm_neg_headroom": 0.0,
+    "cm_pos_headroom": 5.0,
+    "out_neg_headroom": 0.002,
+    "out_pos_headroom": 1.7
+  },
+  "rating_sources": {
+    "vs_max": "Intersil CA3260 data sheet FN1266 Rev. 7.00 (December 2009): vs_max 16 V (V+ to V–); common-mode range 0 to 10 V min at V+ = 15 V; output headroom VOM+ 13.3 V typ and VOM– 0.002 V typ at RL = 10 kΩ (to the rails within 10 mV unloaded)",
+    "cm_neg_headroom": "Intersil CA3260 data sheet FN1266 Rev. 7.00 (December 2009): vs_max 16 V (V+ to V–); common-mode range 0 to 10 V min at V+ = 15 V; output headroom VOM+ 13.3 V typ and VOM– 0.002 V typ at RL = 10 kΩ (to the rails within 10 mV unloaded)",
+    "cm_pos_headroom": "Intersil CA3260 data sheet FN1266 Rev. 7.00 (December 2009): vs_max 16 V (V+ to V–); common-mode range 0 to 10 V min at V+ = 15 V; output headroom VOM+ 13.3 V typ and VOM– 0.002 V typ at RL = 10 kΩ (to the rails within 10 mV unloaded)",
+    "out_neg_headroom": "Intersil CA3260 data sheet FN1266 Rev. 7.00 (December 2009): vs_max 16 V (V+ to V–); common-mode range 0 to 10 V min at V+ = 15 V; output headroom VOM+ 13.3 V typ and VOM– 0.002 V typ at RL = 10 kΩ (to the rails within 10 mV unloaded)",
+    "out_pos_headroom": "Intersil CA3260 data sheet FN1266 Rev. 7.00 (December 2009): vs_max 16 V (V+ to V–); common-mode range 0 to 10 V min at V+ = 15 V; output headroom VOM+ 13.3 V typ and VOM– 0.002 V typ at RL = 10 kΩ (to the rails within 10 mV unloaded)"
+  },
+  "channels": 2,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "a.out": 1,
+      "a.-": 2,
+      "a.+": 3,
+      "V-": 4,
+      "b.+": 5,
+      "b.-": 6,
+      "b.out": 7,
+      "V+": 8
+    },
+    "source": "Intersil CA3260 data sheet FN1266 Rev. 7.00 (December 2009), 8-lead PDIP pinout"
+  },
+  "fit": {
+    "sheet": "Intersil CA3260 data sheet FN1266 Rev. 7.00 (December 2009), at V+ = 15 V, V– = 0 (±7.5 V)",
+    "figure": "Electrical characteristics at V+ = 15 V, V− = 0: AOL 320 kV/V typ; at ±7.5 V: unity-gain crossover 4 MHz, slew rate 10 V/µs, follower overshoot 10 % (CL 25 pF, RL 2 kΩ); total supply current 9 mA with outputs at mid-supply; VOM+ 13.3 V typ at 10 kΩ, within 10 mV of each rail unloaded",
+    "points": [],
+    "method": "A small macromodel (scripts/fit_models.py opamp_card, D-162): a tanh transconductance stage limited to 10 µA into C1 sets the slew rate, gm the unity-gain crossing and R1 the open-loop gain; a second pole gives the phase margin; diode clamps and an output resistance set the swing; the supply current is drawn from the rails. CMOS output: clamps 35 mV from each rail and an output resistance of 1.28 kΩ (VOM+ 1.7 V short at 1.33 mA). Phase margin 65.6° fitted so a follower at the sheet's load overshoots 10 %; internal slew 16.4 V/µs so the output slews at the sheet's 10 V/µs into 2 kΩ (the 1.28 kΩ output divides it).",
+    "note": "Input bias, offset, noise, common-mode limits and the output's current limit are not modelled: the input stage is ideal (1 TΩ). The real output stage is nonlinear (22 mA short-circuit source current at 15 V); a fixed 1.28 kΩ is right near 1 mA and pessimistic for heavy loads."
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 7.5
+      },
+      "datasheet": {
+        "min": 94.0,
+        "typ": 110.0,
+        "source": "Intersil CA3260 data sheet FN1266 Rev. 7.00 (December 2009)",
+        "note": "AOL 50 kV/V min, 320 kV/V typ, V+ = 15 V, V– = 0, VO = 10 Vp-p, RL = 10 kΩ"
+      },
+      "simulated": 108.726
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 7.5
+      },
+      "datasheet": {
+        "typ": 4000000.0,
+        "source": "Intersil CA3260 data sheet FN1266 Rev. 7.00 (December 2009)",
+        "note": "Unity-gain crossover 4 MHz typ at ±7.5 V; 10 % overshoot as a follower (CL = 25 pF, RL = 2 kΩ): phase margin 65.6° fitted to it (.claude/skills/fit-model/tools/opamp_pm_fit.py). Reads low here: the 1.28 kΩ output drives the test's 10 kΩ load"
+      },
+      "simulated": 3603920.0
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 7.5,
+        "load": 1000000000.0
+      },
+      "datasheet": {
+        "min": 0.0,
+        "max": 0.01,
+        "source": "Intersil CA3260 data sheet FN1266 Rev. 7.00 (December 2009): VOM+ 14.99 V min, 15 V typ, RL = ∞"
+      },
+      "simulated": 0.00476293
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 7.5,
+        "load": 1000000000.0
+      },
+      "datasheet": {
+        "min": 0.0,
+        "max": 0.01,
+        "source": "Intersil CA3260 data sheet FN1266 Rev. 7.00 (December 2009): VOM– 0 V typ, 0.01 V max, RL = ∞"
+      },
+      "simulated": 0.00476293
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 7.5,
+        "load": 4360.0
+      },
+      "datasheet": {
+        "typ": 1.7,
+        "tol": 0.1,
+        "source": "Intersil CA3260 data sheet FN1266 Rev. 7.00 (December 2009): VOM+ 13.3 V typ, 11 V min, RL = 10 kΩ",
+        "note": "The sheet's 10 kΩ goes to V– (1.33 mA at 13.3 V); here 4.36 kΩ to the midpoint draws the same current at the same output"
+      },
+      "simulated": 1.7058
+    }
+  ]
+}

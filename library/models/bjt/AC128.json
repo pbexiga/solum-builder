@@ -1,0 +1,313 @@
+{
+  "id": "AC128",
+  "type": "bjt",
+  "description": "AC128 germanium PNP (hFE 55-175 at 50 mA), our fit to Valvo's sheet",
+  "spice_name": "AC128",
+  "kind": "model",
+  "pins": [],
+  "card": "AC128.lib",
+  "manufacturer": "Valvo (Philips)",
+  "source": {
+    "url": "https://alltransistors.com/transistor.php?transistor=21204 (its \"valvo ac128.pdf\": a scan the user supplied, 7 pages, kept as data/spec-sheets/AC128_Valvo.pdf)",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model fitted to the maker's data sheet (D-163): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://alltransistors.com/transistor.php?transistor=21204",
+  "fixes": [],
+  "ratings": {
+    "vceo": 16.0,
+    "ic": 1.0
+  },
+  "rating_sources": {
+    "vceo": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 128: minimum -UCE against ZBE: 16 V with the base open (32 V only with RBE ≤ 500 Ω, page 123)",
+    "ic": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 123: Absolute Grenzwerte: -IC max. 1 A"
+  },
+  "package": {
+    "name": "TO-1 (EBC)",
+    "pins": {
+      "E": 1,
+      "B": 2,
+      "C": 3
+    },
+    "source": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 123: outline: E, B, C in a line, the red dot on the collector side"
+  },
+  "fit": {
+    "sheet": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129)",
+    "figure": "page 126 IB against IE at UCB = 0 (mean, to 10 mA); page 128 B bei -UCE = 1 V (10 to 500 mA); page 127 -UBE against IE at UCB = 0 (mean, both ranges); page 124 table (rbb', Cb'c, f1); page 129 ICBO at 25 °C; page 125 output curves (VAF)",
+    "points": [
+      [
+        0.001,
+        78.8
+      ],
+      [
+        0.002,
+        76.6
+      ],
+      [
+        0.003,
+        78.4
+      ],
+      [
+        0.005,
+        79.9
+      ],
+      [
+        0.01,
+        85.8
+      ],
+      [
+        0.05,
+        90.0
+      ],
+      [
+        0.3,
+        90.0
+      ],
+      [
+        0.75,
+        86.0
+      ],
+      [
+        1.0,
+        80.0
+      ]
+    ],
+    "curves": {
+      "vbe_on": [
+        [
+          0.000453492,
+          0.0775
+        ],
+        [
+          0.00058292,
+          0.0834
+        ],
+        [
+          0.0008417759999999999,
+          0.09620000000000001
+        ],
+        [
+          0.000972192,
+          0.1003
+        ],
+        [
+          0.0014899039999999998,
+          0.1124
+        ],
+        [
+          0.002008604,
+          0.12040000000000001
+        ],
+        [
+          0.0030450159999999998,
+          0.13090000000000002
+        ],
+        [
+          0.003952,
+          0.1379
+        ],
+        [
+          0.004988412,
+          0.1446
+        ],
+        [
+          0.006024824,
+          0.14980000000000002
+        ],
+        [
+          0.006931808,
+          0.15330000000000002
+        ],
+        [
+          0.007969208,
+          0.1565
+        ],
+        [
+          0.00900562,
+          0.16
+        ],
+        [
+          0.009783176,
+          0.16290000000000002
+        ],
+        [
+          0.10245560000000001,
+          0.257
+        ],
+        [
+          0.13199679999999997,
+          0.2702
+        ],
+        [
+          0.3111212,
+          0.3378
+        ],
+        [
+          0.39144559999999995,
+          0.3594
+        ]
+      ],
+      "cobo": [
+        [
+          5.0,
+          1e-10
+        ]
+      ]
+    },
+    "method": "Gummel-Poon (scripts/fit_models.py). IS, NF, BF, ISE, NE, IKF, NKF and RE by least squares on the gain and VBE points together, taken as at VCE = 1 V (the UCB = 0 curves sit at VCE ≈ VBE, 0.1-0.47 V: the sheet gives VBE's change with VCE as 0.4 mV/V, and the Early effect moves the gain 2-3 %, less than the two gain figures disagree at 10 mA: 86 at UCB = 0, 82 at 1 V). RB 25 Ω, the sheet's rbb'. VAF 29 V from the IB = 1 mA output line (the 2 mA line gives 43 V; the curves above it are heated). BR set so ICBO at 10 V is the mean 3.7 µA, NR = NF: there is no VCE(sat) curve, and IS alone would leak far more (an alloy transistor's reverse gain is high). CJC from Cb'c 100 pF at 5 V with the default grading; no emitter capacitance given. TF from f1 1.5 MHz at 10 mA. EG 0.67 (germanium): with XTI 3 the card's VBE moves −2.2 mV/K against the sheet's −2.3. Fitted points are matched within 4.9 % (gain) and 3.2 mV (VBE to 10 mA; 13 mV over the whole curve). The curves are raster scans, read by .claude/skills/fit-model/worked/ac128/trace.py",
+    "note": "One AC128 for every unit (D-170): the sheet's gain spread is 55 to 175, so a circuit sets its transistors' measured hFE and leakage (D-130). The ElectroSmash cards AC128-B85 and AC128-B120 are replaced; old circuits migrate to this card with those gains."
+  },
+  "validation": [
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.05,
+        "vcb": 0.0
+      },
+      "simulated": 90.3138,
+      "datasheet": {
+        "min": 55.0,
+        "max": 175.0,
+        "source": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 124: Kennwerte, B at UCB = 0, IE = 50 mA: 90 (55...175)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.3,
+        "vcb": 0.0
+      },
+      "simulated": 91.0211,
+      "datasheet": {
+        "min": 60.0,
+        "max": 175.0,
+        "source": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 124: Kennwerte, B at UCB = 0, IE = 300 mA: 90 (60...175)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 1.0,
+        "vcb": 0.0
+      },
+      "simulated": 81.4575,
+      "datasheet": {
+        "min": 45.0,
+        "max": 165.0,
+        "source": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 124: Kennwerte, B at UCB = 0, IE = 1 A: 80 (45...165)"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.05,
+        "vcb": 0.0
+      },
+      "simulated": 0.218915,
+      "datasheet": {
+        "max": 0.3,
+        "source": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 124: Kennwerte, -UBE at UCB = 0, IE = 50 mA: ≤ 300 mV"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.3,
+        "vcb": 0.0
+      },
+      "simulated": 0.338001,
+      "datasheet": {
+        "max": 0.45,
+        "source": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 124: Kennwerte, -UBE at UCB = 0, IE = 300 mA: ≤ 450 mV"
+      }
+    },
+    {
+      "quantity": "icbo",
+      "conditions": {
+        "vcb": 10.0
+      },
+      "simulated": 3.69446e-06,
+      "datasheet": {
+        "max": 1e-05,
+        "source": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 124: Kennwerte, -ICBO at -UCB = 10 V: ≤ 10 µA",
+        "note": "The card's own is the mean, 3.7 µA (page 129 at 25 °C); a measured unit's leakage replaces it (D-130)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.03,
+        "vce": 1.0
+      },
+      "simulated": 92.0184,
+      "datasheet": {
+        "typ": 88.1,
+        "tol": 4.4,
+        "source": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 128: B bei -UCE = 1 V",
+        "note": "A point of the sheet's mean curve the fit was not given; within 5 %"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.15,
+        "vce": 1.0
+      },
+      "simulated": 94.2032,
+      "datasheet": {
+        "typ": 90.4,
+        "tol": 4.5,
+        "source": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 128: B bei -UCE = 1 V",
+        "note": "A point of the sheet's mean curve the fit was not given; within 5 %"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.0015,
+        "vcb": 0.0
+      },
+      "simulated": 0.109419,
+      "datasheet": {
+        "typ": 0.1124,
+        "tol": 0.01,
+        "source": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 127: -UBE against IE, UCB = 0, Mittelwert",
+        "note": "A point of the sheet's mean curve the fit was not given"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.007,
+        "vcb": 0.0
+      },
+      "simulated": 0.152991,
+      "datasheet": {
+        "typ": 0.1533,
+        "tol": 0.01,
+        "source": "Valvo AC128 data sheet (Valvo Halbleiterdioden und Transistoren, 8.63, pages 123-129), page 127: -UBE against IE, UCB = 0, Mittelwert",
+        "note": "A point of the sheet's mean curve the fit was not given"
+      }
+    },
+    {
+      "quantity": "iceo",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0
+      },
+      "simulated": 0.000315164,
+      "note": "Leakage on the Geofex tester (D-130): base open, collector through 2.4 kΩ to 9 V. The model's own; a measured leakage replaces it."
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 91.466,
+      "note": "Gain on the Geofex tester (D-130, D-153): 9 V, collector through 2.4 kΩ, 2.2 MΩ from base to supply; collector current less the leakage, over the base current. Where a measured transistor's form starts."
+    }
+  ]
+}

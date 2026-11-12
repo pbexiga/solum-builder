@@ -1,0 +1,27 @@
+id: bjt-saturated
+layer: operating_point
+severity: warning
+check: bjt_saturated
+title: Transistor saturated
+message: "{ref} is saturated: only {vce} between collector and emitter."
+why: >
+  A saturated transistor is switched fully on, with no room for its collector to swing
+  down, so it clips the signal hard and its small-signal (Frequency) results mean little.
+fix: >
+  Bias {ref} so its collector sits nearer the middle of the supply: less base current (a
+  bigger base resistor) or a smaller collector resistor.
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: bjt, nets: [c, b, GND], model: 2N5089}
+        - {ref: R1, type: resistor, nets: [V+, c], value: 100k}
+        - {ref: R2, type: resistor, nets: [V+, b], value: 100k}
+      expect: [Q1]
+  good:
+    - rails: {V+: 9}   # collector-feedback bias
+      parts:
+        - {ref: Q1, type: bjt, nets: [c, b, GND], model: 2N5089}
+        - {ref: R1, type: resistor, nets: [V+, c], value: 10k}
+        - {ref: R2, type: resistor, nets: [c, b], value: 1M}
+    - starter: big-muff-pi-v3

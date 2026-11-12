@@ -1,0 +1,658 @@
+{
+  "schema": 23,
+  "id": "tone-bender-mk2",
+  "name": "Tone Bender MkII (germanium)",
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "description": "Sola Sound Tone Bender MkII Professional (1966) as Fuzz Central traced an original: three germanium PNPs, positive ground (the supply is -9 V), fixed bias resistors, Level and Attack. OC81Ds as the trace says (an estimate from our OC75 fit, D-184), at the gains Fuzz Central suggests (70, 70 and 100). Aion's Deimos version, with bias trimmers and a Mode switch, is a starter of its own.",
+  "tags": [
+    "fuzz",
+    "germanium"
+  ],
+  "starter": true,
+  "power": {
+    "rails": {
+      "V-": -9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "IN",
+      "pos": [
+        0,
+        200
+      ],
+      "type": "guitar",
+      "volume": "250k"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        40,
+        240
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10n",
+      "kind": "film"
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        80,
+        200
+      ],
+      "type": "capacitor",
+      "value": "5µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        120,
+        240
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "Q1",
+      "pos": [
+        160,
+        200
+      ],
+      "type": "bjt",
+      "model": "OC81D",
+      "measured": {
+        "hfe": 70.0,
+        "leakage": 0.0002
+      }
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        180,
+        120
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        220,
+        160
+      ],
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "film"
+    },
+    {
+      "ref": "Q2",
+      "pos": [
+        300,
+        200
+      ],
+      "type": "bjt",
+      "model": "OC81D",
+      "measured": {
+        "hfe": 70.0,
+        "leakage": 0.000125
+      }
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        320,
+        140
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "Q3",
+      "pos": [
+        380,
+        160
+      ],
+      "type": "bjt",
+      "model": "OC81D",
+      "measured": {
+        "hfe": 100.0,
+        "leakage": 0.000175
+      }
+    },
+    {
+      "ref": "R4",
+      "pos": [
+        400,
+        100
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "8k2"
+    },
+    {
+      "ref": "R5",
+      "pos": [
+        400,
+        0
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "470"
+    },
+    {
+      "ref": "C6",
+      "pos": [
+        460,
+        40
+      ],
+      "type": "capacitor",
+      "value": "10n",
+      "kind": "film"
+    },
+    {
+      "ref": "VR1",
+      "pos": [
+        500,
+        80
+      ],
+      "rot": 270,
+      "type": "pot",
+      "value": "100k",
+      "taper": "A",
+      "rotation": 1.0,
+      "label": "Level"
+    },
+    {
+      "ref": "R6",
+      "pos": [
+        330,
+        300
+      ],
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "VR2",
+      "pos": [
+        400,
+        340
+      ],
+      "rot": 270,
+      "type": "pot",
+      "value": "1k",
+      "rotation": 1.0,
+      "label": "Attack"
+    },
+    {
+      "ref": "C5",
+      "pos": [
+        360,
+        380
+      ],
+      "rot": 270,
+      "type": "capacitor",
+      "value": "5µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "OUT",
+      "pos": [
+        560,
+        140
+      ],
+      "type": "amp"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        20,
+        200
+      ],
+      "to": [
+        40,
+        200
+      ]
+    },
+    {
+      "from": [
+        40,
+        200
+      ],
+      "to": [
+        60,
+        200
+      ]
+    },
+    {
+      "from": [
+        40,
+        200
+      ],
+      "to": [
+        40,
+        220
+      ]
+    },
+    {
+      "from": [
+        100,
+        200
+      ],
+      "to": [
+        120,
+        200
+      ]
+    },
+    {
+      "from": [
+        120,
+        200
+      ],
+      "to": [
+        140,
+        200
+      ]
+    },
+    {
+      "from": [
+        120,
+        200
+      ],
+      "to": [
+        120,
+        220
+      ]
+    },
+    {
+      "from": [
+        180,
+        140
+      ],
+      "to": [
+        180,
+        160
+      ]
+    },
+    {
+      "from": [
+        180,
+        160
+      ],
+      "to": [
+        180,
+        180
+      ]
+    },
+    {
+      "from": [
+        180,
+        160
+      ],
+      "to": [
+        200,
+        160
+      ]
+    },
+    {
+      "from": [
+        180,
+        220
+      ],
+      "to": [
+        180,
+        260
+      ]
+    },
+    {
+      "from": [
+        240,
+        160
+      ],
+      "to": [
+        260,
+        160
+      ]
+    },
+    {
+      "from": [
+        260,
+        160
+      ],
+      "to": [
+        260,
+        200
+      ]
+    },
+    {
+      "from": [
+        260,
+        200
+      ],
+      "to": [
+        280,
+        200
+      ]
+    },
+    {
+      "from": [
+        260,
+        200
+      ],
+      "to": [
+        260,
+        300
+      ]
+    },
+    {
+      "from": [
+        260,
+        300
+      ],
+      "to": [
+        310,
+        300
+      ]
+    },
+    {
+      "from": [
+        320,
+        160
+      ],
+      "to": [
+        320,
+        180
+      ]
+    },
+    {
+      "from": [
+        320,
+        220
+      ],
+      "to": [
+        320,
+        240
+      ]
+    },
+    {
+      "from": [
+        320,
+        160
+      ],
+      "to": [
+        360,
+        160
+      ]
+    },
+    {
+      "from": [
+        400,
+        120
+      ],
+      "to": [
+        400,
+        140
+      ]
+    },
+    {
+      "from": [
+        400,
+        20
+      ],
+      "to": [
+        400,
+        40
+      ]
+    },
+    {
+      "from": [
+        400,
+        40
+      ],
+      "to": [
+        440,
+        40
+      ]
+    },
+    {
+      "from": [
+        480,
+        40
+      ],
+      "to": [
+        500,
+        40
+      ]
+    },
+    {
+      "from": [
+        500,
+        40
+      ],
+      "to": [
+        500,
+        60
+      ]
+    },
+    {
+      "from": [
+        480,
+        80
+      ],
+      "to": [
+        460,
+        80
+      ]
+    },
+    {
+      "from": [
+        460,
+        80
+      ],
+      "to": [
+        460,
+        140
+      ]
+    },
+    {
+      "from": [
+        460,
+        140
+      ],
+      "to": [
+        540,
+        140
+      ]
+    },
+    {
+      "from": [
+        400,
+        180
+      ],
+      "to": [
+        400,
+        300
+      ]
+    },
+    {
+      "from": [
+        400,
+        300
+      ],
+      "to": [
+        400,
+        320
+      ]
+    },
+    {
+      "from": [
+        350,
+        300
+      ],
+      "to": [
+        400,
+        300
+      ]
+    },
+    {
+      "from": [
+        380,
+        340
+      ],
+      "to": [
+        360,
+        340
+      ]
+    },
+    {
+      "from": [
+        360,
+        340
+      ],
+      "to": [
+        360,
+        360
+      ]
+    },
+    {
+      "from": [
+        320,
+        120
+      ],
+      "to": [
+        320,
+        80
+      ]
+    },
+    {
+      "from": [
+        400,
+        80
+      ],
+      "to": [
+        400,
+        40
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "in",
+      "pos": [
+        30,
+        200
+      ]
+    },
+    {
+      "net": "V-",
+      "pos": [
+        180,
+        100
+      ]
+    },
+    {
+      "net": "V-",
+      "pos": [
+        320,
+        80
+      ]
+    },
+    {
+      "net": "V-",
+      "pos": [
+        400,
+        -20
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        40,
+        260
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        120,
+        260
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        180,
+        260
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        320,
+        240
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        400,
+        360
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        360,
+        400
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        500,
+        100
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        510,
+        140
+      ]
+    }
+  ],
+  "probes": {
+    "in": "in",
+    "out": "out"
+  },
+  "notes": {
+    "part:Q1": "Q1 is biased by its own leakage (no resistor from its base to the supply): a leaky part is needed. Try 50 µA and 300 µA measured.",
+    "part:R3": "Q2's collector load, a fixed 100K as Fuzz Central traced it. Aion's Deimos puts a 100k trimmer in series with 47k here to set the bias by hand.",
+    "part:R4": "Q3's collector load, 8K2. Fuzz Central suggests a 20K trimmer in its place, set for -4.5 V at Q3's collector, as a mod.",
+    "part:R6": "Feedback from Q3's emitter to Q2's base, as in a Fuzz Face.",
+    "part:VR2": "Attack: with C5, bypasses Q3's emitter: more Fuzz, more gain."
+  },
+  "enclosure": {
+    "size": "125B"
+  },
+  "texts": [
+    {
+      "title": "Source",
+      "pos": [
+        0,
+        480
+      ],
+      "text": "Drawn from Fuzz Central's \"Sola Sound ToneBender Professional MKII\"\nschematic, traced from an original (5µF, 0.01µF, 100K, 10K, 0.1µF,\n100K, 8K2, 470, Level 100KA, Attack 1KB with 5µF; \"Transistors were\nOC81D PNP Germanium\"). Part numbers are Solum Builder's.\nhttp://fuzzcentral.ssguitar.com/mkII.php"
+    }
+  ]
+}

@@ -1,0 +1,5 @@
+* 2N7000 N-channel enhancement MOSFET, 60 V 200 mA (our model from Fairchild's sheet)
+* Built by Solum Builder from Fairchild 2N7000/2N7002/NDS7002A data sheet, Rev. 2.10 (onsemi) (D-175)
+.model 2N7000 VDMOS(vto=2.3973 kp=0.4838 ksubthres=0.24488 mtriode=1.1919 lambda=1e-06
++ rs=1.0742 rd=1.0117e-06 cgs=1.7221e-11 cgdmax=3.7315e-11 cgdmin=2.0146e-12 a=0.30204
++ cjo=2.6453e-11 m=0.40407 vj=1.0171 is=9.1033e-13 n=1.1464 rb=0.12828)

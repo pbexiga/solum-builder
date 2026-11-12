@@ -1,0 +1,35 @@
+id: supply-sags
+layer: operating_point
+severity: warning
+check: supply_sags
+title: Supply lost on its way in
+message: "{net} sits at {volts}, under half of {rail}'s {rail_volts}: most of the supply is lost in {parts}."
+why: >
+  A pedal's supply comes in through a reverse-polarity diode and a small filter resistor,
+  which together drop well under a volt. Losing more than half of it on the way means
+  something there is wrong: most often the protection diode fitted backwards (it then only
+  leaks a little current through), or a filter resistor far too big. Every stage then runs
+  starved, without anything else looking wrong.
+fix: >
+  Check {parts}: the diode's band (its cathode) goes towards the circuit, away from the
+  supply; a supply filter resistor is usually 10 to 100 Ω.
+fixtures:
+  bad:
+    - rails: {V+: 9}   # the protection diode fitted backwards (D-237: the Dyna Comp's D1)
+      parts:
+        - {ref: D1, type: diode, nets: [va, V+], model: 1N5817}
+        - {ref: R1, type: resistor, nets: [va, vb], value: 100R}
+        - {ref: C1, type: capacitor, nets: [vb, GND], value: 100u}
+        - {ref: R2, type: resistor, nets: [vb, GND], value: 10k}
+      expect: [D1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: D1, type: diode, nets: [V+, va], model: 1N5817}
+        - {ref: R1, type: resistor, nets: [va, vb], value: 100R}
+        - {ref: C1, type: capacitor, nets: [vb, GND], value: 100u}
+        - {ref: R2, type: resistor, nets: [vb, GND], value: 10k}
+    - starter: mxr-dyna-comp-aion
+    - starter: marshall-bluesbreaker-aion
+    - starter: klon-centaur-aion
+    - starter: tone-bender-mk2   # a negative supply

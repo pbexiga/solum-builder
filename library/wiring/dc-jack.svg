@@ -1,0 +1,21 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 280" class="wiring" role="img" aria-labelledby="dc-title">
+  <title id="dc-title">2.1 mm DC jack, centre negative, with the battery lug</title>
+  <text class="w-text w-head" x="200" y="30" text-anchor="middle">DC jack (2.1 mm, centre negative)</text>
+  <rect class="w-body" x="110" y="50" width="180" height="70" rx="6"/>
+  <text class="w-note" x="200" y="90" text-anchor="middle">DC jack</text>
+  <path class="w-wire" d="M140 120 V250"/>
+  <path class="w-wire" d="M200 120 V210"/>
+  <path class="w-wire" d="M260 120 V170"/>
+  <text class="w-text" x="268" y="174">battery lug: battery + (red)</text>
+  <text class="w-text" x="208" y="214">+ (sleeve): the circuit's 9 V</text>
+  <text class="w-text" x="148" y="254">− (centre pin): ground</text>
+  <g class="w-lug"><circle cx="140" cy="128" r="8"/><circle cx="200" cy="128" r="8"/><circle cx="260" cy="128" r="8"/></g>
+  <!-- the polarity symbol printed on adapters: centre −, barrel + -->
+  <text class="w-text w-head" x="490" y="30" text-anchor="middle">The adapter's label</text>
+  <circle class="w-wire" cx="490" cy="85" r="14"/>
+  <circle class="w-dot" cx="490" cy="85" r="5"/>
+  <path class="w-wire" d="M490 85 H460 M504 85 H520"/>
+  <text class="w-text" x="446" y="90" text-anchor="end">−</text>
+  <text class="w-text" x="526" y="90">+</text>
+  <text class="w-note" x="490" y="125" text-anchor="middle">centre −, barrel +</text>
+</svg>

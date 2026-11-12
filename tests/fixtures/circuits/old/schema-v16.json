@@ -1,0 +1,13 @@
+{
+  "schema": 16,
+  "id": "ac128-cards-v16",
+  "name": "Two AC128 cards (v16)",
+  "parts": [
+    {"ref": "Q1", "pos": [0, 0], "type": "bjt", "model": "AC128-B85"},
+    {"ref": "Q2", "pos": [80, 0], "type": "bjt", "model": "AC128-B120", "measured": {"hfe": 130}},
+    {"ref": "Q3", "pos": [160, 0], "type": "bjt", "model": "AC128-B85", "measured": {"hfe": 65, "leakage": 0.0002}},
+    {"ref": "Q4", "pos": [240, 0], "type": "bjt", "model": "2N3906"}
+  ],
+  "wires": [],
+  "labels": []
+}

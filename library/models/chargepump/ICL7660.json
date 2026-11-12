@@ -1,0 +1,60 @@
+{
+  "id": "ICL7660",
+  "type": "chargepump",
+  "description": "ICL7660 charge pump (the original 7660; no boost pin, 10.5 V maximum supply)",
+  "kind": "behavioural",
+  "manufacturer": "Renesas (Intersil)",
+  "source": {
+    "url": "https://www.renesas.com/us/en/document/dst/icl7660-icl7660a-datasheet",
+    "retrieved": "2026-10-22",
+    "licence": "values read from the manufacturer's data sheet",
+    "original": "Renesas (Intersil)"
+  },
+  "datasheet": "https://www.renesas.com/us/en/document/dst/icl7660-icl7660a-datasheet",
+  "note": "A behavioural model, not the chip's circuit: the figures read from the maker's sheet (pump frequency, output resistance, voltage drop, supply current) drive Solum Builder's own model of a charge pump, switching ripple included (D-093).",
+  "ratings": {
+    "vs_max": 10.5
+  },
+  "rating_sources": {
+    "vs_max": "Renesas (Intersil) ICL7660/ICL7660A data sheet, FN3072 Rev 7.00 (Oct 2010): Absolute Maximum Ratings, Supply Voltage ICL7660 +10.5 V (the ICL7660A is rated 13 V)"
+  },
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "cap+": 2,
+      "gnd": 3,
+      "cap-": 4,
+      "out": 5,
+      "in": 8
+    },
+    "source": "Renesas (Intersil) ICL7660/ICL7660A data sheet, FN3072 Rev 7.00 (Oct 2010), Pinouts, 8-lead PDIP/SOIC: NC 1, CAP+ 2, GND 3, CAP- 4, VOUT 5, LV 6, OSC 7, V+ 8. The pump's caps and diodes are drawn parts (D-226)."
+  },
+  "params": {
+    "f_pump": 5000.0,
+    "r_out": 55.0,
+    "i_q": 0.00017,
+    "c_pump": 1e-05
+  },
+  "param_sources": {
+    "f_pump": "Renesas (Intersil) ICL7660/ICL7660A data sheet, FN3072 Rev 7.00 (Oct 2010): oscillator 10 kHz typ (Electrical Specifications, f_OSC); f_PUMP = f_OSC / 2 (page 8, Typical Applications)",
+    "r_out": "Renesas (Intersil) ICL7660/ICL7660A data sheet, FN3072 Rev 7.00 (Oct 2010): R_OUT 55 ohms typ at I_OUT = 20 mA, V+ = 5 V, 25 C (Electrical Specifications, ICL7660 column)",
+    "i_q": "Renesas (Intersil) ICL7660/ICL7660A data sheet, FN3072 Rev 7.00 (Oct 2010): supply current 170 uA typ, R_L = infinity, V+ = 5 V (Electrical Specifications, ICL7660 column)",
+    "c_pump": "Renesas (Intersil) ICL7660/ICL7660A data sheet, FN3072 Rev 7.00 (Oct 2010): C1 = 10 uF in the test circuit (Figure 11) the Electrical Specifications use"
+  },
+  "validation": [
+    {
+      "quantity": "vout",
+      "conditions": {
+        "supply": 5.0,
+        "load": 0.02
+      },
+      "simulated": -3.9,
+      "datasheet": {
+        "typ": -3.9,
+        "tol": 0.2,
+        "source": "Renesas (Intersil) ICL7660/ICL7660A data sheet, FN3072 Rev 7.00 (Oct 2010), Figure 7: output voltage vs load current at V+ = 5 V, slope 55 ohms",
+        "note": "Read off the figure (image): about -3.9 V at 20 mA, on the straight part of the curve (the sheet's 55-ohm slope)."
+      }
+    }
+  ]
+}

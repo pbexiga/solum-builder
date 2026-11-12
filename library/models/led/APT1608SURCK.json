@@ -1,0 +1,125 @@
+{
+  "id": "APT1608SURCK",
+  "type": "led",
+  "description": "Red LED (Kingbright APT1608SURCK, hyper red AlGaInP): the high clipper, about 1.7-1.9 V (our fit to Kingbright's sheet)",
+  "spice_name": "APT1608SURCK",
+  "kind": "model",
+  "pins": [],
+  "card": "APT1608SURCK.lib",
+  "manufacturer": "Kingbright",
+  "source": {
+    "url": "https://www.kingbrightusa.com/images/catalog/SPEC/APT1608SURCK.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own fit to the maker's datasheet curve (D-156): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.kingbrightusa.com/images/catalog/SPEC/APT1608SURCK.pdf",
+  "fixes": [],
+  "ratings": {
+    "if_avg": 0.03,
+    "vr_max": 5.0
+  },
+  "rating_sources": {
+    "if_avg": "Kingbright APT1608SURCK data sheet, DSAD0926 Rev V.22A (04/08/2023): DC Forward Current 30 mA",
+    "vr_max": "Kingbright APT1608SURCK data sheet, DSAD0926 Rev V.22A (04/08/2023): Reverse Voltage 5 V"
+  },
+  "fit": {
+    "sheet": "Kingbright APT1608SURCK data sheet, DSAD0926 Rev V.22A (04/08/2023)",
+    "figure": "Forward Current vs. Forward Voltage (page 3), read from the PDF's vector drawing",
+    "points": [
+      [
+        1.7486,
+        0.0018803000000000001
+      ],
+      [
+        1.8186,
+        0.0051049
+      ],
+      [
+        1.8485,
+        0.0069500000000000004
+      ],
+      [
+        1.8779,
+        0.0099057
+      ],
+      [
+        1.9129,
+        0.0147087
+      ],
+      [
+        1.9478,
+        0.020080200000000003
+      ],
+      [
+        1.9878,
+        0.0299529
+      ]
+    ],
+    "method": "IS, N and RS by least squares on V = N·Vt·ln(I/IS) + RS·I (scripts/fit_models.py fit_diode, Vt at 27 °C) over every other curve point, the curve's last point always included; BV 5 V, IBV 10 µA: the sheet's reverse current limit at 5 V",
+    "note": "The figure is linear and starts near 2 mA; below that the fit follows the diode equation, not the sheet"
+  },
+  "validation": [
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.02
+      },
+      "simulated": 1.94386,
+      "datasheet": {
+        "typ": 1.95,
+        "tol": 0.1,
+        "max": 2.5,
+        "source": "Kingbright APT1608SURCK data sheet, DSAD0926 Rev V.22A (04/08/2023): Forward Voltage at I_F = 20 mA, typ 1.95 V, max 2.5 V",
+        "note": "±0.1 V, the sheet's own forward-voltage tolerance (D-118)"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0032226
+      },
+      "simulated": 1.78697,
+      "datasheet": {
+        "source": "Kingbright APT1608SURCK data sheet, DSAD0926 Rev V.22A (04/08/2023), Forward Current vs. Forward Voltage (page 3), read from the PDF's vector drawing",
+        "typ": 1.7836,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0120547
+      },
+      "simulated": 1.89467,
+      "datasheet": {
+        "source": "Kingbright APT1608SURCK data sheet, DSAD0926 Rev V.22A (04/08/2023), Forward Current vs. Forward Voltage (page 3), read from the PDF's vector drawing",
+        "typ": 1.8929,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0251521
+      },
+      "simulated": 1.96882,
+      "datasheet": {
+        "source": "Kingbright APT1608SURCK data sheet, DSAD0926 Rev V.22A (04/08/2023), Forward Current vs. Forward Voltage (page 3), read from the PDF's vector drawing",
+        "typ": 1.9678,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    }
+  ],
+  "package": {
+    "name": "1.6 × 0.8 mm SMD chip (0603)",
+    "pins": {
+      "K": 1,
+      "A": 2
+    },
+    "source": "Kingbright APT1608SURCK data sheet, DSAD0926 Rev V.22A; pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The cathode is marked on the chip"
+  }
+}

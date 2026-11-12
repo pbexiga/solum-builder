@@ -1,0 +1,10 @@
+* 1N4742A 12 V, 1 W zener diode (Diodes Incorporated model)
+* Source: https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Diode/zener.lib
+.SUBCKT 1N4742A  1 2
+*        Terminals    A   K
+D1 1 2 DF
+DZ 3 1 DR
+VZ 2 3 10.9
+.model DF D(is=34.3p rs=0.620 n=1.10 cjo=94.2p vj=1.00 m=0.330 tt=50.1n)
+.model DR D(is=6.87f rs=0.550 n=1.49)
+.ENDS

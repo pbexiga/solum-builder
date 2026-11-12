@@ -1,0 +1,141 @@
+{
+  "schema": 29,
+  "id": "input-filter-9v-v1",
+  "name": "9 V power · supply filter",
+  "version": {
+    "major": 1,
+    "minor": 3
+  },
+  "description": "Supply filter between the 9 V jack (V+) and the circuit (V+F): a Schottky diode in series against a supply plugged in the wrong way round, then a series resistor with a big and a small capacitor to ground. R1, C1, C2 are the ProCo Rat's R10, C11, C12 (ElectroSmash's analysis); the 1N5817 in front of them is as on Aion FX's boards (the Comet: the same four parts).",
+  "tags": [
+    "power",
+    "filter"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "R1",
+      "pos": [
+        40,
+        0
+      ],
+      "type": "resistor",
+      "value": "47"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        90,
+        40
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "100µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        140,
+        40
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "ceramic"
+    },
+    {
+      "ref": "D1",
+      "pos": [
+        -20,
+        0
+      ],
+      "type": "diode",
+      "model": "1N5817"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        0,
+        0
+      ],
+      "to": [
+        20,
+        0
+      ]
+    },
+    {
+      "from": [
+        60,
+        0
+      ],
+      "to": [
+        160,
+        0
+      ]
+    },
+    {
+      "from": [
+        90,
+        0
+      ],
+      "to": [
+        90,
+        20
+      ]
+    },
+    {
+      "from": [
+        140,
+        0
+      ],
+      "to": [
+        140,
+        20
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "V+",
+      "pos": [
+        -40,
+        0
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        90,
+        60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        140,
+        60
+      ]
+    },
+    {
+      "net": "V+F",
+      "pos": [
+        160,
+        0
+      ]
+    }
+  ],
+  "ports": {
+    "V+F": "V+F"
+  },
+  "notes": {
+    "part:D1": "Reverse-polarity protection: a Schottky diode in series, as on Aion FX's boards (the Comet's D1, with the same 47 Ω, 100 µF and 100 nF after it). A supply plugged in the wrong way round is blocked; it drops about 0.2 V, so V+F sits a little under 9 V."
+  }
+}

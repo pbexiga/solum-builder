@@ -1,0 +1,71 @@
+{
+  "id": "PF5102",
+  "type": "jfet",
+  "description": "PF5102 N-channel JFET (our model from Fairchild's sheet)",
+  "spice_name": "PF5102",
+  "kind": "model",
+  "pins": [],
+  "card": "PF5102.lib",
+  "manufacturer": "Fairchild",
+  "source": {
+    "url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/721/PF5102.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model built from the maker's data sheet (D-159, D-161): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/721/PF5102.pdf",
+  "fixes": [],
+  "ratings": {},
+  "package": {
+    "name": "TO-92 (DSG)",
+    "pins": {
+      "D": 1,
+      "S": 2,
+      "G": 3
+    },
+    "source": "Fairchild PF5102 Rev. B0, page 1: 1. Drain 2. Source 3. Gate"
+  },
+  "fit": {
+    "sheet": "Fairchild PF5102 data sheet, Rev. B0 (2011)",
+    "figure": "Electrical characteristics (no typical DC curve on the sheet)",
+    "points": [
+      [
+        0.0,
+        0.00894427190999916
+      ],
+      [
+        -1.058300524425836,
+        0.0
+      ]
+    ],
+    "method": "Idss and Vp the geometric middles of 4-20 mA and -0.7 to -1.6 V (8.94 mA, -1.06 V); BETA = Idss/Vp²; CGD = Crss 6 pF, CGS = Ciss − Crss = 10 pF (the sheet's maxima: no typicals); no LAMBDA (the sheet gives only a maximum output conductance). Its gm at VGS = 0 is 16.9 mS against 11 mS min",
+    "note": "Real units spread over the sheet's whole range; a circuit's measured Idss and Vp replace these (D-130)"
+  },
+  "validation": [
+    {
+      "quantity": "idss",
+      "conditions": {
+        "vds": 15.0
+      },
+      "simulated": 0.00893924,
+      "datasheet": {
+        "min": 0.004,
+        "max": 0.02,
+        "source": "Fairchild PF5102 data sheet, Rev. B0 (2011), Electrical Characteristics: IDSS"
+      }
+    },
+    {
+      "quantity": "vp",
+      "conditions": {
+        "vds": 15.0,
+        "id": 1e-09
+      },
+      "simulated": -1.05765,
+      "datasheet": {
+        "min": -1.6,
+        "max": -0.7,
+        "source": "Fairchild PF5102 data sheet, Rev. B0 (2011), Electrical Characteristics: VGS(off) at ID = 1 nA"
+      }
+    }
+  ]
+}

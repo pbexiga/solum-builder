@@ -1,0 +1,345 @@
+{
+  "schema": 29,
+  "id": "big-muff-stage-v1",
+  "name": "Gain stage · Big Muff (BJT, soft clipping)",
+  "version": {
+    "major": 1,
+    "minor": 2
+  },
+  "description": "BJT common-emitter stage with collector-to-base feedback (R17, C12) and two diodes in that feedback path (D3, D4, via C6) that clip softly: one of the Big Muff's two clipping stages. Values: ElectroSmash's Big Muff Pi analysis (electrosmash.com/big-muff-pi-analysis), as in the Big Muff Pi (V3) starter, stage Q3. Delete the diodes and C6 for the input booster.",
+  "tags": [
+    "gain",
+    "bjt",
+    "clipping",
+    "big muff"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "C5",
+      "pos": [
+        480,
+        80
+      ],
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "film"
+    },
+    {
+      "ref": "R19",
+      "pos": [
+        540,
+        80
+      ],
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "R20",
+      "pos": [
+        620,
+        120
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "R17",
+      "pos": [
+        620,
+        30
+      ],
+      "rot": 180,
+      "type": "resistor",
+      "value": "470k"
+    },
+    {
+      "ref": "C12",
+      "pos": [
+        620,
+        -20
+      ],
+      "rot": 180,
+      "type": "capacitor",
+      "value": "470p",
+      "kind": "c0g"
+    },
+    {
+      "ref": "R18",
+      "pos": [
+        720,
+        20
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "Q3",
+      "pos": [
+        660,
+        80
+      ],
+      "type": "bjt",
+      "model": "2N5089"
+    },
+    {
+      "ref": "R21",
+      "pos": [
+        680,
+        130
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "150"
+    },
+    {
+      "ref": "C6",
+      "pos": [
+        600,
+        -90
+      ],
+      "type": "capacitor",
+      "value": "1µ",
+      "kind": "film"
+    },
+    {
+      "ref": "D3",
+      "pos": [
+        660,
+        -70
+      ],
+      "type": "diode",
+      "model": "1N4148"
+    },
+    {
+      "ref": "D4",
+      "pos": [
+        660,
+        -120
+      ],
+      "rot": 180,
+      "type": "diode",
+      "model": "1N4148"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        500,
+        80
+      ],
+      "to": [
+        520,
+        80
+      ]
+    },
+    {
+      "from": [
+        570,
+        80
+      ],
+      "to": [
+        570,
+        -90
+      ]
+    },
+    {
+      "from": [
+        680,
+        60
+      ],
+      "to": [
+        680,
+        -120
+      ]
+    },
+    {
+      "from": [
+        570,
+        30
+      ],
+      "to": [
+        600,
+        30
+      ]
+    },
+    {
+      "from": [
+        640,
+        30
+      ],
+      "to": [
+        680,
+        30
+      ]
+    },
+    {
+      "from": [
+        570,
+        -20
+      ],
+      "to": [
+        600,
+        -20
+      ]
+    },
+    {
+      "from": [
+        640,
+        -20
+      ],
+      "to": [
+        680,
+        -20
+      ]
+    },
+    {
+      "from": [
+        570,
+        -90
+      ],
+      "to": [
+        580,
+        -90
+      ]
+    },
+    {
+      "from": [
+        620,
+        -90
+      ],
+      "to": [
+        630,
+        -90
+      ]
+    },
+    {
+      "from": [
+        630,
+        -70
+      ],
+      "to": [
+        630,
+        -120
+      ]
+    },
+    {
+      "from": [
+        630,
+        -70
+      ],
+      "to": [
+        640,
+        -70
+      ]
+    },
+    {
+      "from": [
+        630,
+        -120
+      ],
+      "to": [
+        640,
+        -120
+      ]
+    },
+    {
+      "from": [
+        620,
+        80
+      ],
+      "to": [
+        620,
+        100
+      ]
+    },
+    {
+      "from": [
+        680,
+        100
+      ],
+      "to": [
+        680,
+        110
+      ]
+    },
+    {
+      "from": [
+        720,
+        40
+      ],
+      "to": [
+        720,
+        60
+      ]
+    },
+    {
+      "from": [
+        560,
+        80
+      ],
+      "to": [
+        640,
+        80
+      ]
+    },
+    {
+      "from": [
+        680,
+        60
+      ],
+      "to": [
+        750,
+        60
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "GND",
+      "pos": [
+        620,
+        140
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        680,
+        150
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        720,
+        0
+      ]
+    },
+    {
+      "net": "q3c",
+      "pos": [
+        750,
+        60
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        460,
+        80
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "out": "q3c"
+  }
+}

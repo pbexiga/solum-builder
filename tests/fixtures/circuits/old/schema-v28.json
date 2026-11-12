@@ -1,0 +1,23 @@
+{
+ "schema": 28,
+ "id": "v28",
+ "name": "v28",
+ "power": {
+  "rails": {
+   "V+": 9.0
+  }
+ },
+ "parts": [
+  {
+   "ref": "Q1",
+   "pos": [
+    0,
+    0
+   ],
+   "type": "bjt",
+   "model": "2N5088"
+  }
+ ],
+ "wires": [],
+ "labels": []
+}

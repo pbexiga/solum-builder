@@ -1,0 +1,180 @@
+{
+  "schema": 14,
+  "id": "old-switches-v14",
+  "name": "Switches as v14 drew them",
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "description": "v14's switch lugs: throws level with the common and down. An SPDT and a 1P3T rotary, every lug wired to a label. SW4's lug 1 touches R1's pin, with no wire.",
+  "parts": [
+    {
+      "ref": "SW1",
+      "type": "switch",
+      "kind": "spdt",
+      "pos": [
+        100,
+        100
+      ]
+    },
+    {
+      "ref": "SW2",
+      "type": "switch",
+      "kind": "rotary-1p3t",
+      "pos": [
+        100,
+        300
+      ]
+    },
+    {
+      "ref": "SW3",
+      "type": "switch",
+      "kind": "spdt",
+      "pos": [
+        300,
+        100
+      ]
+    },
+    {
+      "ref": "SW4",
+      "type": "switch",
+      "kind": "spdt",
+      "pos": [
+        100,
+        500
+      ]
+    },
+    {
+      "ref": "R1",
+      "type": "resistor",
+      "value": "1k",
+      "pos": [
+        140,
+        500
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        80,
+        100
+      ],
+      "to": [
+        60,
+        100
+      ]
+    },
+    {
+      "from": [
+        120,
+        100
+      ],
+      "to": [
+        140,
+        100
+      ]
+    },
+    {
+      "from": [
+        120,
+        120
+      ],
+      "to": [
+        140,
+        120
+      ]
+    },
+    {
+      "from": [
+        80,
+        300
+      ],
+      "to": [
+        60,
+        300
+      ]
+    },
+    {
+      "from": [
+        120,
+        300
+      ],
+      "to": [
+        140,
+        300
+      ]
+    },
+    {
+      "from": [
+        120,
+        320
+      ],
+      "to": [
+        140,
+        320
+      ]
+    },
+    {
+      "from": [
+        120,
+        340
+      ],
+      "to": [
+        140,
+        340
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "c",
+      "pos": [
+        60,
+        100
+      ]
+    },
+    {
+      "net": "a",
+      "pos": [
+        140,
+        100
+      ]
+    },
+    {
+      "net": "b",
+      "pos": [
+        140,
+        120
+      ]
+    },
+    {
+      "net": "rc",
+      "pos": [
+        60,
+        300
+      ]
+    },
+    {
+      "net": "r1",
+      "pos": [
+        140,
+        300
+      ]
+    },
+    {
+      "net": "r2",
+      "pos": [
+        140,
+        320
+      ]
+    },
+    {
+      "net": "r3",
+      "pos": [
+        140,
+        340
+      ]
+    }
+  ]
+}

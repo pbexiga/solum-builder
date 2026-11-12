@@ -1,0 +1,117 @@
+{
+  "id": "CA3080",
+  "type": "ota",
+  "description": "CA3080 operational transconductance amplifier, single (our model from Intersil's sheet)",
+  "spice_name": "CA3080",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "out",
+    "iabc",
+    "V+",
+    "V-"
+  ],
+  "card": "CA3080.lib",
+  "manufacturer": "Intersil (Renesas)",
+  "source": {
+    "url": "https://www.renesas.com/en/document/dst/ca3080-ca3080a-datasheet",
+    "retrieved": "2026-11-02",
+    "licence": "Our own model built from the maker's data sheet (D-180): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.renesas.com/en/document/dst/ca3080-ca3080a-datasheet",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 3.0,
+    "cm_pos_headroom": 3.0
+  },
+  "rating_sources": {
+    "vs_max": "Intersil CA3080/CA3080A data sheet File Number 475.4 (September 1998): Absolute Maximum Ratings, supply voltage 36 V (±18 V)",
+    "cm_neg_headroom": "Intersil CA3080/CA3080A data sheet File Number 475.4 (September 1998): Electrical Specifications, common-mode input-voltage range 12 to -12 V min (13.6 to -14.6 V typ) at VSUPPLY = ±15 V, so 3 V from each supply",
+    "cm_pos_headroom": "Intersil CA3080/CA3080A data sheet File Number 475.4 (September 1998): Electrical Specifications, common-mode input-voltage range 12 to -12 V min (13.6 to -14.6 V typ) at VSUPPLY = ±15 V, so 3 V from each supply"
+  },
+  "validation": [
+    {
+      "quantity": "gm",
+      "conditions": {
+        "supply": 15.0,
+        "iabc": 0.0005
+      },
+      "simulated": 0.00968329,
+      "datasheet": {
+        "min": 0.0067,
+        "typ": 0.0096,
+        "max": 0.013,
+        "source": "https://www.renesas.com/en/document/dst/ca3080-ca3080a-datasheet",
+        "note": "CA3080 gm 9600 µS typ (6700 to 13000), ±15 V, IABC = 500 µA"
+      }
+    },
+    {
+      "quantity": "iout_max",
+      "conditions": {
+        "supply": 15.0,
+        "iabc": 0.0005
+      },
+      "simulated": 0.000500977,
+      "datasheet": {
+        "min": 0.00035,
+        "typ": 0.0005,
+        "max": 0.00065,
+        "source": "https://www.renesas.com/en/document/dst/ca3080-ca3080a-datasheet",
+        "note": "CA3080 peak output current 500 µA typ (350 to 650) at IABC = 500 µA"
+      }
+    },
+    {
+      "quantity": "iout_max",
+      "conditions": {
+        "supply": 15.0,
+        "iabc": 5e-06
+      },
+      "simulated": 5.01e-06,
+      "datasheet": {
+        "typ": 5e-06,
+        "source": "https://www.renesas.com/en/document/dst/ca3080-ca3080a-datasheet",
+        "note": "CA3080 peak output current 5 µA typ at IABC = 5 µA (CA3080A 3 to 7)"
+      }
+    }
+  ],
+  "channels": 1,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "-": 2,
+      "+": 3,
+      "V-": 4,
+      "iabc": 5,
+      "out": 6,
+      "V+": 7
+    },
+    "source": "Intersil CA3080/CA3080A data sheet File Number 475.4 (September 1998), Pinouts (p.1): 1 and 8 NC"
+  },
+  "fit": {
+    "sheet": "Intersil CA3080/CA3080A data sheet File Number 475.4 (September 1998)",
+    "figure": "Figure 21, transconductance vs amplifier bias current (25 °C); Figure 22-type bias voltage curve for the bias pin",
+    "points": [
+      [
+        2e-06,
+        1e-07
+      ],
+      [
+        1.98e-05,
+        1.03e-06
+      ],
+      [
+        0.000222,
+        1.16e-05
+      ],
+      [
+        0.01108,
+        0.00062
+      ]
+    ],
+    "method": "Behavioural OTA: Iout = Iabc·tanh(Vd/2VT) split into source and sink halves, a 2 MHz pole, swing limits and Early term from the table, the bias pin a junction to V- fitted to the bias-voltage figure, base currents fitted to Figure 16. Build script .claude/skills/fit-model/worked/ota/build_ota.py; checks check_ota.py.",
+    "note": "Where a figure disagrees with the table (output resistance, supply current, peak current), the table wins (D-163). Offsets, CMRR and noise aren't modelled."
+  }
+}

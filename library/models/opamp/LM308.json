@@ -1,0 +1,110 @@
+{
+  "id": "LM308",
+  "type": "opamp",
+  "description": "LM308 op-amp with external compensation (TI macromodel): ProCo Rat",
+  "spice_name": "LM308",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out",
+    "comp1",
+    "comp2"
+  ],
+  "card": "LM308.lib",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Manufacturer/Texas%20Instruments/lm308.mod",
+    "retrieved": "2026-10-20",
+    "licence": "KiCad-Spice-Library collection (GPL-3.0); model by the manufacturer named, redistributed there",
+    "original": "Texas Instruments"
+  },
+  "datasheet": "https://highered.mheducation.com/sites/dl/free/0073373796/443736/LM308.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 1.0,
+    "cm_pos_headroom": 1.0,
+    "out_neg_headroom": 1.0,
+    "out_pos_headroom": 1.0
+  },
+  "rating_sources": {
+    "vs_max": "National LM108/LM208/LM308 datasheet (TL/H/7758): vs_max from Absolute Maximum Ratings (LM308 ±18 V); common-mode headroom from Electrical Characteristics, LM308 input voltage range ±14 V min at ±15 V",
+    "cm_neg_headroom": "National LM108/LM208/LM308 datasheet (TL/H/7758): vs_max from Absolute Maximum Ratings (LM308 ±18 V); common-mode headroom from Electrical Characteristics, LM308 input voltage range ±14 V min at ±15 V",
+    "cm_pos_headroom": "National LM108/LM208/LM308 datasheet (TL/H/7758): vs_max from Absolute Maximum Ratings (LM308 ±18 V); common-mode headroom from Electrical Characteristics, LM308 input voltage range ±14 V min at ±15 V",
+    "out_neg_headroom": "National LM108/LM208/LM308 datasheet (Dec 1994, TL/H/7758): output headroom from Electrical Characteristics (LM308), output voltage swing ±14 V typ at RL = 10 kΩ, VS = ±15 V (±13 V min)",
+    "out_pos_headroom": "National LM108/LM208/LM308 datasheet (Dec 1994, TL/H/7758): output headroom from Electrical Characteristics (LM308), output voltage swing ±14 V typ at RL = 10 kΩ, VS = ±15 V (±13 V min)"
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 15.0,
+        "comp": 3e-11
+      },
+      "simulated": 109.3,
+      "datasheet": {
+        "min": 87.96,
+        "typ": 109.5,
+        "source": "National LM108/LM208/LM308 data sheet (Dec 1994), Electrical Characteristics, LM308",
+        "note": "Large-signal voltage gain at 25 °C, ±15 V: min 25 V/mV (87.96 dB), typ 300 V/mV (109.5 dB)."
+      }
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 15.0,
+        "comp": 3e-11
+      },
+      "simulated": 590500.0,
+      "datasheet": {
+        "typ": 480000.0,
+        "source": "National LM108/LM208/LM308 data sheet (Dec 1994), Typical Performance Characteristics LM308, Open Loop Frequency Response (Cf = 30 pF)",
+        "note": "Read off the curve (image) by tracing its pixels: 71.4 dB at 111 Hz, 51.6 dB at 1.1 kHz, 33.0 dB at 10.9 kHz, 13.2 dB at 111 kHz, i.e. 0.41-0.51 MHz; about 34 dB at 10 kHz. Not checked: the sheet gives no spread. The model is about 23 % (1.5 dB) above this typical curve."
+      }
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "source": "National LM108/LM208/LM308 datasheet (Dec 1994, TL/H/7758): output voltage swing ±14 V typ, ±13 V min, RL = 10 kΩ, VS = ±15 V",
+        "typ": 1.0,
+        "note": "Not checked against the minimum: the card stops 2.01 V from each rail, 12 mV past the sheet's ±13 V minimum (2.0 V of headroom). Kept, since the Rat starter needs it; its swing rating is the sheet's typical."
+      },
+      "simulated": 2.012359
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "source": "National LM108/LM208/LM308 datasheet (Dec 1994, TL/H/7758): output voltage swing ±14 V typ, ±13 V min, RL = 10 kΩ, VS = ±15 V",
+        "typ": 1.0,
+        "note": "Not checked against the minimum: the card stops 2.01 V from each rail, 12 mV past the sheet's ±13 V minimum (2.0 V of headroom). Kept, since the Rat starter needs it; its swing rating is the sheet's typical."
+      },
+      "simulated": 2.012494
+    }
+  ],
+  "channels": 1,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "comp1": 1,
+      "-": 2,
+      "+": 3,
+      "V-": 4,
+      "nc": 5,
+      "out": 6,
+      "V+": 7,
+      "comp2": 8
+    },
+    "source": "National LM108/LM208/LM308 datasheet (Dec 1994, TL/H/7758), Connection Diagrams, Dual-In-Line Package (pin 5: unused, no internal connection)"
+  }
+}

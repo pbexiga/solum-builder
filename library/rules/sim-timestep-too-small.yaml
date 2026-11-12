@@ -1,0 +1,17 @@
+id: sim-timestep-too-small
+layer: sim_error
+severity: error
+check: sim_timestep_too_small
+title: Simulation stalled
+message: "Can't simulate: the simulator's time step became too small."
+why: >
+  The simulator shrinks its time step around fast changes. When no step works it gives
+  up: usually a part with an extreme value (a tiny capacitor, a huge resistor) or a loop
+  with too much gain.
+fix: Look for extreme part values, and check the other problems for a stage without feedback or bias.
+fixtures:
+  bad:
+    - log: ["stderr Error: Timestep too small; time = 0.0123, timestep = 1.25e-17: trouble with node q1c"]
+  good:
+    - log: ["stderr Warning: singular matrix:  check node a"]
+      nodes: {a: a}

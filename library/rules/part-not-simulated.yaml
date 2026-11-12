@@ -1,0 +1,40 @@
+id: part-not-simulated
+layer: topology
+severity: warning
+check: part_not_simulated
+build: true
+title: Part not wired in
+message: "{ref} isn't wired into the circuit{open}, so the simulation leaves it out."
+why: >
+  No current can flow through a part that touches nothing, hangs off the circuit by one
+  pin, or sits in a group of parts not yet joined to ground, a supply or the guitar. It
+  changes nothing, so the simulation leaves it out and the rest of the circuit still runs
+  (and its curves still follow the sliders) while you finish the wiring.
+fix: "Wire {ref} where it belongs, or delete it if it isn't needed."
+fixtures:
+  bad:
+    - parts:   # dropped on the sheet
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: R2, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: C1, type: capacitor, nets: [~, ~], value: 100n}
+      expect: [C1]
+    - parts:   # wired at one end only
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: C1, type: capacitor, nets: [a, ~], value: 100n}
+      expect: [C1]
+    - parts:   # a group not yet joined to the rest
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: R2, type: resistor, nets: [x, y], value: 10k}
+        - {ref: C1, type: capacitor, nets: [x, y], value: 100n}
+      expect: [R2, C1]
+  good:
+    - parts:
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: C1, type: capacitor, nets: [a, GND], value: 100n}
+    - parts:   # a pot wired as a variable resistor, one end left open
+        - {ref: VR1, type: pot, nets: [~, a, GND], value: 100k}
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+    - parts:   # a switch's spare pole: nothing wired to it, another pole in use
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: SW1A, type: switch, kind: dpdt, pole: a, nets: [a, GND, ~]}
+        - {ref: SW1B, type: switch, kind: dpdt, pole: b, nets: [~, ~, ~]}

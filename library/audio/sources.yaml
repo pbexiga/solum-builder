@@ -1,0 +1,10 @@
+# Built-in clips, amp captures and cab IRs (D-083). Every file in library/audio/ is
+# listed here with where it came from and its licence; a file without an entry doesn't
+# ship. Uploads live in DATA_DIR/audio/ and need no entry.
+#
+# - file: captures/<name>.nam
+#   source: <page link>
+#   author: <who made it>
+#   licence: <licence, with a link>
+#   retrieved: <YYYY-MM-DD>
+files: []

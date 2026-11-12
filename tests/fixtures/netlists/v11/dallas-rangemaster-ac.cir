@@ -1,0 +1,23 @@
+* Dallas Rangemaster (OC44)
+V_RAIL1 v_ 0 DC -9
+V_IN in 0 DC 0 AC 0.999996000016
+C1 in q1_b 5e-09
+R1 v_ q1_b 470000
+R2 q1_b 0 68000
+Q1 q1_c q1_b q1_e OC44_Q1
+I_Q1_leak q1_b q1_c DC -2.47328293737e-07
+R3 q1_e 0 3900
+C3 0 q1_e 4.7e-05
+R_VR1_a v_ c2_1 10000
+R_VR1_b c2_1 q1_c 1
+C2 c2_1 out 1e-08
+C4 0 v_ 4.7e-05
+R_OUT out 0 1000000
+* OC44 germanium PNP (Mullard, r.f.), our fit to Mullard's sheet
+* Fitted by Solum Builder to Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), its typical curves (germanium study, .claude/skills/fit-model/worked/germanium/NOTES.md)
+.model OC44 PNP(is=4.451e-06 nf=1 bf=107.6 ise=1.067e-07 ne=1.47 ikf=10 vaf=19 br=11.92 vje=0.75 mje=0.33 cjc=2.168e-11 vjc=0.75 mjc=0.33 tf=1.034e-08 nkf=0.3 rb=110 eg=0.67)
+.model OC44_Q1 PNP(is=4.451e-06 nf=1 bf=91.6 ise=1.25337554585e-07 ne=1.47 ikf=10 vaf=19
++ br=11.92 vje=0.75 mje=0.33 cjc=2.168e-11 vjc=0.75 mjc=0.33 tf=1.034e-08 nkf=0.3 rb=110
++ eg=0.67)
+.ac dec 50 10 100000
+.end

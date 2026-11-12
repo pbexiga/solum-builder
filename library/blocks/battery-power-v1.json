@@ -1,0 +1,175 @@
+{
+  "schema": 29,
+  "id": "battery-power-v1",
+  "name": "9 V power · battery only",
+  "version": {
+    "major": 1,
+    "minor": 2
+  },
+  "description": "How a battery-only pedal (no DC jack) takes its 9 V. The battery's + is V+; its - goes to ground: in a real pedal that wire goes to the input jack's ring (a stereo jack), so the pedal is on only with a guitar cable plugged in, which is why battery pedals say to unplug them when not in use. The simulation always has a cable in, so it's ground. Then the 9 V input filter to V+F (its values from the ProCo Rat, ElectroSmash). The battery's form sets how drained it is. The same ports as the DC jack and battery block, so either can replace the other.",
+  "tags": [
+    "power",
+    "battery",
+    "filter"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "BAT1",
+      "pos": [
+        -100,
+        40
+      ],
+      "type": "battery"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        40,
+        0
+      ],
+      "type": "resistor",
+      "value": "47"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        90,
+        40
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "100µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        140,
+        40
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "ceramic"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        -100,
+        20
+      ],
+      "to": [
+        -100,
+        0
+      ]
+    },
+    {
+      "from": [
+        -100,
+        0
+      ],
+      "to": [
+        0,
+        0
+      ]
+    },
+    {
+      "from": [
+        -100,
+        60
+      ],
+      "to": [
+        -100,
+        80
+      ]
+    },
+    {
+      "from": [
+        0,
+        0
+      ],
+      "to": [
+        20,
+        0
+      ]
+    },
+    {
+      "from": [
+        60,
+        0
+      ],
+      "to": [
+        160,
+        0
+      ]
+    },
+    {
+      "from": [
+        90,
+        0
+      ],
+      "to": [
+        90,
+        20
+      ]
+    },
+    {
+      "from": [
+        140,
+        0
+      ],
+      "to": [
+        140,
+        20
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "GND",
+      "pos": [
+        -100,
+        80
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        0,
+        0
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        90,
+        60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        140,
+        60
+      ]
+    },
+    {
+      "net": "V+F",
+      "pos": [
+        160,
+        0
+      ]
+    }
+  ],
+  "ports": {
+    "V+F": "V+F"
+  }
+}

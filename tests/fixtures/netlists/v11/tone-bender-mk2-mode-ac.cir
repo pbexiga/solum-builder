@@ -1,0 +1,48 @@
+* Tone Bender MkII / 1.5 (Mode switch)
+V_RAIL1 v_ 0 DC -9
+C1 c1_1 0 1e-08
+C2 c1_1 q1_b 4.7e-06
+R1 q1_b 0 100000
+Q1 q1_c q1_b 0 OC75_Q1
+I_Q1_leak q1_b q1_c DC -2.57936363636e-06
+R2 v_ q1_c 10000
+C3 q1_c q1out 1e-07
+Q2 q2_c q2b 0 OC75_Q2
+I_Q2_leak q2b q2_c DC -3.71572727273e-06
+R3 r3_1 q2_c 47000
+R_TR1_a r3_1 v_ 85000
+R_TR1_b v_ v_ 15000
+Q3 q3_c q2_c q3_e OC75_Q3
+I_Q3_leak q2_c q3_c DC -1.79117431193e-06
+R4 r4_1 q3_c 8200
+R_TR2_a r4_1 c6_1 1000
+R_TR2_b c6_1 c6_1 9000
+R5 v_ c6_1 470
+C6 c6_1 c6_2 1e-08
+R_VR1_a 0 out 100000
+R_VR1_b out c6_2 1
+R6 q2b q3_e 100000
+R_VR2_a 0 c5_2 1000
+R_VR2_b c5_2 q3_e 1
+C5 0 c5_2 4.7e-06
+R_OUT out 0 1000000
+V_IN in 0 DC 0 AC 0.999996000016
+R_SW1A_A1 in c1_1 0.01
+R_SW1A_A3 in c4_1 1e+12
+R_SW1B_B1 q2b q1out 0.01
+R_SW1B_B3 q2b c4_2 1e+12
+C4 c4_1 c4_2 4.7e-06
+* OC75 germanium PNP (Mullard, high-gain audio), our fit to Mullard's sheet
+* Fitted by Solum Builder to Mullard OC75 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC75 of March 1959, pages D1-D4 and C1-C11), its typical curves (germanium study, .claude/skills/fit-model/worked/germanium/NOTES.md)
+.model OC75 PNP(is=1.654e-05 nf=1.029 bf=136.5 ise=3.012e-07 ne=1.295 ikf=0.291 vaf=22 br=3.844 re=2.377 vje=0.75 mje=0.33 cjc=1.032e-10 vjc=0.75 mjc=0.33 tf=1.755e-07 nkf=1 nr=1.029 eg=0.67)
+.model OC75_Q1 PNP(is=1.654e-05 nf=1.029 bf=65 ise=6.3252e-07 ne=1.295 ikf=0.291 vaf=22
++ br=3.844 re=2.377 vje=0.75 mje=0.33 cjc=1.032e-10 vjc=0.75 mjc=0.33 tf=1.755e-07 nkf=1
++ nr=1.029 eg=0.67)
+.model OC75_Q2 PNP(is=1.654e-05 nf=1.029 bf=65 ise=6.3252e-07 ne=1.295 ikf=0.291 vaf=22
++ br=3.844 re=2.377 vje=0.75 mje=0.33 cjc=1.032e-10 vjc=0.75 mjc=0.33 tf=1.755e-07 nkf=1
++ nr=1.029 eg=0.67)
+.model OC75_Q3 PNP(is=1.654e-05 nf=1.029 bf=108 ise=3.80683333333e-07 ne=1.295 ikf=0.291
++ vaf=22 br=3.844 re=2.377 vje=0.75 mje=0.33 cjc=1.032e-10 vjc=0.75 mjc=0.33 tf=1.755e-07
++ nkf=1 nr=1.029 eg=0.67)
+.ac dec 50 10 100000
+.end

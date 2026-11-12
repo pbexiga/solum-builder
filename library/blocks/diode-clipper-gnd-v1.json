@@ -1,0 +1,128 @@
+{
+  "schema": 29,
+  "id": "diode-clipper-gnd-v1",
+  "name": "Clipper · diodes to ground (Rat)",
+  "version": {
+    "major": 1,
+    "minor": 1
+  },
+  "description": "Two diodes back to back from the signal to ground after a series resistor: hard clipping at about ±0.6 V with silicon diodes. The ProCo Rat's clipper (R6 1k, D1 and D2 1N4148 for its 1N914; ElectroSmash's \"ProCo Rat Analysis\", electrosmash.com/proco-rat). Swap the diodes to change the clip level: LEDs higher, germanium or Schottky lower.",
+  "tags": [
+    "clipping",
+    "diode",
+    "rat"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "R1",
+      "pos": [
+        40,
+        0
+      ],
+      "type": "resistor",
+      "value": "1k"
+    },
+    {
+      "ref": "D1",
+      "pos": [
+        90,
+        40
+      ],
+      "rot": 90,
+      "type": "diode",
+      "model": "1N4148"
+    },
+    {
+      "ref": "D2",
+      "pos": [
+        130,
+        40
+      ],
+      "rot": 270,
+      "type": "diode",
+      "model": "1N4148"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        0,
+        0
+      ],
+      "to": [
+        20,
+        0
+      ]
+    },
+    {
+      "from": [
+        60,
+        0
+      ],
+      "to": [
+        140,
+        0
+      ]
+    },
+    {
+      "from": [
+        90,
+        0
+      ],
+      "to": [
+        90,
+        20
+      ]
+    },
+    {
+      "from": [
+        130,
+        0
+      ],
+      "to": [
+        130,
+        20
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "in",
+      "pos": [
+        0,
+        0
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        90,
+        60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        130,
+        60
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        140,
+        0
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "out": "out"
+  }
+}

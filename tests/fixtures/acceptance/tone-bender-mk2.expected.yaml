@@ -1,0 +1,43 @@
+# Expected values for library/starters/tone-bender-mk2.json (D-019, D-251): the original
+# Tone Bender MkII Professional as Fuzz Central traced it. Aion's Deimos version, with its
+# bias trimmers and prototype readings, is tone-bender-mk2-mode.
+circuit: tone-bender-mk2
+source:
+  title: Fuzz Central, "Sola Sound ToneBender Professional MKII" (schematic traced from an original)
+  url: http://fuzzcentral.ssguitar.com/mkII.php
+  snapshot: http://web.archive.org/web/20170119191827/http://fuzzcentral.ssguitar.com/mkII.php
+  read: 2026-11-10
+  licence: a hobbyist's page (short quotes, for testing)
+substitutions:
+  - >-
+    Q1-Q3 OC81D as the schematic says ("Transistors were OC81D PNP Germanium"); our OC81D
+    card is an estimate from our OC75 fit (D-184), as there's no OC81D sheet. Gains as the
+    page suggests: "something like 70 for Q1 and Q2 and 100 for Q3".
+  - >-
+    The page gives no leakage, and this circuit's bias rests on it (Q1 has no base resistor
+    to the supply). The leakages are the middle of Aion FX's Deimos ranges for the same
+    pedal, as tone-bender-mk2-mode uses: "Q1: ... high leakage (100-300µA); Q2: ... low to
+    medium leakage (50-200µA); Q3: ... low to high leakage (50-300µA)" (200, 125 and 175 µA;
+    https://aionfx.com/project/deimos-germanium-fuzz/).
+  - The supply is an ideal -9 V, as the Fuzz Face starter's.
+
+checks: []
+
+omitted:
+  - what: Bias voltages
+    why: >-
+      The page gives none for the original (its -4.5 V at Q3's collector is for a mod, a 20K
+      trimmer in place of the 8K2). Simulated: Q2's collector -0.11 V, Q3's collector -8.30 V,
+      Q3's emitter -0.08 V, near the Aion version's prototype readings (-0.15 to -0.25 V,
+      -8 to -8.5 V, -0.1 V), which are checked on tone-bender-mk2-mode.
+  - what: The tone and the gain
+    why: The page describes the sound only ("completely saturated fuzz"); no figure to check.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  sources: []
+  parts:
+    - "The circuit and every value are from the main source's schematic."
+    - "Capacitor types aren't given there, so they follow the app's advice: C2 and C5 (5µ) electrolytic, the rest film."
+    - "Electrolytics rated 16 V: the source gives no rating, so this is the app's own advice for a 9 V circuit (D-203)."
+    - "Enclosure 125B, a builder's choice, as the Aion version's."

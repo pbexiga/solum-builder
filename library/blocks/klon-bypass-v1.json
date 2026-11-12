@@ -1,0 +1,571 @@
+{
+  "schema": 29,
+  "id": "klon-bypass-v1",
+  "name": "Bypass · Klon, true or buffered (3PDT switch + 3PDT footswitch)",
+  "version": {
+    "major": 1,
+    "minor": 1
+  },
+  "description": "The Klon KTR's bypass, after Aion FX's Refractor: a 3PDT on-on (SW1, slide or toggle; Aion fits a 4PDT slide with one pole unused) picks Buffered or True bypass, a 3PDT footswitch (SW2) switches the effect and lights the LED. Buffered: your circuit's input buffer always runs, and when bypassed its output (buffer, through C2 and R4) goes to the jack. True bypass: in goes straight to out. R26, R27 and R28 hold the unused output at ground so switching doesn't pop; bypassed in Buffered, R27 lets a little of the effect through, as Aion draws it. Wire send to your circuit's input, return to its output and buffer to its input buffer's output. Flip both in Knobs.",
+  "tags": [
+    "bypass",
+    "buffer",
+    "footswitch",
+    "switching",
+    "klon"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "SW1C",
+      "pos": [
+        260,
+        40
+      ],
+      "type": "switch",
+      "kind": "3pdt",
+      "pole": "c",
+      "position": 1,
+      "label": "Bypass mode",
+      "names": [
+        "True bypass",
+        "Buffered"
+      ]
+    },
+    {
+      "ref": "SW1B",
+      "pos": [
+        260,
+        160
+      ],
+      "type": "switch",
+      "kind": "3pdt",
+      "pole": "b",
+      "position": 1,
+      "label": "Bypass mode",
+      "names": [
+        "True bypass",
+        "Buffered"
+      ]
+    },
+    {
+      "ref": "SW1A",
+      "pos": [
+        260,
+        280
+      ],
+      "type": "switch",
+      "kind": "3pdt",
+      "pole": "a",
+      "position": 1,
+      "label": "Bypass mode",
+      "names": [
+        "True bypass",
+        "Buffered"
+      ]
+    },
+    {
+      "ref": "R26",
+      "pos": [
+        120,
+        240
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "68k"
+    },
+    {
+      "ref": "R27",
+      "pos": [
+        80,
+        280
+      ],
+      "type": "resistor",
+      "value": "68k"
+    },
+    {
+      "ref": "R28",
+      "pos": [
+        160,
+        320
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "SW2A",
+      "pos": [
+        560,
+        40
+      ],
+      "type": "switch",
+      "kind": "footswitch",
+      "pole": "a",
+      "label": "Bypass"
+    },
+    {
+      "ref": "SW2B",
+      "pos": [
+        560,
+        160
+      ],
+      "type": "switch",
+      "kind": "footswitch",
+      "pole": "b",
+      "label": "Bypass"
+    },
+    {
+      "ref": "SW2C",
+      "pos": [
+        560,
+        280
+      ],
+      "type": "switch",
+      "kind": "footswitch",
+      "pole": "c",
+      "label": "Bypass"
+    },
+    {
+      "ref": "LEDR1",
+      "pos": [
+        420,
+        160
+      ],
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "LED1",
+      "pos": [
+        480,
+        160
+      ],
+      "type": "led",
+      "model": "APT1608SURCK"
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        40,
+        520
+      ],
+      "type": "capacitor",
+      "value": "4µ7",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        80,
+        540
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "R4",
+      "pos": [
+        140,
+        520
+      ],
+      "type": "resistor",
+      "value": "560"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        240,
+        40
+      ],
+      "to": [
+        200,
+        40
+      ]
+    },
+    {
+      "from": [
+        280,
+        60
+      ],
+      "to": [
+        320,
+        60
+      ]
+    },
+    {
+      "from": [
+        240,
+        160
+      ],
+      "to": [
+        200,
+        160
+      ]
+    },
+    {
+      "from": [
+        280,
+        140
+      ],
+      "to": [
+        320,
+        140
+      ]
+    },
+    {
+      "from": [
+        280,
+        180
+      ],
+      "to": [
+        320,
+        180
+      ]
+    },
+    {
+      "from": [
+        280,
+        260
+      ],
+      "to": [
+        320,
+        260
+      ]
+    },
+    {
+      "from": [
+        280,
+        300
+      ],
+      "to": [
+        320,
+        300
+      ]
+    },
+    {
+      "from": [
+        120,
+        260
+      ],
+      "to": [
+        120,
+        280
+      ]
+    },
+    {
+      "from": [
+        120,
+        280
+      ],
+      "to": [
+        160,
+        280
+      ]
+    },
+    {
+      "from": [
+        160,
+        280
+      ],
+      "to": [
+        240,
+        280
+      ]
+    },
+    {
+      "from": [
+        160,
+        280
+      ],
+      "to": [
+        160,
+        300
+      ]
+    },
+    {
+      "from": [
+        540,
+        40
+      ],
+      "to": [
+        500,
+        40
+      ]
+    },
+    {
+      "from": [
+        580,
+        20
+      ],
+      "to": [
+        620,
+        20
+      ]
+    },
+    {
+      "from": [
+        440,
+        160
+      ],
+      "to": [
+        460,
+        160
+      ]
+    },
+    {
+      "from": [
+        500,
+        160
+      ],
+      "to": [
+        520,
+        160
+      ]
+    },
+    {
+      "from": [
+        520,
+        160
+      ],
+      "to": [
+        540,
+        160
+      ]
+    },
+    {
+      "from": [
+        580,
+        140
+      ],
+      "to": [
+        620,
+        140
+      ]
+    },
+    {
+      "from": [
+        540,
+        280
+      ],
+      "to": [
+        500,
+        280
+      ]
+    },
+    {
+      "from": [
+        580,
+        260
+      ],
+      "to": [
+        620,
+        260
+      ]
+    },
+    {
+      "from": [
+        580,
+        300
+      ],
+      "to": [
+        620,
+        300
+      ]
+    },
+    {
+      "from": [
+        0,
+        520
+      ],
+      "to": [
+        20,
+        520
+      ]
+    },
+    {
+      "from": [
+        60,
+        520
+      ],
+      "to": [
+        120,
+        520
+      ]
+    },
+    {
+      "from": [
+        100,
+        280
+      ],
+      "to": [
+        120,
+        280
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "send",
+      "pos": [
+        200,
+        40
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        320,
+        60
+      ]
+    },
+    {
+      "net": "bypass",
+      "pos": [
+        200,
+        160
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        320,
+        140
+      ]
+    },
+    {
+      "net": "buffer-out",
+      "pos": [
+        320,
+        180
+      ]
+    },
+    {
+      "net": "return",
+      "pos": [
+        320,
+        260
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        320,
+        300
+      ]
+    },
+    {
+      "net": "buffer-out",
+      "pos": [
+        120,
+        220
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        160,
+        340
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        500,
+        40
+      ]
+    },
+    {
+      "net": "send",
+      "pos": [
+        620,
+        20
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        400,
+        160
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        620,
+        140
+      ],
+      "rot": 270
+    },
+    {
+      "net": "out",
+      "pos": [
+        500,
+        280
+      ]
+    },
+    {
+      "net": "return",
+      "pos": [
+        620,
+        260
+      ]
+    },
+    {
+      "net": "bypass",
+      "pos": [
+        620,
+        300
+      ]
+    },
+    {
+      "net": "buffer",
+      "pos": [
+        0,
+        520
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        80,
+        560
+      ]
+    },
+    {
+      "net": "buffer-out",
+      "pos": [
+        160,
+        520
+      ]
+    },
+    {
+      "net": "return",
+      "pos": [
+        60,
+        280
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "send": "send",
+    "buffer": "buffer",
+    "return": "return",
+    "out": "out"
+  },
+  "notes": {
+    "part:C2": "With R4, the buffered output: the input buffer's signal for the bypass board, used when bypassed in Buffered mode. R3 keeps C2 charged so switching doesn't pop.",
+    "part:SW1A": "Bypass mode: Buffered or True bypass. Any 3PDT on-on, slide or toggle; Aion fits a 4PDT slide (E-Switch EG4208) with one pole unused. Aion's lugs 1-9 are A1-C3 here.",
+    "part:SW2A": "The 3PDT footswitch (Aion's FSA and FSC; B lights the LED). Lug 1 is On here, so Aion's A1/A3 and C1/C3 trade names.",
+    "part:R26": "R26 and R27 tie the unused output (the buffer's or the effect's) to R28, which holds it at ground so the footswitch doesn't pop. As Aion draws it (and as the original's R243, the same 68k): bypassed in Buffered, R27 lets the effect into the output about 22 dB under the dry signal at noon."
+  }
+}

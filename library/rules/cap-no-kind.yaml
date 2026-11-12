@@ -1,0 +1,24 @@
+id: cap-no-kind
+layer: topology
+severity: info
+check: cap_no_kind
+build: true
+title: Capacitor type not set
+message: "{which} no type (film, ceramic, C0G, electrolytic or tantalum)."
+why: >
+  The parts list needs each capacitor's type to say what to buy: a 100n film and a 100n
+  ceramic are different parts, and an electrolytic needs a voltage rating and goes in one
+  way round. The simulation treats every type the same.
+fix: "Pick a type in each capacitor's form. Help → Choosing capacitors says which kind goes where."
+fixtures:
+  bad:
+    - parts:
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: C1, type: capacitor, nets: [a, GND], value: 100n}
+        - {ref: C10, type: capacitor, nets: [a, GND], value: 1u}
+        - {ref: C2, type: capacitor, nets: [a, GND], value: 10n, kind: film}
+      expect: [C1, C10]
+  good:
+    - parts:
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: C1, type: capacitor, nets: [a, GND], value: 100n, kind: film}

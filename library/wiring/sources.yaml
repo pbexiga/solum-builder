@@ -1,0 +1,23 @@
+# The generic wiring diagrams (9d1, D-209). Drawn for Solum Builder; each says what it
+# follows. Lug numbers differ between makers, so the drawings name lugs by what they do.
+files:
+  - file: footswitch-3pdt.svg
+    follows: >-
+      The usual 3PDT true-bypass wiring: the commons are the middle row, the poles run in
+      columns, a jumper joins the input and output poles' bypass throws, and the LED pole
+      grounds the LED's cathode with the effect on.
+    sources:
+      - https://www.diystompboxes.com/smfforum/index.php?msg=479374
+      - https://www.stewmac.com/video-and-ideas/online-resources/learn-about-guitar-pickups-and-electronics-and-wiring/3pdt-stomp-switch-instructions/
+  - file: jacks.svg
+    follows: >-
+      Tip to the signal, sleeve to ground; on a stereo input jack the battery's − on the
+      ring, so a mono plug joins it to the sleeve and switches the battery on (D-185).
+    sources:
+      - https://diystompboxes.com/smfforum/index.php?msg=729090
+  - file: dc-jack.svg
+    follows: >-
+      The 2.1 mm centre-negative jack pedals use: the centre pin ground, the sleeve +, the
+      battery's + on the lug the sleeve touches until a plug goes in (D-143).
+    sources:
+      - https://diystompboxes.com/smfforum/index.php?msg=729090

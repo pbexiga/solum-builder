@@ -1,0 +1,433 @@
+{
+  "id": "2N7000",
+  "type": "mosfet",
+  "description": "2N7000 N-channel enhancement MOSFET, 60 V 200 mA (our model from Fairchild's sheet)",
+  "spice_name": "2N7000",
+  "kind": "model",
+  "pins": [],
+  "card": "2N7000.lib",
+  "manufacturer": "Fairchild",
+  "source": {
+    "url": "https://www.farnell.com/datasheets/2304304.pdf",
+    "retrieved": "2026-11-02",
+    "licence": "Our own model built from the maker's data sheet (D-159, D-161): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.farnell.com/datasheets/2304304.pdf",
+  "fixes": [],
+  "ratings": {
+    "vds_max": 60.0,
+    "id_max": 0.2
+  },
+  "rating_sources": {
+    "vds_max": "Fairchild 2N7000/2N7002/NDS7002A data sheet, Rev. 2.10 (onsemi), Absolute Maximum Ratings: VDSS",
+    "id_max": "Fairchild 2N7000/2N7002/NDS7002A data sheet, Rev. 2.10 (onsemi), Absolute Maximum Ratings: ID continuous"
+  },
+  "package": {
+    "name": "TO-92 (SGD)",
+    "pins": {
+      "S": 1,
+      "G": 2,
+      "D": 3
+    },
+    "source": "Fairchild 2N7000/2N7002/NDS7002A data sheet, Rev. 2.10 (onsemi), page 1: TO-92 pin drawing, 1. Source 2. Gate 3. Drain"
+  },
+  "fit": {
+    "sheet": "Fairchild 2N7000/2N7002/NDS7002A data sheet, Rev. 2.10 (onsemi)",
+    "figure": "Figure 5. Transfer Characteristics (25 °C, VDS = 10 V); Figure 1. On-Region Characteristics; Figure 8. Body Diode Forward Voltage (25 °C); Figure 9. Capacitance Characteristics",
+    "points": [
+      [
+        2.5759,
+        0.01008
+      ],
+      [
+        2.7087,
+        0.02025
+      ],
+      [
+        3.2344,
+        0.10686
+      ],
+      [
+        3.7175,
+        0.23523
+      ],
+      [
+        4.1583,
+        0.38342
+      ],
+      [
+        4.5568,
+        0.52944
+      ],
+      [
+        5.3525,
+        0.83627
+      ],
+      [
+        6.2972,
+        1.20365
+      ],
+      [
+        7.2279,
+        1.55855
+      ],
+      [
+        8.4745,
+        2.0
+      ]
+    ],
+    "method": "ngspice VDMOS fitted through ngspice itself with the project's Levenberg-Marquardt (scripts/fit_models.py): VTO, KP, KSUBTHRES, MTRIODE, LAMBDA, RS, RD to Figure 1 (output curves, VGS 3-10 V, half weight), Figure 5 (transfer, 25 °C, VDS 10 V), the table's VGS(th) 2.1 V at 1 mA (weight 20: the curves start at 0.05 A, so the threshold anchors the low end) and VDS(on) 0.6 V (10 V, 500 mA) and 0.14 V (4.5 V, 75 mA); then, with those held, CGS, CGDMAX, CGDMIN, A, CJO, M, VJ to Figure 9 (Ciss, Coss, Crss at VGS 0, 1 MHz) and IS, N, RB to Figure 8 (body diode, 25 °C). Scripts: .claude/skills/fit-model/worked/mosfet/ (not committed); points are read off the sheet's vector drawing",
+    "note": "Output curves within about 12 %, capacitances within 7 %, body diode within 6 %. Figure 5's low end (10 mA at 2.58 V) disagrees with the table's VGS(th) (1 mA at 2.1 V); the table wins (D-163), so the card runs above the figure there (+66 % at 10 mA, +30 % at 2 A)",
+    "curves": {
+      "output_vgs_3": [
+        [
+          0.2519,
+          0.05047
+        ],
+        [
+          0.5004,
+          0.06728
+        ],
+        [
+          1.563,
+          0.07536
+        ],
+        [
+          2.6259,
+          0.07648
+        ],
+        [
+          4.7515,
+          0.07991
+        ]
+      ],
+      "output_vgs_4": [
+        [
+          0.2519,
+          0.11566
+        ],
+        [
+          0.5004,
+          0.21454
+        ],
+        [
+          1.0006,
+          0.34073
+        ],
+        [
+          1.5011,
+          0.38279
+        ],
+        [
+          3.002,
+          0.39961
+        ],
+        [
+          5.0,
+          0.40379
+        ]
+      ],
+      "output_vgs_5": [
+        [
+          0.2519,
+          0.14928
+        ],
+        [
+          0.5004,
+          0.28604
+        ],
+        [
+          1.0006,
+          0.51948
+        ],
+        [
+          1.5011,
+          0.6856
+        ],
+        [
+          2.0013,
+          0.77391
+        ],
+        [
+          2.9983,
+          0.82125
+        ],
+        [
+          5.0,
+          0.82647
+        ]
+      ],
+      "output_vgs_6": [
+        [
+          0.2519,
+          0.17035
+        ],
+        [
+          0.646,
+          0.41996
+        ],
+        [
+          1.0677,
+          0.65839
+        ],
+        [
+          1.5189,
+          0.87152
+        ],
+        [
+          2.0013,
+          1.04523
+        ],
+        [
+          3.0468,
+          1.23786
+        ],
+        [
+          4.7515,
+          1.27449
+        ]
+      ],
+      "output_vgs_7": [
+        [
+          0.2519,
+          0.18716
+        ],
+        [
+          0.8994,
+          0.63325
+        ],
+        [
+          1.7668,
+          1.11634
+        ],
+        [
+          2.7502,
+          1.47636
+        ],
+        [
+          4.0491,
+          1.67918
+        ],
+        [
+          5.0,
+          1.7098
+        ]
+      ],
+      "output_vgs_8": [
+        [
+          0.2519,
+          0.19979
+        ],
+        [
+          1.046,
+          0.7826
+        ],
+        [
+          1.8996,
+          1.28856
+        ],
+        [
+          2.8662,
+          1.68967
+        ],
+        [
+          3.9993,
+          1.95792
+        ]
+      ],
+      "output_vgs_9": [
+        [
+          0.2519,
+          0.21028
+        ],
+        [
+          0.8532,
+          0.68622
+        ],
+        [
+          1.4957,
+          1.13305
+        ],
+        [
+          2.2038,
+          1.53333
+        ],
+        [
+          3.002,
+          1.86961
+        ]
+      ],
+      "output_vgs_10": [
+        [
+          0.2519,
+          0.21873
+        ],
+        [
+          0.8001,
+          0.67445
+        ],
+        [
+          1.3914,
+          1.11542
+        ],
+        [
+          2.0375,
+          1.52076
+        ],
+        [
+          2.7502,
+          1.86961
+        ]
+      ],
+      "ciss": [
+        [
+          1.02,
+          3.834e-11
+        ],
+        [
+          2,
+          3.299e-11
+        ],
+        [
+          5,
+          2.752e-11
+        ],
+        [
+          10,
+          2.4379999999999997e-11
+        ],
+        [
+          25,
+          2.11e-11
+        ],
+        [
+          50,
+          1.909e-11
+        ]
+      ],
+      "coss": [
+        [
+          1.02,
+          4.038e-11
+        ],
+        [
+          2,
+          3.209e-11
+        ],
+        [
+          5,
+          2.2539999999999997e-11
+        ],
+        [
+          10,
+          1.6870000000000002e-11
+        ],
+        [
+          25,
+          1.125e-11
+        ],
+        [
+          50,
+          8.17e-12
+        ]
+      ],
+      "crss": [
+        [
+          1.02,
+          2.019e-11
+        ],
+        [
+          2,
+          1.508e-11
+        ],
+        [
+          5,
+          9.61e-12
+        ],
+        [
+          10,
+          6.68e-12
+        ],
+        [
+          25,
+          4.03e-12
+        ],
+        [
+          50,
+          2.81e-12
+        ]
+      ],
+      "body_diode": [
+        [
+          0.6182,
+          0.001
+        ],
+        [
+          0.6884,
+          0.01118
+        ],
+        [
+          0.7448,
+          0.05737
+        ],
+        [
+          0.8121,
+          0.2343
+        ],
+        [
+          0.9103,
+          0.7433
+        ],
+        [
+          1.059,
+          1.789
+        ]
+      ]
+    }
+  },
+  "validation": [
+    {
+      "quantity": "vgs_th",
+      "conditions": {
+        "id": 0.001
+      },
+      "simulated": 2.103753,
+      "datasheet": {
+        "min": 0.8,
+        "typ": 2.1,
+        "max": 3.0,
+        "tol": 0.1,
+        "source": "Fairchild 2N7000/2N7002/NDS7002A data sheet, Rev. 2.10 (onsemi), On Characteristics: VGS(th) at VDS = VGS, ID = 1 mA"
+      }
+    },
+    {
+      "quantity": "vds_on",
+      "conditions": {
+        "vgs": 10.0,
+        "id": 0.5
+      },
+      "simulated": 0.661118,
+      "datasheet": {
+        "typ": 0.6,
+        "max": 2.5,
+        "tol": 0.1,
+        "source": "Fairchild 2N7000/2N7002/NDS7002A data sheet, Rev. 2.10 (onsemi), On Characteristics: VDS(on) at VGS = 10 V, ID = 500 mA"
+      }
+    },
+    {
+      "quantity": "vds_on",
+      "conditions": {
+        "vgs": 4.5,
+        "id": 0.075
+      },
+      "simulated": 0.146151,
+      "datasheet": {
+        "typ": 0.14,
+        "max": 0.4,
+        "tol": 0.02,
+        "source": "Fairchild 2N7000/2N7002/NDS7002A data sheet, Rev. 2.10 (onsemi), On Characteristics: VDS(on) at VGS = 4.5 V, ID = 75 mA"
+      }
+    }
+  ]
+}

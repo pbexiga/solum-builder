@@ -1,0 +1,17 @@
+{
+  "schema": 13,
+  "id": "old-switches",
+  "name": "v13 switches",
+  "power": {"rails": {"V+": 9.0}},
+  "parts": [
+    {"ref": "SW1", "type": "switch", "poles": 2, "throws": 3, "position": 2, "label": "Clip",
+     "pos": [100, 40], "rot": 90},
+    {"ref": "SW2", "type": "switch", "throws": 1, "position": 1, "pos": [300, 40]},
+    {"ref": "SW3", "type": "switch", "pos": [400, 40]},
+    {"ref": "TR1", "type": "trimmer", "value": "10k", "pos": [500, 40],
+     "bias_target": {"node": "SW1.2T3", "volts": 4.5}}
+  ],
+  "wires": [{"from": [40, 60], "to": [40, 120]}],
+  "probes": {"in": "SW1.1C", "out": "SW3.1T2"},
+  "notes": {"part:SW1": "the clipping selector"}
+}

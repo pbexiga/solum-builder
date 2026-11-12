@@ -1,0 +1,10 @@
+* 1N4739A 9.1 V, 1 W zener diode (Diodes Incorporated model)
+* Source: https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Diode/zener.lib
+.SUBCKT 1N4739A  1 2
+*        Terminals    A   K
+D1 1 2 DF
+DZ 3 1 DR
+VZ 2 3 8.16
+.model DF D(is=45.3p rs=0.620 n=1.10 cjo=79.4p vj=0.750 m=0.330 tt=50.1n)
+.model DR D(is=9.05f rs=0.344 n=1.24)
+.ENDS

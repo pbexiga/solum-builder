@@ -1,0 +1,138 @@
+# Expected values for library/starters/fuzz-face.json (D-019, D-034).
+circuit: fuzz-face
+source:
+  title: ElectroSmash, "Fuzz Face Analysis"
+  url: https://electrosmash.com/fuzz-face
+  snapshot: http://web.archive.org/web/20260518130743/https://electrosmash.com/fuzz-face
+  read: 2026-10-20
+  licence: CC BY-NC 3.0 (its figures, said in our own words)
+substitutions:
+  - >-
+    Q1 and Q2: the AC128 card (our fit to Valvo's sheet, D-170) given the page's betas, 85
+    and 120, as measured gains, with the low leakage of the page's own models (9.8 and
+    14 µA on the tester). The page's bias diagram is its own simulation with its own AC128
+    models (CC BY-NC: not shipped; an optional download in 9c, to run these checks like for
+    like). Their base-emitter drop is 0.22 V at Q2's 0.5 mA; Valvo's measured curves give
+    0.08 V. The checks that hang on that drop are known gaps.
+
+checks:
+  # Bias, from the bias diagram (fuzz-face-bias-small.jpg), Fuzz at mid as the page says.
+  - id: q1-base
+    kind: dc
+    node: Q1.B
+    volts: -0.2
+    tol: 0.15
+    from: image
+    image: http://web.archive.org/web/20251116072622im_/https://www.electrosmash.com/images/tech/fuzz-face/fuzz-face-bias-small.jpg
+    confirmed: 2026-10-20
+    says: "The bias figures are with the Fuzz pot at its middle, 500 Ω."
+  - id: q1-collector
+    kind: dc
+    node: Q1.C
+    volts: -0.7
+    tol: 0.15
+    from: image
+    image: http://web.archive.org/web/20251116072622im_/https://www.electrosmash.com/images/tech/fuzz-face/fuzz-face-bias-small.jpg
+    confirmed: 2026-10-20
+    note: >-
+      The page contradicts itself: the diagram shows -0.7 V, but the input-stage gain
+      calculation takes the emitter current as (9 V - 1.6 V)/33k and the text puts Q1's
+      collector near -1.6 V. Checked whether the two describe different versions: they
+      don't. The whole page covers one version (the first Arbiter model, with PNP germanium
+      transistors); the silicon BC1xx/BC2xx units are mentioned only as
+      later production, with no voltages. The bias source the page links
+      (physics.mcgill.ca/~grant/Stuff/fuzzface.txt, germanium) says to set this collector to
+      "-0.5V under ground". The diagram's -0.7 V matches our circuit (AC128 germanium, the
+      page's own models) and the page's advice (Q1's collector between -0.5 V and -0.7 V); -1.6 V matches nothing on
+      the page and fails the relationship check below (it would need a 1.1 V base-emitter
+      drop on Q2), so it's treated as a slip in the gain calculation.
+    known_gap: >-
+      Simulated -0.50 V, at the edge of the page's advice (-0.5 to -0.7 V) but outside the
+      diagram's figure. Q1's collector is Q2's base, one Q2 base-emitter drop beyond Q2's
+      emitter (-0.43 V): 0.07 V on the AC128 fit, 0.22 V on the page's model (the check
+      below).
+  - id: q1-collector-is-q2-vbe-above-q2-emitter
+    kind: dc
+    node: [Q1.C, Q2.B]
+    minus: Q2.E
+    volts: -0.08
+    tol: 0.02
+    from: text
+    note: >-
+      Q1's collector is Q2's base, so it sits one base-emitter drop beyond Q2's emitter,
+      whatever the absolute voltages are. The page's own figure for it comes from its own
+      model (0.0259·ln(0.51 mA / 120.8 nA) = 0.22 V, with Ic = 4.2 V / 8.2K from the
+      diagram's R3 voltages), so this checks the drop of the transistor in use instead:
+      Valvo's AC128 sheet (page 127, the mean -UBE at UCB = 0) reads 80 mV at the
+      diagram's 0.51 mA (PNP, so the base is that much more negative).
+  - id: q2-collector
+    kind: dc
+    node: Q2.C
+    volts: -4.5
+    tol: 0.45
+    from: image
+    image: http://web.archive.org/web/20251116072622im_/https://www.electrosmash.com/images/tech/fuzz-face/fuzz-face-bias-small.jpg
+    confirmed: 2026-10-20
+    says: "For the best sound, Q1's collector should sit between -0.5 V and -0.7 V and Q2's at -4.5 V."
+    known_gap: >-
+      Simulated -5.30 V: Q2 draws 0.43 mA, not the diagram's 0.51 mA. The Fuzz Face's DC
+      loop runs through both base-emitter drops (Q1's base, through R4, sets Q2's emitter);
+      the page's model drops 0.2 V each, the AC128 fit 0.06 to 0.07 V (Valvo's curves), so
+      Q2's emitter sits at -0.43 V, not -0.5 V.
+  - {id: q2-emitter, kind: dc, node: Q2.E, volts: -0.5, tol: 0.15, from: image,
+     image: "http://web.archive.org/web/20251116072622im_/https://www.electrosmash.com/images/tech/fuzz-face/fuzz-face-bias-small.jpg",
+     confirmed: 2026-10-20}
+  - {id: r2-r3-junction, kind: dc, node: R2.1, volts: -8.7, tol: 0.87, from: image,
+     image: "http://web.archive.org/web/20251116072622im_/https://www.electrosmash.com/images/tech/fuzz-face/fuzz-face-bias-small.jpg",
+     confirmed: 2026-10-20}
+
+  - id: q2-collector-with-leaky-transistors
+    kind: dc
+    node: Q2.C
+    set: {Q1: {measured: {hfe: 85, leakage: 0.0002}}, Q2: {measured: {hfe: 120, leakage: 0.0002}}}
+    volts: 0
+    tol: 0
+    from: text
+    pending: >-
+      No published, measured analysis of how leakage moves a Fuzz Face's bias was found
+      (D-130). ElectroSmash's Fuzz Face and germanium-fuzz pages say only that germanium
+      transistors tend to leak a lot; Geofex (geofex.com/article_folders/ffselect.htm)
+      refused the connection. Forum reports (searched 2026-10-28, not a measured analysis)
+      say a leaky pair biases Q2's collector at 7-8 V instead of 4.5 V; the simulation
+      gives -7.1 V with 200 µA in both (-6.2 V on the page's own models). The leakage model is provisional until
+      a source with numbers is checked here.
+
+  - id: output-high-pass
+    kind: corner
+    side: low
+    node: VR2.2
+    ref: R2.1
+    hz: 31
+    tol_pct: 10
+    set: {OUT: {value: 1G}}
+    from: text
+    says: "The output corner is the Volume pot with C3: 1/(2π x 500k x 10 nF) = 31 Hz."
+    note: Volume at max. The formula has no amp load, so the check swaps the 1 MΩ amp for 1 GΩ.
+
+omitted:
+  - what: Input stage gain 18.6 dB, Q2 collector gain 19.5 dB, output gain -5.5 dB
+    why: The text doesn't say where the Fuzz control was for these; the setting is only in the graph images.
+  - what: Input high-pass 14 Hz and input impedance 5.2K-8.4K
+    why: Both depend on the Fuzz setting (same reason), and Phase 1 has no impedance measure.
+  - what: Output impedance 15K (measured)
+    why: Phase 1 has no impedance measure; add with Phase 6's calculators.
+  - what: C2 bypass corner 7.9 Hz
+    why: A design rule of thumb (reactance below RFUZZ), not a -3 dB point of any node's response.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  sources:
+    - title: Aion FX, "Solaris Germanium Fuzz" documentation 1.0.1 (2024-08-08), based on the Dallas-Arbiter Fuzz Face
+      url: https://aionfx.com/app/files/docs/solaris_documentation.pdf
+      snapshot: http://web.archive.org/web/20251116032332/https://aionfx.com/app/files/docs/solaris_documentation.pdf
+      read: 2026-11-04
+      licence: Aion FX project documentation (short quotes, for testing); the projects may be built, commercially too, without attribution (its License & Usage page)
+  parts:
+    - "C1 and C2 are electrolytic as before. C3 (10 nF output cap), untyped in the main source, is film: the app's capacitor guide's kind for the signal path (`library/guides/capacitors.yaml`)."
+    - "Electrolytics rated 16 V: the sources give no rating, so this is the app's own advice for a 9 V circuit (the smallest rating sold with the supply under 80 % of it, D-203)."
+    - "Enclosure 125B, as the Aion Solaris."

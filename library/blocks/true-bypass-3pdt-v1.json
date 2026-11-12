@@ -1,0 +1,243 @@
+{
+  "schema": 29,
+  "id": "true-bypass-3pdt-v1",
+  "name": "Bypass · true (3PDT footswitch)",
+  "version": {
+    "major": 1,
+    "minor": 1
+  },
+  "description": "A 3PDT footswitch wired as true bypass, with its status LED. On: the guitar (in) goes to your circuit's input (send), your circuit's output (return) to the output jack (out), and the LED lights. Bypassed: in goes straight to out, and your circuit's input is grounded so it doesn't pop. Wiring after Coda Effects' 3PDT guide; the input grounding and the LED's 4k7 after General Guitar Gadgets' bypass options (1k to 8k2 sets how bright it is). Flip it in Knobs: Bypass.",
+  "tags": [
+    "bypass",
+    "footswitch",
+    "switching"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "SW1A",
+      "pos": [
+        240,
+        0
+      ],
+      "type": "switch",
+      "kind": "footswitch",
+      "pole": "a",
+      "label": "Bypass"
+    },
+    {
+      "ref": "SW1B",
+      "pos": [
+        240,
+        80
+      ],
+      "type": "switch",
+      "kind": "footswitch",
+      "pole": "b",
+      "label": "Bypass"
+    },
+    {
+      "ref": "SW1C",
+      "pos": [
+        240,
+        160
+      ],
+      "type": "switch",
+      "kind": "footswitch",
+      "pole": "c",
+      "label": "Bypass"
+    },
+    {
+      "ref": "LEDR1",
+      "pos": [
+        40,
+        160
+      ],
+      "type": "resistor",
+      "value": "4k7"
+    },
+    {
+      "ref": "LED1",
+      "pos": [
+        140,
+        160
+      ],
+      "type": "led",
+      "model": "APT1608SURCK",
+      "label": "Status"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        260,
+        -20
+      ],
+      "to": [
+        300,
+        -20
+      ]
+    },
+    {
+      "from": [
+        260,
+        20
+      ],
+      "to": [
+        280,
+        20
+      ]
+    },
+    {
+      "from": [
+        220,
+        0
+      ],
+      "to": [
+        180,
+        0
+      ]
+    },
+    {
+      "from": [
+        260,
+        60
+      ],
+      "to": [
+        300,
+        60
+      ]
+    },
+    {
+      "from": [
+        260,
+        100
+      ],
+      "to": [
+        300,
+        100
+      ]
+    },
+    {
+      "from": [
+        220,
+        80
+      ],
+      "to": [
+        180,
+        80
+      ]
+    },
+    {
+      "from": [
+        0,
+        160
+      ],
+      "to": [
+        20,
+        160
+      ]
+    },
+    {
+      "from": [
+        60,
+        160
+      ],
+      "to": [
+        120,
+        160
+      ]
+    },
+    {
+      "from": [
+        160,
+        160
+      ],
+      "to": [
+        220,
+        160
+      ]
+    },
+    {
+      "from": [
+        260,
+        140
+      ],
+      "to": [
+        280,
+        140
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "in",
+      "pos": [
+        300,
+        -20
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        280,
+        20
+      ],
+      "rot": 270
+    },
+    {
+      "net": "send",
+      "pos": [
+        180,
+        0
+      ]
+    },
+    {
+      "net": "return",
+      "pos": [
+        300,
+        60
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        300,
+        100
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        180,
+        80
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        0,
+        160
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        280,
+        140
+      ],
+      "rot": 270
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "send": "send",
+    "return": "return",
+    "out": "out"
+  }
+}

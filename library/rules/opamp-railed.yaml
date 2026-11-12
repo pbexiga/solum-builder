@@ -1,0 +1,42 @@
+id: opamp-railed
+layer: operating_point
+severity: warning
+check: opamp_railed
+title: Op-amp or OTA stuck at a rail
+message: "{ref}'s output sits at {volts}, against a supply rail."
+why: >
+  An op-amp's output can only swing to within a volt or two of its supplies. Stuck there
+  at DC, the stage has no room left to amplify and clips everything, and its small-signal
+  (Frequency) results mean little. An OTA's output the same: it can only sink or source
+  its bias current up to a volt or so from the rails.
+fix: >
+  Check that {ref}'s + input sits at the bias voltage (VREF, half the supply) and, on an
+  op-amp, that its feedback goes to the − input; an OTA's two inputs should sit at the same
+  bias.
+fixtures:
+  bad:
+    - rails: {V+: 9}   # a buffer biased to ground on a single supply
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, p], value: 100n}
+        - {ref: R1, type: resistor, nets: [p, GND], value: 1M}
+        - {ref: U1, type: opamp, nets: [p, o, o], model: TL072}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [U1]
+    - rails: {V+: 9}   # an OTA's + input on ground, its - at VREF (D-238)
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, p], value: 100n}
+        - {ref: R1, type: resistor, nets: [p, GND], value: 1M}
+        - {ref: R2, type: resistor, nets: [V+, vref], value: 100k}
+        - {ref: R3, type: resistor, nets: [vref, GND], value: 100k}
+        - {ref: C2, type: capacitor, nets: [vref, GND], value: 10u}
+        - {ref: R4, type: resistor, nets: [V+, ib], value: 100k}
+        - {ref: R5, type: resistor, nets: [o, vref], value: 1M}
+        - {ref: U1, type: ota, nets: [p, vref, o, ib], model: CA3080}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [U1]
+  good:
+    - starter: ts808
+    - starter: proco-rat
+    - starter: mxr-dyna-comp-aion   # an OTA biased right, and a spare one

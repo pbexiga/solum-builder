@@ -1,0 +1,205 @@
+{
+  "schema": 29,
+  "id": "opamp-unity-buffer-v1",
+  "name": "Buffer · op-amp (Klon)",
+  "version": {
+    "major": 1,
+    "minor": 2
+  },
+  "description": "The Klon Centaur's input buffer: an op-amp voltage follower, its + input biased from a reference voltage through R2 (1M, so the guitar sees about 1M), with R1 (10k) and C1 (100n) on the way in and C2 (100n) on the way out. Values and refs from ElectroSmash's \"Klon Centaur Analysis\" (electrosmash.com/klon-centaur-analysis: R1, C1, R2, U1A, and C3 there for C2), as the Klon starter; a TL071 is the single version of its TL072. Wire vref to a Vref divider.",
+  "tags": [
+    "buffer",
+    "opamp",
+    "klon"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "C1",
+      "pos": [
+        40,
+        20
+      ],
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "film"
+    },
+    {
+      "ref": "IC1",
+      "pos": [
+        160,
+        0
+      ],
+      "model": "TL071",
+      "type": "opamp"
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        240,
+        0
+      ],
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "film"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        -20,
+        20
+      ],
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        90,
+        60
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "1M"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        0,
+        20
+      ],
+      "to": [
+        20,
+        20
+      ]
+    },
+    {
+      "from": [
+        60,
+        20
+      ],
+      "to": [
+        120,
+        20
+      ]
+    },
+    {
+      "from": [
+        90,
+        20
+      ],
+      "to": [
+        90,
+        40
+      ]
+    },
+    {
+      "from": [
+        200,
+        0
+      ],
+      "to": [
+        200,
+        -90
+      ]
+    },
+    {
+      "from": [
+        200,
+        -90
+      ],
+      "to": [
+        110,
+        -90
+      ]
+    },
+    {
+      "from": [
+        110,
+        -90
+      ],
+      "to": [
+        110,
+        -20
+      ]
+    },
+    {
+      "from": [
+        110,
+        -20
+      ],
+      "to": [
+        120,
+        -20
+      ]
+    },
+    {
+      "from": [
+        200,
+        0
+      ],
+      "to": [
+        220,
+        0
+      ]
+    },
+    {
+      "from": [
+        260,
+        0
+      ],
+      "to": [
+        280,
+        0
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "in",
+      "pos": [
+        -40,
+        20
+      ]
+    },
+    {
+      "net": "vref",
+      "pos": [
+        90,
+        80
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        280,
+        0
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        160,
+        -40
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        160,
+        40
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "vref": "vref",
+    "out": "out"
+  }
+}

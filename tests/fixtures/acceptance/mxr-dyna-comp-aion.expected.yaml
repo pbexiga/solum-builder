@@ -1,0 +1,188 @@
+# Expected values for library/starters/mxr-dyna-comp-aion.json (D-019, D-213, D-236).
+# Refs follow Aion's Aurora schematic, except the pots and trimmer, numbered as the app
+# numbers them: TR1 Input, VR1 Sustain, VR2 Release, VR3 Level.
+circuit: mxr-dyna-comp-aion
+source:
+  title: Aion FX, "Aurora Compressor/Sustainer" documentation 2.0.0 (2026-03-24), based on the MXR Dyna Comp and the Ross Compressor
+  url: https://aionfx.com/app/files/docs/aurora_documentation.pdf
+  snapshot: http://web.archive.org/web/20251003083538/https://aionfx.com/app/files/docs/aurora_documentation.pdf
+  read: 2026-11-09
+  licence: Aion FX project documentation (short quotes, for testing); the projects may be built, commercially too, without attribution (its License & Usage page)
+substitutions:
+  - >-
+    The circuit is Aion's default parts list, its Q6 output buffer, Release pot (with R19),
+    C17 and Treble switch included, with true bypass (not drawn), without LED and LEDR. C1
+    is left out ("Omit for Dyna Comp"), and CX1 is Aion's "OMIT". Drawn with Treble at
+    Stock, Release all the way down ("it's the stock Ross/Dyna circuit") and the Input
+    trimmer all the way down ("The default position is all the way down").
+  - >-
+    The schematic labels C11 820p (on the Treble switch's pin 1) and C12 330p (pin 3); the
+    parts list swaps the two values. Drawn as the schematic, which the build notes match:
+    "the stock value of 1n (820pF + 180pF)" in one position, "510pF (180pF + 330pF)" in the
+    other.
+  - >-
+    IC1 LM13700 as listed (our own card, D-183), unit A drawn as the schematic draws it,
+    unit B spare (its inputs grounded). Q1-Q6 2N5088, D1 1N5817, D2 and D3 1N914 as listed.
+  - >-
+    The kit's PCB wires the LM13700's other OTA: its voltage table lists pins 12-16 (unit
+    B's output, inputs, diode bias and bias current) and reads pins 3 and 4 (unit A's
+    inputs) at 0 V. The checks take pin 12 as IC1A's output and pin 16 as its iabc.
+  - The supply is an ideal 9 V into D1, as the other starters'; the checks below run at the prototype's 9.6 V, with Sustain all the way up and Release (the kit document's "Attack") all the way down, as measured.
+
+# The kit document's benchmark readings: "The following voltages are taken from our
+# prototype unit using a 9.60V supply ... if you see anything more than +/-0.5V from the
+# listed voltages, it's a good indicator of an issue", "Measurements were taken with
+# Sustain knob all the way up and Attack all the way down". Its tolerance is used as is.
+checks:
+  - id: va
+    kind: dc
+    node: VA
+    supply: 9.6
+    set: {VR1: {rotation: 1.0}, VR2: {rotation: 0.0}}
+    volts: 9.30
+    tol: 0.5
+    from: text
+    quote: "IC1 … 11 9.30"
+  - id: q1-emitter
+    kind: dc
+    node: Q1.E
+    supply: 9.6
+    set: {VR1: {rotation: 1.0}, VR2: {rotation: 0.0}}
+    volts: 1.95
+    tol: 0.5
+    from: text
+    quote: "Q1 … E 1.95"
+  - id: q1-collector
+    kind: dc
+    node: Q1.C
+    supply: 9.6
+    set: {VR1: {rotation: 1.0}, VR2: {rotation: 0.0}}
+    volts: 7.24
+    tol: 0.5
+    from: text
+    quote: "Q1 … C 7.24"
+    note: Q1's collector is the R4, C4 filtered rail, not a gain stage's output.
+  - id: ota-output
+    kind: dc
+    node: IC1A.out
+    supply: 9.6
+    set: {VR1: {rotation: 1.0}, VR2: {rotation: 0.0}}
+    volts: 2.42
+    tol: 0.5
+    from: text
+    quote: "IC1 … 12 2.42"
+    note: >-
+      Also Q2's base ("B 2.42") and, through R22, Q6's. Simulated 2.91 V, near the edge. The
+      node is VB through R13 (150k) less the OTA's output current, which at rest is its gm
+      times its input offset: at the kit's Iabc (8.50 V on Q5's emitter, 1.33 V on pin 16,
+      through R14's 27k: 0.265 mA) gm is about 0.265 mA / 52 mV = 5.1 mS, so the kit's 0.6 V
+      below VB (VA 9.30 V x 27k / 83k = 3.03 V) is 4 µA, an offset of about 0.8 mV, inside
+      TI's 0.4 mV typical, 4 mV max (SNOSBW2F, 6.4). Our card has none, so this node and the
+      ones after it (Q2's and Q6's) follow the unit: a check of one prototype's chip, kept
+      at Aion's own ±0.5 V.
+  - id: q2-emitter
+    kind: dc
+    node: Q2.E
+    supply: 9.6
+    set: {VR1: {rotation: 1.0}, VR2: {rotation: 0.0}}
+    volts: 1.88
+    tol: 0.5
+    from: text
+    quote: "Q2 … E 1.88"
+  - id: q2-collector
+    kind: dc
+    node: Q2.C
+    supply: 9.6
+    set: {VR1: {rotation: 1.0}, VR2: {rotation: 0.0}}
+    volts: 7.33
+    tol: 0.5
+    from: text
+    quote: "Q2 … C 7.33"
+  - id: envelope
+    kind: dc
+    node: Q5.B
+    supply: 9.6
+    set: {VR1: {rotation: 1.0}, VR2: {rotation: 0.0}}
+    volts: 9.05
+    tol: 0.5
+    from: text
+    quote: "Q5 … B 9.05"
+    note: C14, with no signal; Q3's and Q4's collectors ("C 9.05") are the same node.
+  - id: q5-emitter
+    kind: dc
+    node: Q5.E
+    supply: 9.6
+    set: {VR1: {rotation: 1.0}, VR2: {rotation: 0.0}}
+    volts: 8.50
+    tol: 0.5
+    from: text
+    quote: "Q5 … E 8.50"
+  - id: ota-bias-current-pin
+    kind: dc
+    node: IC1A.iabc
+    supply: 9.6
+    set: {VR1: {rotation: 1.0}, VR2: {rotation: 0.0}}
+    volts: 1.33
+    tol: 0.5
+    from: text
+    quote: "IC1 … 16 1.33"
+    note: Two diode drops above V-, with Sustain up the most current R14 lets through (about 0.26 mA).
+  - id: q6-emitter
+    kind: dc
+    node: Q6.E
+    supply: 9.6
+    set: {VR1: {rotation: 1.0}, VR2: {rotation: 0.0}}
+    volts: 1.88
+    tol: 0.5
+    from: text
+    quote: "Q6 … E 1.88"
+  - id: q6-collector
+    kind: dc
+    node: Q6.C
+    supply: 9.6
+    set: {VR1: {rotation: 1.0}, VR2: {rotation: 0.0}}
+    volts: 7.33
+    tol: 0.5
+    from: text
+    quote: "Q6 … C 7.33"
+
+omitted:
+  - what: "Q1 B 2.42"
+    why: >-
+      Fed from VB through R3 and R2 (940k), so a 10 MΩ meter loads it: simulated with one
+      on the node it reads 2.44 V, 2.63 V without.
+  - what: "IC1 pins 13 and 14 (4.63, 4.62, \"falling\")"
+    why: >-
+      Not settled when read (C7 charging through R10, and a 10 MΩ meter on a node fed through
+      220k). Simulated 4.41 V on both.
+  - what: "IC1 pin 15 (0.61)"
+    why: >-
+      The OTA's linearising diodes' bias, left open in the circuit: it floats, so the reading
+      is the meter's and the chip's leakage, not a node of the circuit (the simulation reads
+      0 V with a meter on it).
+  - what: "The rest of the table: IC1 pins 3, 4, 6; Q3 and Q4 B and E; Q3, Q4 C; Q5 C; Q6 B"
+    why: >-
+      Ground (0 V), or the same node as a check above (Q5's collector is VA, 9.21 against pin
+      11's 9.30; Q6's base is pin 12's node through R22's 1k).
+  - what: Gains, compression, frequency curves
+    why: >-
+      Aion publishes none. ElectroSmash's analysis
+      (http://web.archive.org/web/20260413030625/https://electrosmash.com/mxr-dyna-comp-analysis)
+      is of the stock circuit (CA3080, its own input network with a 2K trimmer, 22k in the VB
+      divider, the output from Q2's emitter), whose values differ from the Aurora's at every
+      stage it works figures for.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  sources:
+    - title: Aion FX, "Aurora Compressor/Sustainer" kit build documentation 1.0.2 (2026-04-03)
+      url: https://aionfx.com/app/files/docs/aurora_kit_documentation.pdf
+      snapshot: http://web.archive.org/web/20250128105548/https://aionfx.com/app/files/docs/aurora_kit_documentation.pdf
+      read: 2026-11-09
+      licence: Aion FX kit documentation (short quotes, for testing); kits may be built and sold, commercially too, without attribution (its Resale Terms)
+  parts:
+    - "The checks' voltages are from this kit document's Troubleshooting page (1.0.2); its Wayback snapshot is the older 1.0.1, with the same table."
+    - "The circuit and every value are from the PCB document's schematic and parts list (2.0.0; its snapshot is 1.1.1, with the same parts list)."
+    - "Capacitor types from the parts list: C10-C12 NP0/C0G (\"MLCC capacitor, NP0/C0G\"), C20 X7R (\"MLCC capacitor, X7R\"), C3, C4, C7, C9, C14, C18 and C19 electrolytic, the rest film (\"Film capacitor\"), the 1µ C5 too (\"Film capacitor, 7.2 x 3.5mm\")."
+    - "The electrolytics' ratings aren't given: 16 V, the app's advice on a 9 V pedal."
+    - "Enclosure 125B (\"Enclosure, die-cast aluminum\")."

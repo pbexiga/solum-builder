@@ -1,0 +1,26 @@
+* NJM3404A single-supply bipolar dual op-amp (an improved NJM2904/LM358), 36 V max: the Boss DS-1's (our model from Nisshinbo's sheet)
+* Built by Solum Builder from Nisshinbo Micro Devices NJM3404A data sheet (Ver. 20260723), at ±15 V and at a single 5 V; phase margin assumed (D-169) (D-162)
+.subckt NJM3404A 1 2 3 4 5
+* pins: + - V+ V- out. Built by Solum Builder from the sheet's typical figures (D-162)
+Rin 1 2 1e+12
+Rc1 1 mid 1e12
+Rc2 2 mid 1e12
+Emid mid 4 3 4 0.5
+Bgm mid g I=1e-05*tanh(7.2552*(V(1)-V(2)))
+R1 g mid 1.37832e+09
+C1 g mid 8.33333e-12
+Vhp 3 hp DC 0.95
+Vhn hn 4 DC 0.005
+Dhi g hp DCLAMP
+Dlo hn g DCLAMP
+Ebuf b 0 g 0 1
+Rp b p 1000
+Cp p 0 7.65735e-11
+Eout o 0 p 0 1
+Vsense o o2 0
+Rout o2 5 10
+Bsrc 3 0 I=max(i(Vsense),0)
+Bsnk 0 4 I=max(-i(Vsense),0)
+Iq 3 4 DC 0.001
+.model DCLAMP D(is=1e-15 n=0.05)
+.ends

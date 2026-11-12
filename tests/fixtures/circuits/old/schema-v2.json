@@ -1,0 +1,13 @@
+{
+  "schema": 2,
+  "id": "old-divider-v2",
+  "name": "Divider saved by schema v2",
+  "tags": ["divider"],
+  "power": {"mode": "ideal", "rails": {"V+": 9.0}},
+  "parts": [
+    {"ref": "R1", "type": "resistor", "value": "10k", "pos": [0, 0]},
+    {"ref": "R2", "type": "resistor", "value": "10k", "pos": [60, 0]}
+  ],
+  "wires": [{"from": [20, 0], "to": [40, 0]}],
+  "labels": [{"net": "V+", "pos": [-20, 0]}, {"net": "GND", "pos": [80, 0]}, {"net": "MID", "pos": [20, 0]}]
+}

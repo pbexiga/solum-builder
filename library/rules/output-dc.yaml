@@ -1,0 +1,25 @@
+id: output-dc
+layer: operating_point
+severity: warning
+check: output_dc
+title: DC at the output
+message: "The output ({net}) sits at {volts} DC."
+why: >
+  A pedal's output should sit at 0 V DC. DC there reaches the amp (or the next pedal) and
+  thumps whenever the pedal is switched in or out.
+fix: >
+  Add an output coupling capacitor before the output, with a resistor to ground after it
+  (100k is common) so it can't charge up.
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [V+, out], value: 10k}
+        - {ref: R2, type: resistor, nets: [out, GND], value: 10k}
+        - {ref: OUT, type: amp, nets: [out]}
+  good:
+    - starter: ts808
+    - starter: big-muff-pi-v3
+    - starter: fuzz-face
+    - starter: proco-rat

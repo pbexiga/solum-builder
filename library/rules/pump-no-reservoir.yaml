@@ -1,0 +1,30 @@
+id: pump-no-reservoir
+layer: topology
+severity: error
+check: pump_no_reservoir
+title: Charge pump without a reservoir capacitor
+message: "{ref}'s output {net} has no reservoir capacitor to ground."
+why: >
+  A charge pump delivers its charge in pulses. The reservoir capacitor, from its output
+  to ground, holds the output steady between them; without one (or with one under
+  1 µF) the output is a train of pulses, not a supply.
+fix: "Add an electrolytic from {net} to ground next to {ref}: the datasheets show 10 µF for the TC1044S and ICL7660, 100 µF for the LT1054. Bigger means less ripple."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: U1, type: chargepump, supply: V+, double: V18, model: TC1044S, boost: true}
+        - {ref: R1, type: resistor, nets: [V18, GND], value: 10k}
+      expect: [U1]
+    - rails: {V+: 9}
+      parts:   # 100 nF is decoupling, not a reservoir
+        - {ref: U1, type: chargepump, supply: V+, double: V18, model: TC1044S, boost: true}
+        - {ref: C1, type: capacitor, nets: [V18, GND], value: 100n}
+        - {ref: R1, type: resistor, nets: [V18, GND], value: 10k}
+      expect: [U1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: U1, type: chargepump, supply: V+, double: V18, model: TC1044S, boost: true}
+        - {ref: C1, type: capacitor, nets: [V18, GND], value: 10u, kind: electrolytic}
+        - {ref: R1, type: resistor, nets: [V18, GND], value: 10k}

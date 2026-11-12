@@ -1,0 +1,320 @@
+{
+  "sources": {
+    "ltspice": {
+      "why": "The maker's card, but the copy published is inside LTspice's library, which Analog Devices marks all rights reserved, so it can't be passed on with the app (D-156).",
+      "get": "the file {file} from KiCad-Spice-Library (the copy this app's cards were checked against)"
+    },
+    "ltspice-no-maker": {
+      "why": "The card names no maker, so it belongs to the library it was published in: LTspice's, which Analog Devices marks all rights reserved (D-152, D-156).",
+      "get": "the file {file} from KiCad-Spice-Library (the copy this app's cards were checked against)"
+    },
+    "intusoft": {
+      "why": "The card comes from Intusoft's library, marked all rights reserved (D-151, D-156).",
+      "get": "the file {file} from KiCad-Spice-Library (the copy this app's cards were checked against)"
+    },
+    "electrosmash": {
+      "why": "ElectroSmash publishes it for non-commercial use only (CC BY-NC 3.0); the app ships only cards anyone may pass on for any use (D-156).",
+      "get": "ElectroSmash's Fuzz Face analysis page, which prints the card: copy its .model line into a text file (for example AC128.lib)"
+    },
+    "ti-tlc2262": {
+      "why": "TI's terms for this download don't say whether it may be passed on (D-156); our own TLC2262, fitted to TI's sheet, ships instead.",
+      "get": "{file} from TI's TLC2262 page"
+    },
+    "national-lm13700": {
+      "why": "Free to pass on, but our own LM13700 ships instead: National's card is single-pole, so its own header warns it overstates bandwidth and phase margin by over 2×, and it has a 0.6 mV input offset (D-183).",
+      "get": "{file} from TI's LM13700 page"
+    }
+  },
+  "cards": [
+    {
+      "id": "2N2222A",
+      "type": "bjt",
+      "card": "2N2222A",
+      "description": "2N2222A general-purpose NPN switch (Fairchild card)",
+      "maker": "Fairchild",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "2N3904",
+      "type": "bjt",
+      "card": "2N3904",
+      "description": "2N3904 general-purpose NPN (Philips card)",
+      "maker": "Philips",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "2N3906",
+      "type": "bjt",
+      "card": "2N3906",
+      "description": "2N3906 general-purpose PNP (Philips card)",
+      "maker": "Philips",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "2N4123",
+      "type": "bjt",
+      "card": "2N4123",
+      "description": "2N4123 general-purpose NPN (National card)",
+      "maker": "National Semiconductor",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "2N4125",
+      "type": "bjt",
+      "card": "2N4125",
+      "description": "2N4125 general-purpose PNP, the 2N4123's complement (National card)",
+      "maker": "National Semiconductor",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "2N5087",
+      "type": "bjt",
+      "card": "2N5087",
+      "description": "2N5087 low-noise high-gain PNP (Fairchild card)",
+      "maker": "Fairchild",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "2N5088",
+      "type": "bjt",
+      "card": "2N5088",
+      "description": "2N5088 low-noise high-gain NPN (National card)",
+      "maker": "National Semiconductor",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "2N5089",
+      "type": "bjt",
+      "card": "2N5089",
+      "description": "2N5089 high-gain NPN (Fairchild card)",
+      "maker": "Fairchild",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "AC127",
+      "type": "bjt",
+      "card": "AC127",
+      "description": "AC127 germanium NPN (card with no maker named)",
+      "maker": "",
+      "source": "ltspice-no-maker",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "AC128-B120",
+      "type": "bjt",
+      "card": "GERPNP_HIGHGAIN",
+      "description": "AC128 germanium PNP, a high-gain unit (beta 120): ElectroSmash's Fuzz Face Q2",
+      "maker": "ElectroSmash",
+      "source": "electrosmash",
+      "file": "",
+      "url": "https://www.electrosmash.com/fuzz-face"
+    },
+    {
+      "id": "AC128-B85",
+      "type": "bjt",
+      "card": "GERPNP_LOWGAIN",
+      "description": "AC128 germanium PNP, a low-gain unit (beta 85): ElectroSmash's Fuzz Face Q1",
+      "maker": "ElectroSmash",
+      "source": "electrosmash",
+      "file": "",
+      "url": "https://www.electrosmash.com/fuzz-face"
+    },
+    {
+      "id": "BC109C",
+      "type": "bjt",
+      "card": "BC109C",
+      "description": "BC109C low-noise NPN in a metal can, gain group C (Philips card)",
+      "maker": "Philips",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "BC548",
+      "type": "bjt",
+      "card": "BC548B",
+      "description": "BC548 general-purpose NPN, gain group B (Philips BC548B card)",
+      "maker": "Philips",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "BC549C",
+      "type": "bjt",
+      "card": "BC549C",
+      "description": "BC549C low-noise NPN, gain group C (Philips card)",
+      "maker": "Philips",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "BC550C",
+      "type": "bjt",
+      "card": "BC550C",
+      "description": "BC550C low-noise NPN, gain group C (Philips card, the same parameters as its BC549C card)",
+      "maker": "Philips",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "MPSA06",
+      "type": "bjt",
+      "card": "MPSA06",
+      "description": "MPSA06 80 V general-purpose NPN (National card)",
+      "maker": "National Semiconductor",
+      "source": "ltspice",
+      "file": "BJT.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/BJT/BJT.lib"
+    },
+    {
+      "id": "1N34A",
+      "type": "diode",
+      "card": "1N34A",
+      "description": "1N34A germanium diode (card with no maker named)",
+      "maker": "",
+      "source": "ltspice-no-maker",
+      "file": "DIODE2.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Diode/DIODE2.lib"
+    },
+    {
+      "id": "1N4001",
+      "type": "diode",
+      "card": "1N4001",
+      "description": "1N4001 1 A, 50 V rectifier diode (General Instrument card)",
+      "maker": "General Instrument",
+      "source": "ltspice",
+      "file": "DIODE2.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Diode/DIODE2.lib"
+    },
+    {
+      "id": "1N4148",
+      "type": "diode",
+      "card": "1N4148",
+      "description": "1N4148 small-signal silicon diode (onsemi card)",
+      "maker": "onsemi",
+      "source": "ltspice",
+      "file": "DIODE2.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Diode/DIODE2.lib"
+    },
+    {
+      "id": "1N5817",
+      "type": "diode",
+      "card": "1N5817",
+      "description": "1N5817 Schottky rectifier, 20 V 1 A (onsemi card)",
+      "maker": "onsemi",
+      "source": "ltspice",
+      "file": "DIODE2.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Diode/DIODE2.lib"
+    },
+    {
+      "id": "1N914",
+      "type": "diode",
+      "card": "1N914",
+      "description": "1N914 small-signal silicon diode (onsemi card)",
+      "maker": "onsemi",
+      "source": "ltspice",
+      "file": "DIODE2.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Diode/DIODE2.lib"
+    },
+    {
+      "id": "1SS133",
+      "type": "diode",
+      "card": "1SS133",
+      "description": "1SS133 small-signal switching diode (ROHM card)",
+      "maker": "ROHM",
+      "source": "ltspice",
+      "file": "standard.dio",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/uncategorized/Bordodynovs%20Electronics%20Lib/cmp/standard.dio"
+    },
+    {
+      "id": "BAT46",
+      "type": "diode",
+      "card": "BAT46WJ",
+      "description": "BAT46 small-signal Schottky, 100 V (Philips BAT46WJ card)",
+      "maker": "Philips",
+      "source": "ltspice",
+      "file": "DIODE2.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Diode/DIODE2.lib"
+    },
+    {
+      "id": "2N5457",
+      "type": "jfet",
+      "card": "J2N5457",
+      "description": "2N5457 N-channel JFET (Fairchild card)",
+      "maker": "Fairchild",
+      "source": "ltspice",
+      "file": "JFET2.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/FET/JFET2.lib"
+    },
+    {
+      "id": "2N5458",
+      "type": "jfet",
+      "card": "J2N5458",
+      "description": "2N5458 N-channel JFET (Fairchild card)",
+      "maker": "Fairchild",
+      "source": "ltspice",
+      "file": "JFET2.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/FET/JFET2.lib"
+    },
+    {
+      "id": "J201",
+      "type": "jfet",
+      "card": "J201",
+      "description": "J201 low-pinch-off N-channel JFET (Siliconix level-1 card)",
+      "maker": "Siliconix",
+      "source": "intusoft",
+      "file": "JFET.LIB",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Transistor/FET/JFET.LIB"
+    },
+    {
+      "id": "APT1608SURCK",
+      "type": "led",
+      "card": "APT1608SURCK",
+      "description": "Red LED, Kingbright APT1608SURCK (Kingbright card)",
+      "maker": "Kingbright",
+      "source": "ltspice",
+      "file": "DIODE2.lib",
+      "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Diode/DIODE2.lib"
+    },
+    {
+      "id": "TLC2262",
+      "type": "opamp",
+      "card": "TLC2262",
+      "description": "TLC2262 rail-to-rail-output CMOS dual op-amp (TI 1993 macromodel)",
+      "maker": "Texas Instruments",
+      "source": "ti-tlc2262",
+      "file": "SLOJ078.ZIP",
+      "url": "https://www.ti.com/lit/zip/sloj078"
+    },
+    {
+      "id": "LM13700",
+      "type": "ota",
+      "card": "LM13700/NS",
+      "description": "LM13700 dual OTA (National Semiconductor's transistor-level card)",
+      "maker": "National Semiconductor",
+      "source": "national-lm13700",
+      "file": "LM13700.MOD, inside SNOM267.ZIP",
+      "url": "https://www.ti.com/lit/zip/SNOM267"
+    }
+  ]
+}

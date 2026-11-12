@@ -1,0 +1,119 @@
+{
+  "schema": 29,
+  "id": "vref-divider-v1",
+  "name": "Vref · half-supply divider",
+  "version": {
+    "major": 1,
+    "minor": 2
+  },
+  "description": "Half-supply reference for op-amp and JFET bias: two equal resistors with a capacitor to keep it quiet (the values in the ProCo Rat, ElectroSmash's analysis: R11, R12, C13).",
+  "tags": [
+    "power",
+    "bias"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "R1",
+      "pos": [
+        0,
+        -40
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        0,
+        20
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        50,
+        20
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "1µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        0,
+        -20
+      ],
+      "to": [
+        0,
+        0
+      ]
+    },
+    {
+      "from": [
+        0,
+        0
+      ],
+      "to": [
+        50,
+        0
+      ]
+    },
+    {
+      "from": [
+        50,
+        0
+      ],
+      "to": [
+        80,
+        0
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "V+",
+      "pos": [
+        0,
+        -60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        0,
+        40
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        50,
+        40
+      ]
+    },
+    {
+      "net": "vref",
+      "pos": [
+        80,
+        0
+      ]
+    }
+  ],
+  "ports": {
+    "vref": "vref"
+  }
+}

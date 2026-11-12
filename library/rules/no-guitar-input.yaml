@@ -1,0 +1,20 @@
+id: no-guitar-input
+layer: topology
+severity: info
+check: no_guitar_input
+title: No guitar input
+message: The circuit has no guitar input, so there's no frequency response or waveform to show.
+why: >
+  Frequency response, scope and harmonics are measured from the guitar input. DC voltages
+  are still worked out. Blocks (templates) don't need one.
+fix: Drag a Guitar input in from the palette and wire it to the circuit's input.
+fixtures:
+  bad:
+    - parts:
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: OUT, type: amp, nets: [a]}
+  good:
+    - starter: ts808
+    - template: true
+      parts:
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}

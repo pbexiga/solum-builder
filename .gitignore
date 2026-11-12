@@ -1,0 +1,31 @@
+# editor
+*.sw[a-p]
+.*.sw[a-p]
+# python
+__pycache__/
+*.py[cod]
+.venv/
+.mypy_cache/
+.ruff_cache/
+.pytest_cache/
+.coverage
+htmlcov/
+coverage.xml
+*.egg-info/
+build/
+dist/
+# local config and runtime data
+.env
+/data/*
+!/data/spec-sheets/
+/data/spec-sheets/*.pdf
+/data/spec-sheets/*.png
+/data/spec-sheets/rejected/
+/cache/*
+!/cache/.gitkeep
+
+# spikes and throwaway venvs (never committed)
+/scratch/
+
+# The working notes (plan, session diary, hand-test list, prompts): kept locally, not shipped
+/notes/

@@ -1,0 +1,29 @@
+id: no-dc-path
+layer: topology
+severity: error
+check: no_dc_path
+stops_sim: true
+title: No DC path to ground
+message: "Can't simulate yet: {which} no DC path to ground."
+why: >
+  Every net needs a path to ground that conducts DC: resistors, pots, diodes and
+  transistors count, capacitors don't. A net reached only through capacitors, or not at
+  all, has no defined voltage, and the simulator can't solve the circuit.
+fix: >
+  Wire it to the rest of the circuit, or add a resistor to ground (1M is usual on an
+  input, and it stops pops too).
+fixtures:
+  bad:
+    - parts:
+        - {ref: C1, type: capacitor, nets: [GND, a], value: 100n}
+        - {ref: C2, type: capacitor, nets: [a, GND], value: 100n}
+  good:
+    - parts:
+        - {ref: C1, type: capacitor, nets: [GND, a], value: 100n}
+        - {ref: R1, type: resistor, nets: [a, GND], value: 1M}
+    - rails: {V+: 9}   # an op-amp input fed only by a capacitor still simulates
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, p], value: 100n}
+        - {ref: U1, type: opamp, nets: [p, o, o], model: TL072}
+        - {ref: OUT, type: amp, nets: [o]}

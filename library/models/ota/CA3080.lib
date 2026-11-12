@@ -1,0 +1,38 @@
+* CA3080 operational transconductance amplifier (our model from the sheet)
+* Built by Solum Builder from Intersil CA3080/CA3080A data sheet File Number 475.4
+* (September 1998), typical figures at 25 degC, +-15 V. Behavioural core: Iout =
+* Iabc*tanh(Vd/2VT); bias pin a junction to V-.
+.subckt CA3080 inp inn out iabc vp vn
+Vsense iabc ib0 0
+Dbias ib0 vn DBIAS
+* Iabc as a voltage (1 V per A) for the expressions
+Bia ia 0 V=max(i(Vsense),0)
+* input-pair window: the common-mode range
+Bw w 0 V=((pwr(max(v(vp)-1.4-(0.5*(v(inp)+v(inn))),0),2)/(pwr(max(v(vp)-1.4-(0.5*(v(inp)+v(inn))),0),2)+0.0025))*(pwr(max((0.5*(v(inp)+v(inn)))-v(vn)-0.4,0),2)/(pwr(max((0.5*(v(inp)+v(inn)))-v(vn)-0.4,0),2)+0.0025)))
+* the pair's halves I5 (to the output's source mirror) and I4 (to the sink), then the
+* open-loop bandwidth pole (2 MHz) on each, in the mirrors (after the tanh,
+* so a large step slews at Iabc/C instead of winding up a filtered input voltage)
+Bi5 i5r 0 V=v(ia)*v(w)*0.5*(1+tanh((v(inp)-v(inn))/(2*(8.617333e-5*(temper+273.15)))))
+Bi4 i4r 0 V=v(ia)*v(w)*0.5*(1-tanh((v(inp)-v(inn))/(2*(8.617333e-5*(temper+273.15)))))
+R5 i5r i5 1k
+C5 i5 0 7.95775e-11
+R4 i4r i4 1k
+C4 i4 0 7.95775e-11
+* output: source from V+, sink to V-, each stopping at the swing limit; Early sets Rout
+Bsrc vp out I=v(i5)*(pwr(max(v(vp)-(1.09515+(0.15)*log10(max(v(ia),1e-7)/1e-6))-v(out),0),2)/(pwr(max(v(vp)-(1.09515+(0.15)*log10(max(v(ia),1e-7)/1e-6))-v(out),0),2)+0.0025))*(1+max(v(vp)-v(out),0)/7500)
+Bsnk out vn I=v(i4)*(pwr(max(v(out)-v(vn)-(0.465051+(0.05)*log10(max(v(ia),1e-7)/1e-6)),0),2)/(pwr(max(v(out)-v(vn)-(0.465051+(0.05)*log10(max(v(ia),1e-7)/1e-6)),0),2)+0.0025))*(1+max(v(out)-v(vn),0)/7500)
+Cout out vn 5.6e-12
+Rleak out vn 2.4e+11
+Rleak2 out vp 2.4e+11
+* input bias currents: the pair's base currents (unfiltered Vd), into the tail at V-
+Bbp inp vn I=v(ia)*v(w)*0.5*(1+tanh((v(inp)-v(inn))/(2*(8.617333e-5*(temper+273.15)))))/(0.5*pwr(10,log10(min(max(v(ia),1e-7),1e-3)))/pwr(10,(0.863627)*log10(min(max(v(ia),1e-7),1e-3))+(-2.85139)))
+Bbn inn vn I=v(ia)*v(w)*0.5*(1-tanh((v(inp)-v(inn))/(2*(8.617333e-5*(temper+273.15)))))/(0.5*pwr(10,log10(min(max(v(ia),1e-7),1e-3)))/pwr(10,(0.863627)*log10(min(max(v(ia),1e-7),1e-3))+(-2.85139)))
+Rdiff inp inn 5e+11
+Cinp inp vn 3.6e-12
+Cinn inn vn 3.6e-12
+* quiescent: V+ draws 2 x Iabc at balance (Iabc/2 of it is the output pair);
+* none unpowered, so a V+ left open still solves (D-237)
+Bq vp vn I=1.5*v(ia)*(pwr(max(v(vp)-v(vn),0),2)/(pwr(max(v(vp)-v(vn),0),2)+0.0025))
+Cio inn out 2.4e-14
+.model DBIAS D(IS=1.17975e-16 N=0.939612 RS=15.9617)
+.ends CA3080

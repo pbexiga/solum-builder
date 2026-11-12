@@ -1,0 +1,20 @@
+id: diode-over-current
+layer: operating_point
+severity: error
+check: diode_over_current
+title: Diode over its current rating
+message: "{ref} carries {current}; the {model} is rated for {limit} on average."
+why: Past its forward current rating a diode overheats and can fail.
+fix: "Put a resistor in series with {ref}, or raise the one that's there."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: D1, type: diode, nets: [V+, a], model: 1N4148}
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10}
+      expect: [D1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: D1, type: diode, nets: [V+, a], model: 1N4148}
+        - {ref: R1, type: resistor, nets: [a, GND], value: 1k}

@@ -1,0 +1,22 @@
+id: opamp-supply-reversed
+layer: topology
+severity: error
+check: opamp_supply_reversed
+stops_sim: true
+title: Op-amp supply reversed
+message: "{ref}'s positive supply {pos} ({high}) isn't above its negative supply {neg} ({low})."
+why: >
+  An op-amp powered backwards doesn't work (the simulator can't even solve it), and on a
+  real board it's usually destroyed.
+fix: "Swap the labels on {ref}'s V+ and V- pins, or check the supply's polarity."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, GND], value: 1M}
+        - {ref: U1, type: opamp, nets: [in, o, o], model: TL072, supply: [GND, V+]}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [U1]
+  good:
+    - starter: ts808

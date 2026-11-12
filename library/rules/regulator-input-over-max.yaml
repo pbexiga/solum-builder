@@ -1,0 +1,25 @@
+id: regulator-input-over-max
+layer: operating_point
+severity: error
+check: regulator_input_over_max
+title: Regulator input too high
+message: "{ref} gets {volts} on its input; the {model}'s absolute maximum is {limit}."
+why: >
+  Above its absolute maximum input voltage a regulator can be destroyed. A 78L12's is
+  35 V, far above anything a pedal makes, so this mostly catches a regulator wired to the
+  wrong net.
+fix: "Feed {ref} from a lower supply, below {limit}."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: V1, type: vsource, nets: [VIN, GND], value: 40}
+        - {ref: U1, type: regulator, nets: [VIN, V12, GND], model: 78L12}
+        - {ref: R1, type: resistor, nets: [V12, GND], value: 10k}
+      expect: [U1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: V1, type: vsource, nets: [VIN, GND], value: 18}
+        - {ref: U1, type: regulator, nets: [VIN, V12, GND], model: 78L12}
+        - {ref: R1, type: resistor, nets: [V12, GND], value: 10k}

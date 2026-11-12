@@ -1,0 +1,113 @@
+{
+  "id": "TL072",
+  "type": "opamp",
+  "description": "TL072 JFET-input dual op-amp, ±18 V max (our model from TI's sheet)",
+  "spice_name": "TL072",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "TL072.lib",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://www.ti.com/lit/ds/symlink/tl072.pdf",
+    "retrieved": "2026-11-04",
+    "licence": "Our own model built from the maker's data sheet (D-162): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.ti.com/lit/ds/symlink/tl071.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 4.0,
+    "cm_pos_headroom": 4.0,
+    "out_neg_headroom": 1.5,
+    "out_pos_headroom": 1.5
+  },
+  "rating_sources": {
+    "vs_max": "TI TL07xx data sheet SLOS080W (revised July 2025): vs_max from 5.1 Absolute Maximum Ratings (36 V for NS/PS packages and M grades, 42 V for others; the lower is used); common-mode headroom from 5.8 (TL07xC), VCM ±11 V min at ±15 V; output headroom from 5.8, VOM ±13.5 V typ at RL = 10 kΩ (±12 V min)",
+    "cm_neg_headroom": "TI TL07xx data sheet SLOS080W (revised July 2025): vs_max from 5.1 Absolute Maximum Ratings (36 V for NS/PS packages and M grades, 42 V for others; the lower is used); common-mode headroom from 5.8 (TL07xC), VCM ±11 V min at ±15 V; output headroom from 5.8, VOM ±13.5 V typ at RL = 10 kΩ (±12 V min)",
+    "cm_pos_headroom": "TI TL07xx data sheet SLOS080W (revised July 2025): vs_max from 5.1 Absolute Maximum Ratings (36 V for NS/PS packages and M grades, 42 V for others; the lower is used); common-mode headroom from 5.8 (TL07xC), VCM ±11 V min at ±15 V; output headroom from 5.8, VOM ±13.5 V typ at RL = 10 kΩ (±12 V min)",
+    "out_neg_headroom": "TI TL07xx data sheet SLOS080W (revised July 2025): vs_max from 5.1 Absolute Maximum Ratings (36 V for NS/PS packages and M grades, 42 V for others; the lower is used); common-mode headroom from 5.8 (TL07xC), VCM ±11 V min at ±15 V; output headroom from 5.8, VOM ±13.5 V typ at RL = 10 kΩ (±12 V min)",
+    "out_pos_headroom": "TI TL07xx data sheet SLOS080W (revised July 2025): vs_max from 5.1 Absolute Maximum Ratings (36 V for NS/PS packages and M grades, 42 V for others; the lower is used); common-mode headroom from 5.8 (TL07xC), VCM ±11 V min at ±15 V; output headroom from 5.8, VOM ±13.5 V typ at RL = 10 kΩ (±12 V min)"
+  },
+  "channels": 2,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "a.out": 1,
+      "a.-": 2,
+      "a.+": 3,
+      "V-": 4,
+      "b.+": 5,
+      "b.-": 6,
+      "b.out": 7,
+      "V+": 8
+    },
+    "source": "TI TL07xx data sheet SLOS080W (revised July 2025), Figure 4-5 and Table 4-3, Pin Functions: TL072x (D, P, PS packages)"
+  },
+  "fit": {
+    "sheet": "TI TL07xx data sheet SLOS080W (revised July 2025), TL07xC at ±15 V",
+    "figure": "5.8 and 5.9 (TL07xC) at ±15 V: AOL 200 V/mV typ, GBW 3 MHz (the classic die: NS/PS packages and M grades; 5.25 MHz on newer dies), slew rate 20 V/µs, phase margin 56° (G = +1, RL 10 kΩ, CL 20 pF), open-loop output impedance 125 Ω, quiescent current 1.4 mA per amplifier, VOM ±13.5 V typ at 10 kΩ",
+    "points": [],
+    "method": "A small macromodel (scripts/fit_models.py opamp_card, D-162): a tanh transconductance stage limited to 10 µA into C1 sets the slew rate, gm the unity-gain crossing and R1 the open-loop gain; a second pole gives the phase margin; diode clamps and an output resistance set the swing; the supply current is drawn from the rails. Output resistance the sheet's 125 Ω, clamps 1.33 V from each rail so the 10 kΩ swing lands on the typical ±13.5 V. Replaces TI's 1989 macromodel, whose RP (2.143 kΩ across the supplies) drew 12.6 mA a channel at 27 V against the sheet's 1.4 mA (D-219).",
+    "note": "Input bias, offset, noise, common-mode limits and the output's current limit are not modelled: the input stage is ideal (1 TΩ)."
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "min": 87.95880017344075,
+        "typ": 106.02059991327963,
+        "source": "TI TL07xx data sheet SLOS080W (revised July 2025)",
+        "note": "TL07xC AOL 25 V/mV min, 200 V/mV typ, ±15 V"
+      },
+      "simulated": 105.609
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "typ": 3000000.0,
+        "source": "TI TL07xx data sheet SLOS080W (revised July 2025)",
+        "note": "3 MHz for the classic die (NS/PS packages, M grade); newer dies are 5.25 MHz; phase margin 56° typ"
+      },
+      "simulated": 2971430.0
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "typ": 1.5,
+        "max": 3.0,
+        "source": "TI TL07xx data sheet SLOS080W (revised July 2025), 5.8 (TL07xC): VOM ±13.5 V typ, ±12 V min, RL = 10 kΩ"
+      },
+      "simulated": 1.46951
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "typ": 1.5,
+        "max": 3.0,
+        "source": "TI TL07xx data sheet SLOS080W (revised July 2025), 5.8 (TL07xC): VOM ±13.5 V typ, ±12 V min, RL = 10 kΩ"
+      },
+      "simulated": 1.46951
+    }
+  ]
+}

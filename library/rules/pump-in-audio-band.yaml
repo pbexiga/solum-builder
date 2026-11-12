@@ -1,0 +1,31 @@
+id: pump-in-audio-band
+layer: topology
+severity: warning
+check: pump_in_audio_band
+title: Charge pump in the audio band
+message: "{ref} pumps at {freq}, inside the range you can hear."
+why: >
+  A charge pump moves its charge in pulses, which leaves a small ripple on its output
+  at the pump frequency. Below 20 kHz, any of that ripple that reaches the audio is heard
+  as a whine: a steady high tone, loudest in high-gain circuits and with the guitar
+  quiet.
+fix: "Turn on {ref}'s boost if its chip has a boost pin (a TC1044S then pumps at about 22 kHz), use a chip that pumps above 20 kHz (the LT1054, 25 kHz), or filter its output well (a resistor and a big capacitor before the stages it powers)."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: U1, type: chargepump, supply: V+, double: V18, model: TC1044S}
+        - {ref: C1, type: capacitor, nets: [V18, GND], value: 10u}
+        - {ref: R1, type: resistor, nets: [V18, GND], value: 10k}
+      expect: [U1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: U1, type: chargepump, supply: V+, double: V18, model: TC1044S, boost: true}
+        - {ref: C1, type: capacitor, nets: [V18, GND], value: 10u}
+        - {ref: R1, type: resistor, nets: [V18, GND], value: 10k}
+    - rails: {V+: 9}
+      parts:
+        - {ref: U1, type: chargepump, supply: V+, invert: VNEG, model: LT1054}
+        - {ref: C1, type: capacitor, nets: [GND, VNEG], value: 100u}
+        - {ref: R1, type: resistor, nets: [VNEG, GND], value: 10k}

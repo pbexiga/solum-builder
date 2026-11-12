@@ -1,0 +1,35 @@
+# 9 V batteries (D-143): the one source for the battery part's states (its form fills the
+# battery's voltage from here, and the part records which state it came from).
+# Each state is the battery's voltage on load as it drains: Energizer 522 (alkaline 9 V),
+# its "Clock radio" test, 620 ohm (about 14 mA at 9 V, a pedal's sort of draw), 2 h a day,
+# at 21 °C. Read off the datasheet's curve image; the user confirmed them (2026-10-29,
+# D-042, D-143). The sheet gives no internal resistance, so there's none by default:
+# measure your battery's if you want its sag under a heavier draw.
+title: 9 V batteries
+intro: >
+  A battery's voltage falls as it drains: a fresh 9 V alkaline gives about 9 V on a pedal's
+  load, half-way through its life about 7.4 V, and near the end under 6 V. Pick a state to
+  hear and see what a tired battery does to the circuit (less headroom, bias moving,
+  earlier clipping), or type the voltage you measured on yours, with the pedal on.
+source: >
+  Energizer 522 product datasheet (form 522NA1117), Industry Standard Tests, Clock radio,
+  620 ohm 2 hrs/day, 21 °C: https://www.ee.columbia.edu/sites/default/files/content/docs/Duracell%209V%20battery.pdf
+  (Energizer's sheet, despite the file's name); the same curve in the earlier sheet,
+  https://www-users.cs.york.ac.uk/~mjf/zergling/Datasheet/E522.pdf
+states:
+  - state: fresh
+    name: Fresh
+    volts: 9.0
+    hours: 0
+  - state: half
+    name: Half used
+    volts: 7.4
+    hours: 28
+  - state: low
+    name: Low
+    volts: 6.6
+    hours: 40
+  - state: flat
+    name: Nearly flat
+    volts: 5.5
+    hours: 50

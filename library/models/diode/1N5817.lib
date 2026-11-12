@@ -1,0 +1,3 @@
+* 1N5817 Schottky rectifier (20 V, 1 A): low forward drop, the usual charge-pump doubler diode (our fit to Diotec's sheet)
+* Fitted by Solum Builder to Diotec 1N5817 ... 1N5819 data sheet (Version 2026-03-20), Forward characteristics (typical values), Tj = 25 °C (read from the PDF's vector drawing, centre of the drawn line), up to about 3 A (D-156)
+.model 1N5817 D(is=8.823e-05 n=2.334 rs=0.01307 cjo=8e-11)

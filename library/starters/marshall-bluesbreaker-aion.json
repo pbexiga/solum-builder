@@ -1,0 +1,1603 @@
+{
+ "schema": 30,
+ "id": "marshall-bluesbreaker-aion",
+ "name": "Marshall Bluesbreaker (Aion Cerulean)",
+ "version": {
+  "major": 1,
+  "minor": 0
+ },
+ "description": "Marshall Bluesbreaker (1991) as Aion FX's Cerulean (document 2.0.1), with true bypass: two op-amp stages sharing the Drive pot, the first's feedback in its top half and the second's input through its bottom half, then soft clipping in the second stage's feedback, Tone and Volume. Aion's additions, from the Analogman King of Tone: a Clipping switch (soft, the stock Bluesbreaker's; none, a boost; or hard, to VB), a Mode switch between the pre-1995 and post-1995 values, and an internal Gain DIP shifting Drive's range up.",
+ "tags": [
+  "overdrive"
+ ],
+ "starter": true,
+ "power": {
+  "rails": {
+   "V+": 9.0
+  }
+ },
+ "parts": [
+  {
+   "ref": "D1",
+   "pos": [
+    40,
+    -600
+   ],
+   "note": "Reverse-polarity protection; R15 and C11, C12 filter the supply.",
+   "type": "diode",
+   "model": "1N5817"
+  },
+  {
+   "ref": "R15",
+   "pos": [
+    100,
+    -600
+   ],
+   "type": "resistor",
+   "value": "100"
+  },
+  {
+   "ref": "C12",
+   "pos": [
+    160,
+    -560
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "ceramic"
+  },
+  {
+   "ref": "C11",
+   "pos": [
+    220,
+    -560
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "100µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "R13",
+   "pos": [
+    300,
+    -600
+   ],
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "R14",
+   "pos": [
+    360,
+    -560
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "C10",
+   "pos": [
+    420,
+    -560
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "47µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "IC1C",
+   "pos": [
+    540,
+    -560
+   ],
+   "type": "powerunit",
+   "model": "TL072"
+  },
+  {
+   "ref": "IN",
+   "pos": [
+    -40,
+    0
+   ],
+   "type": "guitar"
+  },
+  {
+   "ref": "RPD1",
+   "pos": [
+    0,
+    40
+   ],
+   "rot": 90,
+   "note": "Aion's RPD: the input pull-down, so the bypass switch doesn't pop.",
+   "type": "resistor",
+   "value": "2M2"
+  },
+  {
+   "ref": "C1",
+   "pos": [
+    80,
+    0
+   ],
+   "type": "capacitor",
+   "value": "10n",
+   "kind": "film"
+  },
+  {
+   "ref": "R1",
+   "pos": [
+    140,
+    -40
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "1M"
+  },
+  {
+   "ref": "IC1A",
+   "pos": [
+    240,
+    -20
+   ],
+   "note": "First stage: a non-inverting gain stage. Its feedback is Drive's top half (wiper to pin 1, plus the Gain DIP's resistance); its legs to ground go through C3 and C4, so the gain falls away in the bass.",
+   "model": "TL072",
+   "type": "opamp",
+   "half": "a"
+  },
+  {
+   "ref": "VR1",
+   "pos": [
+    360,
+    -80
+   ],
+   "rot": 270,
+   "note": "Drive: turning it up moves resistance from the second stage's input (pin 3 side) into the first stage's feedback (pin 1 side), so both stages gain at once. A bigger pot would also lower the least gain, hence Aion's Gain DIP instead.",
+   "type": "pot",
+   "value": "100k",
+   "label": "Drive"
+  },
+  {
+   "ref": "C2",
+   "pos": [
+    240,
+    -120
+   ],
+   "type": "capacitor",
+   "value": "47p",
+   "kind": "c0g"
+  },
+  {
+   "ref": "R2",
+   "pos": [
+    300,
+    -200
+   ],
+   "type": "resistor",
+   "value": "470k"
+  },
+  {
+   "ref": "R4",
+   "pos": [
+    100,
+    -200
+   ],
+   "type": "resistor",
+   "value": "27k"
+  },
+  {
+   "ref": "R3",
+   "pos": [
+    260,
+    -260
+   ],
+   "type": "resistor",
+   "value": "120k"
+  },
+  {
+   "ref": "SW3B",
+   "pos": [
+    340,
+    -260
+   ],
+   "type": "switch",
+   "kind": "dip-2",
+   "pole": "b",
+   "position": 1,
+   "label": "Gain",
+   "names": [
+    "High",
+    "Normal",
+    "Medium",
+    "Normal (both on)"
+   ]
+  },
+  {
+   "ref": "R5",
+   "pos": [
+    100,
+    -260
+   ],
+   "type": "resistor",
+   "value": "5k6"
+  },
+  {
+   "ref": "SW3A",
+   "pos": [
+    300,
+    -320
+   ],
+   "note": "Gain DIP (Aion's, inside): switch 1 on is Normal, the stock range (it shorts R2 and R3); with 1 off, switch 2 on is Medium (R3 across R2, about 96k in the feedback) and off High (R2, 470k).",
+   "type": "switch",
+   "kind": "dip-2",
+   "pole": "a",
+   "position": 1,
+   "label": "Gain",
+   "names": [
+    "High",
+    "Normal",
+    "Medium",
+    "Normal (both on)"
+   ]
+  },
+  {
+   "ref": "R6",
+   "pos": [
+    100,
+    -320
+   ],
+   "type": "resistor",
+   "value": "33k"
+  },
+  {
+   "ref": "R7",
+   "pos": [
+    100,
+    -380
+   ],
+   "type": "resistor",
+   "value": "3k6"
+  },
+  {
+   "ref": "SW2A",
+   "pos": [
+    20,
+    -400
+   ],
+   "note": "Mode: V1 (pre-95) has R6 33k and R4 27k as the first stage's legs to ground; V2 (post-95) puts R7 and R5 across them, 3.3k and 4.7k: more gain, less bass.",
+   "type": "switch",
+   "kind": "dpdt",
+   "pole": "a",
+   "label": "Mode",
+   "names": [
+    "V1 (pre-95)",
+    "V2 (post-95)"
+   ]
+  },
+  {
+   "ref": "SW2B",
+   "pos": [
+    20,
+    -280
+   ],
+   "type": "switch",
+   "kind": "dpdt",
+   "pole": "b",
+   "label": "Mode",
+   "names": [
+    "V1 (pre-95)",
+    "V2 (post-95)"
+   ]
+  },
+  {
+   "ref": "C3",
+   "pos": [
+    -120,
+    -300
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "10n",
+   "kind": "film"
+  },
+  {
+   "ref": "C4",
+   "pos": [
+    -120,
+    -140
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "10n",
+   "kind": "film"
+  },
+  {
+   "ref": "C5",
+   "pos": [
+    480,
+    -140
+   ],
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "R8",
+   "pos": [
+    560,
+    -140
+   ],
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "IC1B",
+   "pos": [
+    720,
+    -120
+   ],
+   "note": "Second stage: an inverting stage, gain R9 / (R8 + Drive's bottom half), with the soft clipping in its feedback.",
+   "model": "TL072",
+   "type": "opamp",
+   "half": "b"
+  },
+  {
+   "ref": "C6",
+   "pos": [
+    720,
+    -200
+   ],
+   "type": "capacitor",
+   "value": "10p",
+   "kind": "c0g"
+  },
+  {
+   "ref": "R9",
+   "pos": [
+    720,
+    -260
+   ],
+   "type": "resistor",
+   "value": "220k"
+  },
+  {
+   "ref": "R10",
+   "pos": [
+    660,
+    -340
+   ],
+   "type": "resistor",
+   "value": "6k8"
+  },
+  {
+   "ref": "D4",
+   "pos": [
+    740,
+    -340
+   ],
+   "rot": 180,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "D5",
+   "pos": [
+    800,
+    -340
+   ],
+   "rot": 180,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "D3",
+   "pos": [
+    740,
+    -400
+   ],
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "D2",
+   "pos": [
+    800,
+    -400
+   ],
+   "note": "Soft clipping: two diodes each way in series with R10, across R9, so the stage's gain falls as they conduct.",
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "SW1A",
+   "pos": [
+    860,
+    -260
+   ],
+   "note": "Clipping (Aion's, from the King of Tone): Soft, D2-D5 in IC1B's feedback (the stock Bluesbreaker); Boost, no diodes; Hard, D6-D9 to VB after R11 (a lower threshold than the soft clipping).",
+   "type": "switch",
+   "kind": "dpdt-on-off-on",
+   "pole": "a",
+   "label": "Clipping",
+   "names": [
+    "Soft",
+    "Boost",
+    "Hard"
+   ]
+  },
+  {
+   "ref": "R11",
+   "pos": [
+    860,
+    -120
+   ],
+   "type": "resistor",
+   "value": "1k"
+  },
+  {
+   "ref": "D6",
+   "pos": [
+    920,
+    -60
+   ],
+   "rot": 90,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "D7",
+   "pos": [
+    920,
+    0
+   ],
+   "rot": 90,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "D9",
+   "pos": [
+    980,
+    -60
+   ],
+   "rot": 270,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "D8",
+   "pos": [
+    980,
+    0
+   ],
+   "rot": 270,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "SW1B",
+   "pos": [
+    960,
+    80
+   ],
+   "rot": 270,
+   "type": "switch",
+   "kind": "dpdt-on-off-on",
+   "pole": "b",
+   "label": "Clipping",
+   "names": [
+    "Soft",
+    "Boost",
+    "Hard"
+   ]
+  },
+  {
+   "ref": "VR2",
+   "pos": [
+    1060,
+    -60
+   ],
+   "rot": 90,
+   "note": "Tone: a treble cut, C7 to VB through the pot, then R12 and C8.",
+   "type": "pot",
+   "value": "25k",
+   "label": "Tone"
+  },
+  {
+   "ref": "C7",
+   "pos": [
+    1060,
+    -180
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "10n",
+   "kind": "film"
+  },
+  {
+   "ref": "R12",
+   "pos": [
+    1140,
+    -60
+   ],
+   "type": "resistor",
+   "value": "6k8"
+  },
+  {
+   "ref": "C8",
+   "pos": [
+    1180,
+    -20
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "10n",
+   "kind": "film"
+  },
+  {
+   "ref": "C9",
+   "pos": [
+    1240,
+    -60
+   ],
+   "note": "Blocks VB's DC from the Volume pot and the output.",
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "film"
+  },
+  {
+   "ref": "VR3",
+   "pos": [
+    1300,
+    -80
+   ],
+   "rot": 90,
+   "type": "pot",
+   "value": "100k",
+   "taper": "A",
+   "label": "Volume"
+  },
+  {
+   "ref": "OUT",
+   "pos": [
+    1380,
+    -80
+   ],
+   "type": "amp"
+  }
+ ],
+ "wires": [
+  {
+   "from": [
+    0,
+    -600
+   ],
+   "to": [
+    20,
+    -600
+   ]
+  },
+  {
+   "from": [
+    60,
+    -600
+   ],
+   "to": [
+    80,
+    -600
+   ]
+  },
+  {
+   "from": [
+    120,
+    -600
+   ],
+   "to": [
+    280,
+    -600
+   ]
+  },
+  {
+   "from": [
+    160,
+    -600
+   ],
+   "to": [
+    160,
+    -580
+   ]
+  },
+  {
+   "from": [
+    220,
+    -600
+   ],
+   "to": [
+    220,
+    -580
+   ]
+  },
+  {
+   "from": [
+    320,
+    -600
+   ],
+   "to": [
+    440,
+    -600
+   ]
+  },
+  {
+   "from": [
+    360,
+    -600
+   ],
+   "to": [
+    360,
+    -580
+   ]
+  },
+  {
+   "from": [
+    420,
+    -600
+   ],
+   "to": [
+    420,
+    -580
+   ]
+  },
+  {
+   "from": [
+    -20,
+    0
+   ],
+   "to": [
+    60,
+    0
+   ]
+  },
+  {
+   "from": [
+    0,
+    0
+   ],
+   "to": [
+    0,
+    20
+   ]
+  },
+  {
+   "from": [
+    100,
+    0
+   ],
+   "to": [
+    200,
+    0
+   ]
+  },
+  {
+   "from": [
+    140,
+    -20
+   ],
+   "to": [
+    140,
+    0
+   ]
+  },
+  {
+   "from": [
+    200,
+    -40
+   ],
+   "to": [
+    180,
+    -40
+   ]
+  },
+  {
+   "from": [
+    180,
+    -40
+   ],
+   "to": [
+    180,
+    -380
+   ]
+  },
+  {
+   "from": [
+    180,
+    -380
+   ],
+   "to": [
+    120,
+    -380
+   ]
+  },
+  {
+   "from": [
+    280,
+    -20
+   ],
+   "to": [
+    300,
+    -20
+   ]
+  },
+  {
+   "from": [
+    300,
+    -20
+   ],
+   "to": [
+    300,
+    -80
+   ]
+  },
+  {
+   "from": [
+    300,
+    -80
+   ],
+   "to": [
+    340,
+    -80
+   ]
+  },
+  {
+   "from": [
+    180,
+    -120
+   ],
+   "to": [
+    220,
+    -120
+   ]
+  },
+  {
+   "from": [
+    260,
+    -120
+   ],
+   "to": [
+    300,
+    -120
+   ]
+  },
+  {
+   "from": [
+    300,
+    -120
+   ],
+   "to": [
+    300,
+    -80
+   ]
+  },
+  {
+   "from": [
+    360,
+    -60
+   ],
+   "to": [
+    360,
+    -40
+   ]
+  },
+  {
+   "from": [
+    360,
+    -40
+   ],
+   "to": [
+    420,
+    -40
+   ]
+  },
+  {
+   "from": [
+    420,
+    -40
+   ],
+   "to": [
+    420,
+    -320
+   ]
+  },
+  {
+   "from": [
+    420,
+    -320
+   ],
+   "to": [
+    320,
+    -320
+   ]
+  },
+  {
+   "from": [
+    180,
+    -200
+   ],
+   "to": [
+    280,
+    -200
+   ]
+  },
+  {
+   "from": [
+    320,
+    -200
+   ],
+   "to": [
+    420,
+    -200
+   ]
+  },
+  {
+   "from": [
+    180,
+    -260
+   ],
+   "to": [
+    240,
+    -260
+   ]
+  },
+  {
+   "from": [
+    280,
+    -260
+   ],
+   "to": [
+    320,
+    -260
+   ]
+  },
+  {
+   "from": [
+    360,
+    -260
+   ],
+   "to": [
+    420,
+    -260
+   ]
+  },
+  {
+   "from": [
+    180,
+    -320
+   ],
+   "to": [
+    280,
+    -320
+   ]
+  },
+  {
+   "from": [
+    120,
+    -320
+   ],
+   "to": [
+    180,
+    -320
+   ]
+  },
+  {
+   "from": [
+    80,
+    -320
+   ],
+   "to": [
+    -120,
+    -320
+   ]
+  },
+  {
+   "from": [
+    40,
+    -380
+   ],
+   "to": [
+    80,
+    -380
+   ]
+  },
+  {
+   "from": [
+    0,
+    -400
+   ],
+   "to": [
+    -120,
+    -400
+   ]
+  },
+  {
+   "from": [
+    -120,
+    -400
+   ],
+   "to": [
+    -120,
+    -320
+   ]
+  },
+  {
+   "from": [
+    120,
+    -260
+   ],
+   "to": [
+    180,
+    -260
+   ]
+  },
+  {
+   "from": [
+    40,
+    -260
+   ],
+   "to": [
+    80,
+    -260
+   ]
+  },
+  {
+   "from": [
+    0,
+    -280
+   ],
+   "to": [
+    -120,
+    -280
+   ]
+  },
+  {
+   "from": [
+    -120,
+    -280
+   ],
+   "to": [
+    -120,
+    -200
+   ]
+  },
+  {
+   "from": [
+    -120,
+    -200
+   ],
+   "to": [
+    -120,
+    -160
+   ]
+  },
+  {
+   "from": [
+    120,
+    -200
+   ],
+   "to": [
+    180,
+    -200
+   ]
+  },
+  {
+   "from": [
+    80,
+    -200
+   ],
+   "to": [
+    -120,
+    -200
+   ]
+  },
+  {
+   "from": [
+    360,
+    -100
+   ],
+   "to": [
+    360,
+    -140
+   ]
+  },
+  {
+   "from": [
+    360,
+    -140
+   ],
+   "to": [
+    460,
+    -140
+   ]
+  },
+  {
+   "from": [
+    500,
+    -140
+   ],
+   "to": [
+    540,
+    -140
+   ]
+  },
+  {
+   "from": [
+    580,
+    -140
+   ],
+   "to": [
+    620,
+    -140
+   ]
+  },
+  {
+   "from": [
+    620,
+    -140
+   ],
+   "to": [
+    680,
+    -140
+   ]
+  },
+  {
+   "from": [
+    620,
+    -140
+   ],
+   "to": [
+    620,
+    -340
+   ]
+  },
+  {
+   "from": [
+    620,
+    -340
+   ],
+   "to": [
+    640,
+    -340
+   ]
+  },
+  {
+   "from": [
+    620,
+    -200
+   ],
+   "to": [
+    700,
+    -200
+   ]
+  },
+  {
+   "from": [
+    620,
+    -260
+   ],
+   "to": [
+    700,
+    -260
+   ]
+  },
+  {
+   "from": [
+    760,
+    -120
+   ],
+   "to": [
+    800,
+    -120
+   ]
+  },
+  {
+   "from": [
+    800,
+    -120
+   ],
+   "to": [
+    800,
+    -260
+   ]
+  },
+  {
+   "from": [
+    800,
+    -260
+   ],
+   "to": [
+    840,
+    -260
+   ]
+  },
+  {
+   "from": [
+    740,
+    -200
+   ],
+   "to": [
+    800,
+    -200
+   ]
+  },
+  {
+   "from": [
+    740,
+    -260
+   ],
+   "to": [
+    800,
+    -260
+   ]
+  },
+  {
+   "from": [
+    680,
+    -340
+   ],
+   "to": [
+    720,
+    -340
+   ]
+  },
+  {
+   "from": [
+    700,
+    -340
+   ],
+   "to": [
+    700,
+    -400
+   ]
+  },
+  {
+   "from": [
+    700,
+    -400
+   ],
+   "to": [
+    720,
+    -400
+   ]
+  },
+  {
+   "from": [
+    760,
+    -400
+   ],
+   "to": [
+    780,
+    -400
+   ]
+  },
+  {
+   "from": [
+    760,
+    -340
+   ],
+   "to": [
+    780,
+    -340
+   ]
+  },
+  {
+   "from": [
+    820,
+    -400
+   ],
+   "to": [
+    840,
+    -400
+   ]
+  },
+  {
+   "from": [
+    840,
+    -400
+   ],
+   "to": [
+    840,
+    -340
+   ]
+  },
+  {
+   "from": [
+    840,
+    -340
+   ],
+   "to": [
+    820,
+    -340
+   ]
+  },
+  {
+   "from": [
+    880,
+    -280
+   ],
+   "to": [
+    880,
+    -340
+   ]
+  },
+  {
+   "from": [
+    880,
+    -340
+   ],
+   "to": [
+    840,
+    -340
+   ]
+  },
+  {
+   "from": [
+    800,
+    -120
+   ],
+   "to": [
+    840,
+    -120
+   ]
+  },
+  {
+   "from": [
+    880,
+    -120
+   ],
+   "to": [
+    1020,
+    -120
+   ]
+  },
+  {
+   "from": [
+    1020,
+    -120
+   ],
+   "to": [
+    1020,
+    -20
+   ]
+  },
+  {
+   "from": [
+    1020,
+    -20
+   ],
+   "to": [
+    1060,
+    -20
+   ]
+  },
+  {
+   "from": [
+    1060,
+    -20
+   ],
+   "to": [
+    1060,
+    -40
+   ]
+  },
+  {
+   "from": [
+    920,
+    -120
+   ],
+   "to": [
+    920,
+    -80
+   ]
+  },
+  {
+   "from": [
+    980,
+    -120
+   ],
+   "to": [
+    980,
+    -80
+   ]
+  },
+  {
+   "from": [
+    920,
+    -40
+   ],
+   "to": [
+    920,
+    -20
+   ]
+  },
+  {
+   "from": [
+    980,
+    -40
+   ],
+   "to": [
+    980,
+    -20
+   ]
+  },
+  {
+   "from": [
+    920,
+    20
+   ],
+   "to": [
+    920,
+    40
+   ]
+  },
+  {
+   "from": [
+    920,
+    40
+   ],
+   "to": [
+    980,
+    40
+   ]
+  },
+  {
+   "from": [
+    980,
+    40
+   ],
+   "to": [
+    980,
+    20
+   ]
+  },
+  {
+   "from": [
+    980,
+    60
+   ],
+   "to": [
+    980,
+    40
+   ]
+  },
+  {
+   "from": [
+    1060,
+    -80
+   ],
+   "to": [
+    1060,
+    -160
+   ]
+  },
+  {
+   "from": [
+    1080,
+    -60
+   ],
+   "to": [
+    1120,
+    -60
+   ]
+  },
+  {
+   "from": [
+    1160,
+    -60
+   ],
+   "to": [
+    1220,
+    -60
+   ]
+  },
+  {
+   "from": [
+    1180,
+    -60
+   ],
+   "to": [
+    1180,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1260,
+    -60
+   ],
+   "to": [
+    1300,
+    -60
+   ]
+  },
+  {
+   "from": [
+    1320,
+    -80
+   ],
+   "to": [
+    1360,
+    -80
+   ]
+  }
+ ],
+ "labels": [
+  {
+   "net": "V+",
+   "pos": [
+    0,
+    -600
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    240,
+    -600
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    440,
+    -600
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    160,
+    -540
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    220,
+    -540
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    360,
+    -540
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    420,
+    -540
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    540,
+    -520
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    540,
+    -600
+   ]
+  },
+  {
+   "net": "in",
+   "pos": [
+    -20,
+    0
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    140,
+    -60
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    0,
+    60
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    -120,
+    -120
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    680,
+    -100
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    960,
+    100
+   ],
+   "rot": 180
+  },
+  {
+   "net": "VB",
+   "pos": [
+    1060,
+    -200
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    1180,
+    0
+   ],
+   "rot": 180
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1300,
+    -100
+   ]
+  },
+  {
+   "net": "out",
+   "pos": [
+    1360,
+    -80
+   ]
+  }
+ ],
+ "texts": [
+  {
+   "title": "Credit",
+   "text": "Based on Aion FX's Cerulean (document 2.0.1): its circuit, values and build ideas.\nThe drawing, notes and wording are Solum Builder's own.\nhttps://aionfx.com/project/cerulean-amp-overdrive/",
+   "pos": [
+    -120,
+    160
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "title": "Try: a three-way clipping switch",
+   "text": "Clipping: with a DPDT on-on-on the middle position is soft and hard at once (close to hard alone); a DPDT on-on offers just soft and hard. (from Aion FX's Cerulean notes)"
+  },
+  {
+   "title": "About C6",
+   "text": "C6 is an addition (it stops the op-amp oscillating well above hearing); the stock Bluesbreaker has none. (from Aion FX's Cerulean notes)"
+  },
+  {
+   "title": "Gain DIP switch (SW3)",
+   "text": "Gain DIP (SW3): switch 1 on is Normal (stock), 2 on is Medium, both off High; 1 on wins over 2. (from Aion FX's Cerulean notes)"
+  }
+ ],
+ "probes": {
+  "in": "in",
+  "out": "out"
+ },
+ "enclosure": {
+  "size": "125B"
+ }
+}

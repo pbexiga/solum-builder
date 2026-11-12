@@ -1,0 +1,544 @@
+{
+  "schema": 29,
+  "id": "baxandall-3-band-v1",
+  "name": "Tone stack · Baxandall (bass, mid, treble)",
+  "version": {
+    "major": 1,
+    "minor": 2
+  },
+  "description": "An active Baxandall tone control with a third, Mid, control: Bass, Mid (around 1 kHz) and Treble, each about ±20 dB, flat with every knob half-way. Values from Texas Instruments' TL082-N data sheet (SNOSBW5C), Figure 28 \"Three-Band Active Tone Control\" (TI's drawing has no refs; ours run left to right); all pots linear, as TI says. A TL071 for the TL082's half, on 9 V with + at vref instead of ±15 V and ground. Left out: TI's input buffer (a TL082 follower with 5 µF in and 10k to ground); C5, TI's 1 µF after it, is kept. It needs a low-impedance source: inside an effect, an op-amp output or an emitter or source follower before it is enough; from the guitar, a pot or a transistor's collector, put a buffer first (Buffer · op-amp (Klon)). The output sits at vref. Wire vref to a Vref divider.",
+  "tags": [
+    "tone",
+    "tone stack",
+    "opamp",
+    "baxandall"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "C5",
+      "pos": [
+        -40,
+        0
+      ],
+      "type": "capacitor",
+      "value": "1µ",
+      "kind": "film"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        40,
+        0
+      ],
+      "type": "resistor",
+      "value": "11k"
+    },
+    {
+      "ref": "VR1",
+      "pos": [
+        120,
+        0
+      ],
+      "rot": 180,
+      "type": "pot",
+      "value": "100k",
+      "label": "Bass"
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        200,
+        0
+      ],
+      "type": "resistor",
+      "value": "11k"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        120,
+        -80
+      ],
+      "type": "capacitor",
+      "value": "47n",
+      "kind": "film"
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        120,
+        60
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "11k"
+    },
+    {
+      "ref": "R4",
+      "pos": [
+        40,
+        240
+      ],
+      "type": "resistor",
+      "value": "3k6"
+    },
+    {
+      "ref": "VR2",
+      "pos": [
+        120,
+        240
+      ],
+      "rot": 180,
+      "type": "pot",
+      "value": "100k",
+      "label": "Mid"
+    },
+    {
+      "ref": "R5",
+      "pos": [
+        200,
+        240
+      ],
+      "type": "resistor",
+      "value": "3k6"
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        120,
+        160
+      ],
+      "type": "capacitor",
+      "value": "5n",
+      "kind": "film"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        120,
+        300
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "22n",
+      "kind": "film"
+    },
+    {
+      "ref": "R6",
+      "pos": [
+        40,
+        480
+      ],
+      "type": "resistor",
+      "value": "1k8"
+    },
+    {
+      "ref": "VR3",
+      "pos": [
+        120,
+        480
+      ],
+      "rot": 180,
+      "type": "pot",
+      "value": "500k",
+      "label": "Treble"
+    },
+    {
+      "ref": "R7",
+      "pos": [
+        200,
+        480
+      ],
+      "type": "resistor",
+      "value": "1k8"
+    },
+    {
+      "ref": "C4",
+      "pos": [
+        120,
+        540
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "5n",
+      "kind": "film"
+    },
+    {
+      "ref": "IC1",
+      "pos": [
+        200,
+        580
+      ],
+      "model": "TL071",
+      "type": "opamp"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        -80,
+        0
+      ],
+      "to": [
+        -60,
+        0
+      ]
+    },
+    {
+      "from": [
+        -20,
+        0
+      ],
+      "to": [
+        20,
+        0
+      ]
+    },
+    {
+      "from": [
+        0,
+        0
+      ],
+      "to": [
+        0,
+        480
+      ]
+    },
+    {
+      "from": [
+        320,
+        0
+      ],
+      "to": [
+        320,
+        580
+      ]
+    },
+    {
+      "from": [
+        60,
+        0
+      ],
+      "to": [
+        100,
+        0
+      ]
+    },
+    {
+      "from": [
+        140,
+        0
+      ],
+      "to": [
+        180,
+        0
+      ]
+    },
+    {
+      "from": [
+        220,
+        0
+      ],
+      "to": [
+        320,
+        0
+      ]
+    },
+    {
+      "from": [
+        120,
+        20
+      ],
+      "to": [
+        120,
+        40
+      ]
+    },
+    {
+      "from": [
+        0,
+        240
+      ],
+      "to": [
+        20,
+        240
+      ]
+    },
+    {
+      "from": [
+        60,
+        240
+      ],
+      "to": [
+        100,
+        240
+      ]
+    },
+    {
+      "from": [
+        140,
+        240
+      ],
+      "to": [
+        180,
+        240
+      ]
+    },
+    {
+      "from": [
+        220,
+        240
+      ],
+      "to": [
+        320,
+        240
+      ]
+    },
+    {
+      "from": [
+        120,
+        260
+      ],
+      "to": [
+        120,
+        280
+      ]
+    },
+    {
+      "from": [
+        0,
+        480
+      ],
+      "to": [
+        20,
+        480
+      ]
+    },
+    {
+      "from": [
+        60,
+        480
+      ],
+      "to": [
+        100,
+        480
+      ]
+    },
+    {
+      "from": [
+        140,
+        480
+      ],
+      "to": [
+        180,
+        480
+      ]
+    },
+    {
+      "from": [
+        220,
+        480
+      ],
+      "to": [
+        320,
+        480
+      ]
+    },
+    {
+      "from": [
+        120,
+        500
+      ],
+      "to": [
+        120,
+        520
+      ]
+    },
+    {
+      "from": [
+        100,
+        -80
+      ],
+      "to": [
+        80,
+        -80
+      ]
+    },
+    {
+      "from": [
+        80,
+        -80
+      ],
+      "to": [
+        80,
+        0
+      ]
+    },
+    {
+      "from": [
+        140,
+        -80
+      ],
+      "to": [
+        160,
+        -80
+      ]
+    },
+    {
+      "from": [
+        160,
+        -80
+      ],
+      "to": [
+        160,
+        0
+      ]
+    },
+    {
+      "from": [
+        100,
+        160
+      ],
+      "to": [
+        80,
+        160
+      ]
+    },
+    {
+      "from": [
+        80,
+        160
+      ],
+      "to": [
+        80,
+        240
+      ]
+    },
+    {
+      "from": [
+        140,
+        160
+      ],
+      "to": [
+        160,
+        160
+      ]
+    },
+    {
+      "from": [
+        160,
+        160
+      ],
+      "to": [
+        160,
+        240
+      ]
+    },
+    {
+      "from": [
+        120,
+        560
+      ],
+      "to": [
+        160,
+        560
+      ]
+    },
+    {
+      "from": [
+        160,
+        600
+      ],
+      "to": [
+        140,
+        600
+      ]
+    },
+    {
+      "from": [
+        240,
+        580
+      ],
+      "to": [
+        360,
+        580
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "in",
+      "pos": [
+        -80,
+        0
+      ]
+    },
+    {
+      "net": "mix",
+      "pos": [
+        120,
+        80
+      ]
+    },
+    {
+      "net": "mix",
+      "pos": [
+        120,
+        320
+      ]
+    },
+    {
+      "net": "mix",
+      "pos": [
+        120,
+        560
+      ]
+    },
+    {
+      "net": "vref",
+      "pos": [
+        140,
+        600
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        360,
+        580
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        200,
+        540
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        200,
+        620
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "out": "out",
+    "vref": "vref"
+  },
+  "notes": {
+    "part:VR1": "Bass: clockwise boosts (to about +20 dB at the bottom of the range), anticlockwise cuts, half-way is flat. C1 bridges the pot, so the treble goes round it.",
+    "part:VR2": "Mid: clockwise boosts a band around 1 kHz (to about +20 dB), anticlockwise cuts it, half-way is flat. C2 and C3 set the band.",
+    "part:VR3": "Treble: clockwise boosts, anticlockwise cuts, half-way is flat. C4 lets only the treble reach the op-amp from it.",
+    "part:C1": "47n, the standard value; TI's original has 0.05 µF (50n) here.",
+    "part:IC1": "The three networks sit in this op-amp's feedback, so cut and boost are symmetrical and flat loses nothing. It inverts the signal."
+  }
+}

@@ -1,0 +1,23 @@
+id: bias-target-unknown
+layer: topology
+severity: error
+check: bias_target_unknown
+stops_sim: true
+title: Bias target not found
+message: "{ref} is set to bias {node}, but the circuit has no such net or pin."
+why: >
+  A trimmer with a bias target is turned until that point sits at the target voltage. The
+  point was probably renamed or deleted.
+fix: "Pick {ref}'s target again (a JFET's inspector: drain target), or clear it."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: TR1, type: trimmer, nets: [V+, d, d], value: 50k, bias_target: {node: Q9.D, volts: 4.5}}
+        - {ref: Q1, type: jfet, nets: [d, GND, GND], model: J201}
+      expect: [TR1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: TR1, type: trimmer, nets: [V+, d, d], value: 50k, bias_target: {node: Q1.D, volts: 4.5}}
+        - {ref: Q1, type: jfet, nets: [d, GND, GND], model: J201}

@@ -1,0 +1,301 @@
+{
+  "schema": 29,
+  "id": "charge-pump-12v-zener-v1",
+  "name": "12 V supply · charge pump and zener",
+  "version": {
+    "major": 1,
+    "minor": 1
+  },
+  "description": "The TC1044S doubler (about 17.5 V on V18) with a resistor and a 12 V zener after it: the simplest regulator, to learn how one works. R1 (1k) passes about 5 mA; what the circuit doesn't draw, Z1 burns, holding V12 at about 12 V. Draw more than R1 passes and V12 falls. A 78L12 (the 12 V regulator block) holds 12 V up to 100 mA and wastes less. Label the stages it powers V12.",
+  "tags": [
+    "power",
+    "charge pump",
+    "zener",
+    "chip"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "U1",
+      "type": "chargepump",
+      "model": "TC1044S"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        100,
+        -50
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        -120,
+        -70
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    },
+    {
+      "ref": "D1",
+      "pos": [
+        -160,
+        -90
+      ],
+      "type": "diode",
+      "model": "1N5817"
+    },
+    {
+      "ref": "D2",
+      "pos": [
+        -20,
+        -90
+      ],
+      "type": "diode",
+      "model": "1N5817"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        160,
+        -90
+      ],
+      "type": "resistor",
+      "value": "1k"
+    },
+    {
+      "ref": "Z1",
+      "pos": [
+        220,
+        -50
+      ],
+      "rot": 270,
+      "type": "diode",
+      "model": "1N4742A"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        260,
+        -50
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        -40,
+        -10
+      ],
+      "to": [
+        -120,
+        -10
+      ]
+    },
+    {
+      "from": [
+        -120,
+        -10
+      ],
+      "to": [
+        -120,
+        -50
+      ]
+    },
+    {
+      "from": [
+        -140,
+        -90
+      ],
+      "to": [
+        -40,
+        -90
+      ]
+    },
+    {
+      "from": [
+        0,
+        -90
+      ],
+      "to": [
+        100,
+        -90
+      ]
+    },
+    {
+      "from": [
+        100,
+        -90
+      ],
+      "to": [
+        100,
+        -70
+      ]
+    },
+    {
+      "from": [
+        100,
+        -90
+      ],
+      "to": [
+        140,
+        -90
+      ]
+    },
+    {
+      "from": [
+        180,
+        -90
+      ],
+      "to": [
+        260,
+        -90
+      ]
+    },
+    {
+      "from": [
+        260,
+        -90
+      ],
+      "to": [
+        260,
+        -70
+      ]
+    },
+    {
+      "from": [
+        220,
+        -90
+      ],
+      "to": [
+        220,
+        -70
+      ]
+    },
+    {
+      "from": [
+        40,
+        -30
+      ],
+      "to": [
+        40,
+        -50
+      ]
+    },
+    {
+      "from": [
+        -40,
+        -30
+      ],
+      "to": [
+        -40,
+        -50
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "V+",
+      "pos": [
+        40,
+        -50
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        -40,
+        10
+      ],
+      "rot": 90
+    },
+    {
+      "net": "GND",
+      "pos": [
+        40,
+        30
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        -180,
+        -90
+      ]
+    },
+    {
+      "net": "V18",
+      "pos": [
+        100,
+        -90
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        100,
+        -30
+      ]
+    },
+    {
+      "net": "V12",
+      "pos": [
+        260,
+        -90
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        220,
+        -30
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        260,
+        -30
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        -40,
+        -50
+      ]
+    }
+  ],
+  "ports": {
+    "out": "V12"
+  },
+  "notes": {
+    "part:U1": "Doubler: V+ in, about 2 × V+ out. Pin 2 swings C2 between ground and V+, lifting the D1/D2 junction; pin 5 goes to ground. Supply: pin 8 is the chip's supply input, fed from the pedal's V+ (the DC jack or the battery, through the input filter). The pump draws its current in short pulses at its switching rate; a bulk electrolytic on V+ (10-100 µF, such as the Input filter block's 47 Ω and 100 µF) supplies them close by, so they don't travel back along V+ and whine in the other stages. A pedal that already has one on V+ needs no second cap here (one close to pin 8 helps a little on a long board). A pedal with none, such as a bare battery fuzz like the Rangemaster, needs one: the \"Supply without a bulk capacitor\" warning says so.",
+    "part:C1": "Reservoir: holds V18 up between the pump's pulses. Bigger means less ripple.",
+    "net:V18": "About 17.5 V from a 9 V supply: 2 × 9 V less two diode drops and the pump's output resistance.",
+    "part:C2": "Pump cap: the bigger, the lower the pump's output resistance (1/(f × C) of it).",
+    "part:D1": "D1 charges C2 from V+; D2 passes its charge on to V18. Schottkys (1N5817) drop the least.",
+    "part:R1": "Drops what V18 has above 12 V. Its current ((V18 - 12 V) / 1k) is shared: what the circuit draws, the rest through Z1. Draw more than that and V12 sags below 12 V.",
+    "part:Z1": "1N4742A, 12 V: conducts backwards once V12 reaches 12 V, so it holds there. It wastes what the circuit doesn't draw.",
+    "part:C3": "Smooths V12 and the zener's noise.",
+    "net:V12": "About 12 V while the circuit draws less than R1's current."
+  }
+}

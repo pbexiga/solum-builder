@@ -1,0 +1,136 @@
+{
+ "schema": 5,
+ "id": "old-own-supply-v5",
+ "name": "Own supply saved by schema v5",
+ "power": {
+  "rails": {
+   "V+": 9,
+   "V-": -12
+  },
+  "mode": "custom"
+ },
+ "parts": [
+  {
+   "ref": "V1",
+   "type": "vsource",
+   "pos": [
+    100,
+    100
+   ],
+   "value": "12"
+  },
+  {
+   "ref": "V3",
+   "type": "vsource",
+   "pos": [
+    300,
+    100
+   ],
+   "value": "9"
+  },
+  {
+   "ref": "R1",
+   "type": "resistor",
+   "pos": [
+    500,
+    100
+   ],
+   "value": "10k"
+  },
+  {
+   "ref": "V2",
+   "type": "vsource",
+   "pos": [
+    700,
+    100
+   ],
+   "value": "1.5"
+  },
+  {
+   "ref": "R2",
+   "type": "resistor",
+   "pos": [
+    900,
+    100
+   ],
+   "value": "10k"
+  }
+ ],
+ "labels": [
+  {
+   "net": "V+",
+   "pos": [
+    100,
+    80
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    100,
+    120
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    300,
+    80
+   ]
+  },
+  {
+   "net": "V-",
+   "pos": [
+    300,
+    120
+   ]
+  },
+  {
+   "net": "V+",
+   "pos": [
+    480,
+    100
+   ]
+  },
+  {
+   "net": "V-",
+   "pos": [
+    520,
+    100
+   ]
+  },
+  {
+   "net": "bias",
+   "pos": [
+    700,
+    80
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    700,
+    120
+   ]
+  },
+  {
+   "net": "bias",
+   "pos": [
+    880,
+    100
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    920,
+    100
+   ]
+  }
+ ],
+ "probes": {},
+ "notes": {
+  "part:V1": "the DC jack",
+  "part:V2": "a bias battery"
+ }
+}

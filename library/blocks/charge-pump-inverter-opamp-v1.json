@@ -1,0 +1,349 @@
+{
+  "schema": 29,
+  "id": "charge-pump-inverter-opamp-v1",
+  "name": "Charge pump · inverter, op-amp (no chip)",
+  "version": {
+    "major": 1,
+    "minor": 1
+  },
+  "description": "⚠ Built from textbook circuits, not documented: values chosen here and checked in simulation only, not a tested build. A voltage inverter built from parts, no pump chip, to see how one works: an op-amp square-wave oscillator (IC1, R1–R4, C1, about 22 kHz) pushes C2 up and down; when the square wave is high, C2 charges through D1 to ground; when it goes low, C2's right side is pulled below ground and D2 passes that to C3. About −5.6 V from 9 V at 0.6 mA (a chip gives about −9 V: the TL071 doesn't swing rail to rail and the diodes drop a little each). Label the stages it powers VNEG. Values are ordinary starting values, checked in simulation, not a published circuit. The DC readouts don't include the pumping (they show VNEG near 0 V); the Scope and audio renders do.",
+  "tags": [
+    "power",
+    "charge pump",
+    "no chip"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "IC1",
+      "pos": [
+        200,
+        0
+      ],
+      "model": "TL071",
+      "type": "opamp"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        80,
+        100
+      ],
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        160,
+        140
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        220,
+        100
+      ],
+      "type": "resistor",
+      "value": "220k"
+    },
+    {
+      "ref": "R4",
+      "pos": [
+        200,
+        -100
+      ],
+      "type": "resistor",
+      "value": "24k"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        120,
+        0
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "2n2",
+      "kind": "film"
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        300,
+        0
+      ],
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    },
+    {
+      "ref": "D1",
+      "pos": [
+        340,
+        40
+      ],
+      "rot": 90,
+      "type": "diode",
+      "model": "1N5817"
+    },
+    {
+      "ref": "D2",
+      "pos": [
+        360,
+        0
+      ],
+      "rot": 180,
+      "type": "diode",
+      "model": "1N5817"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        440,
+        20
+      ],
+      "rot": 270,
+      "type": "capacitor",
+      "value": "10µ",
+      "kind": "electrolytic",
+      "rating_v": 25.0
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        160,
+        20
+      ],
+      "to": [
+        160,
+        100
+      ]
+    },
+    {
+      "from": [
+        160,
+        100
+      ],
+      "to": [
+        160,
+        120
+      ]
+    },
+    {
+      "from": [
+        100,
+        100
+      ],
+      "to": [
+        200,
+        100
+      ]
+    },
+    {
+      "from": [
+        240,
+        100
+      ],
+      "to": [
+        260,
+        100
+      ]
+    },
+    {
+      "from": [
+        260,
+        100
+      ],
+      "to": [
+        260,
+        0
+      ]
+    },
+    {
+      "from": [
+        260,
+        0
+      ],
+      "to": [
+        260,
+        -100
+      ]
+    },
+    {
+      "from": [
+        240,
+        0
+      ],
+      "to": [
+        280,
+        0
+      ]
+    },
+    {
+      "from": [
+        220,
+        -100
+      ],
+      "to": [
+        260,
+        -100
+      ]
+    },
+    {
+      "from": [
+        160,
+        -20
+      ],
+      "to": [
+        120,
+        -20
+      ]
+    },
+    {
+      "from": [
+        140,
+        -20
+      ],
+      "to": [
+        140,
+        -100
+      ]
+    },
+    {
+      "from": [
+        140,
+        -100
+      ],
+      "to": [
+        180,
+        -100
+      ]
+    },
+    {
+      "from": [
+        320,
+        0
+      ],
+      "to": [
+        340,
+        0
+      ]
+    },
+    {
+      "from": [
+        340,
+        0
+      ],
+      "to": [
+        340,
+        20
+      ]
+    },
+    {
+      "from": [
+        380,
+        0
+      ],
+      "to": [
+        460,
+        0
+      ]
+    },
+    {
+      "from": [
+        200,
+        -40
+      ],
+      "to": [
+        200,
+        -60
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "V+",
+      "pos": [
+        60,
+        100
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        160,
+        160
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        120,
+        20
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        340,
+        60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        440,
+        40
+      ]
+    },
+    {
+      "net": "VNEG",
+      "pos": [
+        460,
+        0
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        200,
+        -60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        200,
+        40
+      ]
+    }
+  ],
+  "ports": {
+    "out": "VNEG"
+  },
+  "notes": {
+    "part:IC1": "The oscillator: the op-amp flips its output between high and low (about 1.5 V and 7.5 V from 9 V, a TL071 doesn't reach its rails) about 22,000 times a second. A TL071, a single op-amp (half of a TL072 is the same); any op-amp works, a rail-to-rail one swings further and pumps higher. Supply: the op-amp's V+ pin is the oscillator's supply, fed from the pedal's V+ (the DC jack or the battery, through the input filter). It draws its current in short pulses at its switching rate; a bulk electrolytic on V+ (10-100 µF, such as the Input filter block's 47 Ω and 100 µF) supplies them close by, so they don't travel back along V+ and whine in the other stages. A pedal that already has one on V+ needs no second cap here (one close to the op-amp helps a little on a long board). A pedal with none, such as a bare battery fuzz like the Rangemaster, needs one: the \"Supply without a bulk capacitor\" warning says so.",
+    "part:R1": "R1 and R2 hold IC1's + input at half of V+...",
+    "part:R2": "...and R3 nudges it up when the output is high and down when it's low (hysteresis): the two points where IC1 flips.",
+    "part:R3": "Hysteresis: feeds the output back to the + input, so IC1 snaps cleanly from one state to the other.",
+    "part:R4": "Timing: charges and discharges C1 from the output. R4 × C1 sets the frequency; double either and it halves (into the audio band: you'd hear it).",
+    "part:C1": "Timing: when its voltage crosses the + input's flip point, the output flips and C1 heads the other way. A square wave comes out of IC1.",
+    "part:C2": "The flying capacitor: charged through D1 while the square wave is high, then pulled down by it when it goes low, so its right side drops below ground.",
+    "part:D1": "Clamps C2's right side to ground while the square wave is high, so C2 charges.",
+    "part:D2": "Lets C3 give charge to C2 when C2's right side is below ground; blocks the other way. Schottky (1N5817) for a low drop.",
+    "part:C3": "Reservoir, + to ground: VNEG is below ground. Holds it between pushes; bigger means less ripple.",
+    "net:VNEG": "Below ground by the square wave's swing less two diode drops: about −5.6 V from 9 V at 0.6 mA."
+  }
+}

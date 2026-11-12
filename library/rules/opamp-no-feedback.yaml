@@ -1,0 +1,31 @@
+id: opamp-no-feedback
+layer: topology
+severity: error
+check: opamp_no_feedback
+title: Op-amp without feedback
+message: "{ref} has no feedback path from its output to its − input."
+why: >
+  Without feedback the op-amp runs at its full open-loop gain (around 100 dB) and acts as
+  a comparator: any signal slams its output into the supply rails as a square wave.
+fix: >
+  Add a resistor from {ref}'s output to its − input (and, for gain, one from the − input
+  through a capacitor to ground), or wire the output straight to the − input for a buffer.
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, p], value: 100n}
+        - {ref: R1, type: resistor, nets: [p, vref], value: 1M}
+        - {ref: R2, type: resistor, nets: [V+, vref], value: 100k}
+        - {ref: R3, type: resistor, nets: [vref, GND], value: 100k}
+        - {ref: C2, type: capacitor, nets: [vref, GND], value: 10u}
+        - {ref: R5, type: resistor, nets: [m, vref], value: 10k}
+        - {ref: U1, type: opamp, nets: [p, m, o], model: TL072}
+        - {ref: C3, type: capacitor, nets: [o, out], value: 1u}
+        - {ref: R4, type: resistor, nets: [out, GND], value: 100k}
+        - {ref: OUT, type: amp, nets: [out]}
+      expect: [U1]
+  good:
+    - starter: ts808
+    - starter: proco-rat

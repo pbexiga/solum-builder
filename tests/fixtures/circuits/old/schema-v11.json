@@ -1,0 +1,19 @@
+{
+  "schema": 11,
+  "id": "old-v11",
+  "name": "Old v11 op-amps",
+  "parts": [
+    {"ref": "U3", "type": "opamp", "model": "TL072", "pos": [400, 0]},
+    {"ref": "U1", "type": "opamp", "model": "TL072", "pos": [0, 0], "rot": 90},
+    {"ref": "U2", "type": "opamp", "model": "TL072", "pos": [0, 400], "supply": ["V+F", "GND"]},
+    {"ref": "U4", "type": "opamp", "model": "LM308", "pos": [400, 400]},
+    {"ref": "U10", "type": "opamp", "model": "RC4558", "pos": [800, 0]},
+    {"ref": "IC2", "type": "resistor", "value": "10k", "pos": [800, 400]},
+    {"ref": "RT1", "type": "trimmer", "value": "100k", "pos": [1200, 0],
+     "bias_target": {"node": "U1.out", "volts": 4.5}}
+  ],
+  "labels": [{"net": "GND", "pos": [1000, 1000]}],
+  "probes": {"in": "U3.+", "out": "U10.out"},
+  "notes": {"part:U1": "the clipper", "net:V+F": "filtered"},
+  "power": {"rails": {"V+": 9.0}}
+}

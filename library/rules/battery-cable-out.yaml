@@ -1,0 +1,34 @@
+id: battery-cable-out
+layer: topology
+severity: warning
+check: battery_cable_out
+title: "Battery cut off: no cable in"
+message: "{battery}'s − goes to {ref}'s ring, and {ref} has no cable in, so the battery is cut off and the circuit has no supply."
+why: >
+  Pedals switch the battery on through a stereo input jack: the battery's − goes to the
+  ring, and a mono guitar plug's sleeve joins the ring to ground. With no cable in, the
+  ring touches nothing, so nothing powers the circuit. That's what saves the battery while
+  the pedal sits unplugged; it also means the pedal is silent until a cable goes in.
+fix: "Put a cable in: {ref}'s Cable switch in Knobs. Or wire {battery}'s − to ground, so the battery is always on."
+fixtures:
+  bad:
+    - parts:
+        - {ref: BAT1, type: battery, pins: {"+": V+, "-": r}}
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 10k}
+        - {ref: J1, type: jack, stereo: true, plugged: false, label: Input, pins: {T: in, R: r, S: GND}}
+      expect: [J1]
+  good:
+    - parts:   # a cable in
+        - {ref: BAT1, type: battery, pins: {"+": V+, "-": r}}
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 10k}
+        - {ref: J1, type: jack, stereo: true, label: Input, pins: {T: in, R: r, S: GND}}
+    - parts:   # the battery straight to ground: the jack doesn't switch it (D-185)
+        - {ref: BAT1, type: battery, pins: {"+": V+, "-": GND}}
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 10k}
+        - {ref: J1, type: jack, stereo: true, plugged: false, label: Input, pins: {T: in, R: r, S: GND}}
+    - rails: {V+: 9}   # the DC plug in: the adapter powers it, cable or not
+      parts:
+        - {ref: DC, type: dcjack, pins: {"+": V+, "-": GND, sw: bpos}}
+        - {ref: BAT1, type: battery, pins: {"+": bpos, "-": r}}
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 10k}
+        - {ref: J1, type: jack, stereo: true, plugged: false, label: Input, pins: {T: in, R: r, S: GND}}

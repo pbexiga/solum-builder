@@ -1,0 +1,197 @@
+{
+  "id": "BAT46",
+  "type": "diode",
+  "description": "BAT46 small-signal Schottky (100 V): a low clipper, between germanium and silicon (our fit to Vishay's sheet)",
+  "spice_name": "BAT46",
+  "kind": "subckt",
+  "pins": [
+    "A",
+    "K"
+  ],
+  "card": "BAT46.lib",
+  "manufacturer": "Vishay",
+  "source": {
+    "url": "https://wwwlegacy.vishay.com/docs/85662/bat46.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own fit to the maker's datasheet curve (D-156): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://wwwlegacy.vishay.com/docs/85662/bat46.pdf",
+  "fixes": [],
+  "ratings": {
+    "if_avg": 0.15,
+    "vr_max": 100.0
+  },
+  "rating_sources": {
+    "if_avg": "Vishay BAT46 data sheet, Rev. 2.2, 07-Nov-2024 (doc 85662): Forward continuous current 150 mA",
+    "vr_max": "Vishay BAT46 data sheet, Rev. 2.2, 07-Nov-2024 (doc 85662): Repetitive peak reverse voltage 100 V"
+  },
+  "fit": {
+    "sheet": "Vishay BAT46 data sheet, Rev. 2.2, 07-Nov-2024 (doc 85662)",
+    "figure": "Fig. 1 - Typical Instantaneous Forward Characteristics, Tj = 25 °C (blue), read from the PDF's vector drawing",
+    "points": [
+      [
+        0.0885,
+        1.648e-06
+      ],
+      [
+        0.1421,
+        1.29e-05
+      ],
+      [
+        0.1575,
+        2.343e-05
+      ],
+      [
+        0.1914,
+        8.179e-05
+      ],
+      [
+        0.2522,
+        0.0006594
+      ],
+      [
+        0.2974,
+        0.002166
+      ],
+      [
+        0.3177,
+        0.0032240000000000003
+      ],
+      [
+        0.4002,
+        0.009455999999999999
+      ],
+      [
+        0.4989,
+        0.01909
+      ],
+      [
+        0.5762,
+        0.02807
+      ],
+      [
+        0.6774,
+        0.05577
+      ],
+      [
+        0.7712,
+        0.1362
+      ],
+      [
+        0.8167,
+        0.2028
+      ],
+      [
+        0.8728,
+        0.29810000000000003
+      ]
+    ],
+    "method": "Two diodes in parallel (scripts/fit_models.py fit_diode_pair, D-159): the first fitted, as one diode is, to the points up to 10 mA; the second to the current the points above that carry beyond the first; Both IS held under the sheet's 0.5 µA leakage limit at 1.5 V; CJO is the sheet's typical 10 pF at 0 V; BV 100 V at 100 µA, the sheet's breakdown test, on the first diode",
+    "note": "Like the BAT41, the curve flattens above 10 mA more than one diode can (95 mV off), so two diodes in parallel (D-159). A subcircuit: its current isn't read at the operating point (D-155)"
+  },
+  "validation": [
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0001
+      },
+      "simulated": 0.197264,
+      "datasheet": {
+        "max": 0.25,
+        "source": "Vishay BAT46 data sheet, Rev. 2.2, 07-Nov-2024 (doc 85662): Forward voltage 250 mV max at I_F = 0.1 mA"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.01
+      },
+      "simulated": 0.406192,
+      "datasheet": {
+        "max": 0.45,
+        "source": "Vishay BAT46 data sheet, Rev. 2.2, 07-Nov-2024 (doc 85662): Forward voltage 450 mV max at I_F = 10 mA"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.25
+      },
+      "simulated": 0.845613,
+      "datasheet": {
+        "max": 1.0,
+        "source": "Vishay BAT46 data sheet, Rev. 2.2, 07-Nov-2024 (doc 85662): Forward voltage 1000 mV max at I_F = 250 mA"
+      }
+    },
+    {
+      "quantity": "ir",
+      "conditions": {
+        "vr": 1.5
+      },
+      "simulated": 6.78503e-08,
+      "datasheet": {
+        "max": 5e-07,
+        "source": "Vishay BAT46 data sheet, Rev. 2.2, 07-Nov-2024 (doc 85662): Leakage current at VR = 1.5 V"
+      }
+    },
+    {
+      "quantity": "ir",
+      "conditions": {
+        "vr": 50.0
+      },
+      "simulated": 6.7948e-08,
+      "datasheet": {
+        "max": 2e-06,
+        "source": "Vishay BAT46 data sheet, Rev. 2.2, 07-Nov-2024 (doc 85662): Leakage current at VR = 50 V"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 4.644e-06
+      },
+      "simulated": 0.115033,
+      "datasheet": {
+        "source": "Vishay BAT46 data sheet, Rev. 2.2, 07-Nov-2024 (doc 85662), Fig. 1 - Typical Instantaneous Forward Characteristics, Tj = 25 °C (blue), read from the PDF's vector drawing",
+        "typ": 0.1152,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.005828
+      },
+      "simulated": 0.355467,
+      "datasheet": {
+        "source": "Vishay BAT46 data sheet, Rev. 2.2, 07-Nov-2024 (doc 85662), Fig. 1 - Typical Instantaneous Forward Characteristics, Tj = 25 °C (blue), read from the PDF's vector drawing",
+        "typ": 0.356,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.2474
+      },
+      "simulated": 0.844195,
+      "datasheet": {
+        "source": "Vishay BAT46 data sheet, Rev. 2.2, 07-Nov-2024 (doc 85662), Fig. 1 - Typical Instantaneous Forward Characteristics, Tj = 25 °C (blue), read from the PDF's vector drawing",
+        "typ": 0.8427,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    }
+  ],
+  "package": {
+    "name": "DO-35 (DO-204AH)",
+    "pins": {
+      "K": 1,
+      "A": 2
+    },
+    "source": "Vishay BAT46 data sheet, Rev. 2.2: DO-35 (DO-204AH); pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The band marks the cathode"
+  }
+}

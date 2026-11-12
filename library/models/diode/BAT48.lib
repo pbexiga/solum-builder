@@ -1,0 +1,3 @@
+* BAT48 small-signal Schottky (40 V): a low clipper, between germanium and silicon (our fit to Vishay's sheet)
+* Fitted by Solum Builder to Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02, Ratings and Characteristic Curves: Forward Characteristics, TJ = 25 °C (page 3), read from the PDF's vector drawing (D-156)
+.model BAT48 D(is=6.471e-08 n=1 rs=1.023 cjo=1.2e-11 bv=40 ibv=0.0001)

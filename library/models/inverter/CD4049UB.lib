@@ -1,0 +1,18 @@
+* CD4049UB, one inverter of six (unbuffered hex inverter), for linear (biased) use
+* Our own fit to TI's CD4049UB/CD4050B data sheet SCHS046L (Aug 1998, rev. Feb 2026), 25 C typical
+* Pins: in out vdd vss. Per chip (PDIP-16 CD4049UBE): VCC 1, VSS 8; inputs A3 B5 C7 D9 E11 F14,
+* outputs G2 H4 I6 J10 K12 L15; 13 and 16 not connected.
+* N and P channel: ngspice VDMOS, source on its rail; body diodes are the output's drain-bulk diodes.
+* DIN: the input diode to VSS (sheet p. 1 schematic); DSUP: the VSS->VDD diode; ngspice default values.
+.subckt CD4049UB_INV in out vdd vss
+MN out in vss CD4049UB_N
+MP out in vdd CD4049UB_P
+DIN vss in CD4049UB_D
+DSUP vss vdd CD4049UB_D
+.model CD4049UB_N VDMOS(vto=1.3915 kp=0.0031091 theta=0.048075 mtriode=1.7236 lambda=0.0094943
++ rs=1.2486 rd=0.01 ksubthres=0.1 cgs=2.463e-12 cgdmax=5.0373e-12 cgdmin=5.0373e-12 cjo=4.6998e-12)
+.model CD4049UB_P VDMOS(pchan vto=-0.43687 kp=0.0012393 theta=0.12275 mtriode=1.9884
++ lambda=0.031518 rs=27.07 rd=0.01 ksubthres=0.1 cgs=2.463e-12 cgdmax=5.0373e-12 cgdmin=5.0373e-12
++ cjo=4.6998e-12)
+.model CD4049UB_D D
+.ends CD4049UB_INV

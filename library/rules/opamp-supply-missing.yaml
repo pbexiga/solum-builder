@@ -1,0 +1,38 @@
+id: opamp-supply-missing
+layer: topology
+severity: error
+check: opamp_supply_missing
+stops_sim: true
+title: Chip not powered
+message: "{ref}'s {pin} pin {where}: nothing in the circuit powers it."
+why: >
+  A chip takes its power from its V+ and V- pins (a chip of several units from its power
+  unit). Nothing powers this one's {pin}, so the chip can't work and can't be simulated.
+fix: "Wire {ref}'s {pin} pin to a net the circuit powers (V+, or a filtered V+F), or set that supply in Power."
+fixtures:
+  bad:
+    - parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, GND], value: 1M}
+        - {ref: IC1, type: opamp, nets: [in, o, o], model: TL072}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [IC1]
+    - rails: {V+: 9}   # V+ left unwired (D-237: an OTA's spun ngspice)
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, GND], value: 1M}
+        - {ref: IC1, type: opamp, nets: [in, o, o], model: TL072, pins: {V+: null}}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [IC1]
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, GND], value: 1M}
+        - {ref: R2, type: resistor, nets: [V+, ib], value: 100k}
+        - {ref: R3, type: resistor, nets: [o, GND], value: 10k}
+        - {ref: IC1, type: ota, nets: [in, GND, o, ib], model: CA3080, pins: {V+: null}}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [IC1]
+  good:
+    - starter: ts808
+    - starter: proco-rat   # its op-amp runs from V+F, the filtered supply

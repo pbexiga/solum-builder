@@ -1,0 +1,58 @@
+# Expected values for library/starters/marshall-bluesbreaker.json (D-019, D-239, D-257).
+# Refs follow GGG's schematic, except its pots R15 (Gain), R16 (Tone) and R17 (Volume), which
+# are VR1-VR3 here (the app's refs for pots, as D-245).
+circuit: marshall-bluesbreaker
+source:
+  title: General Guitar Gadgets, "Modernized Marshall Vintage BluesBreaker Replica Schematic", version 2018August29
+  url: https://generalguitargadgets.com/pdf/ggg_mbb_sc.pdf
+  snapshot: none (the file's terms refuse serving it from any other site, so no copy was requested)
+  read: 2026-11-10
+  licence: >-
+    "Copyright 20013, 2018 JD Sleep. Permission refused for posting/serving this file from any
+    site other than www.generalguitargadgets.com". Used to draw the circuit (our own drawing,
+    GGG's refs and values); the file isn't copied into the project or archived elsewhere.
+    The user suggested GGG as a source (2026-11-10).
+substitutions:
+  - >-
+    GGG's replica "is based on the original BluesBreaker pedal in a black enclosure, not the
+    newer, smaller one in a silver enclosure", "Modernized with true bypass, LED indicator &
+    combined coupling cap/resistor". The true bypass (Sw1a-c), the LED (D6) and R18 aren't
+    drawn.
+  - >-
+    The combined coupling: GGG's C6 0.1µF and R8 10k between the stages. Schematics Online's
+    second drawing (below) shows the original's R8 4.7k, C6 220n, then the footswitch's mute
+    to ground ("zum Fußschalter, schaltet nach Masse"), then R9 4.7k, C7 220n. With the effect
+    on that is 9.4k and 110n in series, against GGG's 10k and 100n.
+  - >-
+    GGG's values. Its note "Some factory units had the following alternate values for these
+    parts: R2 - 27k, R3 - 33k, C4 10pF" isn't drawn (the Aion version's Mode switch has
+    27k/33k as its V1).
+  - D1 1N4001, D2-D5 1N4148 ("4 x 1N4148"), IC1 TL072, as GGG's.
+  - The supply is an ideal 9 V into D1, as the other starters'.
+
+# GGG's schematic gives no voltages, gains or frequencies; nor do the two redraws (D-214).
+checks: []
+
+omitted:
+  - what: Bias voltages, gains, frequency curves
+    why: >-
+      None published for the original. At 9 V the simulation reads VA 8.30 V (after D1) and
+      every op-amp pin at VB, 4.15 V. The Aion version's checks are of Aion's supply (a 1N5817,
+      100 Ω, 10k/10k divider) and don't apply.
+  - what: Where the two Schematics Online redraws differ from GGG
+    why: >-
+      Schematics Online's PDF (https://schematicsonline.com/wp-content/uploads/2022/11/Marshall-Blues-Breaker.pdf,
+      snapshot http://web.archive.org/web/20250109112220/https://schematicsonline.com/wp-content/uploads/2022/11/Marshall-Blues-Breaker.pdf)
+      holds two unattributed, low-resolution redraws. The one titled "Marshall Blues Breaker
+      1992": input pull-down 2.2M, R2/R3 27K/33K (GGG's factory alternates) with C4 100pF,
+      Tone 25K LOG, output pull-down 1M, 0.1µF and 10K between the stages (as GGG). The German
+      one: 2.2M, 4.7k/3.3k and 47pf (as GGG), 220nF + 4.7k + 4.7k + 220nF with the mute (the
+      original's), Tone 22k log, 1M. The circuit is the same in all three; the drawing follows
+      GGG, the clearest and the only one with a named author.
+
+build:
+  parts:
+    - "The circuit and every value are from GGG's schematic, with its part numbers."
+    - "Capacitor types: C5 and C11 electrolytic as GGG marks them (+), C4 47p NP0/C0G, the rest film (the app's advice for the signal path; GGG names no types)."
+    - "Electrolytics rated 16 V: GGG gives no rating, so this is the app's own advice for a 9 V circuit (D-203)."
+    - "Enclosure 125B, a builder's choice, as the Aion version's."

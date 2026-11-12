@@ -1,0 +1,16 @@
+id: part-shorted
+layer: topology
+severity: warning
+check: part_shorted
+title: Part shorted out
+message: "Both ends of {ref} are on the same net, so it does nothing."
+why: A wire runs across the part (or one of its pins lands on a wire), joining its ends.
+fix: "Remove the wire across {ref}, or move it so each end goes where it should."
+fixtures:
+  bad:
+    - parts:
+        - {ref: R1, type: resistor, nets: [a, a], value: 10k}
+        - {ref: R2, type: resistor, nets: [a, GND], value: 10k}
+      expect: [R1]
+  good:
+    - starter: big-muff-pi-v3

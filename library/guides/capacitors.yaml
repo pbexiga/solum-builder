@@ -1,0 +1,42 @@
+# Choosing capacitors (D-095): the one source for Help → Choosing capacitors, the hints in
+# the inspector's Kind dropdown, and the cap-kind-in-signal-path rule's advice.
+# One entry per capacitor `kind` in the circuit schema, in the order the dropdown lists them.
+title: Choosing capacitors
+intro: >
+  The kind doesn't change the simulation (every capacitor is ideal there); it sets the
+  polarity, the voltage-rating check and the advice in Problems. Pick it for the build.
+kinds:
+  - kind: film
+    name: Film (box, polyester, polypropylene)
+    hint: signal path, the default for audio
+    values: 1 nF to 1 µF
+    use: "The signal path: coupling caps, tone controls, filters. The default for audio."
+    watch: Gets big physically at higher values.
+  - kind: c0g
+    name: C0G / NP0 ceramic
+    hint: small values in the signal path
+    values: pF to about 10 nF
+    use: "Small values: an op-amp's feedback cap, high-frequency roll-off, the input's RF filter."
+    watch: Not available in large values.
+  - kind: ceramic
+    name: Other ceramic (MLCC, X7R, Y5V)
+    hint: supply decoupling only
+    values: 100 nF and up
+    use: Power-supply decoupling (100 nF next to each IC).
+    watch: >
+      Its value shifts with the voltage across it and with temperature, and it can pick up
+      taps (microphonic). Keep it out of the tone and signal path.
+  - kind: electrolytic
+    name: Electrolytic
+    hint: power filtering and big values (polarised)
+    values: 1 µF and up
+    use: Power filtering, bulk and reservoir caps, big coupling caps, emitter/source bypass caps.
+    watch: Polarised, wide tolerance (±20 %), leaks a little, ages.
+  - kind: tantalum
+    name: Tantalum
+    hint: compact but polarised; fails short
+    values: 1 µF to tens of µF
+    use: Compact coupling or bypass in some older designs.
+    watch: >
+      Polarised. Fails as a short if reversed or over-voltage, so many builders avoid it
+      now.

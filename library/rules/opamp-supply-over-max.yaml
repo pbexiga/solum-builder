@@ -1,0 +1,26 @@
+id: opamp-supply-over-max
+layer: operating_point
+severity: error
+check: opamp_supply_over_max
+title: Op-amp supply too high
+message: "{ref} gets {volts} across its supply; the {model}'s absolute maximum is {limit}."
+why: >
+  Above its absolute maximum supply voltage an op-amp can be damaged. Check it before
+  raising a pedal's supply (an 18 V adapter, a charge pump, a ± supply).
+fix: Lower the supply, or use an op-amp rated for it.
+fixtures:
+  bad:
+    - rails: {V+: 25, V-: -25}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, GND], value: 1M}
+        - {ref: U1, type: opamp, nets: [in, o, o], model: TL072, supply: [V+, V-]}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [U1]
+  good:
+    - rails: {V+: 9, V-: -9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: R1, type: resistor, nets: [in, GND], value: 1M}
+        - {ref: U1, type: opamp, nets: [in, o, o], model: TL072, supply: [V+, V-]}
+        - {ref: OUT, type: amp, nets: [o]}

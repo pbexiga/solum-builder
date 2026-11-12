@@ -1,0 +1,180 @@
+{
+  "id": "BAT48",
+  "type": "diode",
+  "description": "BAT48 small-signal Schottky (40 V): a low clipper, between germanium and silicon (our fit to Vishay's sheet)",
+  "spice_name": "BAT48",
+  "kind": "model",
+  "pins": [],
+  "card": "BAT48.lib",
+  "manufacturer": "Vishay",
+  "source": {
+    "url": "https://www.vishay.com/docs/88141/bat48.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own fit to the maker's datasheet curve (D-156): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.vishay.com/docs/88141/bat48.pdf",
+  "fixes": [],
+  "ratings": {
+    "if_avg": 0.35,
+    "vr_max": 40.0
+  },
+  "rating_sources": {
+    "if_avg": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02: Forward continuous current 350 mA at 25 °C",
+    "vr_max": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02: Repetitive peak reverse voltage 40 V"
+  },
+  "fit": {
+    "sheet": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02",
+    "figure": "Ratings and Characteristic Curves: Forward Characteristics, TJ = 25 °C (page 3), read from the PDF's vector drawing",
+    "points": [
+      [
+        0.1344,
+        1.006e-05
+      ],
+      [
+        0.2235,
+        0.0003321
+      ],
+      [
+        0.4029,
+        0.0636
+      ],
+      [
+        0.6242,
+        0.2104
+      ],
+      [
+        0.7997,
+        0.3949
+      ]
+    ],
+    "method": "IS, N and RS by least squares on V = N·Vt·ln(I/IS) + RS·I (scripts/fit_models.py fit_diode, Vt at 27 °C) over every other curve point, the curve's last point always included; IS held under the sheet's 2 µA leakage limit at 10 V (it fits at 65 nA); CJO is the sheet's 12 pF typical at 1 V; BV 40 V at 100 µA, the sheet's breakdown test",
+    "note": "The sheet draws the curve as 9 straight segments; their corners are the points. It reads 0.92 V at 500 mA against the sheet's 0.90 V maximum there (a pulse test, above the 350 mA continuous rating and past the drawn curve's 395 mA), so that limit isn't a check"
+  },
+  "package": {
+    "name": "DO-35 (DO-204AH)",
+    "pins": {
+      "K": 1,
+      "A": 2
+    },
+    "source": "Vishay BAT48 data sheet, Document Number 88141: DO-204AH (DO-35 Glass); pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The band marks the cathode"
+  },
+  "validation": [
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0001
+      },
+      "simulated": 0.190045,
+      "datasheet": {
+        "max": 0.25,
+        "source": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02, Electrical Characteristics: VF at IF = 0.1 mA (pulse test)"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.001
+      },
+      "simulated": 0.250507,
+      "datasheet": {
+        "max": 0.3,
+        "source": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02, Electrical Characteristics: VF at IF = 1 mA (pulse test)"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.01
+      },
+      "simulated": 0.31927,
+      "datasheet": {
+        "max": 0.4,
+        "source": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02, Electrical Characteristics: VF at IF = 10 mA (pulse test)"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.05
+      },
+      "simulated": 0.401817,
+      "datasheet": {
+        "max": 0.5,
+        "source": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02, Electrical Characteristics: VF at IF = 50 mA (pulse test)"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.2
+      },
+      "simulated": 0.591124,
+      "datasheet": {
+        "max": 0.75,
+        "source": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02, Electrical Characteristics: VF at IF = 200 mA (pulse test)"
+      }
+    },
+    {
+      "quantity": "ir",
+      "conditions": {
+        "vr": 10.0
+      },
+      "simulated": 6.472e-08,
+      "datasheet": {
+        "max": 2e-06,
+        "source": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02, Electrical Characteristics: IR at VR = 10 V"
+      }
+    },
+    {
+      "quantity": "ir",
+      "conditions": {
+        "vr": 40.0
+      },
+      "simulated": 6.475e-08,
+      "datasheet": {
+        "max": 2.5e-05,
+        "source": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02, Electrical Characteristics: IR at VR = 40 V"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 2.832e-05
+      },
+      "simulated": 0.157383,
+      "datasheet": {
+        "source": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02, Ratings and Characteristic Curves: Forward Characteristics, TJ = 25 °C (page 3), read from the PDF's vector drawing",
+        "typ": 0.1595,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.1164
+      },
+      "simulated": 0.491602,
+      "datasheet": {
+        "source": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02, Ratings and Characteristic Curves: Forward Characteristics, TJ = 25 °C (page 3), read from the PDF's vector drawing",
+        "typ": 0.4861,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.3302
+      },
+      "simulated": 0.737281,
+      "datasheet": {
+        "source": "Vishay BAT48 data sheet (formerly General Semiconductor), Document Number 88141, 10-May-02, Ratings and Characteristic Curves: Forward Characteristics, TJ = 25 °C (page 3), read from the PDF's vector drawing",
+        "typ": 0.7458,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    }
+  ]
+}

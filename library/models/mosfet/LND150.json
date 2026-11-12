@@ -1,0 +1,320 @@
+{
+  "id": "LND150",
+  "type": "mosfet",
+  "description": "LND150 N-channel depletion MOSFET, 500 V 30 mA (our model from Microchip's sheet)",
+  "spice_name": "LND150",
+  "kind": "model",
+  "pins": [],
+  "card": "LND150.lib",
+  "manufacturer": "Microchip (Supertex)",
+  "source": {
+    "url": "https://ww1.microchip.com/downloads/en/DeviceDoc/LND150-LND250-N-Channel-Depletion-Mode-DMOS-FETs-Data-Sheet-20005454A.pdf",
+    "retrieved": "2026-11-02",
+    "licence": "Our own model built from the maker's data sheet (D-159, D-161): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://ww1.microchip.com/downloads/en/DeviceDoc/LND150-LND250-N-Channel-Depletion-Mode-DMOS-FETs-Data-Sheet-20005454A.pdf",
+  "fixes": [],
+  "ratings": {
+    "vds_max": 500.0,
+    "id_max": 0.03
+  },
+  "rating_sources": {
+    "vds_max": "Microchip LND150/LND250 data sheet DS20005454A (2018), DC Electrical Characteristics: BVDSX 500 V min",
+    "id_max": "Microchip LND150/LND250 data sheet DS20005454A (2018), Thermal Characteristics: ID continuous 30 mA (TO-92)"
+  },
+  "package": {
+    "name": "TO-92 (SGD)",
+    "pins": {
+      "S": 1,
+      "G": 2,
+      "D": 3
+    },
+    "source": "Microchip LND150/LND250 data sheet DS20005454A (2018), Table 3-1: TO-92 pin function table, 1 Source, 2 Gate, 3 Drain"
+  },
+  "fit": {
+    "sheet": "Microchip LND150/LND250 data sheet DS20005454A (2018)",
+    "figure": "Figure 2-4. Saturation Characteristics; Figure 2-9. Capacitance vs. Drain-to-Source Voltage",
+    "points": [
+      [
+        0.24,
+        0.0002677
+      ],
+      [
+        0.8072,
+        0.0008568
+      ],
+      [
+        1.475,
+        0.001443
+      ],
+      [
+        2.016,
+        0.001701
+      ],
+      [
+        3.665,
+        0.001696
+      ],
+      [
+        4.991,
+        0.001701
+      ]
+    ],
+    "method": "ngspice VDMOS fitted through ngspice itself with the project's Levenberg-Marquardt (scripts/fit_models.py): VTO, KP, KSUBTHRES, MTRIODE, LAMBDA (at most 0.01: the drawn curves are flat past the knee), RS to Figure 2-4 (Saturation Characteristics, VDS 0-5 V, VGS -1 to +1 V; points past the knee weighted 3, where pedals use it), the table's RDS(on) 850 ohm at VGS 0, ID 0.5 mA (weight 3) and VGS(off) at 100 nA, VDS 25 V, the range's middle -2 V (D-161, weight 0.5); then, with those held, CGS, CGDMAX, CGDMIN, A, CJO, M, VJ to Figure 2-9 (VGS -10 V, 1 MHz). Body diode left at VDMOS's defaults: the sheet gives only VSD <= 0.9 V at 1 mA. Figures 2-2 and 2-8 are at VDS 400 V (about 0.6 W in the part, self-heated: ID at VGS 0 reads 1.5 mA there against 1.7 mA in Figure 2-4) and were left out. Scripts: .claude/skills/fit-model/worked/mosfet/fit_lnd150.py (not committed); points are read off the sheet's vector drawing",
+    "note": "Figure 2-4 past the knee within 6 %; the knees run up to 35 % high at VGS 0.5 and 1 V (a gate above its source; the drawn knees are sharper than VDMOS's). RDS(on) 791 ohm (850 typ), VGS(off) -1.74 V (-1 to -3), IDSS at 25 V 1.85 mA (1 to 3), gFS at 1 mA 2.1 mS (2 typ), capacitances within 21 % (7.53/1.97/0.33 pF at 25 V against 7.5/2/0.5 typ), VSD at 1 mA 0.55 V (0.9 max). Held out: Figure 2-10 (ID against a source resistor, gate to ground, 25 C) runs 23 to 43 % below the card: that figure's own unit reads about 1.4 mA at VGS 0 against Figure 2-4's 1.7 mA, so the sheet's samples differ by that much",
+    "curves": {
+      "output_vgs_-1": [
+        [
+          0.0174,
+          1.396e-05
+        ],
+        [
+          0.0857,
+          4.618e-05
+        ],
+        [
+          0.2322,
+          7.839e-05
+        ],
+        [
+          0.4834,
+          9.303000000000001e-05
+        ],
+        [
+          1.311,
+          9.303000000000001e-05
+        ],
+        [
+          4.976,
+          9.303000000000001e-05
+        ]
+      ],
+      "output_vgs_-0.5": [
+        [
+          0.1157,
+          9.491e-05
+        ],
+        [
+          0.3925,
+          0.00030520000000000005
+        ],
+        [
+          0.728,
+          0.0005155
+        ],
+        [
+          1.019,
+          0.0006111
+        ],
+        [
+          1.813,
+          0.0006111
+        ],
+        [
+          4.991,
+          0.0006111
+        ]
+      ],
+      "output_vgs_0": [
+        [
+          0.24,
+          0.0002677
+        ],
+        [
+          0.8072,
+          0.0008568
+        ],
+        [
+          1.475,
+          0.001443
+        ],
+        [
+          2.016,
+          0.001701
+        ],
+        [
+          3.665,
+          0.001696
+        ],
+        [
+          4.991,
+          0.001701
+        ]
+      ],
+      "output_vgs_0.5": [
+        [
+          0.3644,
+          0.0005135999999999999
+        ],
+        [
+          1.222,
+          0.001645
+        ],
+        [
+          2.222,
+          0.0027770000000000004
+        ],
+        [
+          3.012,
+          0.003291
+        ],
+        [
+          4.15,
+          0.003291
+        ],
+        [
+          4.976,
+          0.003291
+        ]
+      ],
+      "output_vgs_1": [
+        [
+          0.6,
+          0.0008926
+        ],
+        [
+          1.962,
+          0.002779
+        ],
+        [
+          3.594,
+          0.004666000000000001
+        ],
+        [
+          4.976,
+          0.005524
+        ]
+      ],
+      "ciss": [
+        [
+          1.0,
+          7.77e-12
+        ],
+        [
+          3.272,
+          7.77e-12
+        ],
+        [
+          9.791,
+          7.77e-12
+        ],
+        [
+          19.96,
+          7.77e-12
+        ],
+        [
+          33.84,
+          7.77e-12
+        ]
+      ],
+      "coss": [
+        [
+          1.0,
+          4.6e-12
+        ],
+        [
+          3.272,
+          2.681e-12
+        ],
+        [
+          9.791,
+          2.293e-12
+        ],
+        [
+          19.96,
+          2.14e-12
+        ],
+        [
+          33.84,
+          2.0299999999999996e-12
+        ]
+      ],
+      "crss": [
+        [
+          1.0,
+          9.5e-13
+        ],
+        [
+          3.272,
+          8e-13
+        ],
+        [
+          9.791,
+          5.500000000000001e-13
+        ],
+        [
+          19.96,
+          3.843e-13
+        ],
+        [
+          33.84,
+          2.681e-13
+        ]
+      ],
+      "id_vs_rsource": [
+        [
+          16.21,
+          0.001398
+        ],
+        [
+          75.93,
+          0.0011970000000000001
+        ],
+        [
+          297.0,
+          0.0008085
+        ],
+        [
+          1359.0,
+          0.0003827
+        ],
+        [
+          10190.0,
+          6.949e-05
+        ]
+      ]
+    }
+  },
+  "validation": [
+    {
+      "quantity": "idss",
+      "conditions": {
+        "vds": 25.0
+      },
+      "simulated": 0.001849,
+      "datasheet": {
+        "min": 0.001,
+        "max": 0.003,
+        "source": "Microchip LND150/LND250 data sheet DS20005454A (2018), DC Electrical Characteristics: IDSS 1 to 3 mA at VGS = 0, VDS = 25 V"
+      }
+    },
+    {
+      "quantity": "vp",
+      "conditions": {
+        "vds": 25.0,
+        "id": 1e-07
+      },
+      "simulated": -1.741356,
+      "datasheet": {
+        "min": -3.0,
+        "max": -1.0,
+        "source": "Microchip LND150/LND250 data sheet DS20005454A (2018), DC Electrical Characteristics: VGS(OFF) -1 to -3 V at ID = 100 nA, VDS = 25 V"
+      }
+    },
+    {
+      "quantity": "vds_on",
+      "conditions": {
+        "vgs": 0.0,
+        "id": 0.0005
+      },
+      "simulated": 0.395347,
+      "datasheet": {
+        "typ": 0.425,
+        "max": 0.5,
+        "tol": 0.05,
+        "source": "Microchip LND150/LND250 data sheet DS20005454A (2018), DC Electrical Characteristics: RDS(ON) 850 ohm typ, 1000 max at VGS = 0, ID = 0.5 mA (times 0.5 mA)"
+      }
+    }
+  ]
+}

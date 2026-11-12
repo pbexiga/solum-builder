@@ -1,0 +1,28 @@
+id: jfet-ohmic
+layer: operating_point
+severity: warning
+check: jfet_ohmic
+title: JFET in its ohmic region
+message: "{ref} is in its ohmic region (Vds = {vds}): it acts as a resistor, not an amplifier."
+why: >
+  With too little voltage between drain and source the channel isn't pinched off at the
+  drain end, so the JFET behaves like a resistor and the stage has little gain and no
+  headroom.
+fix: >
+  Raise {ref}'s drain voltage: a smaller drain resistor, or a trimmer with a drain target
+  near half the supply.
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: jfet, nets: [d, g, GND], model: J201}
+        - {ref: R1, type: resistor, nets: [V+, d], value: 1M}
+        - {ref: R2, type: resistor, nets: [g, GND], value: 1M}
+      expect: [Q1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: jfet, nets: [d, g, s], model: J201}
+        - {ref: R1, type: resistor, nets: [V+, d], value: 4k7}
+        - {ref: R2, type: resistor, nets: [g, GND], value: 1M}
+        - {ref: R3, type: resistor, nets: [s, GND], value: 1k}

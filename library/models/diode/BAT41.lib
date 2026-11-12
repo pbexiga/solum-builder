@@ -1,0 +1,9 @@
+* BAT41 small-signal Schottky (100 V): a low clipper, between germanium and silicon (our fit to Vishay's sheet)
+* Fitted by Solum Builder to Vishay BAT41 data sheet, Rev. 2.1, 07-Nov-2024 (doc 85659), Fig. 3 - Typical Forward Current vs. Forward Voltage, Tj = 25 °C (blue), read from the PDF's vector drawing (D-156)
+.subckt BAT41 1 2
+*        A K
+D1 1 2 BAT41_low
+D2 1 2 BAT41_high
+.model BAT41_low D(is=9.134e-09 n=1.036 rs=77.63 cjo=2e-12 bv=100 ibv=0.0001)
+.model BAT41_high D(is=6.38e-10 n=1.713 rs=0.6746)
+.ends

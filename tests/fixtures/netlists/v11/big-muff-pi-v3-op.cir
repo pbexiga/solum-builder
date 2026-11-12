@@ -1,0 +1,62 @@
+* Big Muff Pi (V3)
+V_RAIL1 v_ 0 DC 9
+V_IN in 0 DC 0
+C1 in c1_2 1e-06
+R2 c1_2 q4_b 39000
+R14 q4_b 0 47000
+R9 q4c q4_b 470000
+C10 q4c q4_b 4.7e-10
+R13 v_ q4c 10000
+Q4 q4c q4_b q4_e 2N5089
+R22 q4_e 0 100
+C4 q4c c4_2 1e-06
+R_SUSTAIN_a r23_1 c5_1 100000
+R_SUSTAIN_b c5_1 c4_2 1
+R23 r23_1 0 1000
+C5 c5_1 c5_2 1e-07
+R19 c5_2 q3_b 10000
+R20 q3_b 0 100000
+R17 q3c q3_b 470000
+C12 q3c q3_b 4.7e-10
+R18 v_ q3c 10000
+Q3 q3c q3_b q3_e 2N5089
+R21 q3_e 0 150
+C6 q3_b c6_2 1e-06
+D3 c6_2 q3c 1N4148
+D4 q3c c6_2 1N4148
+C13 q3c c13_2 1e-07
+R12 c13_2 q2_b 10000
+R16 q2_b 0 100000
+R15 q2c q2_b 470000
+C11 q2c q2_b 4.7e-10
+R11 v_ q2c 10000
+Q2 q2c q2_b q2_e 2N5089
+R10 q2_e 0 150
+C7 q2_b c7_2 1e-06
+D1 c7_2 q2c 1N4148
+D2 q2c c7_2 1N4148
+R8 q2c c8_1 39000
+C8 c8_1 0 1e-08
+C9 q2c c9_2 4e-09
+R5 c9_2 0 22000
+R_TONE_a c8_1 tw 50000
+R_TONE_b tw c9_2 50000
+C3 tw q1_b 1e-07
+R7 v_ q1_b 430000
+R3 q1_b 0 100000
+R6 v_ q1c 15000
+Q1 q1c q1_b q1_e 2N5089
+R4 q1_e 0 3300
+C2 q1c c2_2 1e-07
+R_VOLUME_a 0 out 100000
+R_VOLUME_b out c2_2 1
+R_AMP out 0 1000000
+* 1N4148 small-signal silicon diode (our fit to Diotec's and onsemi's sheets)
+* Fitted by Solum Builder to Diotec 1N4148, 1N4150, 1N4151, 1N4448 data sheet, Version 2023-08-17, Forward characteristics (typical values), Tj = 25 °C, from 2.4 mA (read from the PDF's vector drawing, centre of the drawn line) (D-156)
+.model 1N4148 D(is=2.32e-09 n=1.797 rs=0.2449 cjo=4e-12 bv=100 ibv=0.0001)
+* 2N5089 high-gain, low-noise NPN (hFE 400-1200 at 100 µA; VCEO 25 V), our fit to Fairchild's sheet
+* Fitted by Solum Builder to Fairchild 2N5088/2N5089/MMBT5088/MMBT5089 data sheet, Rev A (2001; onsemi's copy), its typical curves (D-163)
+.model 2N5089 NPN(is=7.732e-14 nf=1.055 bf=857.7 ise=3.478e-15 ne=1.395 ikf=0.1245 br=2.767 re=0.06934 rc=1.265 cje=4.058e-12 vje=0.9692 mje=0.3484 cjc=4.637e-12 vjc=1.2 mjc=0.4718 tf=8.733e-10 nkf=0.8647 nr=1.055)
+.save all @d1[id] @d2[id] @d3[id] @d4[id] @q1[ic] @q1[ib] @q2[ic] @q2[ib] @q3[ic] @q3[ib] @q4[ic] @q4[ib]
+.op
+.end

@@ -1,0 +1,1195 @@
+# Mutations no rule notices, each with the reason (tests/rules/test_mutations.py).
+# A new mutation that fires nothing fails the test until it's explained here or a
+# rule catches it; an entry that a rule now catches fails the test until removed.
+
+- circuit: big-muff-aion-halo
+  mutation: lift-pin VR3.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: big-muff-aion-halo
+  mutation: remove-part C2
+  reason: "Miller cap: without it the stage keeps more highs, a change of the frequency response rather than a fault."
+- circuit: big-muff-aion-halo
+  mutation: remove-part C5
+  reason: "Miller cap: without it the stage keeps more highs, a change of the frequency response rather than a fault."
+- circuit: big-muff-aion-halo
+  mutation: remove-part C6
+  reason: "In series with the stage's clipping diodes: without it the diodes are out of circuit and the stage clips on its transistor alone, a change of sound rather than a fault."
+- circuit: big-muff-aion-halo
+  mutation: remove-part C8
+  reason: "Miller cap: without it the stage keeps more highs, a change of the frequency response rather than a fault."
+- circuit: big-muff-aion-halo
+  mutation: remove-part C9
+  reason: "In series with the stage's clipping diodes: without it the diodes are out of circuit and the stage clips on its transistor alone, a change of sound rather than a fault."
+- circuit: big-muff-aion-halo
+  mutation: remove-part C10
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-aion-halo
+  mutation: remove-part C11
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-aion-halo
+  mutation: remove-part C15
+  reason: "Supply decoupling beside C14 (100 µF), which still filters VA; the 100 nF only helps at radio frequencies, which the simulation doesn't model."
+- circuit: big-muff-aion-halo
+  mutation: remove-part C16
+  reason: "Only in circuit in the Midrange switch's other positions (C16 in Flat mids and Mid hump, C17 in Mid hump); the starter is in Mid scoop, and the rules check the switch's present position only."
+- circuit: big-muff-aion-halo
+  mutation: remove-part C17
+  reason: "Only in circuit in the Midrange switch's other positions (C16 in Flat mids and Mid hump, C17 in Mid hump); the starter is in Mid scoop, and the rules check the switch's present position only."
+- circuit: big-muff-aion-halo
+  mutation: remove-part D2
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-aion-halo
+  mutation: remove-part D3
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-aion-halo
+  mutation: remove-part D4
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-aion-halo
+  mutation: remove-part D5
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-aion-halo
+  mutation: remove-part RPD1
+  reason: "Pull-down resistor on the input (Aion's RPD): without it the input's free side floats and pops when a footswitch switches it, but no footswitch is drawn here, so switch-pulldown-missing can't see it."
+- circuit: big-muff-aion-halo
+  mutation: remove-part R3
+  reason: "Base resistor to ground: without it Q1 still biases through its collector-base resistor, its collector a little lower; a change of operating point no rule can call wrong."
+- circuit: big-muff-aion-halo
+  mutation: remove-part R9
+  reason: "Base resistor to ground: without it Q2 still biases through its collector-base resistor, its collector a little lower; a change of operating point no rule can call wrong."
+- circuit: big-muff-aion-halo
+  mutation: remove-part R14
+  reason: "Base resistor to ground: without it Q3 still biases through its collector-base resistor, its collector a little lower; a change of operating point no rule can call wrong."
+- circuit: big-muff-aion-halo
+  mutation: remove-part R18
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-aion-halo
+  mutation: remove-part R19
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-aion-halo
+  mutation: reverse D2
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-aion-halo
+  mutation: reverse D3
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-aion-halo
+  mutation: reverse D4
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-aion-halo
+  mutation: reverse D5
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-pi-v3
+  mutation: lift-pin VR2.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: big-muff-pi-v3
+  mutation: lift-pin VR2.3
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: big-muff-pi-v3
+  mutation: lift-pin VR3.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: big-muff-pi-v3
+  mutation: remove-part C10
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-pi-v3
+  mutation: remove-part C11
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-pi-v3
+  mutation: remove-part C12
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-pi-v3
+  mutation: remove-part C6
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-pi-v3
+  mutation: remove-part C7
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-pi-v3
+  mutation: remove-part C8
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-pi-v3
+  mutation: remove-part C9
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-pi-v3
+  mutation: remove-part D1
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-pi-v3
+  mutation: remove-part D2
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-pi-v3
+  mutation: remove-part D3
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-pi-v3
+  mutation: remove-part D4
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-pi-v3
+  mutation: remove-part R14
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-pi-v3
+  mutation: remove-part R16
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-pi-v3
+  mutation: remove-part R20
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-pi-v3
+  mutation: remove-part R5
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-pi-v3
+  mutation: remove-part R8
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: big-muff-pi-v3
+  mutation: reverse D1
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-pi-v3
+  mutation: reverse D2
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-pi-v3
+  mutation: reverse D3
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: big-muff-pi-v3
+  mutation: reverse D4
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: boss-ds1
+  mutation: lift-pin VR2.1
+  reason: "Level's end on VB: the pot then works as a variable resistor, a legitimate wiring (pot ends may be left open); the output no longer goes to silence at 0, a change of how the knob behaves."
+- circuit: boss-ds1
+  mutation: remove-part C10
+  reason: "Treble cut after the clipping (with R14): leaving it out changes the frequency response, not whether the circuit works."
+- circuit: boss-ds1
+  mutation: remove-part C12
+  reason: "Part of the tone stack's low-pass (with R16): leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-ds1
+  mutation: remove-part C15
+  reason: "VB's filter cap: without it VB is a bare divider, which still biases every stage (the bias-net rule only follows nets a big cap holds, D-225); in a real build VB carries more supply noise."
+- circuit: boss-ds1
+  mutation: remove-part C4
+  reason: "Booster's feedback cap (with R7): without it the stage keeps more highs, a change of the frequency response rather than a fault."
+- circuit: boss-ds1
+  mutation: remove-part C7
+  reason: "Gain stage's feedback cap: without it the stage keeps more highs at high Distortion, a change of the frequency response rather than a fault."
+- circuit: boss-ds1
+  mutation: remove-part D1
+  reason: "Reverse-polarity protection across the supply: it conducts only when the supply is connected the wrong way round, which the simulation never does; leaving it out changes nothing in normal use."
+- circuit: boss-ds1
+  mutation: remove-part D4
+  reason: "Clipping diode: without it (or turned round, so the pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: boss-ds1
+  mutation: remove-part D5
+  reason: "Clipping diode: without it (or turned round, so the pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: boss-ds1
+  mutation: remove-part D8
+  reason: "Input protection for IC1A: it conducts only if Q2 drives the + input below ground, which the simulated op-amp survives; leaving it out changes nothing in normal playing."
+- circuit: boss-ds1
+  mutation: remove-part R16
+  reason: "Tone stack's low-pass resistor: without it Tone's bass side gets no signal, so the knob turns from silence to treble; a change of sound, and every node keeps a DC path."
+- circuit: boss-ds1
+  mutation: remove-part R17
+  reason: "Tone stack's high-pass leg to VB: without it the treble side still reaches VB through the pot and R16, so the stack works with another response; no rule can know the response you intended."
+- circuit: boss-ds1
+  mutation: remove-part R19
+  reason: "From R18 to VB ahead of C13: against R18 it divides the signal by almost nothing (10k into 1M), and without it C13's input side still finds DC through Level; Q3 stays biased by R20."
+- circuit: boss-ds1
+  mutation: remove-part R23
+  reason: "Output pull-down: without it the output cap's free side floats when nothing is plugged in, which can pop, but the amp's input (1M) holds it in the simulation."
+- circuit: boss-ds1
+  mutation: remove-part R5
+  reason: "Q2's base resistor to ground: without it the stage is still biased, by R7 alone (collector feedback), at a lower collector voltage; a change of bias, not a fault any rule can name."
+- circuit: boss-ds1
+  mutation: reverse D4
+  reason: "Clipping diode: without it (or turned round, so the pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: boss-ds1
+  mutation: reverse D5
+  reason: "Clipping diode: without it (or turned round, so the pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: boss-ds1-aion
+  mutation: lift-pin SW1.1
+  reason: "Mode's lug for Diodes: lifted, the switch at Diodes joins nothing, so D5 and D7 float and only the LEDs clip, the LEDs position's sound; a legitimate switch wiring (a throw may be left open)."
+- circuit: boss-ds1-aion
+  mutation: lift-pin SW1.3
+  reason: "Mode's lug for Two diodes: the drawn position (Diodes) doesn't use it, and a throw may be left open; only that position stops working."
+- circuit: boss-ds1-aion
+  mutation: lift-pin VR2.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: boss-ds1-aion
+  mutation: lift-pin VR3.1
+  reason: "Level's end on VB: the pot then works as a variable resistor, a legitimate wiring (pot ends may be left open); the output no longer goes to silence at 0, a change of how the knob behaves."
+- circuit: boss-ds1-aion
+  mutation: remove-part C11
+  reason: "Part of the tone stack's low-pass (with R13): leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-ds1-aion
+  mutation: remove-part C14
+  reason: "VB's filter cap: without it VB is a bare divider, which still biases every stage (the bias-net rule only follows nets a big cap holds, D-225); in a real build VB carries more supply noise."
+- circuit: boss-ds1-aion
+  mutation: remove-part C16
+  reason: "Supply decoupling: the simulation's supply is ideal, so leaving it out changes nothing it can see; in a real build the rail picks up more ripple and noise."
+- circuit: boss-ds1-aion
+  mutation: remove-part C3
+  reason: "Booster's feedback cap (with R5): without it the stage keeps more highs, a change of the frequency response rather than a fault."
+- circuit: boss-ds1-aion
+  mutation: remove-part C6
+  reason: "Gain stage's feedback cap: without it the stage keeps more highs at high Distortion, a change of the frequency response rather than a fault."
+- circuit: boss-ds1-aion
+  mutation: remove-part C9
+  reason: "Treble cut after the clipping (with R12): leaving it out changes the frequency response, not whether the circuit works."
+- circuit: boss-ds1-aion
+  mutation: remove-part D10
+  reason: "Red LED clipper: below its 1.8 V the 1N914s at Diodes clip first, so without it (or turned round, so the pair clips one side only at LEDs) the drawn position's sound barely changes; a change of sound rather than a fault."
+- circuit: boss-ds1-aion
+  mutation: remove-part D4
+  reason: "Input protection for IC1B: it conducts only if Q2 drives the + input below ground, which the simulated op-amp survives; leaving it out changes nothing in normal playing."
+- circuit: boss-ds1-aion
+  mutation: remove-part D5
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: boss-ds1-aion
+  mutation: remove-part D6
+  reason: "Mode's second pair (D6, D8): in series with D5 and D7 only with Mode at Two diodes, and the starter is drawn at Diodes, where they hang on a lug that's open; missing or turned round, nothing the drawn position sees changes."
+- circuit: boss-ds1-aion
+  mutation: remove-part D7
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: boss-ds1-aion
+  mutation: remove-part D8
+  reason: "Mode's second pair (D6, D8): in series with D5 and D7 only with Mode at Two diodes, and the starter is drawn at Diodes, where they hang on a lug that's open; missing or turned round, nothing the drawn position sees changes."
+- circuit: boss-ds1-aion
+  mutation: remove-part D9
+  reason: "Red LED clipper: below its 1.8 V the 1N914s at Diodes clip first, so without it (or turned round, so the pair clips one side only at LEDs) the drawn position's sound barely changes; a change of sound rather than a fault."
+- circuit: boss-ds1-aion
+  mutation: remove-part R13
+  reason: "Tone stack's low-pass resistor: without it Tone's bass side gets no signal, so the knob turns from silence to treble; a change of sound, and every node keeps a DC path."
+- circuit: boss-ds1-aion
+  mutation: remove-part R15
+  reason: "Tone stack's high-pass leg to VB: without it the treble side still reaches VB through the pot and R13, so the stack works with another response; no rule can know the response you intended."
+- circuit: boss-ds1-aion
+  mutation: remove-part R20
+  reason: "Output pull-down: without it the output cap's free side floats when nothing is plugged in, which can pop, but the amp's input (1M) holds it in the simulation."
+- circuit: boss-ds1-aion
+  mutation: remove-part R4
+  reason: "Q2's base resistor to ground: without it the stage is still biased, by R5 alone (collector feedback), at a lower collector voltage; a change of bias, not a fault any rule can name."
+- circuit: boss-ds1-aion
+  mutation: remove-part RPD1
+  reason: "Pull-down resistor on the input (Aion's RPD): without it the input's free side floats and pops when a footswitch switches it, but no footswitch is drawn here, so switch-pulldown-missing can't see it."
+- circuit: boss-ds1-aion
+  mutation: remove-part SW1
+  reason: "Mode switch: without it D5-D8 have no way to VB and only the LEDs clip, the LEDs position's sound; a change of sound rather than a fault."
+- circuit: boss-ds1-aion
+  mutation: reverse D10
+  reason: "Red LED clipper: below its 1.8 V the 1N914s at Diodes clip first, so without it (or turned round, so the pair clips one side only at LEDs) the drawn position's sound barely changes; a change of sound rather than a fault."
+- circuit: boss-ds1-aion
+  mutation: reverse D5
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: boss-ds1-aion
+  mutation: reverse D6
+  reason: "Mode's second pair (D6, D8): in series with D5 and D7 only with Mode at Two diodes, and the starter is drawn at Diodes, where they hang on a lug that's open; missing or turned round, nothing the drawn position sees changes."
+- circuit: boss-ds1-aion
+  mutation: reverse D7
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: boss-ds1-aion
+  mutation: reverse D8
+  reason: "Mode's second pair (D6, D8): in series with D5 and D7 only with Mode at Two diodes, and the starter is drawn at Diodes, where they hang on a lug that's open; missing or turned round, nothing the drawn position sees changes."
+- circuit: boss-ds1-aion
+  mutation: reverse D9
+  reason: "Red LED clipper: below its 1.8 V the 1N914s at Diodes clip first, so without it (or turned round, so the pair clips one side only at LEDs) the drawn position's sound barely changes; a change of sound rather than a fault."
+- circuit: fuzz-face
+  mutation: lift-pin VR1.3
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: fuzz-face
+  mutation: lift-pin VR1.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: fuzz-face
+  mutation: lift-pin VR2.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: fuzz-face
+  mutation: reverse C1
+  reason: "Turned round, its DC reverse bias stays under electrolytic-reversed's 0.5 V limit, so it does no harm at this operating point."
+- circuit: fuzz-face
+  mutation: reverse C2
+  reason: "Turned round, its DC reverse bias stays under electrolytic-reversed's 0.5 V limit, so it does no harm at this operating point."
+- circuit: proco-rat
+  mutation: lift-pin VR3.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: proco-rat
+  mutation: remove-part C12
+  reason: "Supply or VREF filter capacitor: leaving it out lets hum and noise through, which a DC operating point can't show."
+- circuit: proco-rat
+  mutation: remove-part C13
+  reason: "Supply or VREF filter capacitor: leaving it out lets hum and noise through, which a DC operating point can't show."
+- circuit: proco-rat
+  mutation: remove-part C2
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: proco-rat
+  mutation: remove-part C3
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: proco-rat
+  mutation: remove-part C4
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: proco-rat
+  mutation: remove-part C8
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: proco-rat
+  mutation: remove-part D1
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: proco-rat
+  mutation: remove-part D2
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: proco-rat
+  mutation: remove-part R1
+  reason: "Pull-down resistor on the input or output: without it the coupling cap's free side floats and pops when a footswitch switches it, but no footswitch is drawn here, so switch-pulldown-missing can't see it."
+- circuit: proco-rat
+  mutation: reverse D1
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: proco-rat
+  mutation: reverse D2
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: ts808
+  mutation: lift-pin VR2.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: ts808
+  mutation: lift-pin VR2.3
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: ts808
+  mutation: remove-part C16
+  reason: "Supply or VREF filter capacitor: leaving it out lets hum and noise through, which a DC operating point can't show."
+- circuit: ts808
+  mutation: remove-part C4
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: ts808
+  mutation: remove-part C5
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: ts808
+  mutation: remove-part D1
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: ts808
+  mutation: remove-part D2
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: ts808
+  mutation: remove-part R9
+  reason: "R9 is one of two resistors biasing IC1A's + input (R8 from the clipping stage is the other), so IC1A stays biased and nothing breaks."
+- circuit: ts808
+  mutation: remove-part R35
+  reason: "Pull-down resistor on the input or output: without it the coupling cap's free side floats and pops when a footswitch switches it, but no footswitch is drawn here, so switch-pulldown-missing can't see it."
+- circuit: ts808
+  mutation: reverse D1
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: ts808
+  mutation: reverse D2
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: dallas-rangemaster
+  mutation: remove-part C3
+  reason: "The emitter bypass: without it the stage has less gain (R3's feedback stays), a change of sound rather than a fault."
+- circuit: dallas-rangemaster
+  mutation: remove-part C4
+  reason: "The supply filter: the simulated supply is ideal, so leaving it out changes nothing here."
+- circuit: dallas-rangemaster
+  mutation: remove-part R1
+  reason: "Q1 then has no base bias and conducts only its germanium leakage (µA, above the 100 nA cut-off threshold), its collector at the supply. A transistor run on its leakage alone is how the Tone Bender MkII's Q1 is biased on purpose (D-133), so no rule can call it a fault."
+- circuit: dallas-rangemaster
+  mutation: remove-part R3
+  reason: "The emitter then reaches ground only through C3, so it has no DC path but Q1's own base-emitter junction: no node floats, and Q1 conducts only its leakage (µA for germanium, above the 100 nA cut-off threshold), as with R1 removed."
+- circuit: tone-bender-mk2
+  mutation: lift-pin VR1.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: tone-bender-mk2
+  mutation: remove-part C1
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: tone-bender-mk2
+  mutation: reverse C2
+  reason: "Turned round, its DC reverse bias stays under electrolytic-reversed's 0.5 V limit, so it does no harm at this operating point."
+- circuit: tone-bender-mk2
+  mutation: reverse C5
+  reason: "Turned round, its DC reverse bias stays under electrolytic-reversed's 0.5 V limit, so it does no harm at this operating point."
+- circuit: tone-bender-mk2-mode
+  mutation: lift-pin VR1.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: tone-bender-mk2-mode
+  mutation: lift-pin VR2.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: tone-bender-mk2-mode
+  mutation: lift-pin VR2.3
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: tone-bender-mk2-mode
+  mutation: remove-part C1
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: tone-bender-mk2-mode
+  mutation: remove-part C4
+  reason: "C4 is only in circuit in 1.5 mode, and the starter is in MkII mode: the MkII still works, and the rules check the switch's present position only."
+- circuit: tone-bender-mk2-mode
+  mutation: reverse C2
+  reason: "Turned round, its DC reverse bias stays under electrolytic-reversed's 0.5 V limit, so it does no harm at this operating point."
+- circuit: tone-bender-mk2-mode
+  mutation: reverse C4
+  reason: "Switched out in MkII mode, it has no DC across it; in 1.5 mode it sits between the guitar (0 V) and Q2's base (-0.17 V), under electrolytic-reversed's 0.5 V limit."
+- circuit: tone-bender-mk2-mode
+  mutation: reverse C5
+  reason: "Turned round, its DC reverse bias stays under electrolytic-reversed's 0.5 V limit, so it does no harm at this operating point."
+- circuit: boss-bd2-aion
+  mutation: remove-part C10
+  reason: "Feedback cap across the stage's gain resistors: it rolls off the highest frequencies; without it the stage keeps more highs, a change of the frequency response rather than a fault."
+- circuit: boss-bd2-aion
+  mutation: remove-part C12
+  reason: "Compensation cap of the discrete op-amp (the PNP's base to the output): it keeps the stage stable far above audio; without it a real build may oscillate, which the audio-band simulation doesn't show, and no rule can tell."
+- circuit: boss-bd2-aion
+  mutation: remove-part C13
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-bd2-aion
+  mutation: remove-part C14
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-bd2-aion
+  mutation: remove-part C16
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-bd2-aion
+  mutation: remove-part C18
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-bd2-aion
+  mutation: remove-part C19
+  reason: "One of the gyrator's capacitors (the simulated inductor with Q8 and R25): without it the bass boost changes shape, a change of the frequency response no rule can call wrong."
+- circuit: boss-bd2-aion
+  mutation: remove-part C20
+  reason: "One of the gyrator's capacitors (the simulated inductor with Q8 and R25): without it the bass boost changes shape, a change of the frequency response no rule can call wrong."
+- circuit: boss-bd2-aion
+  mutation: remove-part C23
+  reason: "Smooths Q10's base: without it Q10 still makes VA through R32, only the ripple filtering is lost, and the simulation's supply has no ripple."
+- circuit: boss-bd2-aion
+  mutation: remove-part C25
+  reason: "Supply decoupling: the simulation's supply is ideal, so leaving it out changes nothing it can see; in a real build the rail picks up more ripple and noise."
+- circuit: boss-bd2-aion
+  mutation: remove-part C26
+  reason: "Supply decoupling: the simulation's supply is ideal, so leaving it out changes nothing it can see; in a real build the rail picks up more ripple and noise."
+- circuit: boss-bd2-aion
+  mutation: remove-part C28
+  reason: "Supply decoupling: the simulation's supply is ideal, so leaving it out changes nothing it can see; in a real build the rail picks up more ripple and noise."
+- circuit: boss-bd2-aion
+  mutation: remove-part C4
+  reason: "Feedback cap across the stage's gain resistors: it rolls off the highest frequencies; without it the stage keeps more highs, a change of the frequency response rather than a fault."
+- circuit: boss-bd2-aion
+  mutation: remove-part C5
+  reason: "Compensation cap of the discrete op-amp (the PNP's base to the output): it keeps the stage stable far above audio; without it a real build may oscillate, which the audio-band simulation doesn't show, and no rule can tell."
+- circuit: boss-bd2-aion
+  mutation: remove-part C7
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-bd2-aion
+  mutation: remove-part C8
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-bd2-aion
+  mutation: remove-part D6
+  reason: "One of the two diodes between IC1B's inputs, which conduct only on loud peaks: without it (or turned round, both then pointing one way) the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2-aion
+  mutation: remove-part D7
+  reason: "One of the two diodes between IC1B's inputs, which conduct only on loud peaks: without it (or turned round, both then pointing one way) the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2-aion
+  mutation: remove-part Q8
+  reason: "The gyrator's transistor: without it C19, C20 and R25 are a plain filter to ground, so the bass boost changes shape (1.2 dB at 100 Hz, 14 dB at 1 kHz, against 3.3 and 10.5); the stage still works and no rule knows the response intended."
+- circuit: boss-bd2-aion
+  mutation: remove-part R13
+  reason: "Gives the clipping node its DC path to ground: without it the diodes still hold the node near 0 V, so the circuit works; a real build may drift and click. No rule flags a net held only through diodes."
+- circuit: boss-bd2-aion
+  mutation: remove-part R14
+  reason: "The ground leg of the network before the clipping diodes: without it C8 and R13 return to nothing, the bass cut goes and the signal into the diodes is about 16 dB higher, a change of sound rather than a fault."
+- circuit: boss-bd2-aion
+  mutation: remove-part R17
+  reason: "The JFET pair's drain load: without it the drain's current all flows into the PNP's base, the stage's feedback still holds its output near VB (4.35 V against 4.10 V) and its gain barely moves; a change of operating point no rule can call wrong."
+- circuit: boss-bd2-aion
+  mutation: remove-part R30
+  reason: "Pull-down on the output after C22: without it the output's free side floats and pops when a footswitch switches it, but no footswitch is drawn here, so switch-pulldown-missing can't see it."
+- circuit: boss-bd2-aion
+  mutation: remove-part RPD1
+  reason: "Pull-down resistor on the input (Aion's RPD): without it the input's free side floats and pops when a footswitch switches it, but no footswitch is drawn here, so switch-pulldown-missing can't see it."
+- circuit: boss-bd2-aion
+  mutation: remove-part R6
+  reason: "The JFET pair's drain load: without it the drain's current all flows into the PNP's base, the stage's feedback still holds its output near VB (4.35 V against 4.10 V) and its gain barely moves; a change of operating point no rule can call wrong."
+- circuit: boss-bd2-aion
+  mutation: reverse D2
+  reason: "Clipping diode in a series pair: turned round, its pair conducts neither way, so the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2-aion
+  mutation: reverse D3
+  reason: "Clipping diode in a series pair: turned round, its pair conducts neither way, so the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2-aion
+  mutation: reverse D4
+  reason: "Clipping diode in a series pair: turned round, its pair conducts neither way, so the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2-aion
+  mutation: reverse D5
+  reason: "Clipping diode in a series pair: turned round, its pair conducts neither way, so the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2-aion
+  mutation: reverse D6
+  reason: "One of the two diodes between IC1B's inputs, which conduct only on loud peaks: without it (or turned round, both then pointing one way) the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2-aion
+  mutation: reverse D7
+  reason: "One of the two diodes between IC1B's inputs, which conduct only on loud peaks: without it (or turned round, both then pointing one way) the stage clips one side only, a change of sound rather than a fault."
+- circuit: klon-centaur
+  mutation: lift-pin VR1A.1
+  reason: "Gain A's end on the gain stage's + input: the input is still biased (through R6, R7, R19 to the summing amp's input, held at VR) and the stage still works; Gain no longer shorts its input at 0, a change of how the knob behaves."
+- circuit: klon-centaur
+  mutation: lift-pin VR1B.1
+  reason: "Gain B's clean input: without it the clean blend through Gain B is gone (the R7/R19 path remains), a change of sound; every node keeps a DC path."
+- circuit: klon-centaur
+  mutation: lift-pin VR1B.3
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: klon-centaur
+  mutation: lift-pin VR3.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: klon-centaur
+  mutation: remove-part C10
+  reason: "Coupling cap from the clipping diodes to the summing amp: without it the clipped signal no longer reaches the mix (only the clean paths do). Both sides keep their DC paths, so no rule sees a fault; the sound is plainly wrong."
+- circuit: klon-centaur
+  mutation: remove-part C13
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur
+  mutation: remove-part C16
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur
+  mutation: remove-part C18
+  reason: "VR's filter cap: without it VR is still 4.9 V from R29/R30, only noisier (supply ripple and the pump's whine reach every stage). A noise change, not a DC fault."
+- circuit: klon-centaur
+  mutation: remove-part C2
+  reason: "The bypass path's coupling cap: without it the clean signal no longer bleeds to the output through R243 with the effect on (ElectroSmash puts that bleed at about 1 dB); R3 still holds the path at ground, so nothing floats."
+- circuit: klon-centaur
+  mutation: remove-part C3
+  reason: "Coupling cap from the buffer to the gain stage and the R7/R19 clean path: without it only Gain B's clean path carries signal. Every node keeps a DC path, so no rule sees a fault."
+- circuit: klon-centaur
+  mutation: remove-part C4
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur
+  mutation: remove-part C5
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur
+  mutation: remove-part C7
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur
+  mutation: remove-part C8
+  reason: "Feedback cap across R12: it rolls off the highest frequencies; without it the gain stage keeps more highs, a change of the frequency response rather than a fault."
+- circuit: klon-centaur
+  mutation: remove-part D2
+  reason: "Clipping diode: without it (or turned round, so the pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: klon-centaur
+  mutation: remove-part D3
+  reason: "Clipping diode: without it (or turned round, so the pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: klon-centaur
+  mutation: remove-part D4
+  reason: "Overvoltage protection for the charge pump: a 12 V zener across the supply, which at 9-10 V carries only leakage. Without it the circuit works the same; it only matters when someone plugs in too high a supply."
+- circuit: klon-centaur
+  mutation: remove-part R10
+  reason: "In the gain stage's ground leg: without it the stage is a follower (gain 1), a change of gain rather than a fault."
+- circuit: klon-centaur
+  mutation: remove-part R11
+  reason: "In the gain stage's ground leg (C7 across it): without it only C7 passes, so the stage's gain falls at low frequencies, a change of the response rather than a fault."
+- circuit: klon-centaur
+  mutation: remove-part R17
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur
+  mutation: remove-part R19
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur
+  mutation: remove-part R21
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur
+  mutation: remove-part R22
+  reason: "U2B's input resistor: without it the treble stage gets the signal only through the Treble pot and C14, a change of the response; U2B stays biased through R24."
+- circuit: klon-centaur
+  mutation: remove-part R23
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur
+  mutation: remove-part R28
+  reason: "Output pull-down: without it the output still reaches ground through the Level pot (and the amp's 1M in the simulation); in the pedal it stops a pop when a cable is plugged in."
+- circuit: klon-centaur
+  mutation: remove-part R3
+  reason: "The bypass path's pull-down: without it C2's far side still reaches DC through R4, R243 and R28 to ground, so it's biased and nothing floats; in the pedal it stops a pop when switching to bypass."
+- circuit: klon-centaur
+  mutation: remove-part R5
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur
+  mutation: remove-part R6
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur
+  mutation: remove-part R7
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur
+  mutation: remove-part R8
+  reason: "Gain B's leg to VR: without it the clean node still reaches VR through C6/R9's path at audio and Gain B's track at DC, a change of the blend rather than a fault."
+- circuit: klon-centaur
+  mutation: remove-part U2
+  reason: "Without U2 (both halves and its power) the summing and treble stages are gone, but every node still reaches VR through the resistors around them, so nothing floats and no rule fires; only a faint passive leak of the signal reaches the output, plain to hear."
+- circuit: klon-centaur
+  mutation: remove-part VR1B
+  reason: "Gain B, the clean blend: without it only the clipped signal and the R7/R19 path reach the summing amp, a change of sound; R15, R17 and R18 then end on nothing but each other, still tied to the summing node, so nothing floats."
+- circuit: klon-centaur
+  mutation: reverse D2
+  reason: "Clipping diode: without it (or turned round, so the pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: klon-centaur
+  mutation: reverse D3
+  reason: "Clipping diode: without it (or turned round, so the pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: klon-centaur-aion
+  mutation: lift-pin IC3.1
+  reason: "The LT1054's pin 1 is FB/SHDN: tied to VA as Aion wires it, left open it still runs (only pulling it low shuts the chip down), so lifting it changes nothing (D-234)."
+- circuit: klon-centaur-aion
+  mutation: lift-pin VR1A.1
+  reason: "Gain A's end on the gain stage's + input: the input is still biased (through R6, R7, R19 to the summing amp's input, held at VR) and the stage still works; Gain no longer shorts its input at 0, a change of how the knob behaves."
+- circuit: klon-centaur-aion
+  mutation: lift-pin VR1B.1
+  reason: "Gain B's clean input: without it the clean blend through Gain B is gone (the R7/R19 path remains), a change of sound; every node keeps a DC path."
+- circuit: klon-centaur-aion
+  mutation: lift-pin VR1B.3
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: klon-centaur-aion
+  mutation: lift-pin VR3.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: klon-centaur-aion
+  mutation: remove-part C10
+  reason: "Coupling cap from the clipping diodes to the summing amp: without it the clipped signal no longer reaches the mix (only the clean paths do). Both sides keep their DC paths, so no rule sees a fault; the sound is plainly wrong."
+- circuit: klon-centaur-aion
+  mutation: remove-part C13
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion
+  mutation: remove-part C16
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion
+  mutation: remove-part C18
+  reason: "VR's filter cap: without it VR is still 4.9 V from R29/R30, only noisier (supply ripple and the pump's whine reach every stage). A noise change, not a DC fault."
+- circuit: klon-centaur-aion
+  mutation: remove-part C3
+  reason: "Coupling cap from the buffer to the gain stage and the R7/R19 clean path: without it only Gain B's clean path carries signal. Every node keeps a DC path, so no rule sees a fault."
+- circuit: klon-centaur-aion
+  mutation: remove-part C4
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion
+  mutation: remove-part C5
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion
+  mutation: remove-part C7
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion
+  mutation: remove-part C8
+  reason: "Feedback cap across R12: it rolls off the highest frequencies; without it the gain stage keeps more highs, a change of the frequency response rather than a fault."
+- circuit: klon-centaur-aion
+  mutation: remove-part D1
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: klon-centaur-aion
+  mutation: remove-part D2
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: klon-centaur-aion
+  mutation: remove-part IC2
+  reason: "Without IC2 (both halves and its power) the summing and treble stages are gone, but every node still reaches VR through the resistors around them, so nothing floats and no rule fires; only a faint passive leak of the signal reaches the output, plain to hear."
+- circuit: klon-centaur-aion
+  mutation: remove-part R10
+  reason: "In the gain stage's ground leg: without it the stage is a follower (gain 1), a change of gain rather than a fault."
+- circuit: klon-centaur-aion
+  mutation: remove-part R11
+  reason: "In the gain stage's ground leg (C7 across it): without it only C7 passes, so the stage's gain falls at low frequencies, a change of the response rather than a fault."
+- circuit: klon-centaur-aion
+  mutation: remove-part RPD1
+  reason: "Input pull-down for true bypass: without it the input cap may pop when switching, which the simulation of the effect alone can't show; the input is still biased through R2."
+- circuit: klon-centaur-aion
+  mutation: remove-part R17
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur-aion
+  mutation: remove-part R19
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur-aion
+  mutation: remove-part R21
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion
+  mutation: remove-part R22
+  reason: "IC2B's input resistor: without it the treble stage gets the signal only through the Treble pot and C14, a change of the response; IC2B stays biased through R24."
+- circuit: klon-centaur-aion
+  mutation: remove-part R23
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion
+  mutation: remove-part R5
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur-aion
+  mutation: remove-part R6
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur-aion
+  mutation: remove-part R7
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur-aion
+  mutation: remove-part R8
+  reason: "Gain B's leg to VR: without it the clean node still reaches VR through C6/R9's path at audio and Gain B's track at DC, a change of the blend rather than a fault."
+- circuit: klon-centaur-aion
+  mutation: remove-part VR1B
+  reason: "Gain B, the clean blend: without it only the clipped signal and the R7/R19 path reach the summing amp, a change of sound; R15, R17 and R18 then end on nothing but each other, still tied to the summing node, so nothing floats."
+- circuit: klon-centaur-aion
+  mutation: reverse D1
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: klon-centaur-aion
+  mutation: reverse D2
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: klon-centaur-aion
+  mutation: remove-part Z1
+  reason: "Overvoltage protection for the charge pump: a 12 V zener across VA, which at 9-10 V carries only leakage. Without it the circuit works the same; it only matters when someone plugs in too high a supply."
+- circuit: klon-centaur-aion-built
+  mutation: lift-pin IC3.1
+  reason: "The LT1054's pin 1 is FB/SHDN: tied to VA as Aion wires it, left open it still runs (only pulling it low shuts the chip down), so lifting it changes nothing (D-234)."
+- circuit: klon-centaur-aion-built
+  mutation: lift-pin VR1A.1
+  reason: "Gain A's end on the gain stage's + input: the input is still biased (through R6, R7, R19 to the summing amp's input, held at VR) and the stage still works; Gain no longer shorts its input at 0, a change of how the knob behaves."
+- circuit: klon-centaur-aion-built
+  mutation: lift-pin VR1B.1
+  reason: "Gain B's clean input: without it the clean blend through Gain B is gone (the R7/R19 path remains), a change of sound; every node keeps a DC path."
+- circuit: klon-centaur-aion-built
+  mutation: lift-pin VR1B.3
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: klon-centaur-aion-built
+  mutation: lift-pin VR3.1
+  reason: "The pot then works as a variable resistor, a legitimate wiring (pot ends may be left open, so unconnected-pin skips them); only the knob's range changes."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part C10
+  reason: "Coupling cap from the clipping diodes to the summing amp: without it the clipped signal no longer reaches the mix (only the clean paths do). Both sides keep their DC paths, so no rule sees a fault; the sound is plainly wrong."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part C13
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part C16
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part C18
+  reason: "VR's filter cap: without it VR is still 4.9 V from R29/R30, only noisier (supply ripple and the pump's whine reach every stage). A noise change, not a DC fault."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part C3
+  reason: "Coupling cap from the buffer to the gain stage and the R7/R19 clean path: without it only Gain B's clean path carries signal. Every node keeps a DC path, so no rule sees a fault."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part C4
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part C5
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part C7
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part C8
+  reason: "Feedback cap across R12: it rolls off the highest frequencies; without it the gain stage keeps more highs, a change of the frequency response rather than a fault."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part D1
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part D2
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part IC2
+  reason: "Without IC2 (both halves and its power) the summing and treble stages are gone, but every node still reaches VR through the resistors around them, so nothing floats and no rule fires; only a faint passive leak of the signal reaches the output, plain to hear."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R10
+  reason: "In the gain stage's ground leg: without it the stage is a follower (gain 1), a change of gain rather than a fault."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R11
+  reason: "In the gain stage's ground leg (C7 across it): without it only C7 passes, so the stage's gain falls at low frequencies, a change of the response rather than a fault."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part RPD1
+  reason: "Input pull-down for true bypass: without it C1 may pop when the footswitch switches. switch-pulldown-missing looks only at a net with a capacitor on it, and here R1 sits between the footswitch and C1; the input is still biased through R2."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R17
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R19
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R21
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R22
+  reason: "IC2B's input resistor: without it the treble stage gets the signal only through the Treble pot and C14, a change of the response; IC2B stays biased through R24."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R23
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R5
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R6
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R7
+  reason: "Part of the Klon's mix of clean and clipped signals into the summing amp: leaving it out changes the blend and the response, not whether the circuit works. No rule can know the mix you intended."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R8
+  reason: "Gain B's leg to VR: without it the clean node still reaches VR through C6/R9's path at audio and Gain B's track at DC, a change of the blend rather than a fault."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part VR1B
+  reason: "Gain B, the clean blend: without it only the clipped signal and the R7/R19 path reach the summing amp, a change of sound; R15, R17 and R18 then end on nothing but each other, still tied to the summing node, so nothing floats."
+- circuit: klon-centaur-aion-built
+  mutation: reverse D1
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: klon-centaur-aion-built
+  mutation: reverse D2
+  reason: "Clipping diode: without it (or turned round, so a pair clips one side only) the stage clips less or asymmetrically, a change of sound rather than a fault."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part Z1
+  reason: "Overvoltage protection for the charge pump: a 12 V zener across VA, which at 9-10 V carries only leakage. Without it the circuit works the same; it only matters when someone plugs in too high a supply."
+- circuit: klon-centaur-aion-built
+  mutation: lift-pin SW1A.A1
+  reason: "The slide's True bypass lug: open in Buffered, the starter's mode, so nothing in the circuit changes until the slide is moved. The rules check the switch's present position only."
+- circuit: klon-centaur-aion-built
+  mutation: lift-pin SW1A.A3
+  reason: "In Buffered, joins R26/R27 to the output so R28 holds the unused output at ground. Without it the effect still reaches the output through the footswitch; only the anti-pop hold changes."
+- circuit: klon-centaur-aion-built
+  mutation: lift-pin SW1B.B1
+  reason: "The slide's True bypass lug: open in Buffered, the starter's mode, so nothing in the circuit changes until the slide is moved. The rules check the switch's present position only."
+- circuit: klon-centaur-aion-built
+  mutation: lift-pin SW1B.B3
+  reason: "Feeds the buffered output to the footswitch's bypass lug, used only when bypassed; the starter is On, and the rules check the switch's present position only."
+- circuit: klon-centaur-aion-built
+  mutation: lift-pin SW2C.C1
+  reason: "The footswitch's On lug to the output: without it the effect still reaches the output through R27 68k and the slide (Buffered), about 4 dB down. Every node keeps a DC path, so no rule sees a fault; the level is plainly wrong."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part C2
+  reason: "The buffered output (C2, R3, R4) is used only when bypassed in Buffered mode; the starter is On, and the rules check the switch's present position only."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R3
+  reason: "The buffered output (C2, R3, R4) is used only when bypassed in Buffered mode; the starter is On, and the rules check the switch's present position only."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R4
+  reason: "The buffered output (C2, R3, R4) is used only when bypassed in Buffered mode; the starter is On, and the rules check the switch's present position only."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R26
+  reason: "R26, R27 and R28 hold the unused output (the buffer's or the effect's) at ground so the footswitch doesn't pop. Without one the circuit works the same; only the switching may pop."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R27
+  reason: "R26, R27 and R28 hold the unused output (the buffer's or the effect's) at ground so the footswitch doesn't pop. Without one the circuit works the same; only the switching may pop."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part R28
+  reason: "R26, R27 and R28 hold the unused output (the buffer's or the effect's) at ground so the footswitch doesn't pop. Without one the circuit works the same; only the switching may pop."
+- circuit: klon-centaur-aion-built
+  mutation: remove-part SW1
+  reason: "The bypass-mode slide: with the footswitch On, the footswitch alone joins the input to the circuit and the effect to the output, so the circuit works the same; the slide matters only when bypassed."
+- circuit: marshall-bluesbreaker-aion
+  mutation: lift-pin VR3.1
+  reason: "Volume's end on ground: the pot then works as a variable resistor, a legitimate wiring (pot ends may be left open); the output no longer goes to silence at 0, a change of how the knob behaves."
+- circuit: marshall-bluesbreaker-aion
+  mutation: remove-part C10
+  reason: "VB's filter cap: without it VB is a bare divider, which still biases every stage (the bias-net rule only follows nets a big cap holds, D-225); in a real build VB carries more supply noise."
+- circuit: marshall-bluesbreaker-aion
+  mutation: remove-part C12
+  reason: "Supply decoupling: the simulation's supply is ideal, so leaving it out changes nothing it can see; in a real build the rail picks up more ripple and noise."
+- circuit: marshall-bluesbreaker-aion
+  mutation: remove-part C2
+  reason: "First stage's feedback cap (47p): without it the stage keeps more of the highs far above hearing, a change of the frequency response rather than a fault."
+- circuit: marshall-bluesbreaker-aion
+  mutation: remove-part C3
+  reason: "In the first stage's leg to ground with R6: without it R6's leg is open and only R4 and C4 remain, so the stage has less gain (as with Mode's V1 legs changed); a change of sound, not a fault any rule can name."
+- circuit: marshall-bluesbreaker-aion
+  mutation: remove-part C4
+  reason: "The first stage's legs to ground end in C4: without it they have no way to ground, so the stage is a unity follower and Drive does less; the circuit still works, a change of gain no rule can know you didn't intend."
+- circuit: marshall-bluesbreaker-aion
+  mutation: remove-part C6
+  reason: "Aion's 10p across R9, not in the original Bluesbreaker: leaving it out changes nothing audible (Aion: \"it has no impact on audible frequencies\")."
+- circuit: marshall-bluesbreaker-aion
+  mutation: remove-part C7
+  reason: "Tone's treble cut to VB: without it Tone's pin 1 is open and the knob only adds resistance before R12, a change of the frequency response rather than a fault."
+- circuit: marshall-bluesbreaker-aion
+  mutation: remove-part C8
+  reason: "Treble cut after Tone (with R12): leaving it out changes the frequency response, not whether the circuit works."
+- circuit: marshall-bluesbreaker-aion
+  mutation: remove-part R10
+  reason: "In series with the soft-clipping diodes: without it they're open, so the second stage doesn't clip there, the Boost position's sound; a change of sound rather than a fault."
+- circuit: marshall-bluesbreaker-aion
+  mutation: remove-part RPD1
+  reason: "Pull-down resistor on the input (Aion's RPD): without it the input's free side floats and pops when a footswitch switches it, but no footswitch is drawn here, so switch-pulldown-missing can't see it."
+- circuit: marshall-bluesbreaker-aion
+  mutation: remove-part SW1
+  reason: "Clipping switch: without it neither diode string is connected, the Boost position's sound; a change of sound rather than a fault."
+- circuit: marshall-bluesbreaker-aion
+  mutation: reverse D2
+  reason: "Soft-clipping diode: turned round, its string conducts neither way and only the other string clips, so the stage clips one side only; a change of sound rather than a fault."
+- circuit: marshall-bluesbreaker-aion
+  mutation: reverse D3
+  reason: "Soft-clipping diode: turned round, its string conducts neither way and only the other string clips, so the stage clips one side only; a change of sound rather than a fault."
+- circuit: marshall-bluesbreaker-aion
+  mutation: reverse D4
+  reason: "Soft-clipping diode: turned round, its string conducts neither way and only the other string clips, so the stage clips one side only; a change of sound rather than a fault."
+- circuit: marshall-bluesbreaker-aion
+  mutation: reverse D5
+  reason: "Soft-clipping diode: turned round, its string conducts neither way and only the other string clips, so the stage clips one side only; a change of sound rather than a fault."
+- circuit: marshall-bluesbreaker-aion
+  mutation: reverse D6
+  reason: "Hard-clipping diodes (D6-D9): in use only with Clipping at Hard, and the starter is drawn at Soft, where they hang on a lug that's open; turned round, nothing the drawn position sees changes."
+- circuit: marshall-bluesbreaker-aion
+  mutation: reverse D7
+  reason: "Hard-clipping diodes (D6-D9): in use only with Clipping at Hard, and the starter is drawn at Soft, where they hang on a lug that's open; turned round, nothing the drawn position sees changes."
+- circuit: marshall-bluesbreaker-aion
+  mutation: reverse D8
+  reason: "Hard-clipping diodes (D6-D9): in use only with Clipping at Hard, and the starter is drawn at Soft, where they hang on a lug that's open; turned round, nothing the drawn position sees changes."
+- circuit: marshall-bluesbreaker-aion
+  mutation: reverse D9
+  reason: "Hard-clipping diodes (D6-D9): in use only with Clipping at Hard, and the starter is drawn at Soft, where they hang on a lug that's open; turned round, nothing the drawn position sees changes."
+- circuit: mxr-dyna-comp
+  mutation: lift-pin VR2.1
+  reason: "Output's end on ground: the pot then works as a variable resistor, a legitimate wiring (pot ends may be left open); the output no longer goes to silence at 0, a change of how the knob behaves."
+- circuit: mxr-dyna-comp
+  mutation: remove-part C10
+  reason: "Supply bulk cap: the simulation's supply is ideal, and supply-no-bulk only asks it of a supply an op-amp or pump runs from; in a real build the rail picks up more ripple (ElectroSmash says the original may not have had it)."
+- circuit: mxr-dyna-comp
+  mutation: remove-part C11
+  reason: "VB's filter cap: without it VB is a bare divider, which still biases every stage (the bias-net rule only follows nets a big cap holds, D-225); in a real build VB carries more supply noise."
+- circuit: mxr-dyna-comp
+  mutation: remove-part C3
+  reason: "Holds the + input's network at AC ground: without it the + input follows some of the signal too, a change of gain and response rather than a fault any rule can name."
+- circuit: mxr-dyna-comp
+  mutation: remove-part C4
+  reason: "Across R7 (10n): leaving it out changes the + input network's frequency response, not whether the circuit works."
+- circuit: mxr-dyna-comp
+  mutation: remove-part C5
+  reason: "Treble cut at the OTA's output (1n, across R8): without it the output keeps more highs (a common mod), a change of the frequency response rather than a fault."
+- circuit: mxr-dyna-comp
+  mutation: remove-part C6
+  reason: "Coupling cap into Q3, one of the two rectifiers: without it the envelope follows one half of the wave only, a change of how hard it compresses rather than a fault any rule can name."
+- circuit: mxr-dyna-comp
+  mutation: remove-part C7
+  reason: "Coupling cap into Q4, one of the two rectifiers: without it the envelope follows one half of the wave only (a known mod, ElectroSmash says), a change of how hard it compresses rather than a fault."
+- circuit: mxr-dyna-comp
+  mutation: remove-part C8
+  reason: "The envelope's cap: without it the control voltage follows the waveform instead of its level (distortion, no smooth gain change); every node keeps its DC, so no rule can see it."
+- circuit: mxr-dyna-comp
+  mutation: remove-part D1
+  reason: "Q3's base clamp: without it (or turned round) C6 charges differently and the envelope responds less or more, a change of how it compresses that no rule can judge."
+- circuit: mxr-dyna-comp
+  mutation: remove-part D2
+  reason: "Q4's base clamp: without it (or turned round) C7 charges differently and the envelope responds less or more, a change of how it compresses that no rule can judge."
+- circuit: mxr-dyna-comp
+  mutation: remove-part D3
+  reason: "Reverse-polarity protection across the supply: it conducts only when the supply is connected the wrong way round, which the simulation never does; leaving it out changes nothing in normal use."
+- circuit: mxr-dyna-comp
+  mutation: remove-part Q3
+  reason: "One of the two rectifiers (off at rest, as both are): without it the envelope follows one half of the wave only, a change of how hard it compresses."
+- circuit: mxr-dyna-comp
+  mutation: remove-part Q4
+  reason: "One of the two rectifiers (off at rest, as both are): without it the envelope follows one half of the wave only, a change of how hard it compresses."
+- circuit: mxr-dyna-comp
+  mutation: reverse D1
+  reason: "Q3's base clamp: without it (or turned round) C6 charges differently and the envelope responds less or more, a change of how it compresses that no rule can judge."
+- circuit: mxr-dyna-comp
+  mutation: reverse D2
+  reason: "Q4's base clamp: without it (or turned round) C7 charges differently and the envelope responds less or more, a change of how it compresses that no rule can judge."
+- circuit: mxr-dyna-comp-aion
+  mutation: lift-pin VR1.1
+  reason: "Sustain's pin 1 is joined to its wiper, so lifting it changes nothing."
+- circuit: mxr-dyna-comp-aion
+  mutation: lift-pin VR2.1
+  reason: "Release's end: the pot then works as a variable resistor, a legitimate wiring (pot ends may be left open); only the knob's range changes."
+- circuit: mxr-dyna-comp-aion
+  mutation: lift-pin VR3.1
+  reason: "Level's end on ground: the pot then works as a variable resistor, a legitimate wiring (pot ends may be left open); the output no longer goes to silence at 0, a change of how the knob behaves."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C10
+  reason: "Treble cut across R13 (180p): without it the OTA's output keeps more highs, a change of the frequency response rather than a fault."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C11
+  reason: "Treble's 820p: on a lug the drawn position (Stock) doesn't use, so nothing the drawn circuit sees changes."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C12
+  reason: "Treble's 330p: on a lug the drawn position (Stock) doesn't use, so nothing the drawn circuit sees changes."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C13
+  reason: "Coupling cap into Q3, one of the two rectifiers: without it the envelope follows one half of the wave only, a change of how hard it compresses rather than a fault any rule can name."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C14
+  reason: "The envelope's cap: without it the control voltage follows the waveform instead of its level (distortion, no smooth gain change); every node keeps its DC, so no rule can see it."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C15
+  reason: "Coupling cap into Q4, one of the two rectifiers: without it the envelope follows one half of the wave only, a change of how hard it compresses rather than a fault any rule can name."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C17
+  reason: "Treble cut across R25 (1n): leaving it out changes the frequency response, not whether the circuit works."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C18
+  reason: "Supply bulk cap: the simulation's supply is ideal, and supply-no-bulk only asks it of a supply an op-amp or pump runs from; in a real build the rail picks up more ripple."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C19
+  reason: "VB's filter cap: without it VB is a bare divider, which still biases every stage (the bias-net rule only follows nets a big cap holds, D-225); in a real build VB carries more supply noise."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C20
+  reason: "Supply decoupling: the simulation's supply is ideal, so leaving it out changes nothing it can see; in a real build the rail picks up more ripple and noise."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C3
+  reason: "Filters Q1's bias (between R2 and R3): without it Q1 is still biased through R2 and R3, with more supply noise in a real build."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C4
+  reason: "Filters Q1's collector rail (with R4): the simulation's supply is ideal, so leaving it out changes nothing it can see."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C6
+  reason: "Across the OTA's input network (2n2): leaving it out changes the input network's frequency response, not whether the circuit works."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C7
+  reason: "Filters the OTA inputs' bias (R9, R10): without it the bias is still there, with more supply noise in a real build."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C8
+  reason: "Across R12 (10n): leaving it out changes the + input network's frequency response, not whether the circuit works."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part C9
+  reason: "Holds the + input's network at AC ground: without it the + input follows some of the signal too, a change of gain and response rather than a fault any rule can name."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part D2
+  reason: "Q3's base clamp: without it (or turned round) C13 charges differently and the envelope responds less or more, a change of how it compresses that no rule can judge."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part D3
+  reason: "Q4's base clamp: without it (or turned round) C15 charges differently and the envelope responds less or more, a change of how it compresses that no rule can judge."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part Q2
+  reason: "The phase splitter feeding the rectifiers: without it Q3 and Q4 get no signal, so the pedal stops compressing and plays at a fixed gain; every node keeps its DC, so no rule can see it."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part Q3
+  reason: "One of the two rectifiers (off at rest, as both are): without it the envelope follows one half of the wave only, a change of how hard it compresses."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part Q4
+  reason: "One of the two rectifiers (off at rest, as both are): without it the envelope follows one half of the wave only, a change of how hard it compresses."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part R19
+  reason: "Across Release (390k): without it the release range gets longer at the top, a change of how the knob behaves."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part RPD1
+  reason: "Pull-down resistor on the input (Aion's RPD): without it the input's free side floats and pops when a footswitch switches it, but no footswitch is drawn here, so switch-pulldown-missing can't see it."
+- circuit: mxr-dyna-comp-aion
+  mutation: remove-part VR2
+  reason: "Release: without it R19 alone sets the release, a fixed time instead of a knob; a change of how the pedal behaves."
+- circuit: mxr-dyna-comp-aion
+  mutation: reverse D2
+  reason: "Q3's base clamp: without it (or turned round) C13 charges differently and the envelope responds less or more, a change of how it compresses that no rule can judge."
+- circuit: mxr-dyna-comp-aion
+  mutation: reverse D3
+  reason: "Q4's base clamp: without it (or turned round) C15 charges differently and the envelope responds less or more, a change of how it compresses that no rule can judge."
+- circuit: boss-bd2
+  mutation: remove-part C25
+  reason: "Feedback cap across the stage's gain resistors: it rolls off the highest frequencies; without it the stage keeps more highs, a change of the frequency response rather than a fault."
+- circuit: boss-bd2
+  mutation: remove-part C20
+  reason: "Compensation cap of the discrete op-amp (the PNP's base to the output): it keeps the stage stable far above audio; without it a real build may oscillate, which the audio-band simulation doesn't show, and no rule can tell."
+- circuit: boss-bd2
+  mutation: remove-part C17
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-bd2
+  mutation: remove-part C19
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-bd2
+  mutation: remove-part C101
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-bd2
+  mutation: remove-part C8
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-bd2
+  mutation: remove-part C9
+  reason: "One of the gyrator's capacitors (the simulated inductor with Q7 and R21): without it the bass boost changes shape, a change of the frequency response no rule can call wrong."
+- circuit: boss-bd2
+  mutation: remove-part C16
+  reason: "One of the gyrator's capacitors (the simulated inductor with Q7 and R21): without it the bass boost changes shape, a change of the frequency response no rule can call wrong."
+- circuit: boss-bd2
+  mutation: remove-part C4
+  reason: "Smooths Q2's base: without it Q2 still makes VA through R6, only the ripple filtering is lost, and the simulation's supply has no ripple."
+- circuit: boss-bd2
+  mutation: remove-part C2
+  reason: "Supply decoupling: the simulation's supply is ideal, so leaving it out changes nothing it can see; in a real build the rail picks up more ripple and noise."
+- circuit: boss-bd2
+  mutation: remove-part C11
+  reason: "Supply decoupling: the simulation's supply is ideal, so leaving it out changes nothing it can see; in a real build the rail picks up more ripple and noise."
+- circuit: boss-bd2
+  mutation: remove-part C23
+  reason: "Feedback cap across the stage's gain resistors: it rolls off the highest frequencies; without it the stage keeps more highs, a change of the frequency response rather than a fault."
+- circuit: boss-bd2
+  mutation: remove-part C21
+  reason: "Compensation cap of the discrete op-amp (the PNP's base to the output): it keeps the stage stable far above audio; without it a real build may oscillate, which the audio-band simulation doesn't show, and no rule can tell."
+- circuit: boss-bd2
+  mutation: remove-part C34
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-bd2
+  mutation: remove-part C35
+  reason: "Part of a filter or tone network: leaving it out changes the frequency response, not whether the circuit works. No rule can know the response you intended."
+- circuit: boss-bd2
+  mutation: remove-part D1
+  reason: "One of the two diodes between IC1B's inputs, which conduct only on loud peaks: without it (or turned round, both then pointing one way) the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2
+  mutation: remove-part D3
+  reason: "One of the two diodes between IC1B's inputs, which conduct only on loud peaks: without it (or turned round, both then pointing one way) the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2
+  mutation: remove-part Q7
+  reason: "The gyrator's transistor: without it C9, C16 and R21 are a plain filter to ground, so the bass boost changes shape; the stage still works and no rule knows the response intended."
+- circuit: boss-bd2
+  mutation: remove-part R50
+  reason: "Gives the clipping node its DC path to ground: without it the diodes still hold the node near 0 V, so the circuit works; a real build may drift and click. No rule flags a net held only through diodes."
+- circuit: boss-bd2
+  mutation: remove-part R51
+  reason: "The ground leg of the network before the clipping diodes: without it C35 and R50 return to nothing, the bass cut goes and the signal into the diodes is higher, a change of sound rather than a fault."
+- circuit: boss-bd2
+  mutation: remove-part R33
+  reason: "The JFET pair's drain load: without it the drain's current all flows into the PNP's base, the stage's feedback still holds its output near VB and its gain barely moves; a change of operating point no rule can call wrong."
+- circuit: boss-bd2
+  mutation: remove-part R3
+  reason: "Pull-down on the output after C1: without it the output's free side floats and pops when a footswitch switches it, but no footswitch is drawn here, so switch-pulldown-missing can't see it."
+- circuit: boss-bd2
+  mutation: remove-part R28
+  reason: "The JFET pair's drain load: without it the drain's current all flows into the PNP's base, the stage's feedback still holds its output near VB and its gain barely moves; a change of operating point no rule can call wrong."
+- circuit: boss-bd2
+  mutation: reverse D7
+  reason: "Clipping diode in a series pair: turned round, its pair conducts neither way, so the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2
+  mutation: reverse D8
+  reason: "Clipping diode in a series pair: turned round, its pair conducts neither way, so the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2
+  mutation: reverse D10
+  reason: "Clipping diode in a series pair: turned round, its pair conducts neither way, so the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2
+  mutation: reverse D9
+  reason: "Clipping diode in a series pair: turned round, its pair conducts neither way, so the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2
+  mutation: reverse D1
+  reason: "One of the two diodes between IC1B's inputs, which conduct only on loud peaks: without it (or turned round, both then pointing one way) the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2
+  mutation: reverse D3
+  reason: "One of the two diodes between IC1B's inputs, which conduct only on loud peaks: without it (or turned round, both then pointing one way) the stage clips one side only, a change of sound rather than a fault."
+- circuit: boss-bd2
+  mutation: remove-part C3
+  reason: "The bulk cap on the adapter side of the ripple filter: C5 (100µ) on VA still holds the circuit's supply, so supply-no-bulk is content, and the simulation's supply is ideal; in a real build the filter would see more of the adapter's ripple."
+- circuit: boss-bd2
+  mutation: remove-part D2
+  reason: "Reverse-polarity shunt: with the supply the right way round, the only way the simulation powers it, it never conducts; in a real build a reversed adapter would then reach the circuit."
+- circuit: boss-bd2
+  mutation: remove-part R17
+  reason: "One of the two 100k resistors to VB on the node where Boss's switching JFET Q6 sits (drawn closed): R22 still holds the node at VB, so the circuit works the same; no rule can know it was meant to be two."
+- circuit: boss-bd2
+  mutation: remove-part R22
+  reason: "One of the two 100k resistors to VB on the node where Boss's switching JFET Q6 sits (drawn closed): R17 still holds the node at VB, so the circuit works the same; no rule can know it was meant to be two."
+- circuit: boss-bd2
+  mutation: remove-part R11
+  reason: "One of the two 100k resistors to VB on the node where Boss's switching JFET Q4 sits (drawn closed): R8 still holds the node at VB, so the circuit works the same; no rule can know it was meant to be two."
+- circuit: boss-bd2
+  mutation: remove-part R8
+  reason: "One of the two 100k resistors to VB on the node where Boss's switching JFET Q4 sits (drawn closed): R11 still holds the node at VB, so the circuit works the same; no rule can know it was meant to be two."
+- circuit: boss-bd2
+  mutation: reverse C15
+  reason: "Turned round, its DC reverse bias (Q3's source 4.47 V against VB 4.14 V) stays under electrolytic-reversed's 0.5 V limit, so it does no harm at this operating point."
+- circuit: boss-bd2
+  mutation: reverse C7
+  reason: "Both its ends sit at VB (IC1B's output, and the switch node through R11 and R8), so turned round it has no DC across it and no rule can tell."
+- circuit: boss-bd2
+  mutation: reverse C6
+  reason: "Both its ends sit at VB (the switch node, and Q1's base through R7), so turned round it has no DC across it and no rule can tell."
+- circuit: marshall-bluesbreaker
+  mutation: lift-pin VR3.1
+  reason: "Volume's end on VB: the pot then works as a variable resistor, a legitimate wiring (pot ends may be left open); the output no longer goes to silence at 0, a change of how the knob behaves."
+- circuit: marshall-bluesbreaker
+  mutation: remove-part C11
+  reason: "VB's filter cap: without it VB is a bare divider, which still biases every stage (the bias-net rule only follows nets a big cap holds, D-225); in a real build VB carries more supply noise."
+- circuit: marshall-bluesbreaker
+  mutation: remove-part C4
+  reason: "First stage's feedback cap (47p): without it the stage keeps more of the highs far above hearing, a change of the frequency response rather than a fault."
+- circuit: marshall-bluesbreaker
+  mutation: remove-part C3
+  reason: "The first stage's legs to ground end in C3: without it they have no way to ground, so the stage is a unity follower and Gain does less; the circuit still works, a change of gain no rule can know you didn't intend."
+- circuit: marshall-bluesbreaker
+  mutation: remove-part C8
+  reason: "Tone's treble cut to VB: without it Tone's pin 1 is open and the knob only adds resistance before R12, a change of the frequency response rather than a fault."
+- circuit: marshall-bluesbreaker
+  mutation: remove-part C9
+  reason: "Treble cut after Tone (with R12): leaving it out changes the frequency response, not whether the circuit works."
+- circuit: marshall-bluesbreaker
+  mutation: remove-part R11
+  reason: "In series with the soft-clipping diodes: without it they're open, so the second stage doesn't clip there; a change of sound rather than a fault."
+- circuit: marshall-bluesbreaker
+  mutation: remove-part R1
+  reason: "Pull-down resistor on the input: without it the input's free side floats and pops when a footswitch switches it, but no footswitch is drawn here, so switch-pulldown-missing can't see it."
+- circuit: marshall-bluesbreaker
+  mutation: reverse D4
+  reason: "Soft-clipping diode: turned round, its string conducts neither way and only the other string clips, so the stage clips one side only; a change of sound rather than a fault."
+- circuit: marshall-bluesbreaker
+  mutation: reverse D2
+  reason: "Soft-clipping diode: turned round, its string conducts neither way and only the other string clips, so the stage clips one side only; a change of sound rather than a fault."
+- circuit: marshall-bluesbreaker
+  mutation: reverse D5
+  reason: "Soft-clipping diode: turned round, its string conducts neither way and only the other string clips, so the stage clips one side only; a change of sound rather than a fault."
+- circuit: marshall-bluesbreaker
+  mutation: reverse D3
+  reason: "Soft-clipping diode: turned round, its string conducts neither way and only the other string clips, so the stage clips one side only; a change of sound rather than a fault."
+- circuit: marshall-bluesbreaker
+  mutation: remove-part R13
+  reason: "Pull-down on the output after C10: without it the output's free side floats and pops when a footswitch switches it, but no footswitch is drawn here, so switch-pulldown-missing can't see it."

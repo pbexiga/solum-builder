@@ -1,0 +1,3 @@
+* MPF102 N-channel JFET (our model from onsemi's sheet)
+* Built by Solum Builder from onsemi MPF102/D Rev. 3 (January 2006) (D-161)
+.model MPF102 NJF(vto=-2.355 beta=0.00114 cgs=4e-12 cgd=3e-12)

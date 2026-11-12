@@ -1,0 +1,26 @@
+id: resistor-over-power
+layer: operating_point
+severity: error
+check: resistor_over_power
+build: true
+title: Resistor too hot
+message: "{ref} dissipates {power}, over {rating}."
+why: >
+  A resistor run past its power rating overheats, drifts in value and can burn. Without a
+  rating in the file, the usual ¼ W pedal resistor is assumed.
+fix: "Use a larger value for {ref} if the circuit allows, or a resistor rated for the power."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 100}
+      expect: [R1]
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 1k, rating_w: 0.05}
+      expect: [R1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 100, rating_w: 1}
+    - starter: proco-rat

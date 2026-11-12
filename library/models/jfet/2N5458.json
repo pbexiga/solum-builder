@@ -1,0 +1,86 @@
+{
+  "id": "2N5458",
+  "type": "jfet",
+  "description": "2N5458 N-channel JFET (Rat output buffer; our model from onsemi's sheet)",
+  "spice_name": "J2N5458",
+  "kind": "model",
+  "pins": [],
+  "card": "2N5458.lib",
+  "manufacturer": "onsemi",
+  "source": {
+    "url": "https://www.rlocman.ru/i/File/2018/03/29/2N5457-D.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model built from the maker's data sheet (D-159, D-161): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.rlocman.ru/i/File/2018/03/29/2N5457-D.pdf",
+  "fixes": [],
+  "ratings": {},
+  "package": {
+    "name": "TO-92 (DSG)",
+    "pins": {
+      "D": 1,
+      "S": 2,
+      "G": 3
+    },
+    "source": "onsemi 2N5457/D (Rev. 6, February 2010), page 1: TO-92 Style 5, 1 drain, 2 source, 3 gate"
+  },
+  "fit": {
+    "sheet": "onsemi 2N5457/D Rev. 6 (Feb 2010)",
+    "figure": "Electrical characteristics (no typical DC curve on the sheet)",
+    "points": [
+      [
+        0.0,
+        0.006
+      ],
+      [
+        -3.5,
+        0.0002
+      ]
+    ],
+    "method": "Idss the sheet's typical 6 mA; Vp -4.28 V from its typical VGS of -3.5 V at 200 µA (square law); BETA = Idss/Vp²; LAMBDA = typical |Yos| 10 µS / Idss; CGD = Crss 1.5 pF, CGS = Ciss − Crss = 3 pF (typical)",
+    "note": "Real units spread over the sheet's whole range; a circuit's measured Idss and Vp replace these (D-130)"
+  },
+  "validation": [
+    {
+      "quantity": "idss",
+      "conditions": {
+        "vds": 15.0
+      },
+      "simulated": 0.00615128,
+      "datasheet": {
+        "min": 0.002,
+        "typ": 0.006,
+        "max": 0.009,
+        "source": "onsemi 2N5457/D Rev. 6 (Feb 2010), Electrical Characteristics"
+      }
+    },
+    {
+      "quantity": "vp",
+      "conditions": {
+        "vds": 15.0,
+        "id": 1e-08
+      },
+      "simulated": -4.27655,
+      "datasheet": {
+        "min": -7.0,
+        "max": -1.0,
+        "source": "onsemi 2N5457/D Rev. 6 (Feb 2010), Electrical Characteristics (VGS(off) at iD = 10 nA)"
+      }
+    },
+    {
+      "quantity": "vp",
+      "conditions": {
+        "vds": 15.0,
+        "id": 0.0002
+      },
+      "simulated": -3.50989,
+      "datasheet": {
+        "typ": -3.5,
+        "tol": 0.05,
+        "source": "onsemi 2N5457/D Rev. 6 (Feb 2010), Electrical Characteristics (VGS at iD = 200 µA, typical)",
+        "note": "Fitted to, so a check of the arithmetic, not of the model"
+      }
+    }
+  ]
+}

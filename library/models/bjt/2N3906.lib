@@ -1,0 +1,3 @@
+* 2N3906 general-purpose PNP (switching and small-signal; pairs with the 2N3904), our fit to Fairchild's sheet
+* Fitted by Solum Builder to Fairchild 2N3906/MMBT3906/PZT3906 data sheet, Rev A (2001), its typical curves (D-163)
+.model 2N3906 PNP(is=1.485e-14 nf=1.025 bf=164.2 ise=2.04e-14 ne=1.396 ikf=0.4615 vaf=23.36 br=3.548 isc=6.497e-09 nc=3.761 re=0.3112 rc=0.5516 cje=7.948e-12 vje=0.8276 mje=0.3859 cjc=9.772e-12 vjc=0.5115 mjc=0.4918 tf=5.902e-10 nkf=1 nr=1.025)

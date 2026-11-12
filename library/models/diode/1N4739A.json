@@ -1,0 +1,45 @@
+{
+  "id": "1N4739A",
+  "type": "diode",
+  "description": "1N4739A 9.1 V, 1 W zener diode (Diodes Incorporated model)",
+  "spice_name": "1N4739A",
+  "kind": "subckt",
+  "pins": [
+    "A",
+    "K"
+  ],
+  "card": "1N4739A.lib",
+  "manufacturer": "Diodes Incorporated",
+  "source": {
+    "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Diode/zener.lib",
+    "retrieved": "2026-10-29",
+    "licence": "KiCad-Spice-Library collection (GPL-3.0); model by the manufacturer named, redistributed there",
+    "original": "Diodes Incorporated"
+  },
+  "datasheet": "https://www.vishay.com/docs/85816/1n4728a.pdf",
+  "fixes": [],
+  "ratings": {},
+  "rating_sources": {},
+  "package": {
+    "name": "DO-41 (DO-204AL)",
+    "pins": {
+      "K": 1,
+      "A": 2
+    },
+    "source": "Vishay 1N4728A to 1N4761A data sheet: DO-41 (DO-204AL); pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The band marks the cathode"
+  },
+  "validation": [
+    {
+      "quantity": "vz",
+      "conditions": {
+        "iz": 0.028
+      },
+      "datasheet": {
+        "source": "Vishay 1N4728A to 1N4761A data sheet, Rev. 2.7, 07-Nov-2024 (doc 85816): VZ 9.1 V at IZT 28 mA, standard tolerance ±5 %",
+        "min": 8.645,
+        "max": 9.555
+      },
+      "simulated": 9.092052
+    }
+  ]
+}

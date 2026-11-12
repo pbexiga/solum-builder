@@ -1,0 +1,2172 @@
+{
+ "schema": 30,
+ "id": "mxr-dyna-comp-aion",
+ "name": "MXR Dyna Comp (Aion Aurora)",
+ "version": {
+  "major": 1,
+  "minor": 0
+ },
+ "description": "MXR Dyna Comp (1972) and Ross Compressor as Aion FX's Aurora (document 2.0.0), with true bypass: an input buffer, an OTA whose gain the envelope sets, a phase splitter feeding a full-wave envelope detector, and Aion's output buffer. Sustain sets how hard it compresses, Release (from the Boss CS-2, which calls it Attack) how fast it recovers, Level the output; Aion's Treble switch picks the treble cut after the OTA. The LM13700 as Aion uses it in place of the CA3080.",
+ "tags": [
+  "compressor"
+ ],
+ "starter": true,
+ "power": {
+  "rails": {
+   "V+": 9.0
+  }
+ },
+ "parts": [
+  {
+   "ref": "D1",
+   "pos": [
+    40,
+    -400
+   ],
+   "note": "Reverse-polarity protection; R28 and C18, C20 filter the supply.",
+   "type": "diode",
+   "model": "1N5817"
+  },
+  {
+   "ref": "R28",
+   "pos": [
+    100,
+    -400
+   ],
+   "type": "resistor",
+   "value": "100"
+  },
+  {
+   "ref": "C20",
+   "pos": [
+    160,
+    -360
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "ceramic"
+  },
+  {
+   "ref": "C18",
+   "pos": [
+    220,
+    -360
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "100µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "R26",
+   "pos": [
+    300,
+    -400
+   ],
+   "type": "resistor",
+   "value": "56k"
+  },
+  {
+   "ref": "R27",
+   "pos": [
+    360,
+    -360
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "27k"
+  },
+  {
+   "ref": "C19",
+   "pos": [
+    420,
+    -360
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "47µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "IC1C",
+   "pos": [
+    540,
+    -360
+   ],
+   "type": "powerunit",
+   "model": "LM13700"
+  },
+  {
+   "ref": "IC1B",
+   "pos": [
+    720,
+    -260
+   ],
+   "model": "LM13700",
+   "type": "ota",
+   "half": "b"
+  },
+  {
+   "ref": "IN",
+   "pos": [
+    -40,
+    0
+   ],
+   "type": "guitar"
+  },
+  {
+   "ref": "RPD1",
+   "pos": [
+    0,
+    40
+   ],
+   "rot": 90,
+   "note": "Aion's RPD: the input pull-down, so the bypass switch doesn't pop.",
+   "type": "resistor",
+   "value": "2M2"
+  },
+  {
+   "ref": "C2",
+   "pos": [
+    60,
+    0
+   ],
+   "type": "capacitor",
+   "value": "10n",
+   "kind": "film"
+  },
+  {
+   "ref": "R1",
+   "pos": [
+    120,
+    0
+   ],
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "Q1",
+   "pos": [
+    180,
+    0
+   ],
+   "note": "Input buffer (emitter follower), biased from VB by R2 and R3; C3 keeps the bias quiet.",
+   "type": "bjt",
+   "model": "2N5088"
+  },
+  {
+   "ref": "R2",
+   "pos": [
+    160,
+    -60
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "470k"
+  },
+  {
+   "ref": "R3",
+   "pos": [
+    160,
+    -140
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "470k"
+  },
+  {
+   "ref": "C3",
+   "pos": [
+    100,
+    -60
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "R4",
+   "pos": [
+    200,
+    -80
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "C4",
+   "pos": [
+    260,
+    -20
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "R5",
+   "pos": [
+    200,
+    60
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "C5",
+   "pos": [
+    260,
+    40
+   ],
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "film"
+  },
+  {
+   "ref": "TR1",
+   "pos": [
+    340,
+    -20
+   ],
+   "rot": 180,
+   "note": "Input (a trimmer inside): attenuates the signal into the OTA for hot pickups. All the way down (no cut) as Aion sets it; turn it up if the OTA clips.",
+   "type": "trimmer",
+   "value": "100k",
+   "rotation": 0.0,
+   "label": "Input"
+  },
+  {
+   "ref": "C6",
+   "pos": [
+    340,
+    -80
+   ],
+   "note": "Passes treble around the Input trimmer, so turning it up cuts the lows and mids first.",
+   "type": "capacitor",
+   "value": "2n2",
+   "kind": "film"
+  },
+  {
+   "ref": "R6",
+   "pos": [
+    560,
+    0
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "1M"
+  },
+  {
+   "ref": "R7",
+   "pos": [
+    480,
+    0
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "1k"
+  },
+  {
+   "ref": "R8",
+   "pos": [
+    480,
+    60
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "1k"
+  },
+  {
+   "ref": "R9",
+   "pos": [
+    440,
+    40
+   ],
+   "type": "resistor",
+   "value": "220k"
+  },
+  {
+   "ref": "R10",
+   "pos": [
+    380,
+    40
+   ],
+   "type": "resistor",
+   "value": "220k"
+  },
+  {
+   "ref": "C7",
+   "pos": [
+    420,
+    80
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "R11",
+   "pos": [
+    520,
+    120
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "1M"
+  },
+  {
+   "ref": "R12",
+   "pos": [
+    580,
+    120
+   ],
+   "rot": 90,
+   "note": "With C8, cuts the treble into the OTA's + input only: the OTA amplifies the difference, so the treble comes out boosted, and C10 and C11 cut it again after (the noise with it).",
+   "type": "resistor",
+   "value": "15k"
+  },
+  {
+   "ref": "C8",
+   "pos": [
+    640,
+    120
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "10n",
+   "kind": "film"
+  },
+  {
+   "ref": "C9",
+   "pos": [
+    600,
+    180
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "IC1A",
+   "pos": [
+    720,
+    0
+   ],
+   "note": "The OTA: its gain follows the current into iabc. Loud notes pull the envelope down, starving iabc, so the gain drops: compression.",
+   "model": "LM13700",
+   "type": "ota",
+   "half": "a"
+  },
+  {
+   "ref": "R14",
+   "pos": [
+    740,
+    80
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "27k"
+  },
+  {
+   "ref": "VR1",
+   "pos": [
+    760,
+    140
+   ],
+   "note": "Sustain: sets the OTA's most current (with R14), so how much quiet notes are lifted. Below noon it acts more as a limiter.",
+   "type": "pot",
+   "value": "500k",
+   "taper": "C",
+   "label": "Sustain"
+  },
+  {
+   "ref": "R13",
+   "pos": [
+    800,
+    -40
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "150k"
+  },
+  {
+   "ref": "C10",
+   "pos": [
+    860,
+    -40
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "180p",
+   "kind": "c0g"
+  },
+  {
+   "ref": "C12",
+   "pos": [
+    920,
+    -40
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "330p",
+   "kind": "c0g"
+  },
+  {
+   "ref": "C11",
+   "pos": [
+    980,
+    -40
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "820p",
+   "kind": "c0g"
+  },
+  {
+   "ref": "SW1",
+   "pos": [
+    940,
+    -120
+   ],
+   "rot": 90,
+   "note": "Treble (Aion's, from the Janglebox): Stock, C11 with C10 (1n, flat); Most treble, C10 alone; Some treble, C12 with C10 (510p).",
+   "type": "switch",
+   "kind": "spdt-on-off-on",
+   "label": "Treble",
+   "names": [
+    "Stock",
+    "Most treble",
+    "Some treble"
+   ]
+  },
+  {
+   "ref": "Q2",
+   "pos": [
+    1060,
+    0
+   ],
+   "note": "Phase splitter: the OTA's output in phase at the emitter, inverted at the collector, one for each rectifier.",
+   "type": "bjt",
+   "model": "2N5088"
+  },
+  {
+   "ref": "R15",
+   "pos": [
+    1080,
+    -60
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "R16",
+   "pos": [
+    1080,
+    60
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "C13",
+   "pos": [
+    1140,
+    -40
+   ],
+   "type": "capacitor",
+   "value": "10n",
+   "kind": "film"
+  },
+  {
+   "ref": "R17",
+   "pos": [
+    1180,
+    -20
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "1M"
+  },
+  {
+   "ref": "D2",
+   "pos": [
+    1220,
+    -20
+   ],
+   "rot": 270,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "Q3",
+   "pos": [
+    1260,
+    -40
+   ],
+   "note": "Q3 and Q4 rectify: each discharges C14 on its half of the wave, so C14 falls as the signal grows. Off with no signal, so both are marked off by design (D-238).",
+   "type": "bjt",
+   "model": "2N5088",
+   "off_by_design": true
+  },
+  {
+   "ref": "C15",
+   "pos": [
+    1140,
+    80
+   ],
+   "type": "capacitor",
+   "value": "10n",
+   "kind": "film"
+  },
+  {
+   "ref": "R21",
+   "pos": [
+    1180,
+    100
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "1M"
+  },
+  {
+   "ref": "D3",
+   "pos": [
+    1220,
+    100
+   ],
+   "rot": 270,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "Q4",
+   "pos": [
+    1260,
+    80
+   ],
+   "type": "bjt",
+   "model": "2N5088",
+   "off_by_design": true
+  },
+  {
+   "ref": "C14",
+   "pos": [
+    1360,
+    0
+   ],
+   "rot": 90,
+   "note": "The envelope: Q5 follows it into Sustain and iabc. Big notes drain it; R18 and Release refill it as the note fades.",
+   "type": "capacitor",
+   "value": "10µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "VR2",
+   "pos": [
+    1340,
+    -200
+   ],
+   "rot": 270,
+   "note": "Release (Aion's, from the Boss CS-2, which calls it Attack): how fast C14 refills, so how fast the gain comes back. All the way down is the stock circuit (R18 + 150k); up is faster.",
+   "type": "pot",
+   "value": "250k",
+   "taper": "C",
+   "rotation": 0.0,
+   "label": "Release"
+  },
+  {
+   "ref": "R19",
+   "pos": [
+    1380,
+    -200
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "390k"
+  },
+  {
+   "ref": "R18",
+   "pos": [
+    1360,
+    -260
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "Q5",
+   "pos": [
+    1420,
+    -140
+   ],
+   "type": "bjt",
+   "model": "2N5088"
+  },
+  {
+   "ref": "R22",
+   "pos": [
+    1520,
+    240
+   ],
+   "type": "resistor",
+   "value": "1k"
+  },
+  {
+   "ref": "Q6",
+   "pos": [
+    1560,
+    240
+   ],
+   "note": "Aion's output buffer: takes the signal from the OTA's output, so the envelope's ripple at Q2's emitter stays out of it.",
+   "type": "bjt",
+   "model": "2N5088"
+  },
+  {
+   "ref": "R23",
+   "pos": [
+    1580,
+    180
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "R24",
+   "pos": [
+    1580,
+    300
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "C16",
+   "pos": [
+    1640,
+    260
+   ],
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "R25",
+   "pos": [
+    1700,
+    260
+   ],
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "C17",
+   "pos": [
+    1700,
+    220
+   ],
+   "note": "Across R25: a little more treble above 3 kHz.",
+   "type": "capacitor",
+   "value": "1n",
+   "kind": "film"
+  },
+  {
+   "ref": "VR3",
+   "pos": [
+    1760,
+    260
+   ],
+   "rot": 180,
+   "type": "pot",
+   "value": "50k",
+   "taper": "A",
+   "label": "Level"
+  },
+  {
+   "ref": "OUT",
+   "pos": [
+    1840,
+    320
+   ],
+   "type": "amp"
+  }
+ ],
+ "wires": [
+  {
+   "from": [
+    0,
+    -400
+   ],
+   "to": [
+    20,
+    -400
+   ]
+  },
+  {
+   "from": [
+    60,
+    -400
+   ],
+   "to": [
+    80,
+    -400
+   ]
+  },
+  {
+   "from": [
+    120,
+    -400
+   ],
+   "to": [
+    280,
+    -400
+   ]
+  },
+  {
+   "from": [
+    160,
+    -400
+   ],
+   "to": [
+    160,
+    -380
+   ]
+  },
+  {
+   "from": [
+    220,
+    -400
+   ],
+   "to": [
+    220,
+    -380
+   ]
+  },
+  {
+   "from": [
+    320,
+    -400
+   ],
+   "to": [
+    440,
+    -400
+   ]
+  },
+  {
+   "from": [
+    360,
+    -400
+   ],
+   "to": [
+    360,
+    -380
+   ]
+  },
+  {
+   "from": [
+    420,
+    -400
+   ],
+   "to": [
+    420,
+    -380
+   ]
+  },
+  {
+   "from": [
+    680,
+    -280
+   ],
+   "to": [
+    660,
+    -280
+   ]
+  },
+  {
+   "from": [
+    660,
+    -280
+   ],
+   "to": [
+    660,
+    -240
+   ]
+  },
+  {
+   "from": [
+    660,
+    -240
+   ],
+   "to": [
+    680,
+    -240
+   ]
+  },
+  {
+   "from": [
+    -20,
+    0
+   ],
+   "to": [
+    40,
+    0
+   ]
+  },
+  {
+   "from": [
+    0,
+    0
+   ],
+   "to": [
+    0,
+    20
+   ]
+  },
+  {
+   "from": [
+    80,
+    0
+   ],
+   "to": [
+    100,
+    0
+   ]
+  },
+  {
+   "from": [
+    140,
+    0
+   ],
+   "to": [
+    160,
+    0
+   ]
+  },
+  {
+   "from": [
+    160,
+    -40
+   ],
+   "to": [
+    160,
+    0
+   ]
+  },
+  {
+   "from": [
+    160,
+    -80
+   ],
+   "to": [
+    160,
+    -100
+   ]
+  },
+  {
+   "from": [
+    160,
+    -100
+   ],
+   "to": [
+    160,
+    -120
+   ]
+  },
+  {
+   "from": [
+    160,
+    -100
+   ],
+   "to": [
+    100,
+    -100
+   ]
+  },
+  {
+   "from": [
+    100,
+    -100
+   ],
+   "to": [
+    100,
+    -80
+   ]
+  },
+  {
+   "from": [
+    200,
+    -20
+   ],
+   "to": [
+    200,
+    -40
+   ]
+  },
+  {
+   "from": [
+    200,
+    -40
+   ],
+   "to": [
+    200,
+    -60
+   ]
+  },
+  {
+   "from": [
+    200,
+    -40
+   ],
+   "to": [
+    260,
+    -40
+   ]
+  },
+  {
+   "from": [
+    200,
+    20
+   ],
+   "to": [
+    200,
+    40
+   ]
+  },
+  {
+   "from": [
+    200,
+    40
+   ],
+   "to": [
+    240,
+    40
+   ]
+  },
+  {
+   "from": [
+    280,
+    40
+   ],
+   "to": [
+    300,
+    40
+   ]
+  },
+  {
+   "from": [
+    300,
+    40
+   ],
+   "to": [
+    300,
+    -20
+   ]
+  },
+  {
+   "from": [
+    300,
+    -20
+   ],
+   "to": [
+    320,
+    -20
+   ]
+  },
+  {
+   "from": [
+    340,
+    0
+   ],
+   "to": [
+    320,
+    0
+   ]
+  },
+  {
+   "from": [
+    320,
+    0
+   ],
+   "to": [
+    320,
+    -20
+   ]
+  },
+  {
+   "from": [
+    300,
+    -20
+   ],
+   "to": [
+    300,
+    -80
+   ]
+  },
+  {
+   "from": [
+    300,
+    -80
+   ],
+   "to": [
+    320,
+    -80
+   ]
+  },
+  {
+   "from": [
+    360,
+    -80
+   ],
+   "to": [
+    380,
+    -80
+   ]
+  },
+  {
+   "from": [
+    380,
+    -80
+   ],
+   "to": [
+    380,
+    -20
+   ]
+  },
+  {
+   "from": [
+    360,
+    -20
+   ],
+   "to": [
+    380,
+    -20
+   ]
+  },
+  {
+   "from": [
+    380,
+    -20
+   ],
+   "to": [
+    480,
+    -20
+   ]
+  },
+  {
+   "from": [
+    480,
+    -20
+   ],
+   "to": [
+    560,
+    -20
+   ]
+  },
+  {
+   "from": [
+    560,
+    -20
+   ],
+   "to": [
+    680,
+    -20
+   ]
+  },
+  {
+   "from": [
+    480,
+    20
+   ],
+   "to": [
+    480,
+    40
+   ]
+  },
+  {
+   "from": [
+    480,
+    40
+   ],
+   "to": [
+    460,
+    40
+   ]
+  },
+  {
+   "from": [
+    420,
+    40
+   ],
+   "to": [
+    400,
+    40
+   ]
+  },
+  {
+   "from": [
+    420,
+    40
+   ],
+   "to": [
+    420,
+    60
+   ]
+  },
+  {
+   "from": [
+    480,
+    80
+   ],
+   "to": [
+    520,
+    80
+   ]
+  },
+  {
+   "from": [
+    520,
+    80
+   ],
+   "to": [
+    580,
+    80
+   ]
+  },
+  {
+   "from": [
+    580,
+    80
+   ],
+   "to": [
+    640,
+    80
+   ]
+  },
+  {
+   "from": [
+    640,
+    80
+   ],
+   "to": [
+    660,
+    80
+   ]
+  },
+  {
+   "from": [
+    660,
+    80
+   ],
+   "to": [
+    660,
+    20
+   ]
+  },
+  {
+   "from": [
+    660,
+    20
+   ],
+   "to": [
+    680,
+    20
+   ]
+  },
+  {
+   "from": [
+    520,
+    80
+   ],
+   "to": [
+    520,
+    100
+   ]
+  },
+  {
+   "from": [
+    580,
+    80
+   ],
+   "to": [
+    580,
+    100
+   ]
+  },
+  {
+   "from": [
+    640,
+    80
+   ],
+   "to": [
+    640,
+    100
+   ]
+  },
+  {
+   "from": [
+    580,
+    140
+   ],
+   "to": [
+    600,
+    140
+   ]
+  },
+  {
+   "from": [
+    600,
+    140
+   ],
+   "to": [
+    640,
+    140
+   ]
+  },
+  {
+   "from": [
+    600,
+    140
+   ],
+   "to": [
+    600,
+    160
+   ]
+  },
+  {
+   "from": [
+    740,
+    40
+   ],
+   "to": [
+    740,
+    60
+   ]
+  },
+  {
+   "from": [
+    740,
+    100
+   ],
+   "to": [
+    740,
+    120
+   ]
+  },
+  {
+   "from": [
+    740,
+    120
+   ],
+   "to": [
+    740,
+    140
+   ]
+  },
+  {
+   "from": [
+    760,
+    120
+   ],
+   "to": [
+    740,
+    120
+   ]
+  },
+  {
+   "from": [
+    760,
+    0
+   ],
+   "to": [
+    800,
+    0
+   ]
+  },
+  {
+   "from": [
+    800,
+    0
+   ],
+   "to": [
+    860,
+    0
+   ]
+  },
+  {
+   "from": [
+    860,
+    0
+   ],
+   "to": [
+    920,
+    0
+   ]
+  },
+  {
+   "from": [
+    920,
+    0
+   ],
+   "to": [
+    980,
+    0
+   ]
+  },
+  {
+   "from": [
+    980,
+    0
+   ],
+   "to": [
+    1000,
+    0
+   ]
+  },
+  {
+   "from": [
+    1000,
+    0
+   ],
+   "to": [
+    1040,
+    0
+   ]
+  },
+  {
+   "from": [
+    800,
+    -20
+   ],
+   "to": [
+    800,
+    0
+   ]
+  },
+  {
+   "from": [
+    860,
+    -20
+   ],
+   "to": [
+    860,
+    0
+   ]
+  },
+  {
+   "from": [
+    920,
+    -20
+   ],
+   "to": [
+    920,
+    0
+   ]
+  },
+  {
+   "from": [
+    980,
+    -20
+   ],
+   "to": [
+    980,
+    0
+   ]
+  },
+  {
+   "from": [
+    920,
+    -100
+   ],
+   "to": [
+    920,
+    -60
+   ]
+  },
+  {
+   "from": [
+    960,
+    -100
+   ],
+   "to": [
+    980,
+    -100
+   ]
+  },
+  {
+   "from": [
+    980,
+    -100
+   ],
+   "to": [
+    980,
+    -60
+   ]
+  },
+  {
+   "from": [
+    1080,
+    -20
+   ],
+   "to": [
+    1080,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1080,
+    20
+   ],
+   "to": [
+    1080,
+    40
+   ]
+  },
+  {
+   "from": [
+    1080,
+    -40
+   ],
+   "to": [
+    1120,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1160,
+    -40
+   ],
+   "to": [
+    1180,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1180,
+    -40
+   ],
+   "to": [
+    1220,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1220,
+    -40
+   ],
+   "to": [
+    1240,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1080,
+    40
+   ],
+   "to": [
+    1100,
+    40
+   ]
+  },
+  {
+   "from": [
+    1100,
+    40
+   ],
+   "to": [
+    1100,
+    80
+   ]
+  },
+  {
+   "from": [
+    1100,
+    80
+   ],
+   "to": [
+    1120,
+    80
+   ]
+  },
+  {
+   "from": [
+    1160,
+    80
+   ],
+   "to": [
+    1180,
+    80
+   ]
+  },
+  {
+   "from": [
+    1180,
+    80
+   ],
+   "to": [
+    1220,
+    80
+   ]
+  },
+  {
+   "from": [
+    1220,
+    80
+   ],
+   "to": [
+    1240,
+    80
+   ]
+  },
+  {
+   "from": [
+    1280,
+    -60
+   ],
+   "to": [
+    1320,
+    -60
+   ]
+  },
+  {
+   "from": [
+    1280,
+    60
+   ],
+   "to": [
+    1320,
+    60
+   ]
+  },
+  {
+   "from": [
+    1320,
+    60
+   ],
+   "to": [
+    1320,
+    -20
+   ]
+  },
+  {
+   "from": [
+    1320,
+    -20
+   ],
+   "to": [
+    1320,
+    -60
+   ]
+  },
+  {
+   "from": [
+    1320,
+    -60
+   ],
+   "to": [
+    1320,
+    -140
+   ]
+  },
+  {
+   "from": [
+    1320,
+    -140
+   ],
+   "to": [
+    1320,
+    -200
+   ]
+  },
+  {
+   "from": [
+    1320,
+    -20
+   ],
+   "to": [
+    1360,
+    -20
+   ]
+  },
+  {
+   "from": [
+    1320,
+    -140
+   ],
+   "to": [
+    1340,
+    -140
+   ]
+  },
+  {
+   "from": [
+    1340,
+    -140
+   ],
+   "to": [
+    1380,
+    -140
+   ]
+  },
+  {
+   "from": [
+    1380,
+    -140
+   ],
+   "to": [
+    1400,
+    -140
+   ]
+  },
+  {
+   "from": [
+    1340,
+    -180
+   ],
+   "to": [
+    1340,
+    -140
+   ]
+  },
+  {
+   "from": [
+    1380,
+    -180
+   ],
+   "to": [
+    1380,
+    -140
+   ]
+  },
+  {
+   "from": [
+    1340,
+    -220
+   ],
+   "to": [
+    1360,
+    -220
+   ]
+  },
+  {
+   "from": [
+    1360,
+    -220
+   ],
+   "to": [
+    1380,
+    -220
+   ]
+  },
+  {
+   "from": [
+    1360,
+    -240
+   ],
+   "to": [
+    1360,
+    -220
+   ]
+  },
+  {
+   "from": [
+    1440,
+    -120
+   ],
+   "to": [
+    1460,
+    -120
+   ]
+  },
+  {
+   "from": [
+    1460,
+    -120
+   ],
+   "to": [
+    1460,
+    180
+   ]
+  },
+  {
+   "from": [
+    1460,
+    180
+   ],
+   "to": [
+    780,
+    180
+   ]
+  },
+  {
+   "from": [
+    780,
+    180
+   ],
+   "to": [
+    780,
+    140
+   ]
+  },
+  {
+   "from": [
+    1000,
+    0
+   ],
+   "to": [
+    1000,
+    240
+   ]
+  },
+  {
+   "from": [
+    1000,
+    240
+   ],
+   "to": [
+    1500,
+    240
+   ]
+  },
+  {
+   "from": [
+    1580,
+    220
+   ],
+   "to": [
+    1580,
+    200
+   ]
+  },
+  {
+   "from": [
+    1580,
+    260
+   ],
+   "to": [
+    1580,
+    280
+   ]
+  },
+  {
+   "from": [
+    1580,
+    260
+   ],
+   "to": [
+    1620,
+    260
+   ]
+  },
+  {
+   "from": [
+    1660,
+    260
+   ],
+   "to": [
+    1680,
+    260
+   ]
+  },
+  {
+   "from": [
+    1680,
+    260
+   ],
+   "to": [
+    1680,
+    220
+   ]
+  },
+  {
+   "from": [
+    1720,
+    260
+   ],
+   "to": [
+    1720,
+    220
+   ]
+  },
+  {
+   "from": [
+    1720,
+    260
+   ],
+   "to": [
+    1740,
+    260
+   ]
+  },
+  {
+   "from": [
+    1760,
+    280
+   ],
+   "to": [
+    1760,
+    320
+   ]
+  },
+  {
+   "from": [
+    1760,
+    320
+   ],
+   "to": [
+    1820,
+    320
+   ]
+  }
+ ],
+ "labels": [
+  {
+   "net": "V+",
+   "pos": [
+    0,
+    -400
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    240,
+    -400
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    440,
+    -400
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    160,
+    -340
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    220,
+    -340
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    360,
+    -340
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    420,
+    -340
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    540,
+    -320
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    540,
+    -400
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    660,
+    -240
+   ]
+  },
+  {
+   "net": "in",
+   "pos": [
+    -20,
+    0
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    160,
+    -160
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    200,
+    -100
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    0,
+    60
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    100,
+    -40
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    260,
+    0
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    200,
+    80
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    560,
+    20
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    360,
+    40
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    420,
+    100
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    520,
+    140
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    600,
+    200
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    800,
+    -60
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    860,
+    -60
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    940,
+    -140
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    1080,
+    -80
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1080,
+    80
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1180,
+    0
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1220,
+    0
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1280,
+    -20
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1180,
+    120
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1220,
+    120
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1280,
+    100
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1360,
+    20
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    1360,
+    -280
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    1440,
+    -160
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    1580,
+    160
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1580,
+    320
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1780,
+    260
+   ]
+  },
+  {
+   "net": "out",
+   "pos": [
+    1820,
+    320
+   ]
+  }
+ ],
+ "texts": [
+  {
+   "title": "Credit",
+   "text": "Based on Aion FX's Aurora (document 2.0.0): its circuit, values and build ideas.\nThe drawing, notes and wording are Solum Builder's own.\nhttps://aionfx.com/project/aurora-compressor-sustainer/",
+   "pos": [
+    -40,
+    380
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "title": "Try: the stock Ross/Dyna output",
+   "text": "The stock Ross/Dyna output: CX1 47n from Q2's emitter to R25, with Q6 and R22-R24 left out (that lets a little ripple onto the signal, heard as slight distortion). (from Aion FX's Aurora notes)"
+  },
+  {
+   "title": "Release fully down",
+   "text": "Release fully down matches the stock circuit; with a true 150kC pot, R19 can go. (from Aion FX's Aurora notes)"
+  },
+  {
+   "title": "Treble switch",
+   "text": "Treble switch: up (C11 1n with C10) is stock and flat, down (C12 510p) slightly brighter, middle (C10 alone) brightest and a bit noisier. (from Aion FX's Aurora notes)"
+  },
+  {
+   "title": "Try: C17 across R25",
+   "text": "C17 1n across R25 lifts the treble above 3 kHz (1n5: from 2.2 kHz); leave it out for the stock sound. (from Aion FX's Aurora notes)"
+  },
+  {
+   "title": "Try: C1 at the input",
+   "text": "C1 220p from the input to ground (the Keeley has 150p). (from Aion FX's Aurora notes)"
+  },
+  {
+   "title": "Stock pots and the legacy board",
+   "text": "Stock pots: Sustain 500kB, Level 50kB. Aion's legacy Aurora board takes a CA3080 instead of the LM13700. (from Aion FX's Aurora notes)"
+  }
+ ],
+ "probes": {
+  "in": "in",
+  "out": "out"
+ },
+ "net_notes": {
+  "VB": "About a third of the supply: the OTA's output bias and Q1's."
+ },
+ "enclosure": {
+  "size": "125B"
+ }
+}

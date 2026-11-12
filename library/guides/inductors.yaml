@@ -1,0 +1,48 @@
+# Wah inductors (D-173): the one source for the inductor form's presets. Each is one
+# measured inductor (or the measurer's average of several), not a maker's figure: the
+# inductance at 1 kHz, the frequency Dunlop states its own ME-6's (570 mH ±10 % at 1 kHz,
+# 0.3 V; DCR 40 Ω max), and the wire's DC resistance. A wah's inductor reads up to 30 %
+# higher at 100 Hz than at 10 kHz (its core), and units of one type differ by 10 % or
+# more: measure yours, at 1 kHz, if you have an LCR meter.
+title: Wah inductors
+intro: >
+  A wah's inductor, with the 0.01µ and 0.22µ caps around it, sets where the sweep's peak
+  sits and how sharp it is. Its wire's resistance lowers the peak: a 30 Ω Halo makes a
+  gentler peak than a 15 Ω Fasel. These are single measured inductors; yours may differ.
+source: >
+  Stickman393, "Wah inductors: no hype, just measurements", PedalPCB forum (2024-11-09),
+  https://forum.pedalpcb.com/threads/wah-inductors-no-hype-just-measurements.24076/; the
+  measurements sheet it links,
+  https://docs.google.com/spreadsheets/d/1XX76Ut6rlUfunlPw1pnUg8KjjkpsK1_Oc08YkTqDzIk/
+  (Hantek 1832C LCR meter at 648 mV; read 2026-11-02)
+inductors:
+  - kind: fasel-red
+    name: Fasel red (toroid)
+    measured: Dunlop red Fasel, toroid core (the measurer's average)
+    l: 666m
+    r: "15.65"
+  - kind: fasel-yellow
+    name: Fasel yellow (cup core)
+    measured: Dunlop yellow Fasel, cup core
+    l: 638m
+    r: "13.9"
+  - kind: halo-dunlop
+    name: Halo (Dunlop)
+    measured: Dunlop Halo
+    l: 564m
+    r: "27.2"
+  - kind: halo-whipple
+    name: Halo (Whipple, 1811P)
+    measured: Whipple Halo, 1811P core
+    l: 520m
+    r: "27.8"
+  - kind: me-6
+    name: Dunlop ME-6 (stock Cry Baby)
+    measured: Dunlop / SBP ME-6 (the measurer's average)
+    l: 613m
+    r: "28.8"
+  - kind: dunlop-535q
+    name: Dunlop 535Q (shielded can)
+    measured: Dunlop 535Q 18 V, 1999, shielded metal can
+    l: 626m
+    r: "17.8"

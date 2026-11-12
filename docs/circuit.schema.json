@@ -1,0 +1,2640 @@
+{
+  "$defs": {
+    "AmpInput": {
+      "additionalProperties": false,
+      "description": "The amplifier the pedal drives: a load from pin `in` to ground.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "amp",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "default": "1M",
+          "title": "Value"
+        }
+      },
+      "required": [
+        "ref",
+        "type"
+      ],
+      "title": "AmpInput",
+      "type": "object"
+    },
+    "Battery": {
+      "additionalProperties": false,
+      "description": "A 9 V battery (v14, D-143): `volts` across pins + and -, through `resistance` (its\ninternal resistance; None: none). `state`: the battery guide's state the volts came\nfrom (fresh, half…), None for a voltage you measured. With no DC plug in (or no DC\njack) it alone powers the circuit: the Power menu's positive supply is off, and V+ is\nwhatever the battery's wiring gives it. A DC plug cuts it off only when its + goes\nthrough the DC jack's battery lug, as wired (D-185).",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "battery",
+          "title": "Type",
+          "type": "string"
+        },
+        "volts": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "default": 9.0,
+          "title": "Volts"
+        },
+        "state": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": "fresh",
+          "title": "State"
+        },
+        "resistance": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Resistance"
+        }
+      },
+      "required": [
+        "ref",
+        "type"
+      ],
+      "title": "Battery",
+      "type": "object"
+    },
+    "BiasTarget": {
+      "additionalProperties": false,
+      "description": "Solve the trimmer so that `node` (a net or `REF.PIN`) sits at `volts`.",
+      "properties": {
+        "node": {
+          "title": "Node",
+          "type": "string"
+        },
+        "volts": {
+          "title": "Volts",
+          "type": "number"
+        }
+      },
+      "required": [
+        "node",
+        "volts"
+      ],
+      "title": "BiasTarget",
+      "type": "object"
+    },
+    "Bjt": {
+      "additionalProperties": false,
+      "description": "Pins C, B, E. `off_by_design` (v29, D-238): off at rest on purpose, as a rectifier\nor a switch is, so being cut off isn't a problem.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "bjt",
+          "title": "Type",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "measured": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/MeasuredBjt"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "off_by_design": {
+          "default": false,
+          "title": "Off By Design",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "model"
+      ],
+      "title": "Bjt",
+      "type": "object"
+    },
+    "Capacitor": {
+      "additionalProperties": false,
+      "description": "For polarised kinds, pin 1 is +.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "capacitor",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Value"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "enum": [
+                "film",
+                "ceramic",
+                "c0g",
+                "electrolytic",
+                "tantalum"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
+        },
+        "rating_v": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rating V"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "value"
+      ],
+      "title": "Capacitor",
+      "type": "object"
+    },
+    "ChargePump": {
+      "additionalProperties": false,
+      "description": "A charge-pump chip (TC1044S, LT1054...), drawn with its real pins (D-226): in (V+,\npin 8), cap+ (2), gnd (3), cap- (4) and out (VOUT, 5). Its caps and diodes are drawn\nparts, and their wiring makes it a doubler, an inverter or both (`circuit.pump`).\nPins 1, 6 and 7 may be wired too; pin 1 on V+ is boost on chips that have it (v28).",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "chargepump",
+          "title": "Type",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "model"
+      ],
+      "title": "ChargePump",
+      "type": "object"
+    },
+    "CustomPosition": {
+      "additionalProperties": false,
+      "description": "One position of a custom switch (9c): its name and, per pole, the throw (1…n) its\ncommon joins, or None (open).",
+      "properties": {
+        "name": {
+          "maxLength": 24,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "joins": {
+          "items": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "maxItems": 4,
+          "minItems": 1,
+          "title": "Joins",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "joins"
+      ],
+      "title": "CustomPosition",
+      "type": "object"
+    },
+    "CustomSwitch": {
+      "additionalProperties": false,
+      "description": "A switch whose contacts its part defines (v22, 9c: the user's \"a custom (with\nlimits)\"): up to 4 poles, 12 throws a pole and 12 positions; each position joins each\npole's common to one throw or none. `look`: drawn as a toggle (a column) or a rotary\n(an arc, 3 throws or more). Every pole carries the same one.",
+      "properties": {
+        "name": {
+          "maxLength": 24,
+          "minLength": 1,
+          "title": "Name",
+          "type": "string"
+        },
+        "throws": {
+          "maximum": 12,
+          "minimum": 1,
+          "title": "Throws",
+          "type": "integer"
+        },
+        "look": {
+          "default": "toggle",
+          "enum": [
+            "toggle",
+            "rotary"
+          ],
+          "title": "Look",
+          "type": "string"
+        },
+        "positions": {
+          "items": {
+            "$ref": "#/$defs/CustomPosition"
+          },
+          "maxItems": 12,
+          "minItems": 2,
+          "title": "Positions",
+          "type": "array"
+        }
+      },
+      "required": [
+        "name",
+        "throws",
+        "positions"
+      ],
+      "title": "CustomSwitch",
+      "type": "object"
+    },
+    "DcJack": {
+      "additionalProperties": false,
+      "description": "The 2.1 mm power jack, centre negative as on pedals (v14, D-143), wired to V+ and\nGND: the Power menu's supply (the wall wart) comes in here. Pins `+` (the sleeve),\n`-` (the centre pin) and `sw` (the battery lug). `plugged`: a plug is in, so `sw` is\nopen; with none, `sw` touches the sleeve, so a battery wired to it reaches V+ and the\nPower menu's supply is off. Always DC: one per circuit.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "dcjack",
+          "title": "Type",
+          "type": "string"
+        },
+        "plugged": {
+          "default": true,
+          "title": "Plugged",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "type"
+      ],
+      "title": "DcJack",
+      "type": "object"
+    },
+    "Diode": {
+      "additionalProperties": false,
+      "description": "Pins A (anode) and K (cathode).",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "diode",
+          "title": "Type",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "model"
+      ],
+      "title": "Diode",
+      "type": "object"
+    },
+    "Dismissal": {
+      "additionalProperties": false,
+      "description": "A problem the user dismissed (D-176): its mark is hidden and the Problems panel lists\nit under Dismissed, with `reason`. It names the problem as the rules do: the rule and\nthe refs and nets the problem names (`problems.js` matches them).",
+      "properties": {
+        "rule": {
+          "pattern": "^[a-z0-9][a-z0-9-]*$",
+          "title": "Rule",
+          "type": "string"
+        },
+        "refs": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Refs",
+          "type": "array"
+        },
+        "nets": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Nets",
+          "type": "array"
+        },
+        "reason": {
+          "default": "",
+          "maxLength": 200,
+          "title": "Reason",
+          "type": "string"
+        }
+      },
+      "required": [
+        "rule"
+      ],
+      "title": "Dismissal",
+      "type": "object"
+    },
+    "Enclosure": {
+      "additionalProperties": false,
+      "description": "The box a circuit is built in (v23, D-204): a standard size (`enclosures.SIZES`) or\n`custom` with its own outside length, width and height in mm.",
+      "properties": {
+        "size": {
+          "title": "Size",
+          "type": "string"
+        },
+        "length": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Length"
+        },
+        "width": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Width"
+        },
+        "height": {
+          "anyOf": [
+            {
+              "exclusiveMinimum": 0,
+              "maximum": 1000,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Height"
+        }
+      },
+      "required": [
+        "size"
+      ],
+      "title": "Enclosure",
+      "type": "object"
+    },
+    "Guitar": {
+      "additionalProperties": false,
+      "description": "The signal input. One pin, `out`; the other side is ground. `ideal` is a stiff\nsource (a buffer or an active pickup in front); with a `pickup`, the guitar's volume\npot (`volume`, its `taper` and `rotation`; None: no pot) and `cable` metres of lead\nsit between the coil and the circuit (D-096). Ideal (\"buffered\") ignores the cable;\nits volume pot sits before the buffer, so it turns only the level (D-134).",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "guitar",
+          "title": "Type",
+          "type": "string"
+        },
+        "source": {
+          "default": "ideal",
+          "enum": [
+            "ideal",
+            "pickup"
+          ],
+          "title": "Source",
+          "type": "string"
+        },
+        "pickup": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Pickup"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "cable": {
+          "default": 0.0,
+          "maximum": 30.0,
+          "minimum": 0.0,
+          "title": "Cable",
+          "type": "number"
+        },
+        "volume": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Volume"
+        },
+        "taper": {
+          "default": "A",
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "W"
+          ],
+          "title": "Taper",
+          "type": "string"
+        },
+        "rotation": {
+          "default": 1.0,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Rotation",
+          "type": "number"
+        },
+        "stereo": {
+          "default": false,
+          "title": "Stereo",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "type"
+      ],
+      "title": "Guitar",
+      "type": "object"
+    },
+    "Inductor": {
+      "additionalProperties": false,
+      "description": "A coil (v18, D-173): its inductance `value` (H) in series with its wire's\n`resistance` (Ω, 0 for an ideal one). `kind`: the inductor guide's entry it was filled\nfrom (`library/guides/inductors.yaml`: measured wah inductors), or None. Pins 1, 2.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "inductor",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Value"
+        },
+        "resistance": {
+          "default": 0.0,
+          "maximum": 10000.0,
+          "minimum": 0.0,
+          "title": "Resistance",
+          "type": "number"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "value"
+      ],
+      "title": "Inductor",
+      "type": "object"
+    },
+    "Inverter": {
+      "additionalProperties": false,
+      "description": "One of a hex CMOS inverter's six (v20, D-180): CD4049UB, IC1A to IC1F, its power\non unit G (VDD on V+, VSS on V-), as KiCad draws a 4049. Pins in, out.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "type": {
+          "const": "inverter",
+          "title": "Type",
+          "type": "string"
+        },
+        "half": {
+          "enum": [
+            "a",
+            "b",
+            "c",
+            "d",
+            "e",
+            "f"
+          ],
+          "title": "Half",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref",
+        "model",
+        "type",
+        "half"
+      ],
+      "title": "Inverter",
+      "type": "object"
+    },
+    "Jack": {
+      "additionalProperties": false,
+      "description": "An input or output jack (v18, D-174), drawn as KiCad draws one: `AudioJack2` (mono,\nTS: pins T and S) or, `stereo`, `AudioJack3` (TRS: T, R and S). Drawing only, for the\nbuild and its export: the guitar input and the amp are where the simulation's signal\nstarts and ends, so a jack carries no signal in it. `label`: what it's for (Input,\nOutput). `plugged` (v21, D-185): a stereo jack's cable is in, so its sleeve joins the\nring to S, the one contact the simulation keeps: a battery wired to the ring is on\nonly with a cable in.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "jack",
+          "title": "Type",
+          "type": "string"
+        },
+        "stereo": {
+          "default": false,
+          "title": "Stereo",
+          "type": "boolean"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "plugged": {
+          "default": true,
+          "title": "Plugged",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "type"
+      ],
+      "title": "Jack",
+      "type": "object"
+    },
+    "Jfet": {
+      "additionalProperties": false,
+      "description": "Pins D, G, S.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "jfet",
+          "title": "Type",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "measured": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/Measured"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "off_by_design": {
+          "default": false,
+          "title": "Off By Design",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "model"
+      ],
+      "title": "Jfet",
+      "type": "object"
+    },
+    "Label": {
+      "additionalProperties": false,
+      "description": "Names the net at `pos`. Same name anywhere = same net. `GND` is ground. `rot`\nturns a supply's symbol (ground, a rail) clockwise; it never changes the net (D-117).",
+      "properties": {
+        "net": {
+          "pattern": "^[^.\\s]+$",
+          "title": "Net",
+          "type": "string"
+        },
+        "pos": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        }
+      },
+      "required": [
+        "net",
+        "pos"
+      ],
+      "title": "Label",
+      "type": "object"
+    },
+    "Led": {
+      "additionalProperties": false,
+      "description": "Pins A (anode) and K (cathode). `label`: what it's for (\"Status\"), v14.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "led",
+          "title": "Type",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "model"
+      ],
+      "title": "Led",
+      "type": "object"
+    },
+    "Measured": {
+      "additionalProperties": false,
+      "description": "Measured JFET parameters; they replace the model's Idss and pinch-off (Vp).",
+      "properties": {
+        "idss": {
+          "exclusiveMinimum": 0,
+          "title": "Idss",
+          "type": "number"
+        },
+        "vp": {
+          "title": "Vp",
+          "type": "number"
+        }
+      },
+      "required": [
+        "idss",
+        "vp"
+      ],
+      "title": "Measured",
+      "type": "object"
+    },
+    "MeasuredBjt": {
+      "additionalProperties": false,
+      "description": "A measured transistor (D-130). `hfe` (v10) replaces the model's BF: a germanium\npart's gain varies far more unit to unit than its model says (an AC128 is sold as\n45-165). `leakage` (v11, amps) is the collector current with the base open, on the\nGeofex tester (9 V, the collector through 2.4 kΩ); None: the model's own.",
+      "properties": {
+        "hfe": {
+          "exclusiveMinimum": 0,
+          "maximum": 2000,
+          "title": "Hfe",
+          "type": "number"
+        },
+        "leakage": {
+          "anyOf": [
+            {
+              "maximum": 0.01,
+              "minimum": 0,
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Leakage"
+        }
+      },
+      "required": [
+        "hfe"
+      ],
+      "title": "MeasuredBjt",
+      "type": "object"
+    },
+    "Mosfet": {
+      "additionalProperties": false,
+      "description": "An N-channel MOSFET (v18, D-175), enhancement or (by its model's VTO) depletion\n(D-178): pins D, G, S. The body diode, from source to drain, is in the model.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "mosfet",
+          "title": "Type",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "off_by_design": {
+          "default": false,
+          "title": "Off By Design",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "model"
+      ],
+      "title": "Mosfet",
+      "type": "object"
+    },
+    "Note": {
+      "additionalProperties": false,
+      "description": "A general note on the circuit (v30, the Notes pane's General tab): a title, its text,\nor both. Notes on a part live on the part (`note`), on a named net in `net_notes`.",
+      "properties": {
+        "title": {
+          "default": "",
+          "maxLength": 100,
+          "title": "Title",
+          "type": "string"
+        },
+        "text": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Text",
+          "type": "string"
+        }
+      },
+      "title": "Note",
+      "type": "object"
+    },
+    "Opamp": {
+      "additionalProperties": false,
+      "description": "An op-amp (v12, D-140): a single chip (TL071, LM308), or one of a chip's op-amps:\n`half` a or b of a dual (refs IC1A and IC1B since v13, as pedal docs name them), a to\nd of a quad (v18, D-172); one model per chip.\nPins +, -, out; V+ and V- (power, real pins wired like any other) on a single only: a\ndual's or quad's are on its `PowerUnit` (v19, D-179); comp1/comp2 for models with\ncompensation pins; a single's offset null and no-connect pins (null1, null2, nc) only\nwith `show_pins`. v11's hidden `supply` became labels on V+ and V-.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "type": {
+          "const": "opamp",
+          "title": "Type",
+          "type": "string"
+        },
+        "half": {
+          "anyOf": [
+            {
+              "enum": [
+                "a",
+                "b",
+                "c",
+                "d"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Half"
+        },
+        "show_pins": {
+          "default": false,
+          "title": "Show Pins",
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "ref",
+        "model",
+        "type"
+      ],
+      "title": "Opamp",
+      "type": "object"
+    },
+    "Ota": {
+      "additionalProperties": false,
+      "description": "An OTA (v20, D-180): a single (CA3080: pins +, -, out, iabc and its own V+ and V-),\nor half a or b of a dual (LM13700: +, -, out, iabc, its linearising diodes' dbias, and\nits buffer's bufin and bufout; the chip's supply on its power unit, IC1C).",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        },
+        "type": {
+          "const": "ota",
+          "title": "Type",
+          "type": "string"
+        },
+        "half": {
+          "anyOf": [
+            {
+              "enum": [
+                "a",
+                "b"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Half"
+        }
+      },
+      "required": [
+        "ref",
+        "model",
+        "type"
+      ],
+      "title": "Ota",
+      "type": "object"
+    },
+    "Pickup": {
+      "additionalProperties": false,
+      "description": "Pickup coil as a series R-L with its own winding capacitance across the output.\n`kind`: the pickup guide's entry it was filled from (`library/guides/pickups.yaml`);\nNone for values of your own (D-096).",
+      "properties": {
+        "r": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "R"
+        },
+        "l": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "L"
+        },
+        "c": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "C"
+        },
+        "kind": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Kind"
+        }
+      },
+      "required": [
+        "r",
+        "l",
+        "c"
+      ],
+      "title": "Pickup",
+      "type": "object"
+    },
+    "Pot": {
+      "additionalProperties": false,
+      "description": "Pins 1 (counter-clockwise end), 2 (wiper), 3 (clockwise end). Rotation 0-1. A dual\npot (v24, D-217) is a part per gang (`gang` a, b: VR1A, VR1B), each placed on its own,\nof one value, taper, rotation and label: one knob turns both.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "pot",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Value"
+        },
+        "taper": {
+          "default": "B",
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "W"
+          ],
+          "title": "Taper",
+          "type": "string"
+        },
+        "rotation": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Rotation",
+          "type": "number"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "gang": {
+          "anyOf": [
+            {
+              "enum": [
+                "a",
+                "b"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Gang"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "value"
+      ],
+      "title": "Pot",
+      "type": "object"
+    },
+    "Power": {
+      "additionalProperties": false,
+      "description": "The supply: each rail is an ideal DC source. Rails are V+ (positive) and/or V-\n(negative); other supplies are nets the circuit makes itself (a filtered V+F, a VREF\ndivider, a DC source's own net). v6 dropped `mode` (D-091).",
+      "properties": {
+        "rails": {
+          "patternProperties": {
+            "^[^.\\s]+$": {
+              "type": "number"
+            }
+          },
+          "title": "Rails",
+          "type": "object"
+        }
+      },
+      "title": "Power",
+      "type": "object"
+    },
+    "PowerUnit": {
+      "additionalProperties": false,
+      "description": "A chip's power unit (v19, D-179), as KiCad draws a TL072's unit C: pins V+ and V-,\nthe chip's supply, apart from its units. Its ref is the chip's and the letter after\nthe last unit (IC1C on a dual, IC1E on a quad, IC1G on a 4049, D-180); its model is\nthe chip's. It joins nothing itself: the chip's units run from the nets on its pins.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "powerunit",
+          "title": "Type",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "model"
+      ],
+      "title": "PowerUnit",
+      "type": "object"
+    },
+    "Probes": {
+      "additionalProperties": false,
+      "properties": {
+        "in": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "In"
+        },
+        "out": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Out"
+        }
+      },
+      "title": "Probes",
+      "type": "object"
+    },
+    "Regulator": {
+      "additionalProperties": false,
+      "description": "A fixed linear regulator (v27, D-227), such as a 78L12: in, gnd and out, as its\ndatasheet names them. Its model's figures (output voltage, dropout, bias current, line\nand load regulation) drive Solum Builder's own model of it.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "regulator",
+          "title": "Type",
+          "type": "string"
+        },
+        "model": {
+          "title": "Model",
+          "type": "string"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "model"
+      ],
+      "title": "Regulator",
+      "type": "object"
+    },
+    "Resistor": {
+      "additionalProperties": false,
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "resistor",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Value"
+        },
+        "rating_w": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Rating W"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "value"
+      ],
+      "title": "Resistor",
+      "type": "object"
+    },
+    "Switch": {
+      "additionalProperties": false,
+      "description": "One pole of a switch (v14, D-143), of a type from `switches.py` (`kind`: spdt,\n3pdt, rotary-2p4t, footswitch…). A single-pole switch is one part (SW1); a\nmulti-pole one is a part per pole (`pole` a, b…: SW1A, SW1B), each placed on its\nown, all of one type, position and label. Its pins are the pole's lugs: 1, 2, 3 on a\ntoggle (2 the common), C and 1…n on a rotary, with the pole's letter on a multi-pole\nswitch (A1, A2, A3). `position` is the index into the type's positions; `names`, if\ngiven, names each position (\"Vintage\", \"Modern\"), an empty one keeping the type's.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "switch",
+          "title": "Type",
+          "type": "string"
+        },
+        "kind": {
+          "default": "spdt",
+          "title": "Kind",
+          "type": "string"
+        },
+        "pole": {
+          "anyOf": [
+            {
+              "enum": [
+                "a",
+                "b",
+                "c",
+                "d"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Pole"
+        },
+        "position": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Position",
+          "type": "integer"
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        },
+        "names": {
+          "anyOf": [
+            {
+              "items": {
+                "maxLength": 24,
+                "type": "string"
+              },
+              "type": "array"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Names"
+        },
+        "custom": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/CustomSwitch"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        }
+      },
+      "required": [
+        "ref",
+        "type"
+      ],
+      "title": "Switch",
+      "type": "object"
+    },
+    "TextBlock": {
+      "additionalProperties": false,
+      "description": "Free text on the sheet (v6): notes for whoever reads the drawing, not part of the\ncircuit. An optional `title` is drawn in bold above `text`; `pos` is the top-left\ncorner; lines are split on newlines. A block has a title, text, or both.",
+      "properties": {
+        "title": {
+          "default": "",
+          "maxLength": 100,
+          "title": "Title",
+          "type": "string"
+        },
+        "text": {
+          "default": "",
+          "maxLength": 2000,
+          "title": "Text",
+          "type": "string"
+        },
+        "pos": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        }
+      },
+      "required": [
+        "pos"
+      ],
+      "title": "TextBlock",
+      "type": "object"
+    },
+    "Trimmer": {
+      "additionalProperties": false,
+      "description": "Same pins as a pot. With `bias_target`, rotation is solved before every run.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "trimmer",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Value"
+        },
+        "taper": {
+          "default": "B",
+          "enum": [
+            "A",
+            "B",
+            "C",
+            "W"
+          ],
+          "title": "Taper",
+          "type": "string"
+        },
+        "rotation": {
+          "default": 0.5,
+          "maximum": 1.0,
+          "minimum": 0.0,
+          "title": "Rotation",
+          "type": "number"
+        },
+        "bias_target": {
+          "anyOf": [
+            {
+              "$ref": "#/$defs/BiasTarget"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null
+        },
+        "label": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Label"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "value"
+      ],
+      "title": "Trimmer",
+      "type": "object"
+    },
+    "VSource": {
+      "additionalProperties": false,
+      "description": "Ideal DC voltage source. Pins + and -.",
+      "properties": {
+        "ref": {
+          "pattern": "^[A-Za-z][A-Za-z0-9]*$",
+          "title": "Ref",
+          "type": "string"
+        },
+        "pos": {
+          "default": [
+            0,
+            0
+          ],
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Pos",
+          "type": "array"
+        },
+        "rot": {
+          "default": 0,
+          "enum": [
+            0,
+            90,
+            180,
+            270
+          ],
+          "title": "Rot",
+          "type": "integer"
+        },
+        "note": {
+          "default": "",
+          "maxLength": 5000,
+          "title": "Note",
+          "type": "string"
+        },
+        "type": {
+          "const": "vsource",
+          "title": "Type",
+          "type": "string"
+        },
+        "value": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "number"
+            }
+          ],
+          "title": "Value"
+        }
+      },
+      "required": [
+        "ref",
+        "type",
+        "value"
+      ],
+      "title": "VSource",
+      "type": "object"
+    },
+    "Version": {
+      "additionalProperties": false,
+      "description": "A version tag (v5, D-075): `major` changes only when the user starts a new major\nversion; `minor` goes up by one on every save that changes the file. Shown `v1.12`.",
+      "properties": {
+        "major": {
+          "default": 1,
+          "minimum": 1,
+          "title": "Major",
+          "type": "integer"
+        },
+        "minor": {
+          "default": 0,
+          "minimum": 0,
+          "title": "Minor",
+          "type": "integer"
+        }
+      },
+      "title": "Version",
+      "type": "object"
+    },
+    "Wire": {
+      "additionalProperties": false,
+      "properties": {
+        "from": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "From",
+          "type": "array"
+        },
+        "to": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "To",
+          "type": "array"
+        }
+      },
+      "required": [
+        "from",
+        "to"
+      ],
+      "title": "Wire",
+      "type": "object"
+    }
+  },
+  "additionalProperties": false,
+  "properties": {
+    "schema": {
+      "const": 30,
+      "title": "Schema",
+      "type": "integer"
+    },
+    "id": {
+      "pattern": "^[a-z0-9][a-z0-9-]*$",
+      "title": "Id",
+      "type": "string"
+    },
+    "name": {
+      "title": "Name",
+      "type": "string"
+    },
+    "description": {
+      "default": "",
+      "title": "Description",
+      "type": "string"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "title": "Tags",
+      "type": "array"
+    },
+    "template": {
+      "default": false,
+      "title": "Template",
+      "type": "boolean"
+    },
+    "starter": {
+      "default": false,
+      "title": "Starter",
+      "type": "boolean"
+    },
+    "version": {
+      "$ref": "#/$defs/Version"
+    },
+    "final": {
+      "default": false,
+      "title": "Final",
+      "type": "boolean"
+    },
+    "power": {
+      "$ref": "#/$defs/Power"
+    },
+    "parts": {
+      "items": {
+        "discriminator": {
+          "mapping": {
+            "amp": "#/$defs/AmpInput",
+            "battery": "#/$defs/Battery",
+            "bjt": "#/$defs/Bjt",
+            "capacitor": "#/$defs/Capacitor",
+            "chargepump": "#/$defs/ChargePump",
+            "dcjack": "#/$defs/DcJack",
+            "diode": "#/$defs/Diode",
+            "guitar": "#/$defs/Guitar",
+            "inductor": "#/$defs/Inductor",
+            "inverter": "#/$defs/Inverter",
+            "jack": "#/$defs/Jack",
+            "jfet": "#/$defs/Jfet",
+            "led": "#/$defs/Led",
+            "mosfet": "#/$defs/Mosfet",
+            "opamp": "#/$defs/Opamp",
+            "ota": "#/$defs/Ota",
+            "pot": "#/$defs/Pot",
+            "powerunit": "#/$defs/PowerUnit",
+            "regulator": "#/$defs/Regulator",
+            "resistor": "#/$defs/Resistor",
+            "switch": "#/$defs/Switch",
+            "trimmer": "#/$defs/Trimmer",
+            "vsource": "#/$defs/VSource"
+          },
+          "propertyName": "type"
+        },
+        "oneOf": [
+          {
+            "$ref": "#/$defs/Resistor"
+          },
+          {
+            "$ref": "#/$defs/Capacitor"
+          },
+          {
+            "$ref": "#/$defs/Inductor"
+          },
+          {
+            "$ref": "#/$defs/Pot"
+          },
+          {
+            "$ref": "#/$defs/Trimmer"
+          },
+          {
+            "$ref": "#/$defs/Switch"
+          },
+          {
+            "$ref": "#/$defs/Diode"
+          },
+          {
+            "$ref": "#/$defs/Led"
+          },
+          {
+            "$ref": "#/$defs/Jfet"
+          },
+          {
+            "$ref": "#/$defs/Bjt"
+          },
+          {
+            "$ref": "#/$defs/Mosfet"
+          },
+          {
+            "$ref": "#/$defs/Opamp"
+          },
+          {
+            "$ref": "#/$defs/Inverter"
+          },
+          {
+            "$ref": "#/$defs/Ota"
+          },
+          {
+            "$ref": "#/$defs/PowerUnit"
+          },
+          {
+            "$ref": "#/$defs/VSource"
+          },
+          {
+            "$ref": "#/$defs/ChargePump"
+          },
+          {
+            "$ref": "#/$defs/Regulator"
+          },
+          {
+            "$ref": "#/$defs/Guitar"
+          },
+          {
+            "$ref": "#/$defs/AmpInput"
+          },
+          {
+            "$ref": "#/$defs/DcJack"
+          },
+          {
+            "$ref": "#/$defs/Battery"
+          },
+          {
+            "$ref": "#/$defs/Jack"
+          }
+        ]
+      },
+      "title": "Parts",
+      "type": "array"
+    },
+    "wires": {
+      "items": {
+        "$ref": "#/$defs/Wire"
+      },
+      "title": "Wires",
+      "type": "array"
+    },
+    "labels": {
+      "items": {
+        "$ref": "#/$defs/Label"
+      },
+      "title": "Labels",
+      "type": "array"
+    },
+    "texts": {
+      "items": {
+        "$ref": "#/$defs/TextBlock"
+      },
+      "title": "Texts",
+      "type": "array"
+    },
+    "ports": {
+      "patternProperties": {
+        "^[^.\\s]+$": {
+          "pattern": "^[^.\\s]+$",
+          "type": "string"
+        }
+      },
+      "title": "Ports",
+      "type": "object"
+    },
+    "probes": {
+      "$ref": "#/$defs/Probes"
+    },
+    "notes": {
+      "items": {
+        "$ref": "#/$defs/Note"
+      },
+      "title": "Notes",
+      "type": "array"
+    },
+    "net_notes": {
+      "additionalProperties": {
+        "maxLength": 5000,
+        "minLength": 1,
+        "type": "string"
+      },
+      "title": "Net Notes",
+      "type": "object"
+    },
+    "dismissed": {
+      "items": {
+        "$ref": "#/$defs/Dismissal"
+      },
+      "title": "Dismissed",
+      "type": "array"
+    },
+    "enclosure": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Enclosure"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
+    }
+  },
+  "required": [
+    "schema",
+    "id",
+    "name",
+    "parts"
+  ],
+  "title": "Solum Builder circuit, schema v30",
+  "type": "object",
+  "$schema": "https://json-schema.org/draft/2020-12/schema"
+}

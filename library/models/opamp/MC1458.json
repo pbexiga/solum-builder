@@ -1,0 +1,109 @@
+{
+  "id": "MC1458",
+  "type": "opamp",
+  "description": "MC1458 dual op-amp (two 741s in one package; TI 1989 macromodel)",
+  "spice_name": "MC1458",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "MC1458.lib",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Manufacturer/Texas%20Instruments/mc1458.mod",
+    "retrieved": "2026-10-29",
+    "licence": "KiCad-Spice-Library collection (GPL-3.0); model by the manufacturer named, redistributed there",
+    "original": "Texas Instruments"
+  },
+  "datasheet": "https://www.ti.com/lit/ds/symlink/mc1458.pdf",
+  "note": "The card clips 2.0 V from each rail, about a volt sooner than a typical part (still inside the sheet's minimum). Bias & headroom uses the sheet's typical swing, so a render can clip about a volt before the pane's limit.",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 3.0,
+    "cm_pos_headroom": 3.0,
+    "out_neg_headroom": 1.0,
+    "out_pos_headroom": 1.0
+  },
+  "rating_sources": {
+    "vs_max": "TI MC1458 datasheet SLOS069C (rev. Aug 2010): vs_max from Absolute Maximum Ratings (VCC± ±18 V); common-mode headroom from Electrical Characteristics, VICR ±12 V min at ±15 V; output headroom, VOM ±14 V typ at RL = 10 kΩ (±12 V min)",
+    "cm_neg_headroom": "TI MC1458 datasheet SLOS069C (rev. Aug 2010): vs_max from Absolute Maximum Ratings (VCC± ±18 V); common-mode headroom from Electrical Characteristics, VICR ±12 V min at ±15 V; output headroom, VOM ±14 V typ at RL = 10 kΩ (±12 V min)",
+    "cm_pos_headroom": "TI MC1458 datasheet SLOS069C (rev. Aug 2010): vs_max from Absolute Maximum Ratings (VCC± ±18 V); common-mode headroom from Electrical Characteristics, VICR ±12 V min at ±15 V; output headroom, VOM ±14 V typ at RL = 10 kΩ (±12 V min)",
+    "out_neg_headroom": "TI MC1458 datasheet SLOS069C (rev. Aug 2010): vs_max from Absolute Maximum Ratings (VCC± ±18 V); common-mode headroom from Electrical Characteristics, VICR ±12 V min at ±15 V; output headroom, VOM ±14 V typ at RL = 10 kΩ (±12 V min)",
+    "out_pos_headroom": "TI MC1458 datasheet SLOS069C (rev. Aug 2010): vs_max from Absolute Maximum Ratings (VCC± ±18 V); common-mode headroom from Electrical Characteristics, VICR ±12 V min at ±15 V; output headroom, VOM ±14 V typ at RL = 10 kΩ (±12 V min)"
+  },
+  "channels": 2,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "a.out": 1,
+      "a.-": 2,
+      "a.+": 3,
+      "V-": 4,
+      "b.+": 5,
+      "b.-": 6,
+      "b.out": 7,
+      "V+": 8
+    },
+    "source": "TI MC1458 datasheet SLOS069C (rev. Aug 2010), D, JG, P, PW package pinout (page 1)"
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "min": 86.02,
+        "typ": 106.02,
+        "source": "https://www.ti.com/lit/ds/symlink/mc1458.pdf",
+        "note": "MC1458 AVD 20 V/mV min, 200 V/mV typ, ±15 V, RL ≥ 2 kΩ (SLOS069C)"
+      },
+      "simulated": 106.51239
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "typ": 1000000.0,
+        "source": "https://www.ti.com/lit/ds/symlink/mc1458.pdf",
+        "note": "B1 1 MHz typ (SLOS069C)"
+      },
+      "simulated": 979875.860357
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "max": 3.0,
+        "source": "TI MC1458 datasheet SLOS069C (rev. Aug 2010): VOM ±14 V typ, ±12 V min, RL = 10 kΩ",
+        "typ": 1.0,
+        "note": "The card stops 2 V from each rail, a volt short of the typical part"
+      },
+      "simulated": 1.994746
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "max": 3.0,
+        "source": "TI MC1458 datasheet SLOS069C (rev. Aug 2010): VOM ±14 V typ, ±12 V min, RL = 10 kΩ",
+        "typ": 1.0,
+        "note": "The card stops 2 V from each rail, a volt short of the typical part"
+      },
+      "simulated": 1.994877
+    }
+  ]
+}

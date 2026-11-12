@@ -1,0 +1,99 @@
+* every part
+V_RAIL1 v_ 0 DC 9
+V_IN in_in_emf 0 DC 0 SIN(0 0.3 200)
+R_IN_coil in_in_emf in_in_coil 6000
+L_IN in_in_coil in_in_pu 2.5
+C_IN_coil in_in_pu 0 5e-10
+R_IN_vola 0 in 25000
+R_IN_volb in in_in_pu 225000
+C_IN_cable in 0 3e-10
+C1 in b 1e-07
+R1 b vref 1000000
+R2 v_ vref 10000
+R3 vref 0 10000
+X_U1 b fb v_ 0 o c1 c2 LM308
+C3 c1 c2 3e-11
+R_VR1_a fb fb 5000
+R_VR1_b fb o 95000
+R4 fb e 560
+C2 e 0 4.7e-06
+D1 o 0 1N4148
+D2 0 o 1N4148
+R_SW1_1 o t1 1e+12
+R_SW1_3 o t2 0.01
+J_Q1 v_ t2 s J201_Q1
+R_TR1_a s s 3000
+R_TR1_b s 0 7000
+Q2 v_ s out 2N5089
+R_L1_wire out l1_wire 20
+L1 l1_wire lo 0.5
+R5 lo 0 10000
+M_Q3 sw vref 0 2N7000
+R6 v_ sw 10000
+V1 t1 0 DC -1.5
+R_OUT out 0 1000000
+* 1N4148 small-signal silicon diode (our fit to Diotec's and onsemi's sheets)
+* Fitted by Solum Builder to Diotec 1N4148, 1N4150, 1N4151, 1N4448 data sheet, Version 2023-08-17, Forward characteristics (typical values), Tj = 25 °C, from 2.4 mA (read from the PDF's vector drawing, centre of the drawn line) (D-156)
+.model 1N4148 D(is=2.32e-09 n=1.797 rs=0.2449 cjo=4e-12 bv=100 ibv=0.0001)
+* 2N5089 high-gain, low-noise NPN (hFE 400-1200 at 100 µA; VCEO 25 V), our fit to Fairchild's sheet
+* Fitted by Solum Builder to Fairchild 2N5088/2N5089/MMBT5088/MMBT5089 data sheet, Rev A (2001; onsemi's copy), its typical curves (D-163)
+.model 2N5089 NPN(is=7.732e-14 nf=1.055 bf=857.7 ise=3.478e-15 ne=1.395 ikf=0.1245 br=2.767 re=0.06934 rc=1.265 cje=4.058e-12 vje=0.9692 mje=0.3484 cjc=4.637e-12 vjc=1.2 mjc=0.4718 tf=8.733e-10 nkf=0.8647 nr=1.055)
+* 2N7000 N-channel enhancement MOSFET, 60 V 200 mA (our model from Fairchild's sheet)
+* Built by Solum Builder from Fairchild 2N7000/2N7002/NDS7002A data sheet, Rev. 2.10 (onsemi) (D-175)
+.model 2N7000 VDMOS(vto=2.3973 kp=0.4838 ksubthres=0.24488 mtriode=1.1919 lambda=1e-06
++ rs=1.0742 rd=1.0117e-06 cgs=1.7221e-11 cgdmax=3.7315e-11 cgdmin=2.0146e-12 a=0.30204
++ cjo=2.6453e-11 m=0.40407 vj=1.0171 is=9.1033e-13 n=1.1464 rb=0.12828)
+* J201 low-pinch-off N-channel JFET (our model from Fairchild's and InterFET's sheets)
+* Built by Solum Builder from Fairchild J201/J202 data sheet (1997); InterFET J201/J202 data sheet IF35018.R00 (June 2019) (D-161)
+.model J201 NJF(vto=-0.6708 beta=0.0009938 lambda=0.002236 cgs=3e-12 cgd=1e-12)
+* LM308 op-amp with external compensation (TI macromodel): ProCo Rat
+* Source: https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Manufacturer/Texas%20Instruments/lm308.mod
+* LM308 operational amplifier "macromodel" subcircuit
+* created using Parts release 4.01 on 08/30/89 at 09:24
+* (REV N/A)
+* connections:   non-inverting input
+*                | inverting input
+*                | | positive power supply
+*                | | | negative power supply
+*                | | | | output
+*                | | | | |  compensation
+*                | | | | | / \
+.subckt LM308    1 2 3 4 5 6 7
+*
+  c1   11 12 6.887E-12
+  dc    5 53 dx
+  de   54  5 dx
+  dlp  90 91 dx
+  dln  92 90 dx
+  dp    4  3 dx
+  egnd 99  0 poly(2) (3,0) (4,0) 0 .5 .5
+  fb    7 99 poly(5) vb vc ve vlp vln 0 19.59E6 -20E6 20E6 20E6 -20E6
+  ga    6  0 11 12 122.5E-6
+  gcm   0  6 10 99 6.891E-9
+  iee  10  4 dc 6.003E-6
+  hlim 90  0 vlim 1K
+  q1   11  2 13 qx
+  q2   12  1 14 qx
+  r2    6  9 100.0E3
+  rc1   3 11 8.161E3
+  rc2   3 12 8.161E3
+  re1  13 10 -460.3
+  re2  14 10 -460.3
+  ree  10 99 33.32E6
+  ro1   8  5 125
+  ro2   7 99 125
+  rp    3  4 102.0E3
+  vb    9  0 dc 0
+  vc    3 53 dc 2.600
+  ve   54  4 dc 2.600
+  vlim  7  8 dc 0
+  vlp  91  0 dc 6
+  vln   0 92 dc 6
+.model dx D(is=800.0E-18)
+.model qx NPN(is=800.0E-18 bf=2.000E3)
+.ends
+
+.model J201_Q1 NJF(vto=-0.8 beta=0.0009375 lambda=0.002236 cgs=3e-12 cgd=1e-12)
+.save v(in) v(out)
+.tran 1.25e-05 0.1 0 1.25e-05
+.end

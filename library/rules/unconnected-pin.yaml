@@ -1,0 +1,41 @@
+id: unconnected-pin
+layer: topology
+severity: warning
+check: unconnected_pin
+title: Pin not connected
+message: "{ref} has {pins} connected to nothing."
+why: >
+  A pin that connects to nothing does nothing, and is usually a wire that stops just short
+  of it. Pot ends, spare switch positions and unused compensation pins may be left open,
+  so they aren't reported; so may a spare OTA's output and bias current pin together (an
+  OTA with no bias current is off, as the datasheets leave an unused one).
+fix: "Wire {ref}'s {pins} where it belongs, or delete {ref} if it isn't needed."
+fixtures:
+  bad:
+    - parts:   # a pot's wiper left open (a part wired by one pin is part-not-simulated)
+        - {ref: VR1, type: pot, nets: [a, ~, GND], value: 100k}
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+      expect: [VR1]
+    - rails: {V+: 9}
+      parts:   # an OTA's output used, but no bias current into it: it does nothing
+        - {ref: R1, type: resistor, nets: [V+, b], value: 100k}
+        - {ref: IC1A, type: ota, nets: [a, GND, o, b], model: LM13700, half: a}
+        - {ref: R2, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: R3, type: resistor, nets: [o, GND], value: 10k}
+        - {ref: IC1B, type: ota, nets: [GND, GND, o2], model: LM13700, half: b}
+        - {ref: R4, type: resistor, nets: [o2, GND], value: 10k}
+      expect: [IC1B]
+  good:
+    - parts:
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: R2, type: resistor, nets: [a, GND], value: 10k}
+    - parts:   # a pot wired as a variable resistor, one end left open
+        - {ref: VR1, type: pot, nets: [~, a, GND], value: 100k}
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+    - rails: {V+: 9}
+      parts:   # a dual OTA's spare half: inputs grounded, output and bias current open
+        - {ref: R1, type: resistor, nets: [V+, b], value: 100k}
+        - {ref: IC1A, type: ota, nets: [a, GND, o, b], model: LM13700, half: a}
+        - {ref: R2, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: R3, type: resistor, nets: [o, GND], value: 10k}
+        - {ref: IC1B, type: ota, nets: [GND, GND], model: LM13700, half: b}

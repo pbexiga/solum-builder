@@ -1,0 +1,188 @@
+{
+  "id": "1N914",
+  "type": "diode",
+  "description": "1N914 small-signal silicon diode (our fit to Diotec's and onsemi's sheets: onsemi gives 1N914 and 1N4148 one die and one set of curves)",
+  "spice_name": "1N914",
+  "kind": "model",
+  "pins": [],
+  "card": "1N914.lib",
+  "manufacturer": "onsemi",
+  "source": {
+    "url": "https://www.diotec.com/request/datasheet/1n4148.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own fit to the maker's datasheet curve (D-156): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.diotec.com/request/datasheet/1n4148.pdf",
+  "fixes": [],
+  "ratings": {
+    "if_avg": 0.2,
+    "vr_max": 75.0
+  },
+  "rating_sources": {
+    "if_avg": "Diotec 1N4148, 1N4150, 1N4151, 1N4448 data sheet, Version 2023-08-17: Max. average forward current IFAV 200 mA (1N4148)",
+    "vr_max": "Diotec 1N4148, 1N4150, 1N4151, 1N4448 data sheet, Version 2023-08-17: Reverse voltage VR 75 V (1N4148)"
+  },
+  "fit": {
+    "sheet": "Diotec 1N4148, 1N4150, 1N4151, 1N4448 data sheet, Version 2023-08-17",
+    "figure": "Forward characteristics (typical values), Tj = 25 °C, from 2.4 mA (read from the PDF's vector drawing, centre of the drawn line)",
+    "points": [
+      [
+        0.387,
+        1e-05
+      ],
+      [
+        0.5,
+        0.0001
+      ],
+      [
+        0.617,
+        0.001
+      ],
+      [
+        0.6283,
+        0.0023769999999999998
+      ],
+      [
+        0.7158,
+        0.012230000000000001
+      ],
+      [
+        0.7799,
+        0.03735
+      ],
+      [
+        0.8247,
+        0.07426
+      ],
+      [
+        0.8694,
+        0.1372
+      ],
+      [
+        0.9187,
+        0.237
+      ],
+      [
+        0.9722,
+        0.38010000000000005
+      ],
+      [
+        0.9976,
+        0.4597
+      ]
+    ],
+    "method": "IS, N and RS by least squares on V = N·Vt·ln(I/IS) + RS·I (scripts/fit_models.py fit_diode, Vt at 27 °C) over every other curve point, the curve's last point always included; Below 2.4 mA, three points of onsemi 1N91x/1N4x48 data sheet, 1N914/D Rev. 6 (Sep 2024), Figures 3 and 4 (10 µA, 100 µA, 1 mA; read off the images, confirmed by the user on 2026-10-20) are fitted with the curve; CJO is the sheets' 4 pF at 0 V; BV 100 V at 100 µA, onsemi's breakdown test",
+    "note": "Two makers' typical curves for one part: Diotec's from 2.4 mA, onsemi's below. Fitted alone, Diotec's curve reads 35-49 mV low at onsemi's points; together every point lands within 14 mV, close to onsemi's own card (IS 2.5 nA, N 1.75)"
+  },
+  "validation": [
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 1e-05
+      },
+      "simulated": 0.388989,
+      "datasheet": {
+        "typ": 0.387,
+        "tol": 0.05,
+        "source": "onsemi 1N91x/1N4x48 data sheet, 1N914/D Rev. 6 (Sep 2024), Figure 3",
+        "note": "Typical curve read off the figure (image), confirmed by the user on 2026-10-20; now fitted to, so a check of the fit, not a held-out point"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0001
+      },
+      "simulated": 0.496022,
+      "datasheet": {
+        "typ": 0.5,
+        "tol": 0.05,
+        "source": "onsemi 1N91x/1N4x48 data sheet, 1N914/D Rev. 6 (Sep 2024), Figures 3 and 4",
+        "note": "Typical curve read off the figure (image), confirmed by the user on 2026-10-20; now fitted to, so a check of the fit, not a held-out point"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.001
+      },
+      "simulated": 0.603264,
+      "datasheet": {
+        "typ": 0.617,
+        "tol": 0.05,
+        "source": "onsemi 1N91x/1N4x48 data sheet, 1N914/D Rev. 6 (Sep 2024), Figure 4",
+        "note": "Typical curve read off the figure (image), confirmed by the user on 2026-10-20; now fitted to, so a check of the fit, not a held-out point"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.01
+      },
+      "simulated": 0.712491,
+      "datasheet": {
+        "max": 1.0,
+        "source": "onsemi 1N91x/1N4x48 data sheet, 1N914/D Rev. 5 (August 2021), Electrical Characteristics (VF at 10 mA, 914/916/4148)"
+      }
+    },
+    {
+      "quantity": "ir",
+      "conditions": {
+        "vr": 20.0
+      },
+      "simulated": 2.34e-09,
+      "datasheet": {
+        "max": 2.5e-08,
+        "source": "Diotec 1N4148, 1N4150, 1N4151, 1N4448 data sheet, Version 2023-08-17, Characteristics: leakage current at VR = 20 V, Tj = 25 °C, 1N4148"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.005467
+      },
+      "simulated": 0.683314,
+      "datasheet": {
+        "source": "Diotec 1N4148, 1N4150, 1N4151, 1N4448 data sheet, Version 2023-08-17, Forward characteristics (typical values), Tj = 25 °C, from 2.4 mA (read from the PDF's vector drawing, centre of the drawn line)",
+        "typ": 0.6729,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.1019
+      },
+      "simulated": 0.842894,
+      "datasheet": {
+        "source": "Diotec 1N4148, 1N4150, 1N4151, 1N4448 data sheet, Version 2023-08-17, Forward characteristics (typical values), Tj = 25 °C, from 2.4 mA (read from the PDF's vector drawing, centre of the drawn line)",
+        "typ": 0.8462,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.3041
+      },
+      "simulated": 0.943231,
+      "datasheet": {
+        "source": "Diotec 1N4148, 1N4150, 1N4151, 1N4448 data sheet, Version 2023-08-17, Forward characteristics (typical values), Tj = 25 °C, from 2.4 mA (read from the PDF's vector drawing, centre of the drawn line)",
+        "typ": 0.9446,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    }
+  ],
+  "package": {
+    "name": "DO-35 (DO-204AH)",
+    "pins": {
+      "K": 1,
+      "A": 2
+    },
+    "source": "onsemi 1N914/D: DO-204AH (DO-35); pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The band marks the cathode"
+  }
+}

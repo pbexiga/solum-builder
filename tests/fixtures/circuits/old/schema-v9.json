@@ -1,0 +1,10 @@
+{
+  "schema": 9,
+  "id": "old-v9",
+  "name": "Old v9",
+  "parts": [
+    {"ref": "Q1", "type": "bjt", "model": "2N3906", "pos": [0, 0]}
+  ],
+  "labels": [{"net": "GND", "pos": [20, 20]}],
+  "power": {"rails": {"V-": -9.0}}
+}

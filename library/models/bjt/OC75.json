@@ -1,0 +1,312 @@
+{
+  "id": "OC75",
+  "type": "bjt",
+  "description": "OC75 germanium PNP (Mullard, high-gain audio), our fit to Mullard's sheet",
+  "spice_name": "OC75",
+  "kind": "model",
+  "pins": [],
+  "card": "OC75.lib",
+  "manufacturer": "Mullard",
+  "source": {
+    "url": "https://frank.pocnet.net/other/Mullard/Mullard_Volume4PartIII_transistors_1968-11.pdf (Mullard Vol. 4 Part III, Nov 1968; pages 197-211 extracted, kept as data/spec-sheets/OC75_Mullard.pdf)",
+    "retrieved": "2026-11-03",
+    "licence": "Our own model fitted to the maker's data sheet (D-163): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://frank.pocnet.net/other/Mullard/Mullard_Volume4PartIII_transistors_1968-11.pdf",
+  "fixes": [],
+  "ratings": {
+    "vceo": 20.0,
+    "ic": 0.01
+  },
+  "rating_sources": {
+    "vceo": "Mullard OC75 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC75 of March 1959, pages D1-D4 and C1-C11), page D1: limiting values, grounded emitter: Vc max. (d.c.) -20 V (base-ground impedance < 500 Ω or Vbe > 500 mV reverse)",
+    "ic": "Mullard OC75 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC75 of March 1959, pages D1-D4 and C1-C11), page D1: limiting values: Ic max. 10 mA (averaged over 20 ms; 50 mA peak)"
+  },
+  "package": {
+    "name": "SO-2 glass (EBC)",
+    "pins": {
+      "E": 1,
+      "B": 2,
+      "C": 3
+    },
+    "source": "Mullard OC75 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC75 of March 1959, pages D1-D4 and C1-C11), page D4: outline and dimensions (V.A.S.C.A. SO-2/SB3-2): e, b, c in a line, the dot on the collector side"
+  },
+  "fit": {
+    "sheet": "Mullard OC75 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC75 of March 1959, pages D1-D4 and C1-C11)",
+    "figure": "page C6 transfer characteristic at Vc = -4.5 V (IB 0 to 13 µA) and its Average spread line (2.6 to 22 mA); page C1 IE against VBE at Vc = -4.5 V (both ranges); page D2 table (Ico, fα); page D3 h'22 (VAF); Cob from the transistor cross-reference book, page 242 (data/spec-sheets/Germanium_OC_crossref.pdf) (a maximum: neither maker's sheet gives a capacitance)",
+    "points": [
+      [
+        0.0004872,
+        258.8735387885229
+      ],
+      [
+        0.0006604,
+        155.93860684769774
+      ],
+      [
+        0.0008449,
+        127.49358684170818
+      ],
+      [
+        0.0010304000000000001,
+        114.03275785745907
+      ],
+      [
+        0.0012118,
+        105.81557806496683
+      ],
+      [
+        0.0013075,
+        103.26988389542691
+      ],
+      [
+        0.0026275,
+        102.63671875
+      ],
+      [
+        0.0053360000000000005,
+        99.31137167318073
+      ],
+      [
+        0.0080237,
+        98.83838383838383
+      ],
+      [
+        0.0106299,
+        98.06180811808117
+      ],
+      [
+        0.0131299,
+        97.17933535637628
+      ],
+      [
+        0.0156299,
+        96.24322660098522
+      ],
+      [
+        0.0178937,
+        93.97951680672269
+      ],
+      [
+        0.0199213,
+        91.12295306925259
+      ],
+      [
+        0.021850400000000002,
+        88.47748623258828
+      ]
+    ],
+    "curves": {
+      "transfer": [
+        [
+          -4.7399999999999993e-07,
+          0.0003103
+        ],
+        [
+          1.8819999999999997e-06,
+          0.0004872
+        ],
+        [
+          4.235e-06,
+          0.0006604
+        ],
+        [
+          6.626999999999999e-06,
+          0.0008449
+        ],
+        [
+          9.036e-06,
+          0.0010304000000000001
+        ],
+        [
+          1.1452e-05,
+          0.0012118
+        ],
+        [
+          1.2661e-05,
+          0.0013075
+        ],
+        [
+          2.56e-05,
+          0.0026275
+        ],
+        [
+          5.3729999999999995e-05,
+          0.0053360000000000005
+        ],
+        [
+          8.118e-05,
+          0.0080237
+        ],
+        [
+          0.0001084,
+          0.0106299
+        ],
+        [
+          0.00013511,
+          0.0131299
+        ],
+        [
+          0.0001624,
+          0.0156299
+        ],
+        [
+          0.0001904,
+          0.0178937
+        ],
+        [
+          0.00021862,
+          0.0199213
+        ],
+        [
+          0.00024696,
+          0.021850400000000002
+        ]
+      ],
+      "vbe_ie": [
+        [
+          2.5079999999999997e-05,
+          0.00547
+        ],
+        [
+          4.213e-05,
+          0.02092
+        ],
+        [
+          5.9229999999999994e-05,
+          0.030260000000000002
+        ],
+        [
+          7.638999999999999e-05,
+          0.03614
+        ],
+        [
+          9.926e-05,
+          0.04181
+        ],
+        [
+          0.0006291000000000001,
+          0.09457
+        ],
+        [
+          0.0011193,
+          0.11042
+        ],
+        [
+          0.0016095,
+          0.11971
+        ],
+        [
+          0.0023448,
+          0.13094
+        ],
+        [
+          0.0028328000000000003,
+          0.13697
+        ],
+        [
+          0.0036444999999999997,
+          0.14625
+        ],
+        [
+          0.0047808,
+          0.15772
+        ],
+        [
+          0.0059232,
+          0.16728
+        ],
+        [
+          0.007067,
+          0.17567
+        ],
+        [
+          0.008782700000000001,
+          0.1849
+        ],
+        [
+          0.009926500000000001,
+          0.1896
+        ]
+      ],
+      "cobo": [
+        [
+          6.0,
+          5e-11
+        ]
+      ]
+    },
+    "method": "see NOTES.md (germanium study): transfer, VBE-IE and Ico fitted together at Vc = -4.5 V, leakage included (the transfer curve is kept as read under curves.transfer, IB and IC; points are its (IC, IC/IB), leakage included, so the lowest-current gains are high; its one negative-IB point, where leakage outruns the base, has no gain and is only in the curve); RB 0 (no rbb' given). Fitted points within 6.6 % (IC at IB) and 1.9 mV (VBE); ICBO 4.71 µA. Curves read off the raster by pixel (.claude/skills/fit-model/worked/germanium/pix.py)",
+    "note": "Our own fit by pixel from Mullard's curves (D-184); germanium units vary widely, so give a measured hFE and leakage."
+  },
+  "validation": [
+    {
+      "quantity": "icbo",
+      "conditions": {
+        "vcb": 4.5
+      },
+      "simulated": 4.71042e-06,
+      "datasheet": {
+        "typ": 4.5e-06,
+        "max": 1.2e-05,
+        "source": "Mullard OC75 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC75 of March 1959, pages D1-D4 and C1-C11), page D2: characteristics at Tj = 25 °C, Ico (Vc = -4.5 V, Ie = 0): 4.5 av., 14 max µA; Philips OC75 data sheet (1958-60, pages 1-3 and A-N; kept as data/spec-sheets/OC75_Philips.pdf), page 2: -ICBO (-VCB = 4.5 V) = 4.5, < 12 µA (the tighter maximum)"
+      },
+      "note": "Fitted to the average; a measured unit's leakage replaces it (D-130)"
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 4.5
+      },
+      "simulated": 0.141226,
+      "datasheet": {
+        "min": 0.1,
+        "typ": 0.14,
+        "max": 0.21,
+        "source": "Mullard OC75 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC75 of March 1959, pages D1-D4 and C1-C11), page D2: characteristics at Tj = 25 °C, base input voltage (Vc = -4.5 V, Ic = 3 mA): -100 min, -140 av., -210 max mV"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.009,
+        "ib": 0.0005
+      },
+      "simulated": 0.078701,
+      "datasheet": {
+        "typ": 0.09,
+        "max": 0.21,
+        "source": "Mullard OC75 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC75 of March 1959, pages D1-D4 and C1-C11), page D2: characteristics at Tj = 25 °C, collector bottoming voltage (Ic = 9 mA, Ib = 0.5 mA): -90 av., -210 max mV"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 4.5
+      },
+      "simulated": 98.7616
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 86.1597,
+      "note": "The card's own gain on the tester (where a measured form starts)"
+    },
+    {
+      "quantity": "iceo",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0
+      },
+      "simulated": 0.000370238,
+      "note": "The card's own leakage on the tester"
+    }
+  ]
+}

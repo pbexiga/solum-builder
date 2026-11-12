@@ -1,0 +1,16 @@
+* Fender TMB tone stack
+V_RAIL1 v_ 0 DC 9
+C1 in c1_2 2.5e-10
+R_TREBLE_a bass_2 out 25000
+R_TREBLE_b out c1_2 225000
+R1 in c2_1 100000
+C2 c2_1 bass_2 1e-07
+R_BASS_a bass_1 bass_2 25000
+R_BASS_b bass_2 bass_2 225000
+C3 c2_1 bass_1 4.7e-08
+R_MID_a 0 bass_1 1000
+R_MID_b bass_1 bass_1 9000
+V_JIGIN in 0 DC 0 AC 1
+R_JIGLOAD out 0 1000000
+.ac dec 50 10 100000
+.end

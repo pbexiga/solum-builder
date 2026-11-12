@@ -1,0 +1,25 @@
+id: electrolytic-reversed
+layer: operating_point
+severity: warning
+check: electrolytic_reversed
+title: Electrolytic reversed
+message: "{ref} ({kind}) is reverse biased by {volts}."
+why: >
+  A polarised capacitor's + side must sit at the higher DC voltage. Reversed it leaks,
+  loses capacitance and can fail. Its pin 1 is +.
+fix: "Turn {ref} round so its + pin faces the higher DC voltage."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, a], value: 47}
+        - {ref: C1, type: capacitor, nets: [GND, a], value: 100u, kind: electrolytic}
+      expect: [C1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, a], value: 47}
+        - {ref: C1, type: capacitor, nets: [a, GND], value: 100u, kind: electrolytic}
+    - starter: fuzz-face
+    - starter: proco-rat
+    - starter: ts808

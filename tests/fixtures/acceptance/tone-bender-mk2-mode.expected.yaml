@@ -1,0 +1,150 @@
+# Expected values for library/starters/tone-bender-mk2-mode.json (D-019, D-034).
+circuit: tone-bender-mk2-mode
+source:
+  title: Aion FX, "Deimos Germanium Fuzz" build documentation 1.1.1 (2024-08-08), based on the Tone Bender Mk. II Professional
+  url: https://aionfx.com/app/files/docs/deimos_documentation.pdf
+  snapshot: http://web.archive.org/web/20251120232651/https://aionfx.com/app/files/docs/deimos_documentation.pdf
+  read: 2026-10-28
+  licence: Aion FX project documentation (short quotes, for testing); the projects may be built, commercially too, without attribution (its License & Usage page)
+substitutions:
+  - >-
+    With the Deimos's Mode switch (DPDT: MkII, or the guitar straight into Q2 through C4
+    for the "1.5"), drawn as Aion wires it, with no pull-downs (so it raises the Missing
+    pull-down warning, tests/rules/corpus_warnings.yaml). Without the other additions: the
+    input pulldown, R7 (a jumper for stock), the voltage inverter and its power filtering. The
+    supply is an ideal -9 V, as the Fuzz Face starter's.
+  - >-
+    Q1-Q3: the pedal's OC75s (some units OC81D) are     our own fit to Mullard's OC75 sheet (D-184; no maker's SPICE card exists), given a
+    measured hFE and leakage from the middle of the document's ranges: "Q1: hFE 50 to 80, high leakage (100-300µA); Q2: hFE
+    50 to 80, low to medium leakage (50-200µA); Q3: hFE 95 to 120, low to high leakage
+    (50-300µA)" (Q1 65 and 200 µA, Q2 65 and 125 µA, Q3 108 and 175 µA).
+  - >-
+    The Q3 bias trimmer at the document's starting position, "Q3 to around 8:00" (TR2
+    10 %). The Q2 bias trimmer (TR1) is solved for Q2's collector at -0.16 V, inside the
+    document's -0.15 to -0.25 V: at its starting position ("turn the Q2 bias trimmer to
+    around 3:00") Q2's collector reads -0.09 V, and aimed at Q3's collector (-8.25 V)
+    -0.11 V, both outside. -0.16 V, low in the range, is where Q3's emitter also reads
+    the document's -0.1 V: the OC75 card drops 0.04 V there, the OC81D 0.05 to 0.25 V (the
+    document's Q3 base and emitter figures).
+
+checks:
+  # The document's benchmark readings: "with the black lead touching ground, measure each
+  # leg on all three of the transistors. You're looking for something near these voltages."
+  # It adds: "Q1 and Q3's collector voltages are also relative to the supply voltage, which
+  # is typically 9.6V to 10V for a wall wart, but often exactly 9V". So those two are
+  # checked against the supply: -8.5 to -9.5 V on 9-10 V is 0 to 1.5 V above it, and -8 to
+  # -8.5 V is 0.5 to 2 V above it.
+  - id: q1-collector-above-supply
+    kind: dc
+    node: Q1.C
+    minus: R2.1
+    volts: 0.75
+    tol: 0.75
+    from: text
+    quote: "Q1: Collector -8.5 to -9.5V, Base -0.05V, Emitter 0V"
+    known_gap: >-
+      Simulated 1.61 V: Q1 draws 161 µA through R2 (10K) from its 200 µA of tester leakage,
+      where the document's -8.5 to -9.5 V on a 9-10 V supply allows up to 150 µA. With the
+      OC75 card's base-emitter drop of 0.05 V (the document's own Q1 base reading) R1
+      diverts little of the leakage from the base; the old card's 0.18 V sent more of it
+      to ground. A unit at the low end of the document's 100-300 µA lands inside: 120 µA
+      reads 0.95 V, 150 µA 1.19 V.
+  - id: q3-collector-above-supply
+    kind: dc
+    node: Q3.C
+    minus: R5.1
+    volts: 1.25
+    tol: 0.75
+    from: text
+    quote: "Q3: Collector -8V to -8.5V, Base -0.15 to -0.35V, Emitter -0.1V"
+  - id: q3-base
+    kind: dc
+    node: Q3.B
+    volts: -0.25
+    tol: 0.1
+    from: text
+    quote: "Q3: Collector -8V to -8.5V, Base -0.15 to -0.35V, Emitter -0.1V"
+  - id: q3-emitter
+    kind: dc
+    node: Q3.E
+    volts: -0.1
+    tol: 0.05
+    from: text
+    quote: "Q3: Collector -8V to -8.5V, Base -0.15 to -0.35V, Emitter -0.1V"
+  # Only capacitors switch, so the benchmarks hold in both modes; checked in 1.5 too.
+  - id: q1-collector-above-supply-in-1-5
+    kind: dc
+    node: Q1.C
+    minus: R2.1
+    set: {SW1: {position: 1}}
+    volts: 0.75
+    tol: 0.75
+    from: text
+    quote: "Q1: Collector -8.5 to -9.5V, Base -0.05V, Emitter 0V"
+    known_gap: The same as in MkII mode (above).
+    known_gap: >-
+      Simulated 1.61 V: Q1 draws 161 µA through R2 (10K) from its 200 µA of tester leakage,
+      where the document's -8.5 to -9.5 V on a 9-10 V supply allows up to 150 µA. With the
+      OC75 card's base-emitter drop of 0.05 V (the document's own Q1 base reading) R1
+      diverts little of the leakage from the base; the old card's 0.18 V sent more of it
+      to ground. A unit at the low end of the document's 100-300 µA lands inside: 120 µA
+      reads 0.95 V, 150 µA 1.19 V.
+  - id: q3-collector-above-supply-in-1-5
+    kind: dc
+    node: Q3.C
+    minus: R5.1
+    set: {SW1: {position: 1}}
+    volts: 1.25
+    tol: 0.75
+    from: text
+    quote: "Q3: Collector -8V to -8.5V, Base -0.15 to -0.35V, Emitter -0.1V"
+  - id: q1-base
+    kind: dc
+    node: Q1.B
+    volts: -0.05
+    tol: 0.05
+    from: text
+    quote: "Q1: Collector -8.5 to -9.5V, Base -0.05V, Emitter 0V"
+    note: >-
+      Met with the germanium fits (D-170, D-184): a germanium transistor's base-emitter
+      drop at these currents is tens of millivolts (the old card's was 0.18 V).
+  - id: q2-base
+    kind: dc
+    node: Q2.B
+    volts: -0.07
+    tol: 0.05
+    from: text
+    quote: "Q2: Collector -0.15V to -0.25V, Base -0.07V, Emitter 0V"
+    note: Met with the germanium fits, as Q1's base.
+  - id: q2-collector
+    kind: dc
+    node: Q2.C
+    volts: -0.2
+    tol: 0.05
+    from: text
+    quote: "Q2: Collector -0.15V to -0.25V, Base -0.07V, Emitter 0V"
+    note: >-
+      Set by TR1's bias target (-0.16 V, see substitutions), so not a check of the model;
+      Q3's base and emitter, which follow from it, are.
+
+omitted:
+  - what: Q1, Q2 emitters 0 V
+    why: Wired straight to ground in the circuit; nothing to check.
+  - what: Cleaning up with the guitar's volume (owners' reports, best at low Fuzz; no published figure)
+    why: >-
+      Not checked: no source measures it. Simulated, the starter doesn't clean up: TR1's
+      target puts it at the high-gain end of the document's settings (65 dB at full Fuzz,
+      45 dB at minimum), and Q1's gain makes up for the volume pot's loss in front of it.
+      At the low-gain end (TR1 at the document's 3:00, Q1 leaking 100 µA, the bottom of
+      its range) and low Fuzz, played softly, turning the guitar down to 4 takes the 3rd
+      and higher harmonics from 52 % to 13 %, leaving mostly 2nd harmonic, as players
+      describe it. Figures in
+      docs/studies/germanium-models.md, section 5.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  sources: []
+  parts:
+    - "Capacitor types from the main source's parts list (\"Film capacitor\", \"Electrolytic capacitor\")."
+    - "Electrolytics rated 16 V: the sources give no rating, so this is the app's own advice for a 9 V circuit (the smallest rating sold with the supply under 80 % of it, D-203)."
+    - "Enclosure 125B, as the main source (\"ENC 125B Enclosure, die-cast aluminum\")."

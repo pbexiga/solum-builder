@@ -1,0 +1,28 @@
+id: cap-rating-close
+layer: operating_point
+severity: warning
+check: cap_rating_close
+build: true
+title: Capacitor close to its voltage rating
+message: "{ref} has {volts} across it, near its {limit} rating."
+why: >
+  A capacitor run close to its rating ages faster, and a pedal's supply isn't exact: an
+  unregulated 9 V adapter can give 10-12 V with no load. Builders keep the DC across a
+  capacitor under about 80 % of its rating.
+fix: "Use {advice} for {ref}."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, a], value: 47}
+        - {ref: C1, type: capacitor, nets: [a, GND], value: 100u, kind: electrolytic, rating_v: 10}
+      expect: [C1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, a], value: 47}
+        - {ref: C1, type: capacitor, nets: [a, GND], value: 100u, kind: electrolytic, rating_v: 16}
+    - rails: {V+: 9}
+      parts:   # over its rating: cap-over-voltage's, not this one's
+        - {ref: R1, type: resistor, nets: [V+, a], value: 47}
+        - {ref: C1, type: capacitor, nets: [a, GND], value: 100u, kind: electrolytic, rating_v: 6.3}

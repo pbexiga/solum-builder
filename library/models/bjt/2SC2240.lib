@@ -1,0 +1,3 @@
+* 2SC2240 low-noise audio NPN (Toshiba; hFE 200-700 in grades GR, BL; VCEO 120 V): the Boss DS-1's, our fit to Toshiba's sheet
+* Fitted by Solum Builder to Toshiba 2SC2240 data sheet (2003-03-25, 6 pages), its typical curves (D-163)
+.model 2SC2240 NPN(is=2.515e-14 nf=1 bf=352.1 ise=3.486e-14 ne=1.481 ikf=0.2335 br=5.231 isc=3.412e-11 nc=1.469 re=0.4279 rc=0.02518 vje=0.75 mje=0.33 cjc=7.223e-12 vjc=0.75 mjc=0.33 tf=1.501e-09 nkf=0.3)

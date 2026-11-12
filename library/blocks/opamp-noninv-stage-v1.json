@@ -1,0 +1,272 @@
+{
+  "schema": 29,
+  "id": "opamp-noninv-stage-v1",
+  "name": "Gain stage · op-amp (TS808)",
+  "version": {
+    "major": 1,
+    "minor": 2
+  },
+  "description": "Op-amp non-inverting gain stage: gain 1 + R2/R3 = 1 + 51k/4k7, about 12 (21.5 dB). R3 and C3 in the leg to ground make a high-pass (about 720 Hz): bass gets less gain. C4 rolls off the top end. Values from the Tube Screamer's clipping stage with Drive at minimum and its diodes left out (ElectroSmash's \"Tube Screamer Circuit Analysis\", electrosmash.com/tube-screamer-analysis: C2, R5, R6, R4, C3, C4 there), on a TL071 for the RC4558's half. A Drive pot in series with R2 adds gain; diodes across R2 make it the TS808's clipper (its own block). The output sits at vref, as in the TS808: add a coupling cap if the next stage isn't biased there. Wire vref to a Vref divider.",
+  "tags": [
+    "gain",
+    "opamp",
+    "ts808"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "C1",
+      "pos": [
+        40,
+        20
+      ],
+      "type": "capacitor",
+      "value": "1µ",
+      "kind": "film"
+    },
+    {
+      "ref": "IC1",
+      "pos": [
+        160,
+        0
+      ],
+      "model": "TL071",
+      "type": "opamp"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        90,
+        60
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        160,
+        -100
+      ],
+      "type": "resistor",
+      "value": "51k"
+    },
+    {
+      "ref": "C4",
+      "pos": [
+        160,
+        -160
+      ],
+      "type": "capacitor",
+      "value": "51p",
+      "kind": "c0g"
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        70,
+        -100
+      ],
+      "type": "resistor",
+      "value": "4k7"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        30,
+        -80
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "47n",
+      "kind": "film"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        0,
+        20
+      ],
+      "to": [
+        20,
+        20
+      ]
+    },
+    {
+      "from": [
+        60,
+        20
+      ],
+      "to": [
+        120,
+        20
+      ]
+    },
+    {
+      "from": [
+        90,
+        20
+      ],
+      "to": [
+        90,
+        40
+      ]
+    },
+    {
+      "from": [
+        200,
+        0
+      ],
+      "to": [
+        200,
+        -100
+      ]
+    },
+    {
+      "from": [
+        200,
+        -100
+      ],
+      "to": [
+        180,
+        -100
+      ]
+    },
+    {
+      "from": [
+        180,
+        -100
+      ],
+      "to": [
+        180,
+        -160
+      ]
+    },
+    {
+      "from": [
+        140,
+        -160
+      ],
+      "to": [
+        140,
+        -100
+      ]
+    },
+    {
+      "from": [
+        140,
+        -100
+      ],
+      "to": [
+        110,
+        -100
+      ]
+    },
+    {
+      "from": [
+        110,
+        -100
+      ],
+      "to": [
+        110,
+        -20
+      ]
+    },
+    {
+      "from": [
+        110,
+        -20
+      ],
+      "to": [
+        120,
+        -20
+      ]
+    },
+    {
+      "from": [
+        90,
+        -100
+      ],
+      "to": [
+        110,
+        -100
+      ]
+    },
+    {
+      "from": [
+        50,
+        -100
+      ],
+      "to": [
+        30,
+        -100
+      ]
+    },
+    {
+      "from": [
+        200,
+        0
+      ],
+      "to": [
+        240,
+        0
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "in",
+      "pos": [
+        0,
+        20
+      ]
+    },
+    {
+      "net": "vref",
+      "pos": [
+        90,
+        80
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        30,
+        -60
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        240,
+        0
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        160,
+        -40
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        160,
+        40
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "vref": "vref",
+    "out": "out"
+  }
+}

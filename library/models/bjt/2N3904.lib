@@ -1,0 +1,3 @@
+* 2N3904 general-purpose NPN (switching and small-signal; pairs with the 2N3906), our fit to onsemi's sheet
+* Fitted by Solum Builder to onsemi 2N3904 data sheet, Rev. 2 (July 2021, 2N3904/D), its typical curves (D-163)
+.model 2N3904 NPN(is=6.048e-15 nf=1 bf=221.5 ikf=0.4559 vaf=105.1 br=5.326 isc=1.708e-11 nc=1.582 re=0.01413 rc=0.8693 cje=4.445e-12 vje=0.9068 mje=0.2546 cjc=3.782e-12 vjc=0.3383 mjc=0.2286 tf=2.435e-10 nkf=0.8007)

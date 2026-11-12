@@ -1,0 +1,64 @@
+{
+  "id": "MAX1044",
+  "type": "chargepump",
+  "description": "MAX1044 charge pump (7660 family with a boost pin, 10.5 V maximum supply): the Klon Centaur's",
+  "kind": "behavioural",
+  "manufacturer": "Analog Devices (Maxim)",
+  "source": {
+    "url": "https://www.analog.com/media/en/technical-documentation/data-sheets/icl7660-max1044.pdf",
+    "retrieved": "2026-11-10 (archived copy, web.archive.org/web/20251214050719)",
+    "licence": "values read from the manufacturer's data sheet",
+    "original": "Analog Devices (Maxim)"
+  },
+  "datasheet": "https://www.analog.com/media/en/technical-documentation/data-sheets/icl7660-max1044.pdf",
+  "note": "A behavioural model, not the chip's circuit: the figures read from the maker's sheet (pump frequency, output resistance, supply current) drive Solum Builder's own model of a charge pump, switching ripple included (D-093).",
+  "ratings": {
+    "vs_max": 10.5
+  },
+  "rating_sources": {
+    "vs_max": "Maxim MAX1044/ICL7660 data sheet, 19-4667 Rev 3 (6/19): Absolute Maximum Ratings, Supply Voltage (V+ to GND, or GND to VOUT) 10.5 V"
+  },
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "cap+": 2,
+      "gnd": 3,
+      "cap-": 4,
+      "out": 5,
+      "in": 8
+    },
+    "source": "Maxim MAX1044/ICL7660 data sheet, 19-4667 Rev 3 (6/19), Pin Configuration and Pin Description: BOOST 1 (MAX1044), CAP+ 2, GND 3, CAP- 4, VOUT 5, LV 6, OSC 7, V+ 8. The pump's caps and diodes are drawn parts (D-226)."
+  },
+  "params": {
+    "f_pump": 4500.0,
+    "f_pump_boost": 27500.0,
+    "r_out": 65.0,
+    "i_q": 3e-05,
+    "i_q_boost": 0.0003,
+    "c_pump": 1e-05
+  },
+  "param_sources": {
+    "f_pump": "Maxim MAX1044/ICL7660 data sheet, 19-4667 Rev 3 (6/19), page 9: \"the pump frequency is around 4kHz or 5kHz\" with no OSC cap (the pump runs at half the oscillator, page 8)",
+    "f_pump_boost": "Maxim MAX1044/ICL7660 data sheet, 19-4667 Rev 3 (6/19), page 4, Oscillator Frequency vs. Temperature, curve A (MAX1044 with BOOST = V+, V+ = 5 V): about 55 kHz at 25 C, read off the figure; halved for the pump (page 8: \"The pump and output ripple frequencies are one-half the\" clock frequency)",
+    "r_out": "Maxim MAX1044/ICL7660 data sheet, 19-4667 Rev 3 (6/19): Output Resistance 65 ohms typ at I_L = 20 mA, f_OSC = 5 kHz, V+ = 5 V, 25 C (Electrical Characteristics, MAX1044 column)",
+    "i_q": "Maxim MAX1044/ICL7660 data sheet, 19-4667 Rev 3 (6/19): Supply Current 30 uA typ, R_L = infinity, pins 1 and 7 no connection, 25 C (Electrical Characteristics, MAX1044 column)",
+    "i_q_boost": "Maxim MAX1044/ICL7660 data sheet, 19-4667 Rev 3 (6/19), page 4, Quiescent Current vs. Oscillator Frequency (using an external capacitor): about 300 uA near 55 kHz, read off the figure; the table gives no figure with BOOST on V+",
+    "c_pump": "Maxim MAX1044/ICL7660 data sheet, 19-4667 Rev 3 (6/19): C1 = C2 = 10 uF, the Typical Operating Characteristics' conditions and page 8's \"10uF charge-pump capacitors\""
+  },
+  "validation": [
+    {
+      "quantity": "vout",
+      "conditions": {
+        "supply": 5.0,
+        "load": 0.01
+      },
+      "simulated": -4.35,
+      "datasheet": {
+        "typ": -4.5,
+        "tol": 0.2,
+        "source": "Maxim MAX1044/ICL7660 data sheet, 19-4667 Rev 3 (6/19), page 8: \"with a 5V input voltage and 10uF charge-pump capacitors ... the output voltage is about -5V under light loads, and decreases to about -4.5V with a 10mA load current\"",
+        "note": "That paragraph says the output resistance is typically 50 ohms; the model uses the table's 65 ohms typ, so it reads 0.15 V lower."
+      }
+    }
+  ]
+}

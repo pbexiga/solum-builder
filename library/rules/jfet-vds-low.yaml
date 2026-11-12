@@ -1,0 +1,28 @@
+id: jfet-vds-low
+layer: operating_point
+severity: warning
+check: jfet_vds_low
+title: JFET drain too low
+message: "{ref} has only {vds} between drain and source (less than {limit})."
+why: >
+  With so little drain-source voltage the JFET is close to its ohmic region and its drain
+  can hardly swing down before it clips.
+fix: >
+  Bias {ref}'s drain higher, nearer half the supply: a smaller drain resistor, or a trimmer
+  with a drain target.
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: jfet, nets: [d, g, s], model: J201}
+        - {ref: TR1, type: trimmer, nets: [V+, d, d], value: 100k, bias_target: {node: Q1.D, volts: 1.2}}   # Vds about 0.8 V: not ohmic yet, but close
+        - {ref: R2, type: resistor, nets: [g, GND], value: 1M}
+        - {ref: R3, type: resistor, nets: [s, GND], value: 2k2}
+      expect: [Q1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: jfet, nets: [d, g, s], model: J201}
+        - {ref: TR1, type: trimmer, nets: [V+, d, d], value: 100k, bias_target: {node: Q1.D, volts: 4.5}}
+        - {ref: R2, type: resistor, nets: [g, GND], value: 1M}
+        - {ref: R3, type: resistor, nets: [s, GND], value: 2k2}

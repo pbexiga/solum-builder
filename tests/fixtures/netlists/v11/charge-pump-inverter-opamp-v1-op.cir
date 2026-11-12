@@ -1,0 +1,47 @@
+* Charge pump inverter · op-amp (no chip)
+V_RAIL1 v_ 0 DC 9
+X_U1 u1__ u1___2 v_ 0 u1_out TL072
+R1 v_ u1__ 100000
+R2 u1__ 0 100000
+R3 u1__ u1_out 220000
+R4 u1___2 u1_out 24000
+C1 u1___2 0 2.2e-09
+C2 u1_out c2_2 1e-05
+D1 c2_2 0 1N5817
+D2 vneg c2_2 1N5817
+C3 0 vneg 1e-05
+V_JIGIN jig_src 0 DC 0
+R_JIGRS jig_src vneg 1000000
+R_JIGLOAD vneg 0 10000
+* 1N5817 Schottky rectifier (20 V, 1 A): low forward drop, the usual charge-pump doubler diode (our fit to Diotec's sheet)
+* Fitted by Solum Builder to Diotec 1N5817 ... 1N5819 data sheet (Version 2026-03-20), Forward characteristics (typical values), Tj = 25 °C (read from the PDF's vector drawing, centre of the drawn line), up to about 3 A (D-156)
+.model 1N5817 D(is=8.823e-05 n=2.334 rs=0.01307 cjo=8e-11)
+* TL072 JFET-input dual op-amp, ±18 V max (our model from TI's sheet)
+* Built by Solum Builder from TI TL07xx data sheet SLOS080W (revised July 2025), TL07xC at ±15 V (D-162)
+.subckt TL072 1 2 3 4 5
+* pins: + - V+ V- out. Built by Solum Builder from the sheet's typical figures (D-162)
+Rin 1 2 1e+12
+Rc1 1 mid 1e12
+Rc2 2 mid 1e12
+Emid mid 4 3 4 0.5
+Bgm mid g I=1e-05*tanh(1.13683*(V(1)-V(2)))
+R1 g mid 1.75927e+10
+C1 g mid 5e-13
+Vhp 3 hp DC 1.33
+Vhn hn 4 DC 1.33
+Dhi g hp DCLAMP
+Dlo hn g DCLAMP
+Ebuf b 0 g 0 1
+Rp b p 1000
+Cp p 0 3.57838e-11
+Eout o 0 p 0 1
+Vsense o o2 0
+Rout o2 5 125
+Bsrc 3 0 I=max(i(Vsense),0)
+Bsnk 0 4 I=max(-i(Vsense),0)
+Iq 3 4 DC 0.0014
+.model DCLAMP D(is=1e-15 n=0.05)
+.ends
+.save all @d1[id] @d2[id]
+.op
+.end

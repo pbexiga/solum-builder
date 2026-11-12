@@ -1,0 +1,24 @@
+id: resistor-power-close
+layer: operating_point
+severity: warning
+check: resistor_power_close
+build: true
+title: Resistor running warm
+message: "{ref} dissipates {power}, {share} of {rating}."
+why: >
+  A resistor near its power rating runs hot and drifts; builders keep it under half its
+  rating. Without a rating in the file, the usual ¼ W pedal resistor is assumed.
+fix: "Use a resistor for {ref} rated for at least twice {power}."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:   # 9 V across 470 Ω: 0.17 W, two thirds of ¼ W
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 470}
+      expect: [R1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 470, rating_w: 0.5}
+    - rails: {V+: 9}
+      parts:   # over its rating: resistor-over-power's, not this one's
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 100}

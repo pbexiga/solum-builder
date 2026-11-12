@@ -1,0 +1,30 @@
+id: switch-pulldown-missing
+layer: topology
+severity: warning
+check: switch_pulldown_missing
+title: Missing pull-down
+message: "Net {net} at {ref} floats when {ref} switches away from it, so the capacitor on it will pop."
+why: >
+  A capacitor on a net that only the switch ties to a DC voltage charges up while it's
+  switched out (leakage, the circuit's bias) and discharges with an audible pop when it's
+  switched back in. The classic case is a true-bypass footswitch and the input capacitor.
+fix: "Add a resistor from {net} to ground (1M to 2M2 is usual)."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: SW1, type: switch, kind: spdt, position: 0, pins: {"2": in, "1": fx, "3": byp}}
+        - {ref: C1, type: capacitor, nets: [fx, b], value: 100n}
+        - {ref: R1, type: resistor, nets: [b, GND], value: 1M}
+        - {ref: OUT, type: amp, nets: [byp]}
+      expect: [SW1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: SW1, type: switch, kind: spdt, position: 0, pins: {"2": in, "1": fx, "3": byp}}
+        - {ref: R2, type: resistor, nets: [fx, GND], value: 2M2}
+        - {ref: C1, type: capacitor, nets: [fx, b], value: 100n}
+        - {ref: R1, type: resistor, nets: [b, GND], value: 1M}
+        - {ref: OUT, type: amp, nets: [byp]}

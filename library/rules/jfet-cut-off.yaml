@@ -1,0 +1,28 @@
+id: jfet-cut-off
+layer: operating_point
+severity: warning
+check: jfet_cut_off
+title: JFET pinched off
+message: "{ref} is pinched off: no drain current flows."
+why: >
+  Its gate sits further below its source than the JFET's pinch-off voltage, so the channel
+  is closed and the stage passes nothing.
+fix: >
+  Check {ref}'s gate and source: the gate usually goes to ground through 1M, and the source
+  resistor sets how far the gate sits below the source.
+fixtures:
+  bad:
+    - rails: {V+: 9, V-: -9}
+      parts:
+        - {ref: Q1, type: jfet, nets: [d, g, GND], model: J201}
+        - {ref: R1, type: resistor, nets: [V+, d], value: 4k7}
+        - {ref: R2, type: resistor, nets: [g, V-], value: 1M}
+      expect: [Q1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: jfet, nets: [d, g, s], model: J201}
+        - {ref: R1, type: resistor, nets: [V+, d], value: 4k7}
+        - {ref: R2, type: resistor, nets: [g, GND], value: 1M}
+        - {ref: R3, type: resistor, nets: [s, GND], value: 1k}
+    - starter: proco-rat

@@ -1,0 +1,17 @@
+id: sim-no-convergence
+layer: sim_error
+severity: error
+check: sim_no_convergence
+title: No DC solution
+message: "Can't simulate: the simulator couldn't find the circuit's DC voltages."
+why: >
+  The simulator finds the DC voltages by repeated refinement, and some circuits never
+  settle: positive feedback, a part with an extreme value, or a transistor wired so it
+  can't bias.
+fix: Undo the last change to see if it caused this, and check the other problems for a stage wired the wrong way.
+fixtures:
+  bad:
+    - log: ["stderr Warning: gmin stepping failed", "stderr Warning: source stepping failed",
+            "stderr doAnalyses: iteration limit reached"]
+  good:
+    - log: ["stderr Error: Timestep too small"]

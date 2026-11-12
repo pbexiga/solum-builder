@@ -1,0 +1,139 @@
+{
+  "id": "LM833",
+  "type": "opamp",
+  "description": "LM833 high-speed audio bipolar dual op-amp, ±18 V max (our model from TI's sheet)",
+  "spice_name": "LM833",
+  "kind": "subckt",
+  "pins": [
+    "+",
+    "-",
+    "V+",
+    "V-",
+    "out"
+  ],
+  "card": "LM833.lib",
+  "manufacturer": "Texas Instruments",
+  "source": {
+    "url": "https://www.ti.com/lit/ds/symlink/lm833.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model built from the maker's data sheet (D-162): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.ti.com/lit/ds/symlink/lm833.pdf",
+  "fixes": [],
+  "ratings": {
+    "vs_max": 36.0,
+    "cm_neg_headroom": 2.0,
+    "cm_pos_headroom": 2.0,
+    "out_neg_headroom": 0.4,
+    "out_pos_headroom": 0.9
+  },
+  "rating_sources": {
+    "vs_max": "TI LM833 data sheet SLOS481B (revised October 2014): vs_max ±18 V (Absolute Maximum Ratings); common-mode range VICR ±13 V min; output headroom VOM+ 14.1 V and VOM– –14.6 V typ at RL = 10 kΩ",
+    "cm_neg_headroom": "TI LM833 data sheet SLOS481B (revised October 2014): vs_max ±18 V (Absolute Maximum Ratings); common-mode range VICR ±13 V min; output headroom VOM+ 14.1 V and VOM– –14.6 V typ at RL = 10 kΩ",
+    "cm_pos_headroom": "TI LM833 data sheet SLOS481B (revised October 2014): vs_max ±18 V (Absolute Maximum Ratings); common-mode range VICR ±13 V min; output headroom VOM+ 14.1 V and VOM– –14.6 V typ at RL = 10 kΩ",
+    "out_neg_headroom": "TI LM833 data sheet SLOS481B (revised October 2014): vs_max ±18 V (Absolute Maximum Ratings); common-mode range VICR ±13 V min; output headroom VOM+ 14.1 V and VOM– –14.6 V typ at RL = 10 kΩ",
+    "out_pos_headroom": "TI LM833 data sheet SLOS481B (revised October 2014): vs_max ±18 V (Absolute Maximum Ratings); common-mode range VICR ±13 V min; output headroom VOM+ 14.1 V and VOM– –14.6 V typ at RL = 10 kΩ"
+  },
+  "channels": 2,
+  "package": {
+    "name": "8-pin DIP",
+    "pins": {
+      "a.out": 1,
+      "a.-": 2,
+      "a.+": 3,
+      "V-": 4,
+      "b.+": 5,
+      "b.-": 6,
+      "b.out": 7,
+      "V+": 8
+    },
+    "source": "TI LM833 data sheet SLOS481B (revised October 2014), D/DGK/P package pinout"
+  },
+  "fit": {
+    "sheet": "TI LM833 data sheet SLOS481B (revised October 2014), at ±15 V",
+    "figure": "Electrical characteristics at ±15 V: AVD 110 dB typ, unity-gain frequency 9 MHz (GBW 16 MHz at 100 kHz), slew rate 7 V/µs, phase margin 55°, open-loop output impedance 37 Ω, 2.05 mA per channel, VOM 14.1 / −14.6 V typ at 10 kΩ",
+    "points": [],
+    "method": "A small macromodel (scripts/fit_models.py opamp_card, D-162): a tanh transconductance stage limited to 10 µA into C1 sets the slew rate, gm the unity-gain crossing and R1 the open-loop gain; a second pole gives the phase margin; diode clamps and an output resistance set the swing; the supply current is drawn from the rails. Output resistance the sheet's 37 Ω, clamps 0.85 V under V+ and 0.35 V over V− so the 10 kΩ swing lands on the typical (simulated 0.87 and 0.37 V). Checked: slews at 6.87 V/µs.",
+    "note": "Input bias, offset, noise, common-mode limits and the output's current limit are not modelled: the input stage is ideal (1 TΩ)."
+  },
+  "validation": [
+    {
+      "quantity": "aol_db",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "min": 90.0,
+        "typ": 110.0,
+        "source": "TI LM833 data sheet SLOS481B (revised October 2014)",
+        "note": "AVD 90 dB min, 110 dB typ, RL ≥ 2 kΩ, VO = ±10 V"
+      },
+      "simulated": 109.903
+    },
+    {
+      "quantity": "gbw",
+      "conditions": {
+        "supply": 15.0
+      },
+      "datasheet": {
+        "typ": 9000000.0,
+        "source": "TI LM833 data sheet SLOS481B (revised October 2014)",
+        "note": "B1 unity-gain frequency 9 MHz typ, open loop (GBW 16 MHz typ at 100 kHz); phase margin 55° typ, open-loop output impedance 37 Ω"
+      },
+      "simulated": 8974270.0
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "typ": 0.9,
+        "max": 1.5,
+        "source": "TI LM833 data sheet SLOS481B (revised October 2014): VOM+ 14.1 V typ, 13.5 V min, RL = 10 kΩ"
+      },
+      "simulated": 0.870388
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 10000.0
+      },
+      "datasheet": {
+        "typ": 0.4,
+        "max": 1.0,
+        "source": "TI LM833 data sheet SLOS481B (revised October 2014): VOM– –14.6 V typ, –14 V min, RL = 10 kΩ"
+      },
+      "simulated": 0.370238
+    },
+    {
+      "quantity": "swing_pos",
+      "conditions": {
+        "supply": 15.0,
+        "load": 2000.0
+      },
+      "datasheet": {
+        "typ": 1.2,
+        "max": 1.8,
+        "source": "TI LM833 data sheet SLOS481B (revised October 2014): VOM+ 13.8 V typ, 13.2 V min, RL = 2 kΩ"
+      },
+      "simulated": 1.07571
+    },
+    {
+      "quantity": "swing_neg",
+      "conditions": {
+        "supply": 15.0,
+        "load": 2000.0
+      },
+      "datasheet": {
+        "typ": 1.3,
+        "max": 1.8,
+        "source": "TI LM833 data sheet SLOS481B (revised October 2014): VOM– –13.7 V typ, –13.2 V min, RL = 2 kΩ"
+      },
+      "simulated": 0.582826
+    }
+  ]
+}

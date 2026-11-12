@@ -1,0 +1,268 @@
+/* Solum Builder theme (docs/DESIGN.md): the only place colours are defined, plus the
+   vendored fonts. Layout lives in app.css and uses these tokens only. */
+
+@font-face {
+  font-family: "Fahkwang";
+  font-weight: 200;
+  font-display: block;
+  src: url("fonts/fahkwang/Fahkwang-ExtraLight.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Fahkwang";
+  font-weight: 300;
+  font-display: block;
+  src: url("fonts/fahkwang/Fahkwang-Light.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Fahkwang";
+  font-weight: 400;
+  font-display: block;
+  src: url("fonts/fahkwang/Fahkwang-Regular.ttf") format("truetype");
+}
+@font-face {
+  font-family: "Lora";
+  font-style: normal;
+  font-weight: 400 700;
+  src: url("fonts/lora/Lora[wght].ttf") format("truetype");
+}
+@font-face {
+  font-family: "Lora";
+  font-style: italic;
+  font-weight: 400 700;
+  src: url("fonts/lora/Lora-Italic[wght].ttf") format("truetype");
+}
+
+/* each theme's block also holds for View → Theme's preview of it (D-303) */
+:root, .theme-swatch[data-theme="solum"] {
+  /* Brand palette (solumfx.com) */
+  --ink: #1E1E1B;
+  --bone: #F0EDE8;
+  --slate: #3D4145;
+  --ocean: #2C3D4F;
+  --cloud: #9DA8B0;
+  --brass: #8B7D5E;
+  --silver: #B0B8BD;
+
+  /* UI roles */
+  --surface-0: var(--ink);
+  --surface-1: #262622;
+  --surface-2: #2F2F2B;
+  --border: var(--slate);
+  --text: var(--bone);
+  --text-2: var(--cloud);
+  --text-3: #868E94;          /* tuned for 4.5:1 on surface-1 (test_theme.py) */
+  --accent: var(--brass);
+  --accent-hi: #B3A47E;
+  --info-bg: var(--ocean);
+  --grid-dot: rgba(61, 65, 69, 0.9);    /* slate; visible enough to place parts by */
+
+  /* Status */
+  --error: #CF7466;           /* tuned for 4.5:1 on surface-1 */
+  --warning: #C9A24A;
+  --ok: #7FA07A;
+  --clip-zone-soft: rgba(207, 116, 102, 0.40);  /* error, faint: a gain slider where a soft pick clips (D-127) */
+  --clip-zone-med: rgba(201, 162, 74, 0.30);    /* warning, faint: where a medium pick clips */
+  --clip-zone-hard: rgba(134, 142, 148, 0.30);  /* text-3, faint: where a hard pick clips */
+  --picked: #D68A4A;          /* copper: the stage picked in Bias & headroom, apart from the brass highlight and the brick error (D-127) */
+
+  /* Schematic */
+  --sch-line: var(--cloud);
+  --sch-selected: var(--accent-hi);
+  --sch-picked: var(--picked);
+  --sch-probed: var(--bone);
+  --sch-supply: #E07A9A;      /* rose: a supply or bias net's name, so power pops on the sheet (TODO 2026-11-09) */
+  --sch-dc: var(--accent-hi);
+  --sch-held: var(--ok);      /* a DC voltage a trimmer holds to its target (D-127) */
+  --sch-impedance: #7FA9C9;   /* steel blue: View → Impedance, apart from the brass DC voltages (D-147) */
+  --sch-type: #B497C8;        /* lavender: View → Capacitor types, apart from both (D-147) */
+  --sch-probed-fill: rgba(44, 61, 79, 0.55);  /* ocean */
+  --scrim: rgba(18, 18, 16, 0.6);     /* behind a modal question (the save prompt) */
+
+  /* Plots (read once with getComputedStyle; canvas can't use variables) */
+  --plot-current: #C9B98F;
+  --plot-snapshot: var(--cloud);
+  --plot-input: var(--text-3);
+  --plot-grid: rgba(61, 65, 69, 0.5);
+  --plot-axis: var(--text-2);
+  --plot-sweep-1: var(--brass);
+  --plot-sweep-2: #A0916E;  /* derived ramp, DESIGN.md */
+  --plot-sweep-3: #B4A57F;
+  --plot-sweep-4: #C9B98F;
+  --plot-sweep-5: #C1B99E;
+  --plot-sweep-6: #B8B8AE;
+  --plot-sweep-7: var(--silver);
+  --plot-sweep-8: #A6B0B6;
+  --plot-sweep-9: var(--cloud);
+  /* Resistor colour bands (Tools → Resistor colour code): the code's own colours, softened
+     a little for the dark sheet; they stand for paint on a part, not UI roles */
+  --band-black: #141412;
+  --band-brown: #7A4A2A;
+  --band-red: #C0392B;
+  --band-orange: #E07B24;
+  --band-yellow: #E8C93A;
+  --band-green: #3E8E4E;
+  --band-blue: #2F6DB5;
+  --band-violet: #7E4FA6;
+  --band-grey: #8A8C8E;
+  --band-white: #F4F2EE;
+  --band-gold: #C2A14A;
+  --band-silver: #C4CACE;
+  --band-body: #D9C9A3;      /* a resistor's beige body */
+  --plot-sweep-10: #B9BFC3;
+  --plot-sweep-11: #D4D6D5;
+  --plot-sweep-12: var(--bone);
+  --plot-output: var(--silver);
+  --plot-harm-even: #C9B98F;
+  --plot-harm-odd: var(--cloud);
+  --plot-marker: var(--bone);
+  --plot-live: rgba(240, 237, 232, 0.35);       /* bone, faint: the Audio panel's live area */
+  --plot-live-fill: rgba(240, 237, 232, 0.12);
+  --plot-band: rgba(139, 125, 94, 0.22);         /* brass, faint: where a knob or part acts (Phase 8b) */
+  --plot-at: var(--accent-hi);                   /* the frequency clicked on the Frequency plot */
+  --plot-handle-fill: var(--surface-1);          /* an Edit mode handle not being dragged: hollow (Phase 8b) */
+  --plot-outside: rgba(240, 237, 232, 0.04);     /* bone, barely: the Frequency plot outside 20 Hz - 20 kHz (D-102) */
+  --plot-hatch: rgba(240, 237, 232, 0.10);       /* bone, faint: the Audio spectrum above 24 kHz, where no recording holds anything (D-105) */
+  --plot-before: rgba(240, 237, 232, 0.22);      /* bone, faint: Edit mode's curve and dots as they were (D-100) */
+
+  --font-display: "Fahkwang", system-ui, sans-serif;
+  --font-prose: "Lora", Georgia, serif;
+  --font-ui: system-ui, sans-serif;
+  --font-mono: ui-monospace, monospace;
+
+  color-scheme: dark;
+}
+
+/* View → Theme (D-303). The Solum Builder theme, the brand's warm dark, is :root above; these two replace
+   its roles. The brand palette itself and the resistor bands stay as they are. */
+:root[data-theme="dark"], .theme-swatch[data-theme="dark"] {
+  --surface-0: #1B1D21;
+  --surface-1: #22252A;
+  --surface-2: #2A2E34;
+  --border: #3A3F47;
+  --text: #E6E8EB;
+  --text-2: #B4BAC2;
+  --text-3: #8F969F;
+  --accent: #4C8DD6;
+  --accent-hi: #7DB1EB;
+  --info-bg: #1F3A57;
+  --grid-dot: rgba(70, 76, 85, 0.9);
+
+  --error: #E57373;
+  --warning: #D9B44A;
+  --ok: #81B07A;
+  --clip-zone-soft: rgba(229, 115, 115, 0.40);
+  --clip-zone-med: rgba(217, 180, 74, 0.30);
+  --clip-zone-hard: rgba(143, 150, 159, 0.30);
+  --picked: #E39A50;
+
+  --sch-line: #AEB6BF;
+  --sch-probed: #FFFFFF;
+  --sch-supply: #E07A9A;
+  --sch-dc: #D9B44A;
+  --sch-impedance: #6FC1D4;
+  --sch-type: #B497C8;
+  --sch-probed-fill: rgba(31, 58, 87, 0.6);
+  --scrim: rgba(10, 11, 13, 0.6);
+
+  --plot-current: #7DB1EB;
+  --plot-snapshot: #B4BAC2;
+  --plot-grid: rgba(70, 76, 85, 0.5);
+  --plot-sweep-1: #4C8DD6;
+  --plot-sweep-2: #5E98DA;
+  --plot-sweep-3: #70A3DE;
+  --plot-sweep-4: #82AEE2;
+  --plot-sweep-5: #93B6DF;
+  --plot-sweep-6: #A2BBD6;
+  --plot-sweep-7: #AFBFCF;
+  --plot-sweep-8: #B8C3CD;
+  --plot-sweep-9: #C2CAD2;
+  --plot-sweep-10: #CDD3D9;
+  --plot-sweep-11: #D9DDE1;
+  --plot-sweep-12: #E6E8EB;
+  --plot-output: #C2CAD2;
+  --plot-harm-even: #7DB1EB;
+  --plot-harm-odd: #B4BAC2;
+  --plot-marker: #E6E8EB;
+  --plot-live: rgba(230, 232, 235, 0.35);
+  --plot-live-fill: rgba(230, 232, 235, 0.12);
+  --plot-band: rgba(76, 141, 214, 0.22);
+  --plot-outside: rgba(230, 232, 235, 0.04);
+  --plot-hatch: rgba(230, 232, 235, 0.10);
+  --plot-before: rgba(230, 232, 235, 0.22);
+}
+
+:root[data-theme="light"], .theme-swatch[data-theme="light"] {
+  --surface-0: #F4F5F7;
+  --surface-1: #FFFFFF;
+  --surface-2: #FFFFFF;
+  --border: #D3D7DD;
+  --text: #1E2125;
+  --text-2: #4A525C;
+  --text-3: #646C76;
+  --accent: #2F6DB5;
+  --accent-hi: #1F5A9E;
+  --info-bg: #E1ECF8;
+  --grid-dot: rgba(140, 148, 158, 0.7);
+
+  --error: #B3402F;
+  --warning: #866712;
+  --ok: #3F7A3A;
+  --clip-zone-soft: rgba(179, 64, 47, 0.22);
+  --clip-zone-med: rgba(134, 103, 18, 0.20);
+  --clip-zone-hard: rgba(100, 108, 118, 0.18);
+  --picked: #A65410;
+
+  --sch-line: #3A4048;
+  --sch-probed: #000000;
+  --sch-supply: #B0306A;
+  --sch-dc: #866712;
+  --sch-held: #3F7A3A;
+  --sch-impedance: #1C7591;
+  --sch-type: #7A4FA6;
+  --sch-probed-fill: rgba(47, 109, 181, 0.14);
+  --scrim: rgba(30, 33, 37, 0.35);
+
+  --plot-current: #2F6DB5;
+  --plot-snapshot: #7A828C;
+  --plot-grid: rgba(30, 33, 37, 0.10);
+  --plot-sweep-1: #1F5A9E;
+  --plot-sweep-2: #2C66A8;
+  --plot-sweep-3: #3A72B2;
+  --plot-sweep-4: #4A7DB8;
+  --plot-sweep-5: #5A86B8;
+  --plot-sweep-6: #6A8EB4;
+  --plot-sweep-7: #7895AE;
+  --plot-sweep-8: #8399A8;
+  --plot-sweep-9: #8D9EA8;
+  --plot-sweep-10: #97A3AB;
+  --plot-sweep-11: #A2AAB0;
+  --plot-sweep-12: #ADB2B6;
+  --plot-output: #59616B;
+  --plot-harm-even: #2F6DB5;
+  --plot-harm-odd: #7A828C;
+  --plot-marker: #1E2125;
+  --plot-live: rgba(30, 33, 37, 0.30);
+  --plot-live-fill: rgba(30, 33, 37, 0.08);
+  --plot-band: rgba(47, 109, 181, 0.14);
+  --plot-outside: rgba(30, 33, 37, 0.03);
+  --plot-hatch: rgba(30, 33, 37, 0.08);
+  --plot-before: rgba(30, 33, 37, 0.25);
+
+  color-scheme: light;
+}
+
+/* the silver logo fades on a light page: the same stamp in ink there */
+:root[data-theme="light"] img.logo, :root[data-theme="light"] img.about-logo {
+  content: url("assets/brand/solum-logo-currentcolor-outlined.svg");
+}
+
+/* Paper (D-205): a schematic drawn for print or the build package, ink on white */
+.print {
+  --surface-0: #FFFFFF;
+  --text: var(--ink);
+  --text-2: var(--slate);
+  --text-3: var(--slate);
+  --sch-line: var(--ink);
+  --sch-supply: #A0305A;
+  --sch-type: var(--brass);
+}

@@ -1,0 +1,3 @@
+* OC75 germanium PNP (Mullard, high-gain audio), our fit to Mullard's sheet
+* Fitted by Solum Builder to Mullard OC75 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC75 of March 1959, pages D1-D4 and C1-C11), its typical curves (germanium study, .claude/skills/fit-model/worked/germanium/NOTES.md)
+.model OC75 PNP(is=1.654e-05 nf=1.029 bf=136.5 ise=3.012e-07 ne=1.295 ikf=0.291 vaf=22 br=3.844 re=2.377 vje=0.75 mje=0.33 cjc=1.032e-10 vjc=0.75 mjc=0.33 tf=1.755e-07 nkf=1 nr=1.029 eg=0.67)

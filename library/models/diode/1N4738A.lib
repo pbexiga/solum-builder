@@ -1,0 +1,10 @@
+* 1N4738A 8.2 V, 1 W zener diode (Diodes Incorporated model)
+* Source: https://github.com/kicad-spice-library/KiCad-Spice-Library/blob/a8688952bcaab19f567bc4db237b60bde03ef310/Models/Diode/zener.lib
+.SUBCKT 1N4738A  1 2
+*        Terminals    A   K
+D1 1 2 DF
+DZ 3 1 DR
+VZ 2 3 7.33
+.model DF D(is=50.2p rs=0.620 n=1.10 cjo=92.8p vj=0.750 m=0.330 tt=50.1n)
+.model DR D(is=10.0f rs=0.288 n=1.15)
+.ENDS

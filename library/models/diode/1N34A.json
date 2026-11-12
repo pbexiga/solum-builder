@@ -1,0 +1,164 @@
+{
+  "id": "1N34A",
+  "type": "diode",
+  "description": "1N34A germanium diode: the soft, low clipper (our fit to a published typical curve)",
+  "spice_name": "1N34A",
+  "kind": "model",
+  "pins": [],
+  "card": "1N34A.lib",
+  "manufacturer": "BKC Semiconductors, NTE, Taitron (the sheets' limits); typical curve: MTM Scientific",
+  "source": {
+    "url": "http://www.mtmscientific.com/1n34a.html",
+    "retrieved": "2026-11-10",
+    "licence": "Our own fit to a published typical curve and the makers' limits (D-253): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://highered.mheducation.com/sites/dl/free/0073373796/443736/1N34A.pdf",
+  "fixes": [],
+  "ratings": {
+    "if_avg": 0.05,
+    "vr_max": 65.0
+  },
+  "rating_sources": {
+    "if_avg": "BKC Semiconductors 1N34A data sheet (Gold Bonded Germanium Diodes, DO-7): Absolute Maximum Ratings at 25 °C: Average Rectified Forward Current 50 mA",
+    "vr_max": "BKC Semiconductors 1N34A data sheet (Gold Bonded Germanium Diodes, DO-7): Absolute Maximum Ratings at 25 °C: Peak Inverse Voltage 65 V"
+  },
+  "fit": {
+    "sheet": "MTM Scientific, 1N34A Diode Performance (a typical forward curve, 0 to 3 mA, linear axes)",
+    "figure": "1N34A Diode Performance, traced by pixel off the published image (dioper.jpg)",
+    "points": [
+      [
+        0.1503,
+        8.04e-05
+      ],
+      [
+        0.202,
+        0.0001982
+      ],
+      [
+        0.2501,
+        0.0003964
+      ],
+      [
+        0.2982,
+        0.0006321
+      ],
+      [
+        0.3511,
+        0.0010179
+      ],
+      [
+        0.398,
+        0.0014303999999999999
+      ],
+      [
+        0.4497,
+        0.0019393
+      ],
+      [
+        0.4978,
+        0.0024321
+      ],
+      [
+        0.5495,
+        0.0029571000000000003
+      ]
+    ],
+    "method": "IS, N and RS by least squares on V = N·Vt·ln(I/IS) + RS·I (scripts/fit_models.py fit_diode, Vt at 27 °C) over every other point of the curve from 0.15 V (one per 25 mV); IS under BKC's 30 µA leakage at 10 V (it fits at 5 µA, under the cap). CJO 0.8 pF, Taitron's typical at 0 V (NTE: 1 pF max at −1 V); EG 0.67 eV (germanium); BV 65 V at 1 mA, BKC's breakdown minimum",
+    "note": "None of the makers' sheets found (BKC, NTE, Taitron) draws a typical curve: they give only limits, which this fit passes. The curve is MTM Scientific's (a crystal-radio supplier), whose page says only that it is typical (0.35 V at 1 mA); builders' readings of real 1N34As run 0.22 to 0.34 V, so units spread either side. Above 3 mA the fit follows its 75 Ω series resistance, past the curve: a point-contact part's soft, nearly linear rise"
+  },
+  "package": {
+    "name": "DO-7",
+    "pins": {
+      "K": 1,
+      "A": 2
+    },
+    "source": "BKC Semiconductors 1N34A data sheet (Gold Bonded Germanium Diodes, DO-7); pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The band marks the cathode"
+  },
+  "validation": [
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.005
+      },
+      "simulated": 0.728552,
+      "datasheet": {
+        "max": 1.0,
+        "source": "BKC Semiconductors 1N34A data sheet (Gold Bonded Germanium Diodes, DO-7), Electrical Characteristics at 25 °C: Forward Voltage Drop 1.0 V max at I_F = 5.0 mA"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.004
+      },
+      "simulated": 0.642302,
+      "datasheet": {
+        "max": 1.0,
+        "source": "NTE Electronics 1N34A data sheet (Point Contact Germanium Diode, Rev. 3-16), Electrical Characteristics: forward current 4 mA min at VF = 1 V",
+        "note": "The sheet gives a minimum current at 1 V; the same limit read as VF at 4 mA"
+      }
+    },
+    {
+      "quantity": "ir",
+      "conditions": {
+        "vr": 10.0
+      },
+      "simulated": 4.97701e-06,
+      "datasheet": {
+        "max": 3e-05,
+        "source": "BKC Semiconductors 1N34A data sheet (Gold Bonded Germanium Diodes, DO-7), Electrical Characteristics at 25 °C: Reverse Leakage 30 µA max at VR = 10 V"
+      }
+    },
+    {
+      "quantity": "ir",
+      "conditions": {
+        "vr": 50.0
+      },
+      "simulated": 4.97705e-06,
+      "datasheet": {
+        "max": 0.0005,
+        "source": "BKC Semiconductors 1N34A data sheet (Gold Bonded Germanium Diodes, DO-7), Electrical Characteristics at 25 °C: Reverse Leakage 500 µA max at VR = 50 V"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0001339
+      },
+      "simulated": 0.180666,
+      "datasheet": {
+        "source": "MTM Scientific, 1N34A Diode Performance (a typical forward curve, 0 to 3 mA, linear axes)",
+        "typ": 0.1756,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N60's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0012161
+      },
+      "simulated": 0.373092,
+      "datasheet": {
+        "source": "MTM Scientific, 1N34A Diode Performance (a typical forward curve, 0 to 3 mA, linear axes)",
+        "typ": 0.3752,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N60's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.0027107
+      },
+      "simulated": 0.52591,
+      "datasheet": {
+        "source": "MTM Scientific, 1N34A Diode Performance (a typical forward curve, 0 to 3 mA, linear axes)",
+        "typ": 0.5255,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N60's curve points"
+      }
+    }
+  ]
+}

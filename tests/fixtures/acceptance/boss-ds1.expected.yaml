@@ -1,0 +1,142 @@
+# Expected values for library/starters/boss-ds1.json (D-019, D-243).
+# The circuit is drawn from this page's schematic and parts list, with its part numbers.
+circuit: boss-ds1
+source:
+  title: ElectroSmash, "Boss DS-1 Distortion Analysis"
+  url: https://electrosmash.com/boss-ds1-analysis
+  snapshot: http://web.archive.org/web/20260518121143/https://electrosmash.com/boss-ds1-analysis
+  read: 2026-11-10
+  licence: CC BY-NC 3.0 (its figures, said in our own words)
+substitutions:
+  - >-
+    The DS-1A (post-1994) circuit of the page's schematic, with true bypass (the page's 3PDT
+    switch): Boss's JFET bypass switching isn't drawn.
+  - >-
+    Q1-Q3 the page's 2SC2240 (low noise, high gain, β 200-700, it says) and IC1 the NJM3404A,
+    our own cards from Toshiba's and Nisshinbo's sheets (D-252). D1 1N4001 for the 1N4004 (same family, only the
+    voltage rating differs). D4, D5, D8 1N4148 as the page's.
+  - The supply is an ideal 9 V into D1, as the other starters'.
+
+checks:
+  - id: bias-reference
+    kind: dc
+    node: VB
+    volts: 4.5
+    tol: 0.45
+    from: text
+    says: "The supply stage is a resistor divider: it gives the pedal its 9 V and its 4.5 V bias voltage."
+  - id: input-high-pass
+    known_gap: >-
+      Simulated 8.4 Hz, just over the 8.3 Hz the tolerance allows. The page takes the input
+      impedance as R2 alone (470k), with β x R3 taken as far larger than R2 for its 2SC2240
+      (β 200-700). Our 2SC2240 card follows the sheet's typical gain line, about 300 (a GR
+      unit, D-252), so Q1's base still adds a few megohms in parallel with R2; a BL unit (350-700)
+      brings it inside, and a gain of 550 gives 7.8 Hz (measured with the 2SC1815 stand-in and a
+      gain of 550 before; the 2SC1815's 150 gave 9.7 Hz).
+    kind: corner
+    side: low
+    node: Q1.E
+    hz: 7.2
+    tol_pct: 15
+    sweep: {start: 0.5}
+    from: text
+    says: "C1 keeps the pedal's DC off the guitar and cuts what lies below hearing, with its corner at 7.2 Hz."
+  - id: booster-gain
+    kind: peak_gain
+    node: Q2.C
+    ref: Q1.E
+    db: 35
+    tol_db: 2.0
+    from: text
+    says: "Above 3.3 kHz the stage's gain is 35 dB, 56 times."
+    note: From the booster's input (Q1's emitter, before C2) to Q2's collector.
+  - id: opamp-input-high-pass
+    kind: corner
+    side: low
+    node: IC1A.out
+    ref: Q2.C
+    hz: 23
+    tol_pct: 15
+    sweep: {start: 1}
+    from: text
+    says: "C5 and R10 make a high-pass filter with its corner at 23 Hz."
+  - id: opamp-gain
+    kind: gain
+    node: IC1B.out
+    ref: IC1B.+
+    set: {VR1: {rotation: 1.0}}
+    hz: 1000
+    db: 26.5
+    tol_db: 1.0
+    from: text
+    says: "The op-amp's most gain: 1 + VR1/R13 = 1 + 100k/4.7k = 22.3, which is 26.5 dB."
+    note: Distortion fully up. 22.3 times is 27.0 dB, so ±1 dB covers both figures.
+  - id: clip-treble-cut
+    known_gap: >-
+      Simulated 4.7 kHz. The page gives R14 and C10 on their own (1/(2π·2.2K·10n) = 7.2 kHz);
+      in the pedal the tone stack hangs on the same node and its input impedance falls with
+      frequency as C11 and C12 conduct, so the response is 3 dB down earlier. The Aion
+      version reads the same (boss-ds1-aion's clip-treble-cut).
+    kind: corner
+    side: high
+    node: C10.1
+    ref: IC1B.out
+    hz: 7200
+    tol_pct: 15
+    from: text
+    says: "R14 and C10 make a low-pass filter with its corner at 7.2 kHz."
+    note: Small signal, so the diodes are off.
+  - id: clipping-level
+    kind: clip
+    node: C10.1
+    minus: VB
+    level: med
+    volts: 0.7
+    tol: 0.15
+    from: text
+    says: "The wave is squared off between +0.7 V and -0.7 V, the diodes' forward voltage."
+  - id: tone-notch
+    known_gap: >-
+      Simulated 692 Hz. Worked by hand (nodal analysis of the stack alone, 20K pot at noon,
+      100K load) it notches at 681 Hz, -14.5 dB, so the simulation agrees with the circuit.
+      The page's rough 500 Hz is the middle of its two filter corners
+      (√(234 x 1063) = 499 Hz), not the stack's response, and its -20 dB isn't worked.
+    kind: notch
+    node: VR2.2
+    ref: C10.1
+    band: [100, 5000]
+    hz: 500
+    tol_pct: 20
+    db: -20
+    tol_db: 2.5
+    from: text
+    says: "The stack loses 12 dB overall (4 times) and about 20 dB at the notch, at 500 Hz."
+    note: Tone at noon, loaded by Level (100k) as in the pedal.
+  - id: output-high-pass
+    kind: corner
+    side: low
+    node: out
+    ref: Q3.E
+    hz: 1.6
+    tol_pct: 15
+    sweep: {start: 0.1}
+    from: text
+    says: "C14 and R23 make a high-pass filter with its corner at 1.6 Hz, under the audio band."
+
+omitted:
+  - what: The booster's 33 Hz and 3.3 Hz high-passes
+    why: The page gives each RC on its own; in the stage, R7's shunt feedback lowers Q2's input impedance far below R5, so no single corner matches either figure.
+  - what: The gain stage's 72 Hz bass cut
+    why: A shelf in the gain (C8 against R13), not a corner of the stage's response; the gain at 1 kHz is checked.
+  - what: The output buffer's 3.4 Hz high-pass
+    why: The page works C13 with R20 alone; R19 is in parallel with it in the circuit (both 1M to VB), so the corner is twice that.
+  - what: The tone stack's 234 Hz and 1063 Hz filters
+    why: Worked RC values for each half of the stack, not responses of the pedal; the notch they make is checked.
+
+# Where the parts list's details come from (9d2, D-211).
+build:
+  parts:
+    - "The circuit and every value are from the main source's schematic and parts list."
+    - "Capacitor types aren't given there, so they follow the app's advice: C4 250p and C7 100p NP0/C0G (small caps in the signal path), C15 and C23 electrolytic, the rest film, C14 1µ too."
+    - "Electrolytics rated 16 V: the source gives no rating, so this is the app's own advice for a 9 V circuit (D-203)."
+    - "Enclosure 125B, a builder's choice (the Boss pedal has its own case), as the Aion version's."

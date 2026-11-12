@@ -1,0 +1,13 @@
+#!/bin/sh
+# Installed by `make hooks`. Runs ruff, the browser code's check and the unit tests before each commit, unless the
+# commit only changes Markdown notes in docs/ or the top folder (DECISIONS, README...):
+# nothing there is tested. data/spec-sheets/README.md and docs/circuit.schema.json are, so
+# they still run the checks.
+set -e
+if git diff --cached --name-only --diff-filter=ACMRD | grep -qvE '^(docs/[^/]+\.md|[^/]+\.md)$'; then
+  make -s ruff
+  make -s jslint
+  make -s test
+else
+  echo "pre-commit: Markdown notes only, checks skipped"
+fi

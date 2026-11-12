@@ -1,0 +1,71 @@
+{
+  "id": "MPF4393",
+  "type": "jfet",
+  "description": "MPF4393 N-channel JFET switch (our model from onsemi's sheet)",
+  "spice_name": "MPF4393",
+  "kind": "model",
+  "pins": [],
+  "card": "MPF4393.lib",
+  "manufacturer": "onsemi",
+  "source": {
+    "url": "https://www.rlocman.ru/i/File/2025/11/27/MPF4392-D.PDF",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model built from the maker's data sheet (D-159, D-161): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.rlocman.ru/i/File/2025/11/27/MPF4392-D.PDF",
+  "fixes": [],
+  "ratings": {},
+  "package": {
+    "name": "TO-92 (DSG)",
+    "pins": {
+      "D": 1,
+      "S": 2,
+      "G": 3
+    },
+    "source": "onsemi MPF4392/D Rev. 6, page 1: TO-92 Style 5, 1 drain, 2 source, 3 gate"
+  },
+  "fit": {
+    "sheet": "onsemi MPF4392/D Rev. 6 (February 2012)",
+    "figure": "Electrical characteristics (no typical DC curve on the sheet)",
+    "points": [
+      [
+        0.0,
+        0.01224744871391589
+      ],
+      [
+        -1.224744871391589,
+        0.0
+      ]
+    ],
+    "method": "Idss and Vp the geometric middles of 5-30 mA and -0.5 to -3.0 V (12.2 mA, -1.22 V); BETA = Idss/Vp²; CGD = Crss 2.5 pF, CGS = Ciss − Crss = 3.5 pF (typical). Its gm at 5 mA is 12.8 mS against the sheet's typical 12 mS, and its on-resistance 50 Ω against 100 Ω max",
+    "note": "Real units spread over the sheet's whole range; a circuit's measured Idss and Vp replace these (D-130)"
+  },
+  "validation": [
+    {
+      "quantity": "idss",
+      "conditions": {
+        "vds": 15.0
+      },
+      "simulated": 0.0122526,
+      "datasheet": {
+        "min": 0.005,
+        "max": 0.03,
+        "source": "onsemi MPF4392/D Rev. 6 (February 2012), Electrical Characteristics: IDSS, MPF4393"
+      }
+    },
+    {
+      "quantity": "vp",
+      "conditions": {
+        "vds": 15.0,
+        "id": 1e-08
+      },
+      "simulated": -1.22389,
+      "datasheet": {
+        "min": -3.0,
+        "max": -0.5,
+        "source": "onsemi MPF4392/D Rev. 6 (February 2012), Electrical Characteristics: VGS at ID = 10 nA, MPF4393"
+      }
+    }
+  ]
+}

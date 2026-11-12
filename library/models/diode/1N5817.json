@@ -1,0 +1,133 @@
+{
+  "id": "1N5817",
+  "type": "diode",
+  "description": "1N5817 Schottky rectifier (20 V, 1 A): low forward drop, the usual charge-pump doubler diode (our fit to Diotec's sheet)",
+  "spice_name": "1N5817",
+  "kind": "model",
+  "pins": [],
+  "card": "1N5817.lib",
+  "manufacturer": "Diotec",
+  "source": {
+    "url": "https://www.diotec.com/request/datasheet/1n5817.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own fit to the maker's datasheet curve (D-156): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://www.diotec.com/request/datasheet/1n5817.pdf",
+  "fixes": [],
+  "ratings": {
+    "if_avg": 1.0,
+    "vr_max": 20.0
+  },
+  "rating_sources": {
+    "if_avg": "Diotec 1N5817 ... 1N5819 data sheet (Version 2026-03-20): IFAV 1 A (TA = 75 °C)",
+    "vr_max": "Diotec 1N5817 ... 1N5819 data sheet (Version 2026-03-20): VRRM 20 V (1N5817)"
+  },
+  "fit": {
+    "sheet": "Diotec 1N5817 ... 1N5819 data sheet (Version 2026-03-20)",
+    "figure": "Forward characteristics (typical values), Tj = 25 °C (read from the PDF's vector drawing, centre of the drawn line), up to about 3 A",
+    "points": [
+      [
+        0.2916,
+        0.01033
+      ],
+      [
+        0.3431,
+        0.02678
+      ],
+      [
+        0.4064,
+        0.07731
+      ],
+      [
+        0.4784,
+        0.2363
+      ],
+      [
+        0.5556,
+        0.7156
+      ],
+      [
+        0.6356,
+        2.04
+      ],
+      [
+        0.6758,
+        3.263
+      ]
+    ],
+    "method": "IS, N and RS by least squares on V = N·Vt·ln(I/IS) + RS·I (scripts/fit_models.py fit_diode, Vt at 27 °C) over every other curve point, the curve's last point always included; IS held under the sheet's 1 mA leakage limit at VRRM; CJO is the sheet's typical 80 pF (at 4 V); no breakdown modelled",
+    "note": "The figure starts at 10 mA; below that the fit follows the diode equation, not the sheet. Diotec's part is slower than Diodes Incorporated's (0.75 V max at 3 A against Diodes' 0.45 V at 1 A; the fit reads about 0.58 V at 1 A); Diodes' curves are a raster image from 0.1 A, so Diotec's are the ones fitted"
+  },
+  "validation": [
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 3.0
+      },
+      "simulated": 0.66911,
+      "datasheet": {
+        "max": 0.75,
+        "source": "Diotec 1N5817 ... 1N5819 data sheet (Version 2026-03-20), Characteristics: forward voltage at IF = 3 A, Tj = 25 °C, 1N5817"
+      }
+    },
+    {
+      "quantity": "ir",
+      "conditions": {
+        "vr": 20.0
+      },
+      "simulated": 8.823e-05,
+      "datasheet": {
+        "max": 0.001,
+        "source": "Diotec 1N5817 ... 1N5819 data sheet (Version 2026-03-20), Characteristics: leakage current at VR = VRRM, Tj = 25 °C"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.01641
+      },
+      "simulated": 0.316007,
+      "datasheet": {
+        "source": "Diotec 1N5817 ... 1N5819 data sheet (Version 2026-03-20), Forward characteristics (typical values), Tj = 25 °C (read from the PDF's vector drawing, centre of the drawn line), up to about 3 A",
+        "typ": 0.3158,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 0.1352
+      },
+      "simulated": 0.444585,
+      "datasheet": {
+        "source": "Diotec 1N5817 ... 1N5819 data sheet (Version 2026-03-20), Forward characteristics (typical values), Tj = 25 °C (read from the PDF's vector drawing, centre of the drawn line), up to about 3 A",
+        "typ": 0.4418,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    },
+    {
+      "quantity": "vf",
+      "conditions": {
+        "if": 1.227
+      },
+      "simulated": 0.591967,
+      "datasheet": {
+        "source": "Diotec 1N5817 ... 1N5819 data sheet (Version 2026-03-20), Forward characteristics (typical values), Tj = 25 °C (read from the PDF's vector drawing, centre of the drawn line), up to about 3 A",
+        "typ": 0.5956,
+        "tol": 0.05,
+        "note": "A point of the typical curve the fit was not given (every other point was held out); ±50 mV, as for the 1N4148's curve points"
+      }
+    }
+  ],
+  "package": {
+    "name": "DO-15 (DO-204AC)",
+    "pins": {
+      "K": 1,
+      "A": 2
+    },
+    "source": "Diotec 1N5817 data sheet (1N5817_Diotec.pdf): DO-15 (DO-204AC); pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The band marks the cathode"
+  }
+}

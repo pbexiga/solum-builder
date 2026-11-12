@@ -1,0 +1,397 @@
+{
+  "schema": 29,
+  "id": "baxandall-bass-treble-v1",
+  "name": "Tone stack · Baxandall (bass, treble)",
+  "version": {
+    "major": 1,
+    "minor": 1
+  },
+  "description": "The classic active Baxandall tone control: Bass and Treble, each from about -20 dB cut through flat (half-way) to about +20 dB boost, with the mids untouched. Values and refs from Texas Instruments' application report SLOA042, \"Audio Tone Control Using The TLC074 Operational Amplifier\" (2000), Figure 3 (R11, R19, C9, C7, R14 around the bass pot R10A; C12, C11, R16 around the treble pot R18A; U2:D); a TL071 for the TLC074's quarter, on 9 V with + at vref instead of TI's 5 V and mid-supply. Linear pots (the report marks only its volume pots audio). Left out: TI's input buffer and volume, and its 100 Ω and 47k at the output; TI's 2.2 µF input cap C1 is kept, at the network's input. It needs a low-impedance source: inside an effect, an op-amp output or an emitter or source follower before it is enough; from the guitar, a pot or a transistor's collector, put a buffer first (Buffer · op-amp (Klon)). The output sits at vref. Wire vref to a Vref divider.",
+  "tags": [
+    "tone",
+    "tone stack",
+    "opamp",
+    "baxandall"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "C1",
+      "pos": [
+        -40,
+        0
+      ],
+      "type": "capacitor",
+      "value": "2µ2",
+      "kind": "film"
+    },
+    {
+      "ref": "R11",
+      "pos": [
+        40,
+        0
+      ],
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "VR1",
+      "pos": [
+        120,
+        0
+      ],
+      "rot": 180,
+      "type": "pot",
+      "value": "100k",
+      "label": "Bass"
+    },
+    {
+      "ref": "R19",
+      "pos": [
+        200,
+        0
+      ],
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "C9",
+      "pos": [
+        100,
+        60
+      ],
+      "type": "capacitor",
+      "value": "33n",
+      "kind": "film"
+    },
+    {
+      "ref": "C7",
+      "pos": [
+        140,
+        60
+      ],
+      "type": "capacitor",
+      "value": "33n",
+      "kind": "film"
+    },
+    {
+      "ref": "R14",
+      "pos": [
+        120,
+        100
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "C12",
+      "pos": [
+        40,
+        180
+      ],
+      "type": "capacitor",
+      "value": "3n3",
+      "kind": "film"
+    },
+    {
+      "ref": "VR2",
+      "pos": [
+        120,
+        180
+      ],
+      "rot": 180,
+      "type": "pot",
+      "value": "100k",
+      "label": "Treble"
+    },
+    {
+      "ref": "C11",
+      "pos": [
+        200,
+        180
+      ],
+      "type": "capacitor",
+      "value": "3n3",
+      "kind": "film"
+    },
+    {
+      "ref": "R16",
+      "pos": [
+        120,
+        240
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "3k3"
+    },
+    {
+      "ref": "IC1",
+      "pos": [
+        200,
+        280
+      ],
+      "model": "TL071",
+      "type": "opamp"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        -80,
+        0
+      ],
+      "to": [
+        -60,
+        0
+      ]
+    },
+    {
+      "from": [
+        -20,
+        0
+      ],
+      "to": [
+        20,
+        0
+      ]
+    },
+    {
+      "from": [
+        60,
+        0
+      ],
+      "to": [
+        100,
+        0
+      ]
+    },
+    {
+      "from": [
+        140,
+        0
+      ],
+      "to": [
+        180,
+        0
+      ]
+    },
+    {
+      "from": [
+        220,
+        0
+      ],
+      "to": [
+        320,
+        0
+      ]
+    },
+    {
+      "from": [
+        120,
+        20
+      ],
+      "to": [
+        120,
+        60
+      ]
+    },
+    {
+      "from": [
+        80,
+        60
+      ],
+      "to": [
+        80,
+        0
+      ]
+    },
+    {
+      "from": [
+        160,
+        60
+      ],
+      "to": [
+        160,
+        0
+      ]
+    },
+    {
+      "from": [
+        120,
+        60
+      ],
+      "to": [
+        120,
+        80
+      ]
+    },
+    {
+      "from": [
+        0,
+        0
+      ],
+      "to": [
+        0,
+        180
+      ]
+    },
+    {
+      "from": [
+        0,
+        180
+      ],
+      "to": [
+        20,
+        180
+      ]
+    },
+    {
+      "from": [
+        60,
+        180
+      ],
+      "to": [
+        100,
+        180
+      ]
+    },
+    {
+      "from": [
+        140,
+        180
+      ],
+      "to": [
+        180,
+        180
+      ]
+    },
+    {
+      "from": [
+        220,
+        180
+      ],
+      "to": [
+        320,
+        180
+      ]
+    },
+    {
+      "from": [
+        120,
+        200
+      ],
+      "to": [
+        120,
+        220
+      ]
+    },
+    {
+      "from": [
+        120,
+        260
+      ],
+      "to": [
+        160,
+        260
+      ]
+    },
+    {
+      "from": [
+        320,
+        0
+      ],
+      "to": [
+        320,
+        280
+      ]
+    },
+    {
+      "from": [
+        160,
+        300
+      ],
+      "to": [
+        140,
+        300
+      ]
+    },
+    {
+      "from": [
+        240,
+        280
+      ],
+      "to": [
+        360,
+        280
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "in",
+      "pos": [
+        -80,
+        0
+      ]
+    },
+    {
+      "net": "mix",
+      "pos": [
+        120,
+        120
+      ]
+    },
+    {
+      "net": "mix",
+      "pos": [
+        120,
+        260
+      ]
+    },
+    {
+      "net": "vref",
+      "pos": [
+        140,
+        300
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        360,
+        280
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        200,
+        240
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        200,
+        320
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "out": "out",
+    "vref": "vref"
+  },
+  "notes": {
+    "part:VR1": "Bass: clockwise boosts (to about +20 dB), anticlockwise cuts (about -20 dB), half-way is flat. C9 and C7 short the pot out at high frequencies, so it only acts on the bass.",
+    "part:VR2": "Treble: clockwise boosts, anticlockwise cuts, half-way is flat. C12 and C11 pass only the treble to it.",
+    "part:C1": "TI's input cap (C1, 2.2 µF, in front of its buffer: a 16 Hz corner there), moved to the network's input so the block takes a signal at any DC level.",
+    "part:IC1": "The tone network sits in this op-amp's feedback, so cut and boost are symmetrical and the flat setting loses nothing. It inverts the signal."
+  }
+}

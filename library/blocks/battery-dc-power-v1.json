@@ -1,0 +1,243 @@
+{
+  "schema": 29,
+  "id": "battery-dc-power-v1",
+  "name": "9 V power · DC jack and battery",
+  "version": {
+    "major": 1,
+    "minor": 3
+  },
+  "description": "How a pedal takes a 9 V supply or a battery. The DC jack (centre negative) puts the supply on V+, through a reverse-polarity diode and the 9 V input filter to V+F (the filter's values from the ProCo Rat, ElectroSmash; the 1N5817 as on Aion FX's boards). The battery's + goes to the jack's battery lug, which touches the sleeve only with no plug in, so a supply cuts the battery off; its - goes to ground: in a real pedal that wire goes to the input jack's ring, so the battery is on only with a guitar cable plugged in (the simulation always has a cable in). Knobs: Power picks the DC jack or the battery; the battery's form sets how drained it is.",
+  "tags": [
+    "power",
+    "battery",
+    "filter"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "DC",
+      "pos": [
+        -140,
+        -20
+      ],
+      "type": "dcjack"
+    },
+    {
+      "ref": "BAT1",
+      "pos": [
+        -10,
+        -80
+      ],
+      "type": "battery"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        40,
+        0
+      ],
+      "type": "resistor",
+      "value": "47"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        90,
+        40
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "100µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        140,
+        40
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "ceramic"
+    },
+    {
+      "ref": "D1",
+      "pos": [
+        -20,
+        0
+      ],
+      "type": "diode",
+      "model": "1N5817"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        -80,
+        0
+      ],
+      "to": [
+        -40,
+        0
+      ]
+    },
+    {
+      "from": [
+        -80,
+        -40
+      ],
+      "to": [
+        -80,
+        -50
+      ]
+    },
+    {
+      "from": [
+        -80,
+        -20
+      ],
+      "to": [
+        -50,
+        -20
+      ]
+    },
+    {
+      "from": [
+        -50,
+        -20
+      ],
+      "to": [
+        -50,
+        -120
+      ]
+    },
+    {
+      "from": [
+        -50,
+        -120
+      ],
+      "to": [
+        -10,
+        -120
+      ]
+    },
+    {
+      "from": [
+        -10,
+        -120
+      ],
+      "to": [
+        -10,
+        -100
+      ]
+    },
+    {
+      "from": [
+        -10,
+        -60
+      ],
+      "to": [
+        -10,
+        -40
+      ]
+    },
+    {
+      "from": [
+        0,
+        0
+      ],
+      "to": [
+        20,
+        0
+      ]
+    },
+    {
+      "from": [
+        60,
+        0
+      ],
+      "to": [
+        160,
+        0
+      ]
+    },
+    {
+      "from": [
+        90,
+        0
+      ],
+      "to": [
+        90,
+        20
+      ]
+    },
+    {
+      "from": [
+        140,
+        0
+      ],
+      "to": [
+        140,
+        20
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "GND",
+      "pos": [
+        -80,
+        -50
+      ],
+      "rot": 180
+    },
+    {
+      "net": "GND",
+      "pos": [
+        -10,
+        -40
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        -40,
+        0
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        90,
+        60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        140,
+        60
+      ]
+    },
+    {
+      "net": "V+F",
+      "pos": [
+        160,
+        0
+      ]
+    }
+  ],
+  "ports": {
+    "V+F": "V+F"
+  },
+  "notes": {
+    "part:D1": "Reverse-polarity protection: a Schottky diode in series, as on Aion FX's boards (the Comet's D1, with the same 47 Ω, 100 µF and 100 nF after it). A supply plugged in the wrong way round is blocked; it drops about 0.2 V, so V+F sits a little under 9 V."
+  }
+}

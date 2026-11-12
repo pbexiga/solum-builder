@@ -1,0 +1,294 @@
+{
+  "schema": 29,
+  "id": "rangemaster-booster-v1",
+  "name": "Treble booster · Rangemaster (germanium)",
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "description": "The Dallas Rangemaster: one germanium PNP (an OC44) on a negative supply (positive ground, V- at -9 V). C1 (5 nF) into its low input impedance makes it a treble booster; the volume pot VR1 is the collector load. Values and refs from ElectroSmash's \"Dallas Rangemaster Treble Booster Analysis\" (electrosmash.com/dallas-rangemaster), as the Rangemaster starter, with our own OC44 fit (hFE about 92). Put it first: it needs the guitar's pickup driving it.",
+  "tags": [
+    "gain",
+    "bjt",
+    "germanium",
+    "rangemaster"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V-": -9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "C1",
+      "pos": [
+        60,
+        100
+      ],
+      "type": "capacitor",
+      "value": "5n",
+      "kind": "film"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        120,
+        40
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "470k"
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        120,
+        160
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "68k"
+    },
+    {
+      "ref": "Q1",
+      "pos": [
+        220,
+        100
+      ],
+      "type": "bjt",
+      "model": "OC44",
+      "measured": {
+        "hfe": 91.6,
+        "leakage": 9.8e-06
+      }
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        240,
+        160
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "3k9"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        320,
+        160
+      ],
+      "rot": 270,
+      "type": "capacitor",
+      "value": "47µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "VR1",
+      "pos": [
+        240,
+        40
+      ],
+      "rot": 90,
+      "type": "pot",
+      "value": "10k",
+      "taper": "A",
+      "rotation": 1.0,
+      "label": "Volume"
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        300,
+        40
+      ],
+      "type": "capacitor",
+      "value": "10n",
+      "kind": "film"
+    },
+    {
+      "ref": "C4",
+      "pos": [
+        400,
+        160
+      ],
+      "rot": 270,
+      "type": "capacitor",
+      "value": "47µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        80,
+        100
+      ],
+      "to": [
+        120,
+        100
+      ]
+    },
+    {
+      "from": [
+        120,
+        100
+      ],
+      "to": [
+        200,
+        100
+      ]
+    },
+    {
+      "from": [
+        120,
+        60
+      ],
+      "to": [
+        120,
+        100
+      ]
+    },
+    {
+      "from": [
+        120,
+        100
+      ],
+      "to": [
+        120,
+        140
+      ]
+    },
+    {
+      "from": [
+        120,
+        20
+      ],
+      "to": [
+        240,
+        20
+      ]
+    },
+    {
+      "from": [
+        240,
+        60
+      ],
+      "to": [
+        240,
+        80
+      ]
+    },
+    {
+      "from": [
+        240,
+        120
+      ],
+      "to": [
+        240,
+        140
+      ]
+    },
+    {
+      "from": [
+        240,
+        140
+      ],
+      "to": [
+        320,
+        140
+      ]
+    },
+    {
+      "from": [
+        260,
+        40
+      ],
+      "to": [
+        280,
+        40
+      ]
+    },
+    {
+      "from": [
+        320,
+        40
+      ],
+      "to": [
+        360,
+        40
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "V-",
+      "pos": [
+        120,
+        20
+      ]
+    },
+    {
+      "net": "V-",
+      "pos": [
+        400,
+        140
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        120,
+        180
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        240,
+        180
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        320,
+        180
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        400,
+        180
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        360,
+        40
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        40,
+        100
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "out": "out"
+  },
+  "notes": {
+    "part:C1": "5 nF into a low input impedance (about 12 kΩ): a high-pass near 2.6 kHz, which makes it a treble booster. A bigger cap boosts more of the range.",
+    "part:R1": "R1 and R2 set the base near -1 V. Builders swap R2 for a 100k trimmer to put the collector at -7 V with their transistor.",
+    "part:VR1": "The volume pot is the collector load: DC runs through it, so it can scratch when turned.",
+    "part:Q1": "Try your own transistor's measured hFE and leakage here: the collector moves with both."
+  }
+}

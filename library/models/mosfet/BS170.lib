@@ -1,0 +1,5 @@
+* BS170 N-channel enhancement MOSFET, 60 V 500 mA (our model, the 2N7000's die, checked against Fairchild's BS170 sheet)
+* Built by Solum Builder from Fairchild BS170/MMBF170 data sheet, Rev. E2 (March 2010) (D-175)
+.model BS170 VDMOS(vto=2.3973 kp=0.4838 ksubthres=0.24488 mtriode=1.1919 lambda=1e-06
++ rs=1.0742 rd=1.0117e-06 cgs=1.7221e-11 cgdmax=3.7315e-11 cgdmin=2.0146e-12 a=0.30204
++ cjo=2.6453e-11 m=0.40407 vj=1.0171 is=9.1033e-13 n=1.1464 rb=0.12828)

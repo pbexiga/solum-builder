@@ -1,0 +1,196 @@
+{
+  "schema": 2,
+  "id": "example-switch-tone",
+  "name": "Example tone switch",
+  "power": {
+    "mode": "ideal",
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "IN",
+      "type": "guitar",
+      "pos": [
+        0,
+        100
+      ]
+    },
+    {
+      "ref": "R1",
+      "type": "resistor",
+      "value": "10k",
+      "pos": [
+        40,
+        100
+      ]
+    },
+    {
+      "ref": "VR1",
+      "type": "pot",
+      "value": "100k",
+      "taper": "A",
+      "rotation": 0.7,
+      "label": "Level",
+      "pos": [
+        60,
+        220
+      ],
+      "rot": 90
+    },
+    {
+      "ref": "S1",
+      "type": "switch",
+      "poles": 1,
+      "throws": 2,
+      "position": 0,
+      "label": "Tone",
+      "pos": [
+        100,
+        140
+      ]
+    },
+    {
+      "ref": "C1",
+      "type": "capacitor",
+      "value": "47n",
+      "kind": "film",
+      "pos": [
+        140,
+        140
+      ]
+    },
+    {
+      "ref": "C2",
+      "type": "capacitor",
+      "value": "4n7",
+      "kind": "film",
+      "pos": [
+        140,
+        160
+      ]
+    },
+    {
+      "ref": "AMP",
+      "type": "amp",
+      "pos": [
+        200,
+        100
+      ]
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        60,
+        100
+      ],
+      "to": [
+        100,
+        100
+      ]
+    },
+    {
+      "from": [
+        100,
+        100
+      ],
+      "to": [
+        100,
+        120
+      ]
+    },
+    {
+      "from": [
+        100,
+        120
+      ],
+      "to": [
+        80,
+        120
+      ]
+    },
+    {
+      "from": [
+        80,
+        120
+      ],
+      "to": [
+        80,
+        140
+      ]
+    },
+    {
+      "from": [
+        160,
+        140
+      ],
+      "to": [
+        160,
+        160
+      ]
+    },
+    {
+      "from": [
+        60,
+        100
+      ],
+      "to": [
+        60,
+        200
+      ]
+    },
+    {
+      "from": [
+        80,
+        220
+      ],
+      "to": [
+        180,
+        220
+      ]
+    },
+    {
+      "from": [
+        180,
+        220
+      ],
+      "to": [
+        180,
+        100
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "GND",
+      "pos": [
+        160,
+        160
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        60,
+        240
+      ]
+    },
+    {
+      "net": "OUT",
+      "pos": [
+        180,
+        100
+      ]
+    }
+  ],
+  "probes": {
+    "in": "IN.out",
+    "out": "OUT"
+  },
+  "notes": {
+    "part:S1": "Tone: dark with C1, bright with C2.",
+    "part:VR1": "Level."
+  }
+}

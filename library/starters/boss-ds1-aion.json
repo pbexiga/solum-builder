@@ -1,0 +1,1826 @@
+{
+ "schema": 30,
+ "id": "boss-ds1-aion",
+ "name": "Boss DS-1 (Aion Comet)",
+ "version": {
+  "major": 1,
+  "minor": 0
+ },
+ "description": "Boss DS-1 Distortion (1978) as Aion FX's Comet (document 1.1.0), the dual op-amp circuit with Aion's pre-1994 values and true bypass: an input buffer, a transistor booster (the Big Muff's first stage), an op-amp gain stage set by Distortion, two diodes clipping to VB, the Big Muff-style Tone, Level and an output buffer. Aion's Mode switch picks the diodes (the stock DS-1's), red LEDs, or two diodes each way. 2N5088s as Aion's substitute for the 2SC2248; the NJM3404A in Aion's kit, our card from Nisshinbo's sheet.",
+ "tags": [
+  "distortion"
+ ],
+ "starter": true,
+ "power": {
+  "rails": {
+   "V+": 9.0
+  }
+ },
+ "parts": [
+  {
+   "ref": "D1",
+   "pos": [
+    40,
+    -320
+   ],
+   "note": "Reverse-polarity protection; R23 and C15, C16 filter the supply.",
+   "type": "diode",
+   "model": "1N5817"
+  },
+  {
+   "ref": "R23",
+   "pos": [
+    100,
+    -320
+   ],
+   "type": "resistor",
+   "value": "47"
+  },
+  {
+   "ref": "C16",
+   "pos": [
+    160,
+    -280
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "ceramic"
+  },
+  {
+   "ref": "C15",
+   "pos": [
+    220,
+    -280
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "100µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "R21",
+   "pos": [
+    300,
+    -320
+   ],
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "R22",
+   "pos": [
+    360,
+    -280
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "C14",
+   "pos": [
+    420,
+    -280
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "47µ",
+   "kind": "electrolytic",
+   "rating_v": 16.0
+  },
+  {
+   "ref": "IC1C",
+   "pos": [
+    540,
+    -280
+   ],
+   "type": "powerunit",
+   "model": "NJM3404A"
+  },
+  {
+   "ref": "IN",
+   "pos": [
+    -40,
+    0
+   ],
+   "type": "guitar"
+  },
+  {
+   "ref": "RPD1",
+   "pos": [
+    0,
+    40
+   ],
+   "rot": 90,
+   "note": "Aion's RPD: the input pull-down, so the bypass switch doesn't pop.",
+   "type": "resistor",
+   "value": "2M2"
+  },
+  {
+   "ref": "R1",
+   "pos": [
+    40,
+    0
+   ],
+   "type": "resistor",
+   "value": "1k"
+  },
+  {
+   "ref": "C1",
+   "pos": [
+    100,
+    0
+   ],
+   "type": "capacitor",
+   "value": "47n",
+   "kind": "film"
+  },
+  {
+   "ref": "R2",
+   "pos": [
+    140,
+    -40
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "470k"
+  },
+  {
+   "ref": "Q1",
+   "pos": [
+    180,
+    0
+   ],
+   "note": "Input buffer (emitter follower), biased at VB by R2.",
+   "type": "bjt",
+   "model": "2N5088"
+  },
+  {
+   "ref": "R3",
+   "pos": [
+    200,
+    60
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "C2",
+   "pos": [
+    260,
+    40
+   ],
+   "type": "capacitor",
+   "value": "47n",
+   "kind": "film"
+  },
+  {
+   "ref": "R4",
+   "pos": [
+    320,
+    100
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "R5",
+   "pos": [
+    380,
+    -20
+   ],
+   "type": "resistor",
+   "value": "470k"
+  },
+  {
+   "ref": "C3",
+   "pos": [
+    380,
+    -60
+   ],
+   "type": "capacitor",
+   "value": "250p",
+   "kind": "c0g"
+  },
+  {
+   "ref": "Q2",
+   "pos": [
+    380,
+    40
+   ],
+   "note": "Booster: a common-emitter stage with shunt feedback (R5, C3), as the Big Muff's first stage. About 35 dB of gain, so loud notes clip here already, softly.",
+   "type": "bjt",
+   "model": "2N5088"
+  },
+  {
+   "ref": "R6",
+   "pos": [
+    400,
+    -100
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "R7",
+   "pos": [
+    400,
+    100
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "22"
+  },
+  {
+   "ref": "C5",
+   "pos": [
+    460,
+    0
+   ],
+   "type": "capacitor",
+   "value": "470n",
+   "kind": "film"
+  },
+  {
+   "ref": "R8",
+   "pos": [
+    520,
+    -40
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "R9",
+   "pos": [
+    560,
+    0
+   ],
+   "type": "resistor",
+   "value": "47k"
+  },
+  {
+   "ref": "D4",
+   "pos": [
+    600,
+    40
+   ],
+   "rot": 270,
+   "note": "Keeps IC1B's + input from being pulled below ground when Q2 swings hard (the LM358 family misbehaves there).",
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "IC1B",
+   "pos": [
+    680,
+    -20
+   ],
+   "note": "A buffer between the booster and the gain stage.",
+   "model": "NJM3404A",
+   "type": "opamp",
+   "half": "b"
+  },
+  {
+   "ref": "IC1A",
+   "pos": [
+    840,
+    -40
+   ],
+   "model": "NJM3404A",
+   "type": "opamp",
+   "half": "a"
+  },
+  {
+   "ref": "VR1",
+   "pos": [
+    900,
+    -100
+   ],
+   "rot": 270,
+   "note": "Distortion: the gain stage's gain, 1 + (pin 1 to wiper) / (wiper to pin 3 + R11): from 1 up to 22 times (27 dB).",
+   "type": "pot",
+   "value": "100k",
+   "label": "Distortion"
+  },
+  {
+   "ref": "R10",
+   "pos": [
+    820,
+    -100
+   ],
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "R11",
+   "pos": [
+    940,
+    -140
+   ],
+   "type": "resistor",
+   "value": "4k7"
+  },
+  {
+   "ref": "C7",
+   "pos": [
+    1020,
+    -100
+   ],
+   "rot": 90,
+   "note": "With R11, cuts the bass the gain stage amplifies: bass notes clip less.",
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "film"
+  },
+  {
+   "ref": "C6",
+   "pos": [
+    900,
+    -180
+   ],
+   "type": "capacitor",
+   "value": "250p",
+   "kind": "c0g"
+  },
+  {
+   "ref": "R12",
+   "pos": [
+    1120,
+    -40
+   ],
+   "type": "resistor",
+   "value": "2k2"
+  },
+  {
+   "ref": "C8",
+   "pos": [
+    1180,
+    -40
+   ],
+   "type": "capacitor",
+   "value": "470n",
+   "kind": "film"
+  },
+  {
+   "ref": "D5",
+   "pos": [
+    1260,
+    0
+   ],
+   "rot": 270,
+   "note": "Clipping: D5 and D7 to VB, one each way, after R12 and C8 (hard clipping, as the Rat's). The Mode switch can add D6 and D8 in series.",
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "D7",
+   "pos": [
+    1320,
+    0
+   ],
+   "rot": 90,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "D6",
+   "pos": [
+    1260,
+    80
+   ],
+   "rot": 270,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "D8",
+   "pos": [
+    1320,
+    80
+   ],
+   "rot": 90,
+   "type": "diode",
+   "model": "1N914"
+  },
+  {
+   "ref": "SW1",
+   "pos": [
+    1300,
+    180
+   ],
+   "rot": 270,
+   "note": "Mode (Aion's): Diodes, D5 and D7 alone (the stock DS-1); LEDs, the switch open, so only D9 and D10 clip (louder, about 1.8 V); Two diodes, D6 and D8 in series with D5 and D7.",
+   "type": "switch",
+   "kind": "spdt-on-off-on",
+   "label": "Mode",
+   "names": [
+    "Diodes",
+    "LEDs",
+    "Two diodes"
+   ]
+  },
+  {
+   "ref": "D9",
+   "pos": [
+    1400,
+    0
+   ],
+   "rot": 90,
+   "note": "Red LEDs, clipping only with Mode at LEDs: below their 1.8 V the diodes clip first.",
+   "type": "led",
+   "model": "APT1608SURCK"
+  },
+  {
+   "ref": "D10",
+   "pos": [
+    1660,
+    0
+   ],
+   "rot": 270,
+   "type": "led",
+   "model": "APT1608SURCK"
+  },
+  {
+   "ref": "C9",
+   "pos": [
+    1720,
+    0
+   ],
+   "rot": 90,
+   "note": "With R12, a treble cut after the clipping.",
+   "type": "capacitor",
+   "value": "10n",
+   "kind": "film"
+  },
+  {
+   "ref": "R13",
+   "pos": [
+    1800,
+    -40
+   ],
+   "type": "resistor",
+   "value": "6k8"
+  },
+  {
+   "ref": "C11",
+   "pos": [
+    1840,
+    0
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "C10",
+   "pos": [
+    1780,
+    100
+   ],
+   "type": "capacitor",
+   "value": "22n",
+   "kind": "film"
+  },
+  {
+   "ref": "R14",
+   "pos": [
+    1840,
+    100
+   ],
+   "type": "resistor",
+   "value": "2k2"
+  },
+  {
+   "ref": "R15",
+   "pos": [
+    1960,
+    140
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "6k8"
+  },
+  {
+   "ref": "VR2",
+   "pos": [
+    1960,
+    20
+   ],
+   "rot": 90,
+   "note": "Tone: a low-pass (R13, C11) and a high-pass (C10, R14, R15) mixed by the pot, as the Big Muff's; scooped around 500 Hz at noon.",
+   "type": "pot",
+   "value": "25k",
+   "label": "Tone"
+  },
+  {
+   "ref": "VR3",
+   "pos": [
+    2120,
+    40
+   ],
+   "rot": 90,
+   "type": "pot",
+   "value": "100k",
+   "label": "Level"
+  },
+  {
+   "ref": "R16",
+   "pos": [
+    2200,
+    40
+   ],
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "C12",
+   "pos": [
+    2260,
+    40
+   ],
+   "type": "capacitor",
+   "value": "47n",
+   "kind": "film"
+  },
+  {
+   "ref": "R17",
+   "pos": [
+    2300,
+    0
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "1M"
+  },
+  {
+   "ref": "Q3",
+   "pos": [
+    2340,
+    40
+   ],
+   "note": "Output buffer (emitter follower).",
+   "type": "bjt",
+   "model": "2N5088"
+  },
+  {
+   "ref": "R18",
+   "pos": [
+    2360,
+    100
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "10k"
+  },
+  {
+   "ref": "R19",
+   "pos": [
+    2400,
+    80
+   ],
+   "type": "resistor",
+   "value": "1k"
+  },
+  {
+   "ref": "C13",
+   "pos": [
+    2460,
+    80
+   ],
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "film"
+  },
+  {
+   "ref": "R20",
+   "pos": [
+    2500,
+    120
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "OUT",
+   "pos": [
+    2540,
+    80
+   ],
+   "type": "amp"
+  }
+ ],
+ "wires": [
+  {
+   "from": [
+    0,
+    -320
+   ],
+   "to": [
+    20,
+    -320
+   ]
+  },
+  {
+   "from": [
+    60,
+    -320
+   ],
+   "to": [
+    80,
+    -320
+   ]
+  },
+  {
+   "from": [
+    120,
+    -320
+   ],
+   "to": [
+    280,
+    -320
+   ]
+  },
+  {
+   "from": [
+    160,
+    -320
+   ],
+   "to": [
+    160,
+    -300
+   ]
+  },
+  {
+   "from": [
+    220,
+    -320
+   ],
+   "to": [
+    220,
+    -300
+   ]
+  },
+  {
+   "from": [
+    320,
+    -320
+   ],
+   "to": [
+    440,
+    -320
+   ]
+  },
+  {
+   "from": [
+    360,
+    -320
+   ],
+   "to": [
+    360,
+    -300
+   ]
+  },
+  {
+   "from": [
+    420,
+    -320
+   ],
+   "to": [
+    420,
+    -300
+   ]
+  },
+  {
+   "from": [
+    -20,
+    0
+   ],
+   "to": [
+    20,
+    0
+   ]
+  },
+  {
+   "from": [
+    0,
+    0
+   ],
+   "to": [
+    0,
+    20
+   ]
+  },
+  {
+   "from": [
+    60,
+    0
+   ],
+   "to": [
+    80,
+    0
+   ]
+  },
+  {
+   "from": [
+    120,
+    0
+   ],
+   "to": [
+    160,
+    0
+   ]
+  },
+  {
+   "from": [
+    140,
+    -20
+   ],
+   "to": [
+    140,
+    0
+   ]
+  },
+  {
+   "from": [
+    200,
+    -20
+   ],
+   "to": [
+    200,
+    -40
+   ]
+  },
+  {
+   "from": [
+    200,
+    20
+   ],
+   "to": [
+    200,
+    40
+   ]
+  },
+  {
+   "from": [
+    200,
+    40
+   ],
+   "to": [
+    240,
+    40
+   ]
+  },
+  {
+   "from": [
+    280,
+    40
+   ],
+   "to": [
+    360,
+    40
+   ]
+  },
+  {
+   "from": [
+    320,
+    40
+   ],
+   "to": [
+    320,
+    80
+   ]
+  },
+  {
+   "from": [
+    320,
+    40
+   ],
+   "to": [
+    320,
+    -20
+   ]
+  },
+  {
+   "from": [
+    320,
+    -20
+   ],
+   "to": [
+    360,
+    -20
+   ]
+  },
+  {
+   "from": [
+    320,
+    -20
+   ],
+   "to": [
+    320,
+    -60
+   ]
+  },
+  {
+   "from": [
+    320,
+    -60
+   ],
+   "to": [
+    360,
+    -60
+   ]
+  },
+  {
+   "from": [
+    400,
+    -60
+   ],
+   "to": [
+    400,
+    -20
+   ]
+  },
+  {
+   "from": [
+    400,
+    -80
+   ],
+   "to": [
+    400,
+    -60
+   ]
+  },
+  {
+   "from": [
+    400,
+    -20
+   ],
+   "to": [
+    400,
+    20
+   ]
+  },
+  {
+   "from": [
+    400,
+    60
+   ],
+   "to": [
+    400,
+    80
+   ]
+  },
+  {
+   "from": [
+    400,
+    0
+   ],
+   "to": [
+    440,
+    0
+   ]
+  },
+  {
+   "from": [
+    480,
+    0
+   ],
+   "to": [
+    540,
+    0
+   ]
+  },
+  {
+   "from": [
+    520,
+    -20
+   ],
+   "to": [
+    520,
+    0
+   ]
+  },
+  {
+   "from": [
+    580,
+    0
+   ],
+   "to": [
+    640,
+    0
+   ]
+  },
+  {
+   "from": [
+    600,
+    0
+   ],
+   "to": [
+    600,
+    20
+   ]
+  },
+  {
+   "from": [
+    640,
+    -40
+   ],
+   "to": [
+    620,
+    -40
+   ]
+  },
+  {
+   "from": [
+    620,
+    -40
+   ],
+   "to": [
+    620,
+    -80
+   ]
+  },
+  {
+   "from": [
+    620,
+    -80
+   ],
+   "to": [
+    740,
+    -80
+   ]
+  },
+  {
+   "from": [
+    740,
+    -80
+   ],
+   "to": [
+    740,
+    -20
+   ]
+  },
+  {
+   "from": [
+    720,
+    -20
+   ],
+   "to": [
+    800,
+    -20
+   ]
+  },
+  {
+   "from": [
+    880,
+    -40
+   ],
+   "to": [
+    1080,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1080,
+    -40
+   ],
+   "to": [
+    1100,
+    -40
+   ]
+  },
+  {
+   "from": [
+    900,
+    -40
+   ],
+   "to": [
+    900,
+    -80
+   ]
+  },
+  {
+   "from": [
+    880,
+    -100
+   ],
+   "to": [
+    840,
+    -100
+   ]
+  },
+  {
+   "from": [
+    800,
+    -100
+   ],
+   "to": [
+    800,
+    -60
+   ]
+  },
+  {
+   "from": [
+    900,
+    -120
+   ],
+   "to": [
+    900,
+    -140
+   ]
+  },
+  {
+   "from": [
+    900,
+    -140
+   ],
+   "to": [
+    920,
+    -140
+   ]
+  },
+  {
+   "from": [
+    960,
+    -140
+   ],
+   "to": [
+    1020,
+    -140
+   ]
+  },
+  {
+   "from": [
+    1020,
+    -140
+   ],
+   "to": [
+    1020,
+    -120
+   ]
+  },
+  {
+   "from": [
+    840,
+    -100
+   ],
+   "to": [
+    840,
+    -180
+   ]
+  },
+  {
+   "from": [
+    840,
+    -180
+   ],
+   "to": [
+    880,
+    -180
+   ]
+  },
+  {
+   "from": [
+    920,
+    -180
+   ],
+   "to": [
+    1080,
+    -180
+   ]
+  },
+  {
+   "from": [
+    1080,
+    -180
+   ],
+   "to": [
+    1080,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1140,
+    -40
+   ],
+   "to": [
+    1160,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1200,
+    -40
+   ],
+   "to": [
+    1760,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1760,
+    -40
+   ],
+   "to": [
+    1780,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1260,
+    -40
+   ],
+   "to": [
+    1260,
+    -20
+   ]
+  },
+  {
+   "from": [
+    1320,
+    -40
+   ],
+   "to": [
+    1320,
+    -20
+   ]
+  },
+  {
+   "from": [
+    1260,
+    20
+   ],
+   "to": [
+    1260,
+    40
+   ]
+  },
+  {
+   "from": [
+    1260,
+    40
+   ],
+   "to": [
+    1320,
+    40
+   ]
+  },
+  {
+   "from": [
+    1320,
+    40
+   ],
+   "to": [
+    1320,
+    20
+   ]
+  },
+  {
+   "from": [
+    1260,
+    40
+   ],
+   "to": [
+    1260,
+    60
+   ]
+  },
+  {
+   "from": [
+    1320,
+    40
+   ],
+   "to": [
+    1320,
+    60
+   ]
+  },
+  {
+   "from": [
+    1260,
+    100
+   ],
+   "to": [
+    1260,
+    120
+   ]
+  },
+  {
+   "from": [
+    1260,
+    120
+   ],
+   "to": [
+    1320,
+    120
+   ]
+  },
+  {
+   "from": [
+    1320,
+    120
+   ],
+   "to": [
+    1320,
+    100
+   ]
+  },
+  {
+   "from": [
+    1320,
+    120
+   ],
+   "to": [
+    1320,
+    160
+   ]
+  },
+  {
+   "from": [
+    1280,
+    160
+   ],
+   "to": [
+    1180,
+    160
+   ]
+  },
+  {
+   "from": [
+    1180,
+    160
+   ],
+   "to": [
+    1180,
+    40
+   ]
+  },
+  {
+   "from": [
+    1180,
+    40
+   ],
+   "to": [
+    1260,
+    40
+   ]
+  },
+  {
+   "from": [
+    1400,
+    -40
+   ],
+   "to": [
+    1400,
+    -20
+   ]
+  },
+  {
+   "from": [
+    1660,
+    -40
+   ],
+   "to": [
+    1660,
+    -20
+   ]
+  },
+  {
+   "from": [
+    1400,
+    20
+   ],
+   "to": [
+    1400,
+    40
+   ]
+  },
+  {
+   "from": [
+    1400,
+    40
+   ],
+   "to": [
+    1660,
+    40
+   ]
+  },
+  {
+   "from": [
+    1660,
+    40
+   ],
+   "to": [
+    1660,
+    20
+   ]
+  },
+  {
+   "from": [
+    1720,
+    -40
+   ],
+   "to": [
+    1720,
+    -20
+   ]
+  },
+  {
+   "from": [
+    1820,
+    -40
+   ],
+   "to": [
+    1960,
+    -40
+   ]
+  },
+  {
+   "from": [
+    1960,
+    -40
+   ],
+   "to": [
+    1960,
+    0
+   ]
+  },
+  {
+   "from": [
+    1840,
+    -40
+   ],
+   "to": [
+    1840,
+    -20
+   ]
+  },
+  {
+   "from": [
+    1760,
+    -40
+   ],
+   "to": [
+    1760,
+    100
+   ]
+  },
+  {
+   "from": [
+    1800,
+    100
+   ],
+   "to": [
+    1820,
+    100
+   ]
+  },
+  {
+   "from": [
+    1860,
+    100
+   ],
+   "to": [
+    1960,
+    100
+   ]
+  },
+  {
+   "from": [
+    1960,
+    40
+   ],
+   "to": [
+    1960,
+    120
+   ]
+  },
+  {
+   "from": [
+    1980,
+    20
+   ],
+   "to": [
+    2020,
+    20
+   ]
+  },
+  {
+   "from": [
+    2020,
+    20
+   ],
+   "to": [
+    2020,
+    80
+   ]
+  },
+  {
+   "from": [
+    2020,
+    80
+   ],
+   "to": [
+    2120,
+    80
+   ]
+  },
+  {
+   "from": [
+    2120,
+    80
+   ],
+   "to": [
+    2120,
+    60
+   ]
+  },
+  {
+   "from": [
+    2140,
+    40
+   ],
+   "to": [
+    2180,
+    40
+   ]
+  },
+  {
+   "from": [
+    2220,
+    40
+   ],
+   "to": [
+    2240,
+    40
+   ]
+  },
+  {
+   "from": [
+    2280,
+    40
+   ],
+   "to": [
+    2320,
+    40
+   ]
+  },
+  {
+   "from": [
+    2300,
+    20
+   ],
+   "to": [
+    2300,
+    40
+   ]
+  },
+  {
+   "from": [
+    2360,
+    20
+   ],
+   "to": [
+    2360,
+    0
+   ]
+  },
+  {
+   "from": [
+    2360,
+    60
+   ],
+   "to": [
+    2360,
+    80
+   ]
+  },
+  {
+   "from": [
+    2360,
+    80
+   ],
+   "to": [
+    2380,
+    80
+   ]
+  },
+  {
+   "from": [
+    2420,
+    80
+   ],
+   "to": [
+    2440,
+    80
+   ]
+  },
+  {
+   "from": [
+    2480,
+    80
+   ],
+   "to": [
+    2520,
+    80
+   ]
+  },
+  {
+   "from": [
+    2500,
+    80
+   ],
+   "to": [
+    2500,
+    100
+   ]
+  }
+ ],
+ "labels": [
+  {
+   "net": "V+",
+   "pos": [
+    0,
+    -320
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    240,
+    -320
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    440,
+    -320
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    160,
+    -260
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    220,
+    -260
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    360,
+    -260
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    420,
+    -260
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    540,
+    -240
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    540,
+    -320
+   ]
+  },
+  {
+   "net": "in",
+   "pos": [
+    -20,
+    0
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    140,
+    -60
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    520,
+    -60
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    200,
+    -40
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    400,
+    -120
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    200,
+    80
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    320,
+    120
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    400,
+    120
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    600,
+    60
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    0,
+    60
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    1020,
+    -80
+   ]
+  },
+  {
+   "net": "clip",
+   "pos": [
+    1740,
+    -40
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    1300,
+    200
+   ],
+   "rot": 180
+  },
+  {
+   "net": "VB",
+   "pos": [
+    1520,
+    40
+   ],
+   "rot": 180
+  },
+  {
+   "net": "VB",
+   "pos": [
+    1720,
+    20
+   ],
+   "rot": 180
+  },
+  {
+   "net": "VB",
+   "pos": [
+    1840,
+    20
+   ],
+   "rot": 180
+  },
+  {
+   "net": "VB",
+   "pos": [
+    1960,
+    160
+   ],
+   "rot": 180
+  },
+  {
+   "net": "VB",
+   "pos": [
+    2120,
+    20
+   ]
+  },
+  {
+   "net": "VB",
+   "pos": [
+    2300,
+    -20
+   ]
+  },
+  {
+   "net": "VA",
+   "pos": [
+    2360,
+    0
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    2360,
+    120
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    2500,
+    140
+   ]
+  },
+  {
+   "net": "out",
+   "pos": [
+    2520,
+    80
+   ]
+  }
+ ],
+ "texts": [
+  {
+   "title": "Credit",
+   "text": "Based on Aion FX's Comet (document 1.1.0): its circuit, values and build ideas.\nThe drawing, notes and wording are Solum Builder's own.\nhttps://aionfx.com/project/comet-vintage-distortion/",
+   "pos": [
+    -40,
+    260
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "title": "Try: later DS-1 values",
+   "text": "Later (1994 on) DS-1 values: C5 68n, C6 100p, C7 470n; bass drops and treble rises a little at high Distortion. (idea from Aion FX's Comet notes)"
+  },
+  {
+   "title": "Try: Big Muff-style clipping in Q2's stage",
+   "text": "Q2's stage clips like a Big Muff's with 1N914s as D2 and D3 and 100n as C4 across R5 (the DS-1 has none). (idea from Aion FX's Comet notes)"
+  },
+  {
+   "title": "Try: other op-amps for IC1",
+   "text": "IC1: the kit's NJM3404AD (drawn), an LM358 relative. An NJM4580 or OPA2134 needs D4 out and a 1N914 as D11, anode to pin 6, cathode to pin 5. (idea from Aion FX's Comet notes)"
+  },
+  {
+   "title": "Try: BAT46s in Mode up",
+   "text": "Mode up: BAT46s as D6 and D8 clip near 1 V. (idea from Aion FX's Comet notes)"
+  },
+  {
+   "title": "Try: known mods",
+   "text": "Known mods (Keeley, Analogman): C10 47n softens the top end; R11 2k2 gives Distortion twice the range. (idea from Aion FX's Comet notes)"
+  }
+ ],
+ "probes": {
+  "in": "in",
+  "out": "out"
+ },
+ "net_notes": {
+  "clip": "The clipping node: the signal after the diodes, into the tone stack."
+ },
+ "enclosure": {
+  "size": "125B"
+ }
+}

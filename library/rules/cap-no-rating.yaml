@@ -1,0 +1,26 @@
+id: cap-no-rating
+layer: topology
+severity: info
+check: cap_no_rating
+build: true
+title: Electrolytic with no voltage rating
+message: "{which} no voltage rating."
+why: >
+  Electrolytics and tantalums are sold by capacitance and voltage rating, so the parts list
+  needs both. With a rating in the file, the checks also warn when the DC across one comes
+  too close to it.
+fix: "Give each a voltage rating in its form: {advice} here."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, a], value: 10k}
+        - {ref: C1, type: capacitor, nets: [a, GND], value: 100u, kind: electrolytic}
+        - {ref: C2, type: capacitor, nets: [a, GND], value: 10u, kind: tantalum}
+      expect: [C1, C2]
+  good:
+    - rails: {V+: 9}
+      parts:   # a film needs no rating to be bought
+        - {ref: R1, type: resistor, nets: [V+, a], value: 10k}
+        - {ref: C1, type: capacitor, nets: [a, GND], value: 100u, kind: electrolytic, rating_v: 16}
+        - {ref: C2, type: capacitor, nets: [a, GND], value: 100n, kind: film}

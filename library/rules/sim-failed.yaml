@@ -1,0 +1,16 @@
+id: sim-failed
+layer: sim_error
+severity: error
+check: sim_failed
+fallback: true
+title: Simulation failed
+message: "{detail}"
+why: The simulator stopped with an error that Solum Builder has no specific explanation for.
+fix: Undo the last change to see if it caused this, and look for extreme part values or parts that aren't wired up.
+fixtures:
+  bad:
+    - log: ["stderr Error: something unexpected"]
+      message: The simulation failed.
+  good:
+    - log: ["stderr Warning: singular matrix:  check node a"]
+      nodes: {a: a}

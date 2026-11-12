@@ -1,0 +1,23 @@
+id: bias-unreachable
+layer: sim_error
+severity: error
+check: bias_unreachable
+title: Bias target out of reach
+message: "{detail}"
+why: >
+  A trimmer with a bias target is turned until the target point sits at the voltage you
+  asked for. Nowhere on its travel gets there.
+fix: >
+  Pick a target the stage can reach, change the trimmer's value, or check the transistor's
+  measured Idss and Vp.
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: TR1, type: trimmer, nets: [V+, d, d], value: 50k, bias_target: {node: Q1.D, volts: 12}}
+        - {ref: Q1, type: jfet, nets: [d, GND, GND], model: J201}
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: TR1, type: trimmer, nets: [V+, d, d], value: 50k, bias_target: {node: Q1.D, volts: 4.5}}
+        - {ref: Q1, type: jfet, nets: [d, GND, GND], model: J201}

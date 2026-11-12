@@ -1,0 +1,866 @@
+{
+  "schema": 23,
+  "id": "tone-bender-mk2-mode",
+  "name": "Tone Bender MkII (Aion Deimos, Mode switch)",
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "description": "The Tone Bender MkII with the Mode switch of Aion FX's Deimos: MkII, or Q1 bypassed for the earlier two-transistor Tone Bender \"1.5\" (much like a Fuzz Face). Three germanium PNPs, positive ground (the supply is -9 V); the OC75s (some units OC81D) are our own fit to Mullard's OC75 sheet (D-184), given measured hFE and leakage from the middle of Aion's ranges. TR1 is set for Aion's Q2 collector reading (-0.16 V; its bias target).",
+  "tags": [
+    "fuzz",
+    "germanium"
+  ],
+  "starter": true,
+  "power": {
+    "rails": {
+      "V-": -9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "C1",
+      "pos": [
+        160,
+        240
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "10n",
+      "kind": "film"
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        200,
+        200
+      ],
+      "type": "capacitor",
+      "value": "4µ7",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        240,
+        240
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "Q1",
+      "pos": [
+        280,
+        200
+      ],
+      "type": "bjt",
+      "model": "OC75",
+      "measured": {
+        "hfe": 65.0,
+        "leakage": 0.0002
+      }
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        300,
+        120
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        340,
+        160
+      ],
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "film"
+    },
+    {
+      "ref": "Q2",
+      "pos": [
+        420,
+        200
+      ],
+      "type": "bjt",
+      "model": "OC75",
+      "measured": {
+        "hfe": 65.0,
+        "leakage": 0.000125
+      }
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        440,
+        140
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "47k"
+    },
+    {
+      "ref": "TR1",
+      "pos": [
+        440,
+        100
+      ],
+      "rot": 270,
+      "type": "trimmer",
+      "value": "100k",
+      "rotation": 0.85,
+      "bias_target": {
+        "node": "Q2.C",
+        "volts": -0.16
+      }
+    },
+    {
+      "ref": "Q3",
+      "pos": [
+        500,
+        160
+      ],
+      "type": "bjt",
+      "model": "OC75",
+      "measured": {
+        "hfe": 108.0,
+        "leakage": 0.000175
+      }
+    },
+    {
+      "ref": "R4",
+      "pos": [
+        520,
+        100
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "8k2"
+    },
+    {
+      "ref": "TR2",
+      "pos": [
+        520,
+        60
+      ],
+      "rot": 270,
+      "type": "trimmer",
+      "value": "10k",
+      "rotation": 0.1
+    },
+    {
+      "ref": "R5",
+      "pos": [
+        520,
+        0
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "470"
+    },
+    {
+      "ref": "C6",
+      "pos": [
+        580,
+        40
+      ],
+      "type": "capacitor",
+      "value": "10n",
+      "kind": "film"
+    },
+    {
+      "ref": "VR1",
+      "pos": [
+        620,
+        80
+      ],
+      "rot": 270,
+      "type": "pot",
+      "value": "100k",
+      "taper": "A",
+      "rotation": 1.0,
+      "label": "Level"
+    },
+    {
+      "ref": "R6",
+      "pos": [
+        450,
+        300
+      ],
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "VR2",
+      "pos": [
+        520,
+        340
+      ],
+      "rot": 270,
+      "type": "pot",
+      "value": "1k",
+      "rotation": 1.0,
+      "label": "Fuzz"
+    },
+    {
+      "ref": "C5",
+      "pos": [
+        480,
+        380
+      ],
+      "rot": 270,
+      "type": "capacitor",
+      "value": "4µ7",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "OUT",
+      "pos": [
+        680,
+        140
+      ],
+      "type": "amp"
+    },
+    {
+      "ref": "IN",
+      "pos": [
+        -100,
+        200
+      ],
+      "type": "guitar",
+      "volume": "250k"
+    },
+    {
+      "ref": "SW1A",
+      "pos": [
+        0,
+        200
+      ],
+      "type": "switch",
+      "kind": "dpdt",
+      "pole": "a",
+      "label": "Mode",
+      "names": [
+        "MkII",
+        "1.5"
+      ]
+    },
+    {
+      "ref": "SW1B",
+      "pos": [
+        0,
+        300
+      ],
+      "type": "switch",
+      "kind": "dpdt",
+      "pole": "b",
+      "label": "Mode",
+      "names": [
+        "MkII",
+        "1.5"
+      ]
+    },
+    {
+      "ref": "C4",
+      "pos": [
+        90,
+        250
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "4µ7",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        140,
+        200
+      ],
+      "to": [
+        160,
+        200
+      ]
+    },
+    {
+      "from": [
+        160,
+        200
+      ],
+      "to": [
+        180,
+        200
+      ]
+    },
+    {
+      "from": [
+        160,
+        200
+      ],
+      "to": [
+        160,
+        220
+      ]
+    },
+    {
+      "from": [
+        220,
+        200
+      ],
+      "to": [
+        240,
+        200
+      ]
+    },
+    {
+      "from": [
+        240,
+        200
+      ],
+      "to": [
+        260,
+        200
+      ]
+    },
+    {
+      "from": [
+        240,
+        200
+      ],
+      "to": [
+        240,
+        220
+      ]
+    },
+    {
+      "from": [
+        300,
+        140
+      ],
+      "to": [
+        300,
+        160
+      ]
+    },
+    {
+      "from": [
+        300,
+        160
+      ],
+      "to": [
+        300,
+        180
+      ]
+    },
+    {
+      "from": [
+        300,
+        160
+      ],
+      "to": [
+        320,
+        160
+      ]
+    },
+    {
+      "from": [
+        300,
+        220
+      ],
+      "to": [
+        300,
+        260
+      ]
+    },
+    {
+      "from": [
+        440,
+        160
+      ],
+      "to": [
+        440,
+        180
+      ]
+    },
+    {
+      "from": [
+        440,
+        220
+      ],
+      "to": [
+        440,
+        240
+      ]
+    },
+    {
+      "from": [
+        420,
+        100
+      ],
+      "to": [
+        420,
+        80
+      ]
+    },
+    {
+      "from": [
+        420,
+        80
+      ],
+      "to": [
+        440,
+        80
+      ]
+    },
+    {
+      "from": [
+        440,
+        160
+      ],
+      "to": [
+        480,
+        160
+      ]
+    },
+    {
+      "from": [
+        520,
+        120
+      ],
+      "to": [
+        520,
+        140
+      ]
+    },
+    {
+      "from": [
+        500,
+        60
+      ],
+      "to": [
+        500,
+        40
+      ]
+    },
+    {
+      "from": [
+        500,
+        40
+      ],
+      "to": [
+        520,
+        40
+      ]
+    },
+    {
+      "from": [
+        520,
+        20
+      ],
+      "to": [
+        520,
+        40
+      ]
+    },
+    {
+      "from": [
+        520,
+        40
+      ],
+      "to": [
+        560,
+        40
+      ]
+    },
+    {
+      "from": [
+        600,
+        40
+      ],
+      "to": [
+        620,
+        40
+      ]
+    },
+    {
+      "from": [
+        620,
+        40
+      ],
+      "to": [
+        620,
+        60
+      ]
+    },
+    {
+      "from": [
+        600,
+        80
+      ],
+      "to": [
+        580,
+        80
+      ]
+    },
+    {
+      "from": [
+        580,
+        80
+      ],
+      "to": [
+        580,
+        140
+      ]
+    },
+    {
+      "from": [
+        580,
+        140
+      ],
+      "to": [
+        660,
+        140
+      ]
+    },
+    {
+      "from": [
+        520,
+        180
+      ],
+      "to": [
+        520,
+        300
+      ]
+    },
+    {
+      "from": [
+        520,
+        300
+      ],
+      "to": [
+        520,
+        320
+      ]
+    },
+    {
+      "from": [
+        470,
+        300
+      ],
+      "to": [
+        520,
+        300
+      ]
+    },
+    {
+      "from": [
+        500,
+        340
+      ],
+      "to": [
+        480,
+        340
+      ]
+    },
+    {
+      "from": [
+        480,
+        340
+      ],
+      "to": [
+        480,
+        360
+      ]
+    },
+    {
+      "from": [
+        -80,
+        200
+      ],
+      "to": [
+        -20,
+        200
+      ]
+    },
+    {
+      "from": [
+        20,
+        200
+      ],
+      "to": [
+        140,
+        200
+      ]
+    },
+    {
+      "from": [
+        20,
+        220
+      ],
+      "to": [
+        90,
+        220
+      ]
+    },
+    {
+      "from": [
+        90,
+        220
+      ],
+      "to": [
+        90,
+        230
+      ]
+    },
+    {
+      "from": [
+        90,
+        270
+      ],
+      "to": [
+        90,
+        320
+      ]
+    },
+    {
+      "from": [
+        90,
+        320
+      ],
+      "to": [
+        20,
+        320
+      ]
+    },
+    {
+      "from": [
+        -20,
+        300
+      ],
+      "to": [
+        -40,
+        300
+      ]
+    },
+    {
+      "from": [
+        20,
+        300
+      ],
+      "to": [
+        40,
+        300
+      ]
+    },
+    {
+      "from": [
+        360,
+        160
+      ],
+      "to": [
+        370,
+        160
+      ]
+    },
+    {
+      "from": [
+        380,
+        200
+      ],
+      "to": [
+        400,
+        200
+      ]
+    },
+    {
+      "from": [
+        380,
+        200
+      ],
+      "to": [
+        380,
+        300
+      ]
+    },
+    {
+      "from": [
+        380,
+        300
+      ],
+      "to": [
+        430,
+        300
+      ]
+    },
+    {
+      "from": [
+        20,
+        180
+      ],
+      "to": [
+        20,
+        200
+      ]
+    },
+    {
+      "from": [
+        20,
+        280
+      ],
+      "to": [
+        20,
+        300
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "V-",
+      "pos": [
+        300,
+        100
+      ]
+    },
+    {
+      "net": "V-",
+      "pos": [
+        440,
+        80
+      ]
+    },
+    {
+      "net": "V-",
+      "pos": [
+        520,
+        -20
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        160,
+        260
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        240,
+        260
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        300,
+        260
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        440,
+        240
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        520,
+        360
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        480,
+        400
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        620,
+        100
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        630,
+        140
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        -60,
+        200
+      ]
+    },
+    {
+      "net": "q2b",
+      "pos": [
+        -40,
+        300
+      ]
+    },
+    {
+      "net": "q2b",
+      "pos": [
+        380,
+        200
+      ]
+    },
+    {
+      "net": "q1out",
+      "pos": [
+        40,
+        300
+      ]
+    },
+    {
+      "net": "q1out",
+      "pos": [
+        370,
+        160
+      ]
+    }
+  ],
+  "probes": {
+    "in": "in",
+    "out": "out"
+  },
+  "notes": {
+    "part:Q1": "Q1 is biased by its own leakage (no resistor from its base to the supply): a leaky part is needed. Try 50 µA and 300 µA measured.",
+    "part:TR1": "Q2 bias: set first; on the pedal, Aion sets it until Q3's collector reads -8 to -8.5 V. It moves Q2 and Q3 together. Here it is solved for Q2's collector at -0.16 V, inside Aion's readings: with the OC75 card, aiming at Q3's collector leaves Q2 outside them (D-184). Aion's addition, one of this version's differences from the original: Fuzz Central's trace of an original has a fixed 100K on Q2's collector and 8K2 alone on Q3's (the starter Tone Bender MkII).",
+    "part:TR2": "Q3 bias: fine-tunes Q3's collector after TR1. Aion's addition: the original has 8K2 alone here.",
+    "part:R6": "Feedback from Q3's emitter to Q2's base, as in a Fuzz Face.",
+    "part:VR2": "With C5, bypasses Q3's emitter: more Fuzz, more gain.",
+    "part:SW1A": "Mode: MkII (Q1's boost stage in front) or 1.5 (the guitar straight into Q2 through C4, Q1 left out). Only capacitors switch, so the bias is the same in both.",
+    "part:C4": "In MkII mode C4 floats, and in 1.5 mode C3 and C2 do: switching modes can pop (the Missing pull-down warnings). Aion's board has no pull-downs here; 1M to ground on each would stop it, but shifts Q2's bias a little (D-135)."
+  },
+  "enclosure": {
+    "size": "125B"
+  },
+  "texts": [
+    {
+      "title": "Credit",
+      "pos": [
+        -100,
+        480
+      ],
+      "text": "Based on Aion FX's Deimos: its circuit, values and build ideas.\nThe drawing, notes and wording are Solum Builder's own.\nhttps://aionfx.com/project/deimos-germanium-fuzz/"
+    }
+  ]
+}

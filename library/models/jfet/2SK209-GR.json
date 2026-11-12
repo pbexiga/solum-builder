@@ -1,0 +1,71 @@
+{
+  "id": "2SK209-GR",
+  "type": "jfet",
+  "description": "2SK209-GR low-noise N-channel JFET, GR grade (the BD-2's 2SK184-GR in SMD; our model from Toshiba's sheet)",
+  "spice_name": "J2SK209GR",
+  "kind": "model",
+  "pins": [],
+  "card": "2SK209-GR.lib",
+  "manufacturer": "Toshiba",
+  "source": {
+    "url": "https://datasheet.lcsc.com/datasheet/pdf/8d45a1e0710547179b2b0483dfe1c7e6.pdf?productCode=C61792",
+    "retrieved": "2026-11-04",
+    "licence": "Our own model built from the maker's data sheet (D-159, D-161): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://datasheet.lcsc.com/datasheet/pdf/8d45a1e0710547179b2b0483dfe1c7e6.pdf?productCode=C61792",
+  "fixes": [],
+  "ratings": {},
+  "package": {
+    "name": "SC-59 (S-MINI)",
+    "pins": {
+      "S": 1,
+      "D": 2,
+      "G": 3
+    },
+    "source": "Toshiba 2SK209 data sheet (2014-03-01), page 1: 1. Source 2. Drain 3. Gate"
+  },
+  "fit": {
+    "sheet": "Toshiba 2SK209 data sheet (2014-03-01)",
+    "figure": "|Yfs| - IDSS, ID - VGS and ID - VDS (typical, page 2)",
+    "points": [
+      [
+        0.0,
+        0.0041109609582188926
+      ],
+      [
+        -0.48747819692767497,
+        0.0
+      ]
+    ],
+    "method": "Idss the geometric middle of the GR grade's 2.6-6.5 mA (4.11 mA). Vp -0.487 V from the typical |Yfs|-IDSS figure (16.9 mS at that Idss) by the square law, Vp = -2·Idss/|Yfs|; the ID-VGS figure agrees (its 3.6 and 5.3 mA curves are square laws with Vp -0.47 and -0.55 V, where this rule gives -0.46 and -0.55). The VGS(OFF)-IDSS figure reads -0.63 V at this Idss, but at 0.1 µA, in the tail a square law doesn't follow. BETA = Idss/Vp². LAMBDA from the ID-VDS figure's VGS = 0 curve, about 17 µS at 2.7 mA. CGD = Crss 3 pF, CGS = Ciss − Crss = 10 pF (typical).",
+    "note": "Real units spread over the grade's range; a circuit's measured Idss and Vp replace these (D-130)"
+  },
+  "validation": [
+    {
+      "quantity": "idss",
+      "conditions": {
+        "vds": 10.0
+      },
+      "simulated": 0.00435814,
+      "datasheet": {
+        "min": 0.0026,
+        "max": 0.0065,
+        "source": "Toshiba 2SK209 data sheet (2014-03-01), Electrical Characteristics: IDSS at VDS = 10 V, GR 2.6~6.5 mA"
+      }
+    },
+    {
+      "quantity": "vp",
+      "conditions": {
+        "vds": 10.0,
+        "id": 1e-07
+      },
+      "simulated": -0.485165,
+      "datasheet": {
+        "min": -1.5,
+        "max": -0.2,
+        "source": "Toshiba 2SK209 data sheet (2014-03-01), Electrical Characteristics: VGS(OFF) at VDS = 10 V, ID = 0.1 µA"
+      }
+    }
+  ]
+}

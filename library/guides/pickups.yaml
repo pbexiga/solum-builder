@@ -1,0 +1,66 @@
+# Guitar pickups (D-096): the one source for the guitar input's pickup choices (the
+# inspector fills a pickup's coil R, L and C, and its volume pot, from here).
+# Each pickup is one measured pickup, not an average: R and L as measured (L at 120 Hz),
+# C worked out from the measured unloaded resonance as 1 / ((2π·resonance)² · L) (a unit
+# test checks it). Pickups of one type vary by ±10 % or more (Lemme).
+title: Guitar pickups
+intro: >
+  The pickup on the guitar input is the guitar plugged into this circuit: its coil, the
+  cable and the guitar's volume pot load the input, and the input loads them back. A fuzz
+  with a low input impedance changes the pickup's sound a lot; a high-impedance input
+  hardly at all. "No pickup (buffered)" is a guitar with a buffer or an active pickup in
+  front: a stiff source that nothing loads. Renders take the pickup's own colour out of
+  the clip first (a DI already has it), so a pickup changes only how the circuit reacts.
+source: >
+  UIUC Physics 406 (Prof. S. Errede), electric guitar pickup measurements, Guitar_Bass_Pickup_Data.xls
+  (updated 2017-03-31), https://courses.physics.illinois.edu/phys406/sp2017/406emi_guitar_pickup_results.html
+pot_source: >
+  250k volume pots for single coils and 500k for humbuckers and P-90s: Guitar.com, "What are pots
+  anyway?", https://guitar.com/features/gear/what-are-pots-anyway-a-working-guide-to-the-knobs-on-your-guitar-and-what-they-actually-do/;
+  Fralin Pickups, https://fralinpickups.com/?p=72550
+cable_source: >
+  About 100 pF per metre for typical guitar cable (65 pF/m for low-capacitance cable, up to
+  115 pF/m for budget ones): Sound On Sound, "Choosing guitar cables",
+  https://www.soundonsound.com/sound-advice/choosing-guitar-cables; Klotz AIS cable guide,
+  https://www.klotz-ais.com/cableguide/capacitance/
+pickups:
+  - kind: strat
+    name: Strat single coil
+    measured: 1996 Fender Vintage '57/'62 Stratocaster, middle pickup
+    r: 6k38
+    l: "2.55"
+    c: 151p
+    resonance: 8k11
+    volume: 250k
+  - kind: tele
+    name: Tele bridge
+    measured: 1996 Fender Vintage Telecaster, bridge pickup
+    r: 7k27
+    l: "3.28"
+    c: 145p
+    resonance: 7k3
+    volume: 250k
+  - kind: p90
+    name: P-90
+    measured: 1952 Gibson Les Paul P-90, neck pickup (whole pickup, no lead)
+    r: 7k83
+    l: "7.18"
+    c: 37p
+    resonance: 9k725
+    volume: 500k
+  - kind: paf
+    name: PAF humbucker
+    measured: Late 1950s / early 1960s Gibson PAF humbucker, no cover
+    r: 8k09
+    l: "5.29"
+    c: 57p
+    resonance: 9k155
+    volume: 500k
+  - kind: hot
+    name: Hot humbucker
+    measured: 2006 Seymour Duncan JB, bridge, no cover
+    r: 16k43
+    l: "8.33"
+    c: 114p
+    resonance: 5k175
+    volume: 500k

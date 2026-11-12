@@ -1,0 +1,17 @@
+id: sim-no-dc-path
+layer: sim_error
+severity: error
+check: sim_no_dc_path
+title: No DC path to ground
+message: "Can't simulate yet: {which} no DC path to ground."
+why: >
+  The simulator found nets with no DC path to ground (connected to nothing, or only
+  through capacitors), so it can't work out their voltage. The no-DC-path check before
+  simulating should catch this; this is the simulator's own report.
+fix: Wire it to the rest of the circuit, or add a resistor to ground.
+fixtures:
+  bad:
+    - log: ["stderr Warning: singular matrix:  check node c1_2"]
+      nodes: {C1.2: c1_2}
+  good:
+    - log: ["stderr Error: Timestep too small"]

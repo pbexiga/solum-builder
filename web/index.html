@@ -1,0 +1,152 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Solum Builder</title>
+  <link rel="icon" href="assets/brand/favicon-outlined.svg" type="image/svg+xml">
+  <link rel="preload" href="fonts/fahkwang/Fahkwang-Light.ttf" as="font" type="font/ttf" crossorigin>
+  <link rel="preload" href="fonts/fahkwang/Fahkwang-ExtraLight.ttf" as="font" type="font/ttf" crossorigin>
+  <script src="theme-start.js"></script>
+  <link rel="stylesheet" href="theme.css">
+  <link rel="stylesheet" href="vendor/uplot/uPlot.min.css">
+  <link rel="stylesheet" href="app.css">
+  <script type="module" src="app.js"></script>
+</head>
+<body>
+  <header>
+    <img class="logo" src="assets/brand/solum-logo-outlined.svg" alt="Solum Builder">
+    <span class="wordmark"><span class="solum">Solum</span> <span class="builder">Builder</span></span>
+    <span class="sep" aria-hidden="true"></span>
+    <nav class="menus" aria-label="Menus">
+      <button type="button" id="file-menu">File</button>
+      <button type="button" id="edit-menu">Edit</button>
+      <button type="button" id="blocks-menu">Blocks</button>
+      <button type="button" id="view-menu">View</button>
+      <button type="button" id="tools-menu">Tools</button>
+      <button type="button" id="help-menu">Help</button>
+    </nav>
+    <span class="sep" aria-hidden="true"></span>
+    <span class="title">
+      <h1 id="circuit-name" class="circuit-name"></h1>
+      <span class="name-edit">
+        <input id="name-box" class="name-box" type="text" aria-label="Name" autocomplete="off" spellcheck="false" hidden>
+        <span id="name-error" class="name-error" role="alert" hidden></span>
+      </span>
+      <button type="button" id="rename-button" class="rename-button" title="Rename" aria-label="Rename">
+        <svg class="pencil" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M2.5 13.5l.7-3.2 7.6-7.6 2.5 2.5-7.6 7.6zM9.6 3.9l2.5 2.5"/></svg>
+        <svg class="tick" viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M3 8.5l3.2 3.2L13 4.8"/></svg>
+      </button>
+      <span id="badges" class="badges"></span>
+      <span id="dirty" class="dirty" hidden title="Changes you haven't saved">Not saved</span>
+    </span>
+    <span class="spacer"></span>
+    <span id="power-chip" class="power-chip" hidden></span>
+    <label class="power">Power
+      <select id="power" aria-label="Power supply"></select>
+      <span id="power-draw" class="power-draw" hidden></span>
+    </label>
+    <span class="sep" aria-hidden="true"></span>
+    <span class="run-group">
+      <button type="button" id="run" class="run" title="Run the simulation (Ctrl+Enter)">▶ Run</button>
+      <label class="autorun" title="Run after every change, as you draw"><input type="checkbox" id="autorun"> Auto-run</label>
+    </span>
+    <span class="sep" aria-hidden="true"></span>
+    <span class="history-wrap">
+      <button type="button" id="history-button" title="Every step you've made, newest first: click one to go back to it (Ctrl+Z steps one)">History</button>
+    </span>
+  </header>
+  <main class="workspace">
+    <nav class="palette" aria-label="Parts" id="palette"></nav>
+    <section class="canvas" aria-label="Schematic">
+      <div class="canvas-body" id="canvas-body">
+        <svg id="schematic" role="img" aria-label="Circuit schematic"></svg>
+        <div id="rename-notice" class="rename-notice" role="status" hidden></div>
+        <div class="zoom" role="group" aria-label="Zoom">
+          <button type="button" id="zoom-in" title="Zoom in" aria-label="Zoom in">+</button>
+          <button type="button" id="zoom-out" title="Zoom out" aria-label="Zoom out">−</button>
+          <button type="button" id="fit-button" title="Fit the circuit to the window">Fit</button>
+        </div>
+      </div>
+      <p class="hint" id="hint">Drag parts in from the left. Wire tool: click to start, click to bend, click a pin to finish. Drag a ball to move a wire end. Click to probe, double-click to edit.</p>
+    </section>
+    <aside class="panels" aria-label="Results">
+      <p id="error" class="error" role="alert" hidden></p>
+      <p id="stale" class="stale-note" hidden>The circuit changed since these results. Press Run (Ctrl+Enter), or turn on Auto-run.</p>
+      <details open id="panel-problems">
+        <summary>Problems <span class="count" id="problem-count"></span></summary>
+        <div class="panel-body" id="problems-body"></div>
+      </details>
+      <details open id="panel-notes">
+        <summary>Notes <span class="count" id="notes-count"></span></summary>
+        <div class="panel-body" id="notes-body"></div>
+      </details>
+      <details id="panel-dc">
+        <summary>DC</summary>
+        <div class="panel-body" id="dc-body"></div>
+      </details>
+      <details open id="panel-probe">
+        <summary>Probe</summary>
+        <div class="panel-body" id="probe-body"></div>
+      </details>
+      <details open id="panel-frequency">
+        <summary>Frequency</summary>
+        <div class="panel-body large-split">
+          <div class="panel-tools sweep-tools" id="sweep-tools" hidden>
+            <span id="sweep-title"></span>
+            <label>at <select id="sweep-net" aria-label="Sweep shown at"></select></label>
+            <button type="button" id="sweep-clear">Clear sweep</button>
+          </div>
+          <div class="sweep-summary" id="sweep-summary" hidden></div>
+          <div class="panel-tools" id="frequency-tools">
+            <button type="button" data-freeze="frequency">Freeze</button>
+            <button type="button" data-clear="frequency" hidden>Clear snapshot</button>
+          </div>
+          <p class="warning" id="ac-invalid" hidden></p>
+          <div class="plot" id="frequency-plot"></div>
+          <div class="readings" id="frequency-readings" hidden></div>
+          <div class="layers large-side" id="frequency-layers" hidden></div>
+        </div>
+      </details>
+      <details open id="panel-stages">
+        <summary>Bias &amp; headroom</summary>
+        <div class="panel-body large-split" id="stages-body"></div>
+      </details>
+      <details open id="panel-scope">
+        <summary>Scope</summary>
+        <div class="panel-body">
+          <div class="panel-tools">
+            <span class="segmented" role="radiogroup" aria-label="Pick level">
+              <button type="button" data-level="soft" role="radio">Soft</button>
+              <button type="button" data-level="med" role="radio">Medium</button>
+              <button type="button" data-level="hard" role="radio">Hard</button>
+            </span>
+            <button type="button" data-freeze="scope">Freeze</button>
+            <button type="button" data-clear="scope" hidden>Clear snapshot</button>
+          </div>
+          <div class="plot" id="scope-plot"></div>
+        </div>
+      </details>
+      <details open id="panel-harmonics">
+        <summary>Harmonics</summary>
+        <div class="panel-body">
+          <div class="plot" id="harmonics-plot"></div>
+        </div>
+      </details>
+      <details open id="panel-knobs">
+        <summary>Knobs &amp; switches</summary>
+        <div class="panel-body">
+          <div id="knobs-body"></div>
+          <div class="panel-tools knobs-tools">
+            <button type="button" id="knobs-opening" hidden title="Save where the knobs are now as where they start when this circuit opens. Turning a knob changes only what you hear and see; this is an edit (Undo takes it back).">Use as opening positions</button>
+          </div>
+        </div>
+      </details>
+      <details open id="panel-audio">
+        <summary>Audio</summary>
+        <div class="panel-body large-split" id="audio-body"></div>
+      </details>
+    </aside>
+  </main>
+</body>
+</html>

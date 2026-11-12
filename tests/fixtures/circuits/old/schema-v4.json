@@ -1,0 +1,11 @@
+{
+  "schema": 4,
+  "id": "old-host-v4",
+  "name": "Circuit with a pasted block, saved by schema v4",
+  "parts": [
+    {"ref": "R7", "type": "resistor", "value": "4k7", "pos": [0, 0]}
+  ],
+  "labels": [{"net": "GND", "pos": [20, 0]}],
+  "provenance": [{"from": "user:fuzz", "version": "abc123def456", "refs": {"R1": "R7"},
+                  "parts": [{"ref": "R1", "type": "resistor", "value": "4k7"}]}]
+}

@@ -1,0 +1,489 @@
+{
+  "id": "MPSA06",
+  "type": "bjt",
+  "description": "MPSA06 80 V general-purpose NPN amplifier (IC 500 mA), our fit to onsemi's MPSA05/06 sheet",
+  "spice_name": "MPSA06",
+  "kind": "model",
+  "pins": [],
+  "card": "MPSA06.lib",
+  "manufacturer": "onsemi",
+  "source": {
+    "url": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/2576/MPSA05,%2006,%2055,%2056%20Rev2.pdf",
+    "retrieved": "2026-10-29",
+    "licence": "Our own model fitted to the maker's data sheet (D-163): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://mm.digikey.com/Volume0/opasdata/d220001/medias/docus/2576/MPSA05,%2006,%2055,%2056%20Rev2.pdf",
+  "fixes": [],
+  "ratings": {
+    "vceo": 80.0,
+    "ic": 0.5
+  },
+  "rating_sources": {
+    "vceo": "Diotec MPSA06 data sheet (version 2026-03-30), Maximum ratings: VCEO 80 V",
+    "ic": "Diotec MPSA06 data sheet (version 2026-03-30), Maximum ratings: IC 500 mA DC"
+  },
+  "package": {
+    "name": "TO-92 (EBC)",
+    "pins": {
+      "E": 1,
+      "B": 2,
+      "C": 3
+    },
+    "source": "Diotec MPSA06 data sheet (version 2026-03-30), page 1 pin drawing"
+  },
+  "fit": {
+    "sheet": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D)",
+    "figure": "Figure 10. MPSA05/06 DC Current Gain (25 °C, VCE = 1.0 V); Figure 12. MPSA05/06 \"ON\" Voltages: VBE(on) at VCE = 1.0 V (25 °C); Figure 12 (VCE(sat) at IC/IB = 10, 25 °C); Figure 4. MPSA05/06 Capacitance (Cibo, 25 °C); Figure 4 (Cobo); Figure 2 (MPSA05/06 Current-Gain-Bandwidth Product, VCE = 2.0 V): 197 MHz at 10 mA, the table's condition (100 MHz minimum); VCB = 2 V less VBE(on) 0.64 V read from Figure 12 at 10 mA",
+    "points": [
+      [
+        0.0005200000000000001,
+        94.7605762973883
+      ],
+      [
+        0.001,
+        112.12171697897423
+      ],
+      [
+        0.002,
+        133.12212127247471
+      ],
+      [
+        0.005,
+        162.8174072904169
+      ],
+      [
+        0.01,
+        185.4321230425126
+      ],
+      [
+        0.02,
+        207.85902346710577
+      ],
+      [
+        0.05,
+        224.173486330962
+      ],
+      [
+        0.1,
+        213.5
+      ],
+      [
+        0.2,
+        149.86458833469464
+      ],
+      [
+        0.49,
+        62.55852407853657
+      ]
+    ],
+    "curves": {
+      "vbe_on": [
+        [
+          0.0005200000000000001,
+          0.5710677820242815
+        ],
+        [
+          0.001,
+          0.5829353644308379
+        ],
+        [
+          0.002,
+          0.598492513491748
+        ],
+        [
+          0.005,
+          0.6213390474045218
+        ],
+        [
+          0.01,
+          0.6411151983062402
+        ],
+        [
+          0.02,
+          0.6612484328391485
+        ],
+        [
+          0.05,
+          0.6896582230044214
+        ],
+        [
+          0.1,
+          0.7229920093236766
+        ],
+        [
+          0.2,
+          0.7563470015358912
+        ],
+        [
+          0.49,
+          0.8237954822327046
+        ]
+      ],
+      "vce_sat": [
+        [
+          0.0005200000000000001,
+          0.06721143577105963
+        ],
+        [
+          0.001,
+          0.05552474264002884
+        ],
+        [
+          0.002,
+          0.04567733009790328
+        ],
+        [
+          0.005,
+          0.03527733300051432
+        ],
+        [
+          0.01,
+          0.03069411300686401
+        ],
+        [
+          0.02,
+          0.029869398101197056
+        ],
+        [
+          0.05,
+          0.03735888271310016
+        ],
+        [
+          0.1,
+          0.05578683483382795
+        ],
+        [
+          0.2,
+          0.08204476342334048
+        ],
+        [
+          0.49,
+          0.14384361546198843
+        ]
+      ],
+      "cibo": [
+        [
+          0.103,
+          5.188e-11
+        ],
+        [
+          0.1748,
+          5.0659999999999996e-11
+        ],
+        [
+          0.2897,
+          4.8799999999999996e-11
+        ],
+        [
+          0.4379,
+          4.711e-11
+        ],
+        [
+          0.6626,
+          4.4979999999999996e-11
+        ],
+        [
+          1.074,
+          4.128e-11
+        ],
+        [
+          1.647,
+          3.76e-11
+        ],
+        [
+          2.416,
+          3.3630000000000004e-11
+        ],
+        [
+          3.382,
+          2.9909999999999997e-11
+        ],
+        [
+          4.008,
+          2.811e-11
+        ]
+      ],
+      "cobo": [
+        [
+          0.1017,
+          1.732e-11
+        ],
+        [
+          0.1543,
+          1.632e-11
+        ],
+        [
+          0.2412,
+          1.527e-11
+        ],
+        [
+          0.428,
+          1.39e-11
+        ],
+        [
+          0.9339,
+          1.207e-11
+        ],
+        [
+          2.097,
+          1.025e-11
+        ],
+        [
+          3.911,
+          8.763e-12
+        ],
+        [
+          7.619,
+          7.267999999999999e-12
+        ],
+        [
+          14.85,
+          5.8390000000000005e-12
+        ],
+        [
+          27.29,
+          4.9109999999999996e-12
+        ],
+        [
+          44.27,
+          4.449e-12
+        ],
+        [
+          80.99,
+          4.1900000000000005e-12
+        ]
+      ]
+    },
+    "method": "Gummel-Poon (scripts/fit_models.py). IS, NF, BF, ISE, NE, IKF, NKF and RE by least squares on the hFE and VBE(on) curves at VCE = 1 V together (points: the curves read at 1-2-5 steps); no Early voltage (VAF left out): the sheet gives no output admittance or output curves, so none is set (ngspice's default). BR, ISC, NC and RC by least squares on the VCE(sat) curve, the hFE points held, NR = NF, at IC/IB = 10. CJE, VJE, MJE from Cibo and CJC, VJC, MJC from Cobo against reverse voltage. TF from fT 196.9 MHz at 10.08 mA (Figure 2 (MPSA05/06 Current-Gain-Bandwidth Product, VCE = 2.0 V): 197 MHz at 10 mA, the table's condition (100 MHz minimum); VCB = 2 V less VBE(on) 0.64 V read from Figure 12 at 10 mA), less the junctions' charging time. Fitted curves are matched within 3.0 % (hFE), 6.3 mV (VBE) and 4.6 mV (VCE(sat)). RB, VAR, TR and the temperature terms are ngspice's defaults: the sheet doesn't pin them",
+    "note": "The MPSA05 and MPSA06 share the sheet's figures and its gain, saturation and VBE(on) limits; the MPSA06 differs in its 80 V ratings. The table gives hFE minimums only (100 at 10 and 100 mA), no range, so the typical 25 °C curve is used as drawn. The fit grid is the 1-2-5 steps plus the curves' ends (0.52 and 490 mA), because the curves start at 0.5 mA"
+  },
+  "validation": [
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.01,
+        "vce": 1.0
+      },
+      "simulated": 187.033,
+      "datasheet": {
+        "min": 100.0,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Electrical Characteristics: hFE at IC = 10 mA, VCE = 1.0 V"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.1,
+        "vce": 1.0
+      },
+      "simulated": 206.465,
+      "datasheet": {
+        "min": 100.0,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Electrical Characteristics: hFE at IC = 100 mA, VCE = 1.0 V"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.1,
+        "ib": 0.01
+      },
+      "simulated": 0.0521172,
+      "datasheet": {
+        "max": 0.25,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Electrical Characteristics: VCE(sat) at IC = 100 mA, IB = 10 mA"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.1,
+        "vce": 1.0
+      },
+      "simulated": 0.719732,
+      "datasheet": {
+        "max": 1.2,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Electrical Characteristics: VBE(on) at IC = 100 mA, VCE = 1.0 V"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.0007,
+        "vce": 1.0
+      },
+      "simulated": 101.928,
+      "datasheet": {
+        "typ": 102.2,
+        "tol": 5.1,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Figure 10. MPSA05/06 DC Current Gain (25 °C, VCE = 1.0 V)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.0007,
+        "vce": 1.0
+      },
+      "simulated": 0.572503,
+      "datasheet": {
+        "typ": 0.576,
+        "tol": 0.01,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Figure 12. MPSA05/06 \"ON\" Voltages: VBE(on) at VCE = 1.0 V (25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.0007,
+        "ib": 7e-05
+      },
+      "simulated": 0.0615261,
+      "datasheet": {
+        "typ": 0.0617,
+        "tol": 0.005,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Figure 12 (VCE(sat) at IC/IB = 10, 25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 1.0
+      },
+      "simulated": 144.811,
+      "datasheet": {
+        "typ": 145.8,
+        "tol": 7.3,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Figure 10. MPSA05/06 DC Current Gain (25 °C, VCE = 1.0 V)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 1.0
+      },
+      "simulated": 0.610584,
+      "datasheet": {
+        "typ": 0.6086,
+        "tol": 0.01,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Figure 12. MPSA05/06 \"ON\" Voltages: VBE(on) at VCE = 1.0 V (25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.003,
+        "ib": 0.0003
+      },
+      "simulated": 0.0394413,
+      "datasheet": {
+        "typ": 0.0411,
+        "tol": 0.005,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Figure 12 (VCE(sat) at IC/IB = 10, 25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.03,
+        "vce": 1.0
+      },
+      "simulated": 219.452,
+      "datasheet": {
+        "typ": 218.5,
+        "tol": 10.9,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Figure 10. MPSA05/06 DC Current Gain (25 °C, VCE = 1.0 V)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.03,
+        "vce": 1.0
+      },
+      "simulated": 0.675299,
+      "datasheet": {
+        "typ": 0.6735,
+        "tol": 0.01,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Figure 12. MPSA05/06 \"ON\" Voltages: VBE(on) at VCE = 1.0 V (25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.03,
+        "ib": 0.003
+      },
+      "simulated": 0.0349843,
+      "datasheet": {
+        "typ": 0.0326,
+        "tol": 0.005,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Figure 12 (VCE(sat) at IC/IB = 10, 25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.3,
+        "vce": 1.0
+      },
+      "simulated": 109.257,
+      "datasheet": {
+        "typ": 108.3,
+        "tol": 5.4,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Figure 10. MPSA05/06 DC Current Gain (25 °C, VCE = 1.0 V)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.3,
+        "vce": 1.0
+      },
+      "simulated": 0.783431,
+      "datasheet": {
+        "typ": 0.7826,
+        "tol": 0.01,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Figure 12. MPSA05/06 \"ON\" Voltages: VBE(on) at VCE = 1.0 V (25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.3,
+        "ib": 0.03
+      },
+      "simulated": 0.101908,
+      "datasheet": {
+        "typ": 0.1052,
+        "tol": 0.0074,
+        "source": "onsemi MPSA05/MPSA06/MPSA55/MPSA56 data sheet, Rev. 2 (January 2006, MPSA05/D), Figure 12 (VCE(sat) at IC/IB = 10, 25 °C)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 7 % here, not 5 mV: the card's VCE(sat) is nearly straight against IC, the sheet's curve bends a little between 10 and 50 mA (Gummel-Poon has no quasi-saturation)"
+      }
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 83.7531,
+      "note": "Gain on the Geofex tester (D-130, D-153): 9 V, collector through 2.4 kΩ, 2.2 MΩ from base to supply; collector current less the leakage, over the base current. Where a measured transistor's form starts."
+    }
+  ]
+}

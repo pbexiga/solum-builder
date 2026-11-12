@@ -1,0 +1,26 @@
+* TL072 JFET-input dual op-amp, ±18 V max (our model from TI's sheet)
+* Built by Solum Builder from TI TL07xx data sheet SLOS080W (revised July 2025), TL07xC at ±15 V (D-162)
+.subckt TL072 1 2 3 4 5
+* pins: + - V+ V- out. Built by Solum Builder from the sheet's typical figures (D-162)
+Rin 1 2 1e+12
+Rc1 1 mid 1e12
+Rc2 2 mid 1e12
+Emid mid 4 3 4 0.5
+Bgm mid g I=1e-05*tanh(1.13683*(V(1)-V(2)))
+R1 g mid 1.75927e+10
+C1 g mid 5e-13
+Vhp 3 hp DC 1.33
+Vhn hn 4 DC 1.33
+Dhi g hp DCLAMP
+Dlo hn g DCLAMP
+Ebuf b 0 g 0 1
+Rp b p 1000
+Cp p 0 3.57838e-11
+Eout o 0 p 0 1
+Vsense o o2 0
+Rout o2 5 125
+Bsrc 3 0 I=max(i(Vsense),0)
+Bsnk 0 4 I=max(-i(Vsense),0)
+Iq 3 4 DC 0.0014
+.model DCLAMP D(is=1e-15 n=0.05)
+.ends

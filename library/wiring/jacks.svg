@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 620 280" class="wiring" role="img" aria-labelledby="jk-title">
+  <title id="jk-title">Output jack (mono) and input jack (stereo, the ring switching the battery)</title>
+  <!-- output jack: mono, tip and sleeve -->
+  <text class="w-text w-head" x="130" y="30" text-anchor="middle">Output jack (mono, TS)</text>
+  <rect class="w-body" x="60" y="50" width="140" height="70" rx="6"/>
+  <text class="w-note" x="130" y="90" text-anchor="middle">¼″ jack</text>
+  <path class="w-wire" d="M100 120 V230"/>
+  <path class="w-wire" d="M160 120 V180"/>
+  <text class="w-text" x="168" y="184">S: ground</text>
+  <text class="w-text" x="108" y="234">T: footswitch output common</text>
+  <g class="w-lug"><circle cx="100" cy="128" r="8"/><circle cx="160" cy="128" r="8"/></g>
+  <!-- input jack: stereo, tip, ring and sleeve -->
+  <text class="w-text w-head" x="450" y="30" text-anchor="middle">Input jack (stereo, TRS)</text>
+  <rect class="w-body" x="360" y="50" width="180" height="70" rx="6"/>
+  <text class="w-note" x="450" y="90" text-anchor="middle">¼″ jack</text>
+  <path class="w-wire" d="M390 120 V250"/>
+  <path class="w-wire" d="M450 120 V210"/>
+  <path class="w-wire" d="M510 120 V170"/>
+  <text class="w-text" x="518" y="174">S: ground</text>
+  <text class="w-text" x="458" y="214">R: battery − (black)</text>
+  <text class="w-text" x="398" y="254">T: footswitch input common</text>
+  <g class="w-lug"><circle cx="390" cy="128" r="8"/><circle cx="450" cy="128" r="8"/><circle cx="510" cy="128" r="8"/></g>
+</svg>

@@ -1,0 +1,5 @@
+* OC81D germanium PNP (Mullard, audio driver), estimated from our OC75 fit: no OC81D sheet
+* Estimated by Solum Builder (D-186): the OC75 card (D-184) scaled by the OC81D's row
+* against the OC75's in the transistor cross-reference book, page 242 (data/spec-sheets/Germanium_OC_crossref.pdf; datasheetarchive.com DSA841000-11):
+* base current x 55/20 (hFE min), CJC x 40/50 (Cob max), TF x 1/2 (fT min).
+.model OC81D PNP(is=1.654e-05 nf=1.029 bf=49.64 ise=8.283e-07 ne=1.295 ikf=0.291 vaf=22 br=3.844 re=2.377 vje=0.75 mje=0.33 cjc=8.256e-11 vjc=0.75 mjc=0.33 tf=8.775e-08 nkf=1 nr=1.029 eg=0.67)

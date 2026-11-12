@@ -1,0 +1,448 @@
+{
+  "id": "2N5087",
+  "type": "bjt",
+  "description": "2N5087 low-noise, high-gain PNP (hFE 250-800 at 100 µA; VCEO 50 V), our fit to Fairchild's sheet",
+  "spice_name": "2N5087",
+  "kind": "model",
+  "pins": [],
+  "card": "2N5087.lib",
+  "manufacturer": "onsemi (Fairchild)",
+  "source": {
+    "url": "https://farnell.com/datasheets/59723.pdf",
+    "retrieved": "2026-11-02",
+    "licence": "Our own model fitted to the maker's data sheet (D-163): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "datasheet": "https://farnell.com/datasheets/59723.pdf",
+  "fixes": [],
+  "ratings": {
+    "vceo": 50.0,
+    "ic": 0.05
+  },
+  "rating_sources": {
+    "vceo": "Central Semiconductor 2N5086/2N5087 data sheet, Maximum ratings: VCEO 50 V",
+    "ic": "Central Semiconductor 2N5086/2N5087 data sheet, Maximum ratings: IC 50 mA DC"
+  },
+  "package": {
+    "name": "TO-92 (EBC)",
+    "pins": {
+      "E": 1,
+      "B": 2,
+      "C": 3
+    },
+    "source": "Central Semiconductor 2N5086/2N5087 data sheet, page 1 heading: JEDEC TO-92 case (EBC)"
+  },
+  "fit": {
+    "sheet": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62)",
+    "figure": "Typical Pulsed Current Gain vs Collector Current (page 3; the 25 °C curve, drawn at VCB = 5 V and taken here as VCE = 5 V, see note); Base Emitter ON Voltage vs Collector Current (page 3; the 25 °C curve, VCE = 5 V); Collector-Emitter Saturation Voltage vs Collector Current (page 3; β = 10, the 25 °C curve: the middle one, its label's arrow ends on it); Input and Output Capacitance vs Reverse Bias Voltage (page 3, f = 1 MHz, Cibo); the same figure (Cobo); Gain Bandwidth Product vs Collector Current (page 4, VCE = 5 V): 312.5 MHz at 10.4 mA, near its 313 MHz peak; the table gives 40 MHz minimum at 500 µA",
+    "points": [
+      [
+        1e-05,
+        449.40045904763497
+      ],
+      [
+        2e-05,
+        448.77402874279466
+      ],
+      [
+        5e-05,
+        447.9459329233374
+      ],
+      [
+        0.0001,
+        447.31950261849715
+      ],
+      [
+        0.0002,
+        446.69307231365684
+      ],
+      [
+        0.0005,
+        445.8649764941996
+      ],
+      [
+        0.001,
+        445.2385461893593
+      ],
+      [
+        0.002,
+        444.61211588451897
+      ],
+      [
+        0.005,
+        433.7941766856824
+      ],
+      [
+        0.01,
+        414.63376262364886
+      ],
+      [
+        0.02,
+        377.2842005067844
+      ],
+      [
+        0.05,
+        298.49886626701
+      ],
+      [
+        0.1,
+        195.17757163017725
+      ]
+    ],
+    "curves": {
+      "vbe_on": [
+        [
+          0.0001,
+          0.5925
+        ],
+        [
+          0.0002,
+          0.6108151392476792
+        ],
+        [
+          0.0005,
+          0.6350269568747046
+        ],
+        [
+          0.001,
+          0.653702797712361
+        ],
+        [
+          0.002,
+          0.6730940924336338
+        ],
+        [
+          0.005,
+          0.6987324300694582
+        ],
+        [
+          0.01,
+          0.7212
+        ],
+        [
+          0.02,
+          0.7486598899443868
+        ]
+      ],
+      "vce_sat": [
+        [
+          0.0001,
+          0.05219
+        ],
+        [
+          0.0002,
+          0.05252951314710987
+        ],
+        [
+          0.0005,
+          0.05307637004961344
+        ],
+        [
+          0.001,
+          0.05390307658712083
+        ],
+        [
+          0.002,
+          0.055695904510843226
+        ],
+        [
+          0.005,
+          0.06152667332440197
+        ],
+        [
+          0.01,
+          0.07149340418925676
+        ],
+        [
+          0.02,
+          0.09197854395417335
+        ],
+        [
+          0.05,
+          0.1596
+        ]
+      ],
+      "cibo": [
+        [
+          0.0,
+          7.512e-12
+        ],
+        [
+          0.8173,
+          6.488000000000001e-12
+        ],
+        [
+          1.635,
+          5.78e-12
+        ],
+        [
+          2.496,
+          5.17e-12
+        ],
+        [
+          3.416,
+          4.708e-12
+        ],
+        [
+          4.571,
+          4.317e-12
+        ],
+        [
+          5.729,
+          4.098e-12
+        ],
+        [
+          6.799,
+          4e-12
+        ],
+        [
+          7.985,
+          3.805e-12
+        ]
+      ],
+      "cobo": [
+        [
+          0.0,
+          6.098e-12
+        ],
+        [
+          0.5545,
+          5.5609999999999994e-12
+        ],
+        [
+          1.401,
+          4.950999999999999e-12
+        ],
+        [
+          2.233,
+          4.39e-12
+        ],
+        [
+          3.226,
+          3.927e-12
+        ],
+        [
+          4.307,
+          3.512e-12
+        ],
+        [
+          5.538,
+          3.147e-12
+        ],
+        [
+          6.828,
+          2.951e-12
+        ],
+        [
+          8.0,
+          2.8050000000000003e-12
+        ],
+        [
+          20.0,
+          2.292e-12
+        ]
+      ]
+    },
+    "method": "Gummel-Poon (scripts/fit_models.py). IS, NF, BF, ISE, NE, IKF, NKF and RE by least squares on the hFE and VBE(on) curves at VCE = 5 V together (points: the curves read at 1-2-5 steps; the hFE curve times 2.187, see note); no Early voltage (VAF left out): the sheet gives no output admittance or output curves, so none is set (ngspice's default). BR, ISC, NC and RC by least squares on the VCE(sat) curve, the hFE points held, NR = NF, at IC/IB = 10. CJE, VJE, MJE from Cibo and CJC, VJC, MJC from Cobo against reverse voltage. TF from fT 312.5 MHz at 10.43 mA (Gain Bandwidth Product vs Collector Current (page 4, VCE = 5 V): 312.5 MHz at 10.4 mA, near its 313 MHz peak; the table gives 40 MHz minimum at 500 µA), less the junctions' charging time. Fitted curves are matched within 1.1 % (hFE), 0.6 mV (VBE) and 1.4 mV (VCE(sat)). RB, VAR, TR and the temperature terms are ngspice's defaults: the sheet doesn't pin them",
+    "note": "The sheet draws one typical gain curve for the 2N5086 and 2N5087 (204.5 at 100 µA). Its shape is kept and its level set to the geometric middle of the 2N5087's 100 µA range (250 to 800: 447), as for the 2N5088/89 (D-163). The gain figure is drawn at VCB = 5 V and the VBE(on) figure at VCE = 5 V; both are fitted at VCE = 5 V. The 0.6-0.7 V between them makes no difference to this card, which has no Early voltage (the sheet gives no output admittance)"
+  },
+  "validation": [
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.0001,
+        "vce": 5.0
+      },
+      "simulated": 448.325,
+      "datasheet": {
+        "min": 250.0,
+        "max": 800.0,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Electrical Characteristics: hFE at IC = 100 µA, VCE = 5.0 V, 2N5087"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.001,
+        "vce": 5.0
+      },
+      "simulated": 445.413,
+      "datasheet": {
+        "min": 250.0,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Electrical Characteristics: hFE at IC = 1.0 mA, VCE = 5.0 V, 2N5087"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.01,
+        "vce": 5.0
+      },
+      "simulated": 414.05,
+      "datasheet": {
+        "min": 250.0,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Electrical Characteristics: hFE at IC = 10 mA, VCE = 5.0 V, 2N5087"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.01,
+        "ib": 0.001
+      },
+      "simulated": 0.071902,
+      "datasheet": {
+        "max": 0.3,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Electrical Characteristics: VCE(sat) at IC = 10 mA, IB = 1.0 mA"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.001,
+        "vce": 5.0
+      },
+      "simulated": 0.65381,
+      "datasheet": {
+        "max": 0.85,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Electrical Characteristics: VBE(on) at IC = 1.0 mA, VCE = 5.0 V"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 3e-05,
+        "vce": 5.0
+      },
+      "simulated": 448.388,
+      "datasheet": {
+        "typ": 448.4,
+        "tol": 22.4,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Typical Pulsed Current Gain vs Collector Current (page 3; the 25 °C curve, drawn at VCB = 5 V and taken here as VCE = 5 V, see note)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %; the curve times 2.187 (see the fit's note)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.0003,
+        "vce": 5.0
+      },
+      "simulated": 447.774,
+      "datasheet": {
+        "typ": 446.3,
+        "tol": 22.3,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Typical Pulsed Current Gain vs Collector Current (page 3; the 25 °C curve, drawn at VCB = 5 V and taken here as VCE = 5 V, see note)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %; the curve times 2.187 (see the fit's note)"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.0003,
+        "vce": 5.0
+      },
+      "simulated": 0.621746,
+      "datasheet": {
+        "typ": 0.6215,
+        "tol": 0.01,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Base Emitter ON Voltage vs Collector Current (page 3; the 25 °C curve, VCE = 5 V)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.0003,
+        "ib": 3e-05
+      },
+      "simulated": 0.0527509,
+      "datasheet": {
+        "typ": 0.0527,
+        "tol": 0.005,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Collector-Emitter Saturation Voltage vs Collector Current (page 3; β = 10, the 25 °C curve: the middle one, its label's arrow ends on it)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 5.0
+      },
+      "simulated": 438.353,
+      "datasheet": {
+        "typ": 440.6,
+        "tol": 22.0,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Typical Pulsed Current Gain vs Collector Current (page 3; the 25 °C curve, drawn at VCB = 5 V and taken here as VCE = 5 V, see note)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %; the curve times 2.187 (see the fit's note)"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.003,
+        "vce": 5.0
+      },
+      "simulated": 0.68426,
+      "datasheet": {
+        "typ": 0.6844,
+        "tol": 0.01,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Base Emitter ON Voltage vs Collector Current (page 3; the 25 °C curve, VCE = 5 V)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.003,
+        "ib": 0.0003
+      },
+      "simulated": 0.0572051,
+      "datasheet": {
+        "typ": 0.0582,
+        "tol": 0.005,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Collector-Emitter Saturation Voltage vs Collector Current (page 3; β = 10, the 25 °C curve: the middle one, its label's arrow ends on it)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them)"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.03,
+        "vce": 5.0
+      },
+      "simulated": 351.003,
+      "datasheet": {
+        "typ": 348.1,
+        "tol": 17.4,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Typical Pulsed Current Gain vs Collector Current (page 3; the 25 °C curve, drawn at VCB = 5 V and taken here as VCE = 5 V, see note)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 5 %; the curve times 2.187 (see the fit's note)"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.03,
+        "ib": 0.003
+      },
+      "simulated": 0.115388,
+      "datasheet": {
+        "typ": 0.1137,
+        "tol": 0.008,
+        "source": "Fairchild 2N5086/2N5087/MMBT5086/MMBT5087 data sheet (1997, Process 62), Collector-Emitter Saturation Voltage vs Collector Current (page 3; β = 10, the 25 °C curve: the middle one, its label's arrow ends on it)",
+        "note": "A point of the sheet's typical curve the fit was not given (it was fitted at 1-2-5 steps per decade, this sits between them); within 7 % here, not 5 mV: the card's VCE(sat) is nearly straight against IC, the sheet's curve bends a little between 10 and 50 mA (Gummel-Poon has no quasi-saturation)"
+      }
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 443.0307,
+      "note": "Gain on the Geofex tester (D-130, D-153): 9 V, collector through 2.4 kΩ, 2.2 MΩ from base to supply; collector current less the leakage, over the base current. Where a measured transistor's form starts."
+    }
+  ]
+}

@@ -1,0 +1,676 @@
+{
+  "schema": 29,
+  "id": "ts808-clipper-tone-v1",
+  "name": "Clipper and tone · Tube Screamer (TS808)",
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "description": "The Tube Screamer's heart, both halves of its RC4558: a non-inverting stage with two diodes in its feedback (IC1B; Drive VR1, gain 1 + (51k + Drive) / 4k7) that clip softly, then the passive low-pass and active Tone control (IC1A, VR2). Values and refs from ElectroSmash's \"Tube Screamer Circuit Analysis\" (electrosmash.com/tube-screamer-analysis), as the TS808 starter; RC4558 and 1N4148 for the JRC4558 and MA150, which the page lists as alternatives. Biased from a reference voltage (vref port: wire it to a Vref divider); C7 blocks it at the output.",
+  "tags": [
+    "gain",
+    "clipping",
+    "tone",
+    "opamp",
+    "ts808"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "C2",
+      "pos": [
+        350,
+        20
+      ],
+      "type": "capacitor",
+      "value": "1µ",
+      "kind": "film"
+    },
+    {
+      "ref": "R5",
+      "pos": [
+        400,
+        60
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "IC1B",
+      "pos": [
+        460,
+        -80
+      ],
+      "model": "RC4558",
+      "type": "opamp",
+      "half": "b"
+    },
+    {
+      "ref": "R4",
+      "pos": [
+        300,
+        -80
+      ],
+      "rot": 270,
+      "type": "resistor",
+      "value": "4k7"
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        340,
+        -100
+      ],
+      "type": "capacitor",
+      "value": "47n",
+      "kind": "film"
+    },
+    {
+      "ref": "R6",
+      "pos": [
+        420,
+        -300
+      ],
+      "type": "resistor",
+      "value": "51k"
+    },
+    {
+      "ref": "VR1",
+      "pos": [
+        470,
+        -300
+      ],
+      "type": "pot",
+      "value": "500k",
+      "taper": "A",
+      "label": "Distortion"
+    },
+    {
+      "ref": "D1",
+      "pos": [
+        450,
+        -190
+      ],
+      "rot": 180,
+      "type": "diode",
+      "model": "1N4148"
+    },
+    {
+      "ref": "D2",
+      "pos": [
+        450,
+        -240
+      ],
+      "type": "diode",
+      "model": "1N4148"
+    },
+    {
+      "ref": "C4",
+      "pos": [
+        450,
+        -140
+      ],
+      "type": "capacitor",
+      "value": "51p",
+      "kind": "c0g"
+    },
+    {
+      "ref": "R8",
+      "pos": [
+        40,
+        360
+      ],
+      "type": "resistor",
+      "value": "1k"
+    },
+    {
+      "ref": "C5",
+      "pos": [
+        80,
+        400
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "220n",
+      "kind": "film"
+    },
+    {
+      "ref": "R9",
+      "pos": [
+        140,
+        400
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "VR2",
+      "pos": [
+        160,
+        320
+      ],
+      "rot": 270,
+      "type": "pot",
+      "value": "20k",
+      "taper": "W",
+      "label": "Tone"
+    },
+    {
+      "ref": "C6",
+      "pos": [
+        120,
+        320
+      ],
+      "rot": 180,
+      "type": "capacitor",
+      "value": "220n",
+      "kind": "film"
+    },
+    {
+      "ref": "R10",
+      "pos": [
+        80,
+        320
+      ],
+      "rot": 180,
+      "type": "resistor",
+      "value": "220"
+    },
+    {
+      "ref": "IC1A",
+      "pos": [
+        260,
+        280
+      ],
+      "model": "RC4558",
+      "type": "opamp",
+      "half": "a"
+    },
+    {
+      "ref": "R11",
+      "pos": [
+        260,
+        180
+      ],
+      "type": "resistor",
+      "value": "1k"
+    },
+    {
+      "ref": "C7",
+      "pos": [
+        360,
+        280
+      ],
+      "type": "capacitor",
+      "value": "1µ",
+      "kind": "film"
+    },
+    {
+      "ref": "IC1C",
+      "pos": [
+        600,
+        -290
+      ],
+      "type": "powerunit",
+      "model": "RC4558"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        370,
+        20
+      ],
+      "to": [
+        400,
+        20
+      ]
+    },
+    {
+      "from": [
+        400,
+        20
+      ],
+      "to": [
+        400,
+        -60
+      ]
+    },
+    {
+      "from": [
+        400,
+        -60
+      ],
+      "to": [
+        420,
+        -60
+      ]
+    },
+    {
+      "from": [
+        400,
+        20
+      ],
+      "to": [
+        400,
+        40
+      ]
+    },
+    {
+      "from": [
+        420,
+        -100
+      ],
+      "to": [
+        380,
+        -100
+      ]
+    },
+    {
+      "from": [
+        360,
+        -100
+      ],
+      "to": [
+        380,
+        -100
+      ]
+    },
+    {
+      "from": [
+        320,
+        -100
+      ],
+      "to": [
+        300,
+        -100
+      ]
+    },
+    {
+      "from": [
+        380,
+        -100
+      ],
+      "to": [
+        380,
+        -300
+      ]
+    },
+    {
+      "from": [
+        500,
+        -80
+      ],
+      "to": [
+        520,
+        -80
+      ]
+    },
+    {
+      "from": [
+        520,
+        -80
+      ],
+      "to": [
+        520,
+        -330
+      ]
+    },
+    {
+      "from": [
+        380,
+        -140
+      ],
+      "to": [
+        430,
+        -140
+      ]
+    },
+    {
+      "from": [
+        470,
+        -140
+      ],
+      "to": [
+        520,
+        -140
+      ]
+    },
+    {
+      "from": [
+        380,
+        -190
+      ],
+      "to": [
+        430,
+        -190
+      ]
+    },
+    {
+      "from": [
+        470,
+        -190
+      ],
+      "to": [
+        520,
+        -190
+      ]
+    },
+    {
+      "from": [
+        380,
+        -240
+      ],
+      "to": [
+        430,
+        -240
+      ]
+    },
+    {
+      "from": [
+        470,
+        -240
+      ],
+      "to": [
+        520,
+        -240
+      ]
+    },
+    {
+      "from": [
+        380,
+        -300
+      ],
+      "to": [
+        400,
+        -300
+      ]
+    },
+    {
+      "from": [
+        440,
+        -300
+      ],
+      "to": [
+        450,
+        -300
+      ]
+    },
+    {
+      "from": [
+        470,
+        -320
+      ],
+      "to": [
+        470,
+        -330
+      ]
+    },
+    {
+      "from": [
+        470,
+        -330
+      ],
+      "to": [
+        520,
+        -330
+      ]
+    },
+    {
+      "from": [
+        520,
+        -80
+      ],
+      "to": [
+        560,
+        -80
+      ]
+    },
+    {
+      "from": [
+        0,
+        360
+      ],
+      "to": [
+        20,
+        360
+      ]
+    },
+    {
+      "from": [
+        60,
+        360
+      ],
+      "to": [
+        200,
+        360
+      ]
+    },
+    {
+      "from": [
+        200,
+        360
+      ],
+      "to": [
+        200,
+        300
+      ]
+    },
+    {
+      "from": [
+        200,
+        300
+      ],
+      "to": [
+        220,
+        300
+      ]
+    },
+    {
+      "from": [
+        80,
+        360
+      ],
+      "to": [
+        80,
+        380
+      ]
+    },
+    {
+      "from": [
+        140,
+        360
+      ],
+      "to": [
+        140,
+        380
+      ]
+    },
+    {
+      "from": [
+        160,
+        340
+      ],
+      "to": [
+        160,
+        360
+      ]
+    },
+    {
+      "from": [
+        160,
+        300
+      ],
+      "to": [
+        160,
+        260
+      ]
+    },
+    {
+      "from": [
+        160,
+        260
+      ],
+      "to": [
+        220,
+        260
+      ]
+    },
+    {
+      "from": [
+        200,
+        260
+      ],
+      "to": [
+        200,
+        180
+      ]
+    },
+    {
+      "from": [
+        200,
+        180
+      ],
+      "to": [
+        240,
+        180
+      ]
+    },
+    {
+      "from": [
+        280,
+        180
+      ],
+      "to": [
+        320,
+        180
+      ]
+    },
+    {
+      "from": [
+        320,
+        180
+      ],
+      "to": [
+        320,
+        280
+      ]
+    },
+    {
+      "from": [
+        300,
+        280
+      ],
+      "to": [
+        320,
+        280
+      ]
+    },
+    {
+      "from": [
+        320,
+        280
+      ],
+      "to": [
+        340,
+        280
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "VREF",
+      "pos": [
+        400,
+        80
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        300,
+        -60
+      ]
+    },
+    {
+      "net": "u2o",
+      "pos": [
+        560,
+        -80
+      ]
+    },
+    {
+      "net": "u2o",
+      "pos": [
+        0,
+        360
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        80,
+        420
+      ]
+    },
+    {
+      "net": "VREF",
+      "pos": [
+        140,
+        420
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        60,
+        320
+      ]
+    },
+    {
+      "net": "V+",
+      "pos": [
+        600,
+        -330
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        600,
+        -250
+      ]
+    },
+    {
+      "net": "in",
+      "pos": [
+        330,
+        20
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        380,
+        280
+      ]
+    }
+  ],
+  "ports": {
+    "in": "in",
+    "out": "out",
+    "vref": "VREF"
+  },
+  "notes": {
+    "part:C3": "With R4, a high-pass in the feedback leg (about 720 Hz): bass gets less gain and less distortion.",
+    "part:C4": "51 pF across the diodes: a low-pass that softens the clipping, strongest at full Distortion.",
+    "part:C5": "With R8, a passive low-pass (about 723 Hz) after the clipper: the mid hump."
+  }
+}

@@ -1,0 +1,3 @@
+* MPF4393 N-channel JFET switch (our model from onsemi's sheet)
+* Built by Solum Builder from onsemi MPF4392/D Rev. 6 (February 2012) (D-161)
+.model MPF4393 NJF(vto=-1.225 beta=0.008165 cgs=3.5e-12 cgd=2.5e-12)

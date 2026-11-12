@@ -1,0 +1,29 @@
+id: rail-shorted
+layer: topology
+severity: error
+check: rail_shorted
+title: Supply shorted
+message: "{ref} joins {a} and {b} with next to no resistance."
+why: >
+  Two supplies at different voltages (or a supply and ground) joined directly short the
+  supply: the battery or adapter delivers all the current it can.
+fix: "Remove {ref}, or check the switch's position or the resistor's value."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 0.5}
+      expect: [R1]
+    - rails: {V+: 9}
+      parts:
+        - {ref: SW1, type: switch, kind: spdt, position: 0, pins: {"2": V+, "1": GND, "3": a}}
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+      expect: [SW1]
+  good:
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, GND], value: 10k}
+    - rails: {V+: 9}
+      parts:
+        - {ref: SW1, type: switch, kind: spdt, position: 1, pins: {"2": V+, "1": GND, "3": a}}
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}

@@ -1,0 +1,22 @@
+id: opamp-pin-not-simulated
+layer: topology
+severity: info
+check: opamp_pin_not_simulated
+title: Pin not in the model
+message: "{ref}'s {pin} ({role}) is wired, but the {model} model doesn't simulate it."
+why: >
+  The {model} model has no node for this pin, so the simulation leaves it open: whatever is
+  wired to it makes no difference here, though it does on the real chip.
+fix: "Keep it if your build needs it (an offset trim, say); the simulation just won't show its effect."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: IC1, type: opamp, nets: [in, o, o], model: TL071, show_pins: true, pins: {null1: t, null2: t}}
+        - {ref: R1, type: resistor, nets: [t, GND], value: 10k}
+        - {ref: C1, type: capacitor, nets: [V+, GND], value: 100u}
+        - {ref: OUT, type: amp, nets: [o]}
+      expect: [IC1]
+  good:
+    - starter: proco-rat   # its LM308's compensation pins are in the model

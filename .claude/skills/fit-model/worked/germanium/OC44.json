@@ -1,0 +1,287 @@
+{
+  "id": "OC44",
+  "type": "bjt",
+  "description": "OC44 germanium PNP (Mullard, r.f.), our fit to Mullard's sheet",
+  "spice_name": "OC44",
+  "kind": "model",
+  "pins": [],
+  "card": "OC44.lib",
+  "manufacturer": "Mullard",
+  "source": {
+    "url": "https://frank.pocnet.net/other/Mullard/Mullard_Volume4PartIII_transistors_1968-11.pdf (Mullard Vol. 4 Part III, Nov 1968; pages 115-126 extracted, kept as data/spec-sheets/OC44_Mullard.pdf)",
+    "retrieved": "2026-11-03",
+    "licence": "Our own model fitted to the maker's data sheet (D-163): the values are Solum Builder's",
+    "original": "Solum Builder fit"
+  },
+  "fixes": [],
+  "ratings": {
+    "vceo": 10.0,
+    "ic": 0.005
+  },
+  "rating_sources": {
+    "vceo": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page D1: absolute maximum ratings, grounded emitter: Vce(d.c.) max. -10 V (base-ground impedance < 1 kΩ or Vbe > 300 mV reverse)",
+    "ic": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page D1: absolute maximum ratings: Ic max. 5.0 mA (averaged over 20 ms; 10 mA peak)"
+  },
+  "package": {
+    "name": "SO-2 glass (EBC)",
+    "pins": {
+      "E": 1,
+      "B": 2,
+      "C": 3
+    },
+    "source": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page D5: outline and dimensions (V.A.S.C.A. SO-2/SB3-2): e, b, c in a line, the dot on the collector side"
+  },
+  "fit": {
+    "sheet": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6)",
+    "figure": "page C2 transfer characteristic at Vc = -2 V (IB 8.8 to 98 µA); page C1 IC against VBE at Vc = -2 V (0.11 to 10 mA); page D2 table (Ico); page D3 (rbb', Cb'c, fα, gce)",
+    "points": [
+      [
+        8.829e-06,
+        0.0007082000000000001
+      ],
+      [
+        2.2718e-05,
+        0.0018833
+      ],
+      [
+        3.6426e-05,
+        0.0032313999999999997
+      ],
+      [
+        5.6933999999999994e-05,
+        0.0053463
+      ],
+      [
+        7.0605e-05,
+        0.0068392
+      ],
+      [
+        8.438699999999999e-05,
+        0.008414099999999999
+      ],
+      [
+        9.8221e-05,
+        0.010007799999999999
+      ]
+    ],
+    "curves": {
+      "vbe_on": [
+        [
+          0.00011310000000000001,
+          0.08259999999999999
+        ],
+        [
+          0.0001898,
+          0.09725
+        ],
+        [
+          0.00034310000000000005,
+          0.11181999999999999
+        ],
+        [
+          0.0006168,
+          0.12637
+        ],
+        [
+          0.0010952,
+          0.14097
+        ],
+        [
+          0.0022378999999999997,
+          0.1565
+        ],
+        [
+          0.0037091,
+          0.16941
+        ],
+        [
+          0.0051691,
+          0.17819000000000002
+        ],
+        [
+          0.0066444,
+          0.18549000000000002
+        ],
+        [
+          0.0080797,
+          0.19179
+        ],
+        [
+          0.0095407,
+          0.19808
+        ],
+        [
+          0.009911099999999999,
+          0.19963999999999998
+        ]
+      ],
+      "cobo": [
+        [
+          6.0,
+          1.05e-11
+        ]
+      ]
+    },
+    "method": "see NOTES.md (germanium study): transfer, VBE-IC and Ico fitted together at Vc = -2 V, leakage included. Fitted points within 5.8 % (IC at IB) and 9.3 mV (VBE); ICBO 0.51 µA. Curves read off the raster by pixel (.claude/skills/fit-model/worked/germanium/pix.py)",
+    "note": "Provisional: a germanium-study card, not in the library (the AC128 stands in, D-170)."
+  },
+  "validation": [
+    {
+      "quantity": "icbo",
+      "conditions": {
+        "vcb": 2.0
+      },
+      "simulated": 5.11302e-07,
+      "datasheet": {
+        "typ": 5e-07,
+        "max": 2e-06,
+        "source": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page D2: characteristics at Tj = 25 °C, Ico (Vcb = -2 V, Ie = 0): 0.5 typ., 2.0 max µA"
+      },
+      "note": "Fitted with the gain; a measured unit's leakage replaces it (D-130)"
+    },
+    {
+      "quantity": "icbo",
+      "conditions": {
+        "vcb": 15.0
+      },
+      "simulated": 5.14754e-07,
+      "datasheet": {
+        "max": 1e-05,
+        "source": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page D2: characteristics at Tj = 25 °C, Ico (Vcb = -15 V, Ie = 0): 10 max µA"
+      }
+    },
+    {
+      "quantity": "vce_sat",
+      "conditions": {
+        "ic": 0.008,
+        "ib": 0.0005
+      },
+      "simulated": 0.0282106,
+      "datasheet": {
+        "min": 0.02,
+        "typ": 0.045,
+        "max": 0.15,
+        "source": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page D2: characteristics at Tj = 25 °C, collector bottoming voltage (Ic = 8 mA, Ib = 500 µA): -20 min, -45 typ., -150 max mV"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.001,
+        "vce": 6.0
+      },
+      "simulated": 0.134192,
+      "datasheet": {
+        "min": 0.125,
+        "typ": 0.15,
+        "max": 0.185,
+        "source": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page D2: characteristics at Tj = 25 °C, base input voltage (Vce = -6 V, Ic = 1 mA): -125 min, -150 typ., -185 max mV"
+      }
+    },
+    {
+      "quantity": "hfe",
+      "conditions": {
+        "ic": 0.001,
+        "vce": 6.0
+      },
+      "simulated": 98.9013
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.0001241,
+        "vce": 2.0
+      },
+      "simulated": 0.0836771,
+      "datasheet": {
+        "typ": 0.08626,
+        "tol": 0.01,
+        "source": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page C1: IC against Vbe, Vc = -2 V (by pixel)"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.000292,
+        "vce": 2.0
+      },
+      "simulated": 0.106121,
+      "datasheet": {
+        "typ": 0.10818000000000001,
+        "tol": 0.01,
+        "source": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page C1: IC against Vbe, Vc = -2 V (by pixel)"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.0007993000000000001,
+        "vce": 2.0
+      },
+      "simulated": 0.13288,
+      "datasheet": {
+        "typ": 0.13366999999999998,
+        "tol": 0.01,
+        "source": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page C1: IC against Vbe, Vc = -2 V (by pixel)"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.0026097000000000004,
+        "vce": 2.0
+      },
+      "simulated": 0.165689,
+      "datasheet": {
+        "typ": 0.15997999999999998,
+        "tol": 0.01,
+        "source": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page C1: IC against Vbe, Vc = -2 V (by pixel)"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.004802900000000001,
+        "vce": 2.0
+      },
+      "simulated": 0.183973,
+      "datasheet": {
+        "typ": 0.17628,
+        "tol": 0.01,
+        "source": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page C1: IC against Vbe, Vc = -2 V (by pixel)"
+      }
+    },
+    {
+      "quantity": "vbe",
+      "conditions": {
+        "ic": 0.0073688,
+        "vce": 2.0
+      },
+      "simulated": 0.197893,
+      "datasheet": {
+        "typ": 0.1885,
+        "tol": 0.01,
+        "source": "Mullard OC44 data sheet (Mullard Technical Handbook Vol. 4 Part III, Nov 1968: OC44 of Dec 1960, pages D1-D5 and C1-C6), page C1: IC against Vbe, Vc = -2 V (by pixel)"
+      }
+    },
+    {
+      "quantity": "tester_hfe",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0,
+        "rb": 2200000.0
+      },
+      "simulated": 94.5834,
+      "note": "The card's own gain on the tester (where a measured form starts)"
+    },
+    {
+      "quantity": "iceo",
+      "conditions": {
+        "vcc": 9.0,
+        "rc": 2400.0
+      },
+      "simulated": 3.27026e-05,
+      "note": "The card's own leakage on the tester"
+    }
+  ]
+}

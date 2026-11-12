@@ -1,0 +1,27 @@
+id: switch-custom
+layer: topology
+severity: info
+check: switch_custom
+build: true
+title: Custom switch
+message: "{switch} is a custom switch, so the parts list can't name one to buy."
+why: >
+  A custom switch has the contacts you drew, which may not match any switch sold. The
+  parts list names a built-in type (SPDT, DPDT, 3PDT, on-off-on, a rotary…) by its lugs.
+fix: "Pick the built-in type closest to {switch} in its form, or find a switch with these contacts."
+fixtures:
+  bad:
+    - parts:
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: R2, type: resistor, nets: [b, GND], value: 10k}
+        - ref: SW1
+          type: switch
+          kind: custom
+          custom: {name: Odd, throws: 2, positions: [{name: A, joins: [1]}, {name: B, joins: [2]}]}
+          pins: {"2": GND, "1": a, "3": b}
+      expect: [SW1]
+  good:
+    - parts:
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+        - {ref: R2, type: resistor, nets: [b, GND], value: 10k}
+        - {ref: SW1, type: switch, kind: spdt, pins: {"2": GND, "1": a, "3": b}}

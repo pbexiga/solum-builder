@@ -1,0 +1,78 @@
+id: opamp-no-dc-feedback
+layer: topology
+severity: error
+check: opamp_no_dc_feedback
+title: Op-amp with no DC feedback
+message: "{ref} has no DC path from its output to its − input: it needs a resistor (or a pot) there."
+why: >
+  Every path from {ref}'s output back to its − input passes through a capacitor. A
+  capacitor blocks DC, so at DC {ref} has no feedback and runs at its full open-loop
+  gain (around 100 dB). A real chip's input offset of a few millivolts, multiplied by
+  that, pushes its output into a supply rail, where it stays: the stage is dead or badly
+  distorted. The simulation can't show this, because its op-amp has no offset: it shows
+  the output sitting at the reference as if all were well.
+fix: >
+  Add a resistor from {ref}'s output to its − input, across the feedback capacitor if it
+  has one (pedal
+  stages use 100k to 1M). With a capacitor in the ground leg, the stage's gain at DC is
+  then 1 and its output sits at the reference. If you meant to remove that resistor,
+  put it back: the capacitor alone only sets where the highs roll off.
+fixtures:
+  bad:
+    # A non-inverting stage whose feedback resistor was left out: only C4 joins out to m.
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, p], value: 100n}
+        - {ref: R1, type: resistor, nets: [p, vref], value: 1M}
+        - {ref: R2, type: resistor, nets: [V+, vref], value: 100k}
+        - {ref: R3, type: resistor, nets: [vref, GND], value: 100k}
+        - {ref: C2, type: capacitor, nets: [vref, GND], value: 10u}
+        - {ref: R5, type: resistor, nets: [m, g], value: 10k}
+        - {ref: C5, type: capacitor, nets: [g, GND], value: 1u}
+        - {ref: C4, type: capacitor, nets: [o, m], value: 100p}
+        - {ref: U1, type: opamp, nets: [p, m, o], model: TL072}
+        - {ref: C3, type: capacitor, nets: [o, out], value: 1u}
+        - {ref: R4, type: resistor, nets: [out, GND], value: 100k}
+        - {ref: OUT, type: amp, nets: [out]}
+      expect: [U1]
+    # The treble stage's feedback resistor left out (the Klon's R24): only C4 joins o2 to
+    # m. R6 reaches m from o2 only through U1's output, which U1 drives: no feedback.
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, p], value: 100n}
+        - {ref: R1, type: resistor, nets: [p, vref], value: 1M}
+        - {ref: R2, type: resistor, nets: [V+, vref], value: 100k}
+        - {ref: R3, type: resistor, nets: [vref, GND], value: 100k}
+        - {ref: C2, type: capacitor, nets: [vref, GND], value: 10u}
+        - {ref: U1, type: opamp, nets: [p, o1, o1], model: TL072}
+        - {ref: R5, type: resistor, nets: [o1, m], value: 100k}
+        - {ref: R6, type: resistor, nets: [o2, o1], value: 10k}
+        - {ref: C4, type: capacitor, nets: [o2, m], value: 3n9}
+        - {ref: U2, type: opamp, nets: [vref, m, o2], model: TL072}
+        - {ref: C3, type: capacitor, nets: [o2, out], value: 1u}
+        - {ref: R4, type: resistor, nets: [out, GND], value: 100k}
+        - {ref: OUT, type: amp, nets: [out]}
+      expect: [U2]
+  good:
+    # DC feedback through a second op-amp (a servo): U1's output drives U2's input, and
+    # U2's output reaches U1's - input through R5. That is feedback.
+    - rails: {V+: 9}
+      parts:
+        - {ref: IN, type: guitar, nets: [in]}
+        - {ref: C1, type: capacitor, nets: [in, p], value: 100n}
+        - {ref: R1, type: resistor, nets: [p, vref], value: 1M}
+        - {ref: R2, type: resistor, nets: [V+, vref], value: 100k}
+        - {ref: R3, type: resistor, nets: [vref, GND], value: 100k}
+        - {ref: C2, type: capacitor, nets: [vref, GND], value: 10u}
+        - {ref: U1, type: opamp, nets: [p, m, o1], model: TL072}
+        - {ref: C4, type: capacitor, nets: [o1, m], value: 100p}
+        - {ref: U2, type: opamp, nets: [o1, o2, o2], model: TL072}
+        - {ref: R5, type: resistor, nets: [o2, m], value: 100k}
+        - {ref: C3, type: capacitor, nets: [o1, out], value: 1u}
+        - {ref: R4, type: resistor, nets: [out, GND], value: 100k}
+        - {ref: OUT, type: amp, nets: [out]}
+    - starter: klon-centaur-aion
+    - starter: ts808
+    - starter: proco-rat

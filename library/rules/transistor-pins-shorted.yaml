@@ -1,0 +1,27 @@
+id: transistor-pins-shorted
+layer: topology
+severity: error
+check: transistor_pins_shorted
+title: Transistor pins shorted
+message: "{ref}'s {pins} pins are on the same net."
+why: >
+  With those pins joined the transistor can't amplify: collector to emitter (or drain to
+  source) shorts the stage out, and base to emitter keeps it switched off. Base to
+  collector (a transistor used as a diode) and a JFET's gate to source (a current source)
+  are deliberate and not reported.
+fix: "Check {ref}'s wiring and orientation: a transistor drawn turned round often has its pins swapped."
+fixtures:
+  bad:
+    - rails: {V+: 9}
+      parts:
+        - {ref: Q1, type: bjt, nets: [c, b, c], model: 2N5089}
+        - {ref: R1, type: resistor, nets: [V+, c], value: 10k}
+        - {ref: R2, type: resistor, nets: [V+, b], value: 1M}
+      expect: [Q1]
+  good:
+    - starter: big-muff-pi-v3
+    - rails: {V+: 9}   # a JFET current source: gate tied to source
+      parts:
+        - {ref: Q1, type: jfet, nets: [d, s, s], model: J201}
+        - {ref: R1, type: resistor, nets: [V+, d], value: 1k}
+        - {ref: R2, type: resistor, nets: [s, GND], value: 100}

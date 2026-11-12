@@ -1,0 +1,18 @@
+id: no-amp-output
+layer: topology
+severity: info
+check: no_amp_output
+title: No amp output
+message: The circuit has no amp output, so its output isn't loaded the way an amp loads it.
+why: >
+  The amp output is the load the pedal drives (1M, like an amp's input). Without it there's
+  no "at the output" view, and a passive tone stack or a high-impedance output reads
+  differently from how it sounds plugged in. Blocks (templates) don't need one.
+fix: Drag an Amp output in from the palette and wire it to the circuit's output.
+fixtures:
+  bad:
+    - parts:
+        - {ref: IN, type: guitar, nets: [a]}
+        - {ref: R1, type: resistor, nets: [a, GND], value: 10k}
+  good:
+    - starter: ts808

@@ -1,0 +1,464 @@
+{
+  "schema": 23,
+  "id": "fuzz-face",
+  "name": "Fuzz Face (AC128)",
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "description": "Arbiter Fuzz Face with AC128 germanium PNPs (positive ground: the supply is -9 V), from ElectroSmash's schematic. Q1 and Q2 are the AC128 card given the page's betas, 85 and 120, as measured hFE, and the low leakage of the page's own models (10 and 14 µA on the tester).",
+  "starter": true,
+  "power": {
+    "rails": {
+      "V-": -9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "IN",
+      "pos": [
+        0,
+        60
+      ],
+      "type": "guitar",
+      "volume": "250k"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        70,
+        60
+      ],
+      "type": "capacitor",
+      "value": "2µ2",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "Q1",
+      "pos": [
+        160,
+        60
+      ],
+      "type": "bjt",
+      "model": "AC128",
+      "measured": {
+        "hfe": 85.0,
+        "leakage": 9.8e-06
+      }
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        180,
+        -10
+      ],
+      "rot": 90,
+      "type": "resistor",
+      "value": "33k"
+    },
+    {
+      "ref": "Q2",
+      "pos": [
+        260,
+        20
+      ],
+      "type": "bjt",
+      "model": "AC128",
+      "measured": {
+        "hfe": 120.0,
+        "leakage": 1.4e-05
+      }
+    },
+    {
+      "ref": "R3",
+      "pos": [
+        280,
+        -30
+      ],
+      "rot": 270,
+      "type": "resistor",
+      "value": "8k2"
+    },
+    {
+      "ref": "R2",
+      "pos": [
+        280,
+        -90
+      ],
+      "rot": 270,
+      "type": "resistor",
+      "value": "470"
+    },
+    {
+      "ref": "R4",
+      "pos": [
+        190,
+        140
+      ],
+      "type": "resistor",
+      "value": "100k"
+    },
+    {
+      "ref": "VR1",
+      "pos": [
+        300,
+        80
+      ],
+      "rot": 270,
+      "type": "pot",
+      "value": "1k",
+      "label": "Fuzz"
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        260,
+        110
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "20µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "C3",
+      "pos": [
+        340,
+        -60
+      ],
+      "type": "capacitor",
+      "value": "10n",
+      "kind": "film"
+    },
+    {
+      "ref": "VR2",
+      "pos": [
+        420,
+        -60
+      ],
+      "rot": 180,
+      "type": "pot",
+      "value": "500k",
+      "taper": "A",
+      "rotation": 1.0,
+      "label": "Volume"
+    },
+    {
+      "ref": "OUT",
+      "pos": [
+        520,
+        -20
+      ],
+      "type": "amp"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        20,
+        60
+      ],
+      "to": [
+        50,
+        60
+      ]
+    },
+    {
+      "from": [
+        90,
+        60
+      ],
+      "to": [
+        140,
+        60
+      ]
+    },
+    {
+      "from": [
+        180,
+        80
+      ],
+      "to": [
+        180,
+        100
+      ]
+    },
+    {
+      "from": [
+        180,
+        10
+      ],
+      "to": [
+        180,
+        40
+      ]
+    },
+    {
+      "from": [
+        180,
+        20
+      ],
+      "to": [
+        240,
+        20
+      ]
+    },
+    {
+      "from": [
+        280,
+        0
+      ],
+      "to": [
+        280,
+        -10
+      ]
+    },
+    {
+      "from": [
+        280,
+        -50
+      ],
+      "to": [
+        280,
+        -70
+      ]
+    },
+    {
+      "from": [
+        280,
+        -60
+      ],
+      "to": [
+        320,
+        -60
+      ]
+    },
+    {
+      "from": [
+        360,
+        -60
+      ],
+      "to": [
+        400,
+        -60
+      ]
+    },
+    {
+      "from": [
+        440,
+        -60
+      ],
+      "to": [
+        460,
+        -60
+      ]
+    },
+    {
+      "from": [
+        420,
+        -40
+      ],
+      "to": [
+        420,
+        -20
+      ]
+    },
+    {
+      "from": [
+        420,
+        -20
+      ],
+      "to": [
+        500,
+        -20
+      ]
+    },
+    {
+      "from": [
+        280,
+        40
+      ],
+      "to": [
+        280,
+        50
+      ]
+    },
+    {
+      "from": [
+        280,
+        50
+      ],
+      "to": [
+        300,
+        50
+      ]
+    },
+    {
+      "from": [
+        300,
+        50
+      ],
+      "to": [
+        300,
+        60
+      ]
+    },
+    {
+      "from": [
+        280,
+        80
+      ],
+      "to": [
+        260,
+        80
+      ]
+    },
+    {
+      "from": [
+        260,
+        80
+      ],
+      "to": [
+        260,
+        90
+      ]
+    },
+    {
+      "from": [
+        120,
+        60
+      ],
+      "to": [
+        120,
+        140
+      ]
+    },
+    {
+      "from": [
+        120,
+        140
+      ],
+      "to": [
+        170,
+        140
+      ]
+    },
+    {
+      "from": [
+        210,
+        140
+      ],
+      "to": [
+        240,
+        140
+      ]
+    },
+    {
+      "from": [
+        240,
+        140
+      ],
+      "to": [
+        240,
+        50
+      ]
+    },
+    {
+      "from": [
+        240,
+        50
+      ],
+      "to": [
+        280,
+        50
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "in",
+      "pos": [
+        30,
+        60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        180,
+        100
+      ]
+    },
+    {
+      "net": "V-",
+      "pos": [
+        180,
+        -30
+      ]
+    },
+    {
+      "net": "q1c",
+      "pos": [
+        210,
+        20
+      ]
+    },
+    {
+      "net": "q2c",
+      "pos": [
+        280,
+        0
+      ]
+    },
+    {
+      "net": "V-",
+      "pos": [
+        280,
+        -110
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        460,
+        -60
+      ]
+    },
+    {
+      "net": "out",
+      "pos": [
+        470,
+        -20
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        300,
+        100
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        260,
+        130
+      ]
+    }
+  ],
+  "probes": {
+    "in": "in",
+    "out": "out"
+  },
+  "notes": {
+    "net:q1c": "Q1 collector, about -0.7 V: the low bias gives the Fuzz Face its asymmetric clipping.",
+    "net:q2c": "Q2 collector, about -4.5 V: the classic bias target.",
+    "part:R4": "Feedback from Q2's emitter to Q1's base: sets the bias and tames the gain.",
+    "part:C2": "With the Fuzz pot, bypasses Q2's emitter: more Fuzz, less feedback, more gain."
+  },
+  "enclosure": {
+    "size": "125B"
+  }
+}

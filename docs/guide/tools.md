@@ -12,6 +12,10 @@ For a capacitor it also reads and writes the **code printed on the part**: `223`
 
 Tools → **Resistor colour code…** works both ways: type a **Value** to see its bands, or pick the bands (**4 bands** or **5 bands**) to read the value and tolerance. It says whether the value is a standard one (E6, E12, E24…), and if not, the nearest standard values each side. Read a resistor from the end where the bands bunch together; the tolerance band (often gold, or brown on 1 % parts) sits apart at the other end.
 
+## Filter calculator
+
+Tools → **Filter calculator…**. A resistor and a capacitor make a filter: pick **High-pass** (the capacitor in the signal's path, the resistor to ground: a bass cut) or **Low-pass** (the resistor in the path, the capacitor to ground: a treble cut) and type both values. It shows the corner, where the level is 3 dB down, with the sum written out (`1 / (2 × π × 100 kΩ × 1 µF) = 1.59 Hz`), how far the filter turns down a guitar's lowest note (82 Hz), 1 kHz and 5 kHz, and what that means in a sentence. Fill in **Compare with** (either value; a blank one stays the same) to see a second filter beside the first and how far the corner moved: 1µ into 100k passes the whole guitar, and 10µ puts the corner ten times lower still. The sum itself is on [Formulas](formulas.md#rc-corner-frequency).
+
 ## Help sheets
 
 - Help → **Documentation…**: this guide, in a large window with a search across every page. The pop-out button beside **Close** (a square with an arrow leaving it) shows the page you're on in its own tab or window.

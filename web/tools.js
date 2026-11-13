@@ -13,7 +13,7 @@ import { h, infoPopup } from "./panels.js";
 import { ORIGIN_TAGS, SHOWS, checksText, excludedText, originText, partGroups } from "./parts.js";
 import { debounce, latestOnly } from "./state.js";
 
-/** @returns {Promise<{colours: any[], quantities: Array<{unit: string, name: string, example: string}>}>} */
+/** @returns {Promise<{colours: any[], quantities: Array<{unit: string, name: string, example: string}>, filters: Record<string, string>}>} */
 const tables = () => getJson("api/tools");
 
 /**
@@ -101,6 +101,57 @@ export async function converterSheet() {
     ],
   });
   value.input.focus();
+}
+
+/**
+ * Tools → Filter calculator (D-319): a resistor and a capacitor as a high-pass or a
+ * low-pass, its corner with the sum written out, what it does to a guitar, and a second
+ * pair of values to compare. The server works it all out (`solum/filters.py`).
+ */
+export async function filterSheet() {
+  const { filters } = await tables();
+  const kind = /** @type {HTMLSelectElement} */ (h("select", { id: "filter-kind" }));
+  for (const [id, name] of Object.entries(filters)) kind.append(new Option(name, id));
+  const r = inputRow("filter-r", "Resistor", "e.g. 100k");
+  const c = inputRow("filter-c", "Capacitor", "e.g. 1u, 47n");
+  const r2 = inputRow("filter-r2", "Compare with R", "the same");
+  const c2 = inputRow("filter-c2", "and C", "e.g. 10u");
+  const error = h("p", { class: "error", role: "alert", hidden: "" });
+  const result = h("div", { class: "tool-result", id: "filter-result" });
+  const q = (/** @type {{input: HTMLInputElement}} */ row) => encodeURIComponent(row.input.value.trim());
+  const ask = asker(error, () => `api/tools/filter?kind=${kind.value}&r=${q(r)}&c=${q(c)}&r2=${q(r2)}&c2=${q(c2)}`, (body) => {
+    result.replaceChildren(
+      h("p", {}, [`The corner, where the level is 3 dB down: ${body.formula}`]),
+      ...body.filters.map((/** @type {any} */ f) =>
+        h("div", { class: "filter-answer" }, [
+          h("h3", {}, [`${f.r} and ${f.c}: ${f.corner_text}`]),
+          h("p", { class: "values" }, [f.working]),
+          h("p", {}, [f.effect]),
+          h("table", {}, [h("tbody", {}, [h("tr", {}, f.levels.map((/** @type {any} */ lv) => h("th", {}, [`at ${lv.freq}`]))), h("tr", {}, f.levels.map((/** @type {any} */ lv) => h("td", { class: "values" }, [lv.db])))])]),
+        ]),
+      ),
+      ...(body.change ? [h("p", { id: "filter-change" }, [body.change])] : []),
+    );
+  });
+  const changed = () => {
+    if (r.input.value.trim() && c.input.value.trim()) ask();
+  };
+  for (const el of [kind, r.input, c.input, r2.input, c2.input]) el.addEventListener(el === kind ? "change" : "input", changed);
+  sheet({
+    title: "Filter calculator",
+    id: "filter-calculator",
+    body: [
+      h("p", {}, ["A resistor and a capacitor make a filter. Type both, the way they're written on a schematic, to see where it starts cutting and what that does to a guitar. Fill in Compare with to see what another value would do."]),
+      h("div", { class: "form-row" }, [h("label", { for: "filter-kind" }, ["Filter"]), kind, h("span", { class: "unit" }, [])]),
+      r.row,
+      c.row,
+      r2.row,
+      c2.row,
+      error,
+      result,
+    ],
+  });
+  r.input.focus();
 }
 
 /** Tools → Resistor colour code. */

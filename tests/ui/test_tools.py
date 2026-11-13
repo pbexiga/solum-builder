@@ -519,3 +519,31 @@ def test_a_browsers_old_preferences_are_carried_over_once(
     page.reload()
     assert page.evaluate("document.documentElement.dataset.theme") == "dark"
     assert page.evaluate("localStorage.getItem('solum.theme')") is None
+
+
+def test_filter_calculator(page: Page, base_url: str, browser_errors: list[str]) -> None:
+    """Tools → Filter calculator (D-319), with the user's example: 1 µF into 100 kΩ is
+    1.59 Hz, far below the guitar; 10 µF moves it ten times lower."""
+    open_circuit(page, base_url)
+    menu(page, "tools-menu", "menu-filter")
+    page.locator("#filter-r").fill("100k")
+    page.locator("#filter-c").fill("1u")
+    result = page.locator("#filter-result")
+    expect(result.locator(".filter-answer h3")).to_have_text(["100k and 1µ: 1.59 Hz"])
+    expect(result).to_contain_text("1 / (2 × π × 100 kΩ × 1 µF) = 1.59 Hz")
+    expect(result).to_contain_text("the whole guitar passes")
+    page.locator("#filter-c2").fill("10u")
+    expect(result.locator(".filter-answer h3")).to_have_text(
+        ["100k and 1µ: 1.59 Hz", "100k and 10µ: 159 mHz"]
+    )
+    expect(page.locator("#filter-change")).to_contain_text("The corner moves 10 times lower")
+    page.locator("#filter-c2").fill("")
+    page.locator("#filter-kind").select_option("low")
+    page.locator("#filter-r").fill("4k7")
+    page.locator("#filter-c").fill("47n")
+    expect(result.locator(".filter-answer h3")).to_have_text(["4k7 and 47n: 720 Hz"])
+    expect(result).to_contain_text("Cuts treble: everything above about 720 Hz")
+    page.locator("#filter-c").fill("47x")
+    expect(page.locator("#filter-calculator .error")).to_contain_text("Couldn't read the value")
+    assert all("422" in e for e in browser_errors)
+    browser_errors.clear()

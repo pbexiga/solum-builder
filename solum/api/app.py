@@ -54,6 +54,8 @@ from solum.export import (
     schematic_page,
     zip_files,
 )
+from solum.filters import KINDS as FILTER_KINDS
+from solum.filters import FilterError, filter_view
 from solum.fixes import (
     FIXES_VERSION,
     Arranged,
@@ -122,7 +124,7 @@ SCHEMATIC_MAX = 8_000_000  # bytes: a drawn schematic is well under this (D-205)
 USER_ERRORS = (
     CircuitError, ConnectivityError, NetlistError, BiasError, ModelError, StoreError, SweepError,
     CantSimulate, LiveError, LinearError, AssetError, NamError, RenderError, WavError,
-    MarkingError, CurveError, FixError, SettingsError,
+    MarkingError, CurveError, FixError, SettingsError, FilterError,
 )  # fmt: skip
 # what makes a render request fail; a lookup (`cached_only`) answers "not rendered" instead
 LOOKUP_MISSES = (*USER_ERRORS, SimError, HTTPException)
@@ -706,8 +708,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/tools")
     def tool_tables() -> dict[str, Any]:
-        """The colour code and the converter's quantities, for the Tools pages' pickers."""
-        return tables()
+        """The colour code, the converter's quantities and the filter calculator's kinds,
+        for the Tools pages' pickers."""
+        return {**tables(), "filters": FILTER_KINDS}
 
     @app.get("/api/tools/convert")
     def convert(unit: str, value: str = "", code: str = "") -> dict[str, Any]:
@@ -731,6 +734,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except ValueError as err:
             raise MarkingError(str(err)) from None
         return resistor_view(ohms)
+
+    @app.get("/api/tools/filter")
+    def rc_filter(kind: str, r: str, c: str, r2: str = "", c2: str = "") -> dict[str, Any]:
+        """Tools → Filter calculator (D-319): an RC high-pass or low-pass from `r` and `c`
+        as typed, and a second pair to compare."""
+        return filter_view(kind, r, c, r2, c2)
 
     @app.post("/api/view")
     def view(req: CircuitRequest) -> dict[str, Any]:

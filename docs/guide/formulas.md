@@ -52,7 +52,7 @@ with R in ohms, C in farads and f in hertz.
 - **Bass cut (high-pass):** an input capacitor of `22n` into a `1M` resistor gives 1 / (2 × π × 1000000 × 0.000000022) = 7.2 Hz, well below a guitar's lowest note (82 Hz), so nothing is lost.
 - A `10k` with a `100n` gives 159 Hz.
 
-Making either part ten times bigger moves the corner ten times lower.
+Making either part ten times bigger moves the corner ten times lower. Tools → **Filter calculator…** does this sum for any two values and says what the filter does to a guitar.
 
 ## Capacitors in parallel and in series
 

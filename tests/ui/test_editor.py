@@ -10,6 +10,7 @@ import itertools
 import json
 import re
 import time
+from pathlib import Path
 from typing import Any
 
 import pytest
@@ -1301,3 +1302,41 @@ def test_undo_puts_back_a_moved_selection(page: Page, base_url: str) -> None:
     wait_for_view(page, before)
     assert part_pos(page, ref) == (x + 40, y)
     expect(lines).to_have_count(n_wires)
+
+
+def test_import_a_solum_builder_file(
+    page: Page, base_url: str, tmp_path: Path, browser_errors: list[str]
+) -> None:
+    """File → Import… (D-315): a circuit file from elsewhere is saved as a new circuit under
+    its own name (or another when that's taken) and opened; a netlist is refused in words."""
+    circuit = json.loads((REPO / "library" / "starters" / "fuzz-face.json").read_text())
+    ours = tmp_path / "shared.json"
+    ours.write_text(json.dumps({**circuit, "name": "Shared fuzz", "starter": False}))
+    netlist = tmp_path / "fuzz.cir"
+    netlist.write_text("* fuzz\nR1 in out 10k\n.end\n")
+    open_circuit(page, base_url)
+
+    menu(page, "file-menu", "menu-import")
+    page.locator(".popup button[type=submit]").click()
+    expect(page.locator(".popup .error")).to_have_text("Choose a file first.")
+    page.locator("#import-file").set_input_files(str(netlist))
+    expect(page.locator(".popup .error")).to_contain_text("fuzz.cir isn't a Solum Builder file.")
+    page.locator("#import-file").set_input_files(str(ours))
+    expect(page.locator(".popup .error")).to_be_hidden()
+    expect(page.locator("#field-name")).to_have_value("Shared fuzz")
+    page.locator(".popup button[type=submit]").click()
+    expect(page.locator("#circuit-name")).to_have_text("Shared fuzz")
+    assert "Q1" in drawn_refs(page)
+    saved = api(page, base_url, "GET", "api/circuits/shared-fuzz")["circuit"]
+    assert (saved["id"], saved.get("starter", False)) == ("shared-fuzz-v1", False)
+
+    # the same file again: the name is taken, so the form says so and takes another
+    menu(page, "file-menu", "menu-import")
+    page.locator("#import-file").set_input_files(str(ours))
+    page.locator(".popup button[type=submit]").click()
+    taken = "already have a circuit called Shared fuzz"
+    expect(page.locator(".popup .error")).to_contain_text(taken)
+    browser_errors.clear()  # the refused save's 422
+    page.locator("#field-name").fill("Shared fuzz two")
+    page.locator(".popup button[type=submit]").click()
+    expect(page.locator("#circuit-name")).to_have_text("Shared fuzz two")

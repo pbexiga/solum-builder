@@ -9,6 +9,7 @@ Your circuits and blocks are plain JSON files in the app's data folder (`DATA_DI
 - **Open…**: your circuits. See [Opening a circuit](#opening-a-circuit).
 - **Save** (Ctrl+S): saves over the open file. A new sheet, a starter or a read-only file asks for a name instead.
 - **Save as…**: a copy under a new name, in My circuits.
+- **Import…**: a Solum Builder file from somewhere else (a circuit or a block someone sent you, or one an AI assistant wrote) becomes a new circuit of yours, under the file's name or another you type, and opens. It takes only the `.json` files Solum Builder saves, not SPICE netlists or other programs' schematics. A file copied straight into the circuits folder shows in Open… too.
 - **Properties…**: the name, tags, description and enclosure, with the file's details.
 - **New major version…**: keeps the current version as final and carries on with the next.
 - **Export…**: the parts list and build package. See [Export and build](export.md).

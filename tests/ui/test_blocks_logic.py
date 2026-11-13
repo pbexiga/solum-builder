@@ -618,3 +618,28 @@ def test_the_op_amp_doubler_pasted_three_times_on_the_klon_keeps_its_nets(js: Pa
         r = paste(js, circuit, block, at=[400 * i, 275])
         check_paste(before, parse_circuit(block), parse_circuit(r["circuit"]), r["refs"])
         circuit = r["circuit"]
+
+
+def test_imported_file_is_one_of_ours_or_says_why(js: Page) -> None:
+    """File → Import… reads only Solum Builder's own files (D-315): a circuit or a block
+    with its name; a netlist or other JSON is refused in words that say what it takes."""
+    fuzz = {"schema": SCHEMA_VERSION, "id": "fuzz", "name": "Fuzz", "parts": []}
+    block = {**fuzz, "name": "Buffer", "template": True}
+    netlist = "* fuzz\nR1 in out 10k\n.end\n"
+    read = run(
+        js,
+        "const f = await m('editor/files.js');"
+        " return arg.map(([text, name]) => f.importedFile(text, name));",
+        [
+            [json.dumps(fuzz), "fuzz.json"],
+            [json.dumps(block), "buffer.json"],
+            [netlist, "fuzz.cir"],
+            [json.dumps({"nodes": [], "name": "Other"}), "other.json"],
+            ["[1, 2]", "list.json"],
+        ],
+    )
+    assert read[0] == {"circuit": fuzz, "name": "Fuzz", "block": False}
+    assert read[1] == {"circuit": block, "name": "Buffer", "block": True}
+    for refused, name in zip(read[2:], ["fuzz.cir", "other.json", "list.json"], strict=True):
+        assert refused["error"].startswith(f"{name} isn't a Solum Builder file.")
+        assert "not a SPICE netlist" in refused["error"]

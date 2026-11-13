@@ -62,6 +62,8 @@ The circuits folder is `circuits/` inside the app's data folder: `data/` beside
 `compose.yaml` unless `DATA_DIR` says otherwise (`.env`, or the environment); File →
 Settings… in the app shows it (with Docker, the host path is the one to use).
 
+- **By the user, anywhere:** File → Import… in the app takes the file (it asks for a name
+  when the file's is taken). Give them the file's full path.
 - **Same machine:** copy the file into that folder under any name ending `.json`. The app
   reads the folder each time File → Open… is shown, with no restart, and renames the file
   its own way (`<id>-v1.json`).
@@ -73,7 +75,7 @@ Settings… in the app shows it (with Docker, the host path is the one to use).
     -d "{\"circuit\": $(cat scratch/drawn/<id>.json)}"
   ```
 
-Then the user opens it from File → Open….
+A copied or posted file is opened from File → Open….
 
 **Never write over a circuit the user may have changed.** Before copying, list the folder.
 A file with that id already there: if it is the same as the one you last put there (keep

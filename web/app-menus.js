@@ -83,6 +83,7 @@ export function appMenus(host, schematic, app) {
       { label: "New sheet", id: "menu-new", run: app.files.newSheet },
       { label: "New from starter", id: "menu-starters", items: starterItems() },
       { label: "Open…", id: "menu-open", run: app.files.openDialog },
+      { label: "Import…", id: "menu-import", hint: "a Solum Builder file, not a netlist", run: app.files.importDialog },
       "-",
       { label: "Save", id: "menu-save", hint: "Ctrl+S", run: () => app.files.save() },
       { label: "Save as…", id: "menu-save-as", run: () => app.files.saveAs() },

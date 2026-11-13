@@ -7,7 +7,7 @@ import re
 
 from playwright.sync_api import Page, expect
 
-from tests.ui.conftest import open_circuit, run, wait_for_update
+from tests.ui.conftest import open_circuit, reload_kept, run, wait_for_update
 from tests.ui.test_editor import menu
 
 DEFAULT = [
@@ -43,7 +43,7 @@ def test_drag_a_pane_and_reset(page: Page, base_url: str) -> None:
     # dragging by the grip never opens or shuts a pane
     assert page.eval_on_selector("#panel-knobs", "(d) => d.open")
     page.locator("#panel-scope > summary").click()  # shut one
-    page.reload()
+    reload_kept(page)
     open_circuit(page, base_url)
     assert order(page) == moved
     menu(page, "view-menu", "menu-reset-panes")
@@ -53,7 +53,7 @@ def test_drag_a_pane_and_reset(page: Page, base_url: str) -> None:
     )
     # Scope reopened; DC starts shut, as on load
     assert opened == [p for p in DEFAULT if p != "panel-dc"]
-    page.reload()
+    reload_kept(page)
     open_circuit(page, base_url)
     assert order(page) == DEFAULT
 
@@ -104,7 +104,7 @@ def test_open_and_shut_panes_and_the_scroll_survive_a_reload(page: Page, base_ur
     page.evaluate("document.querySelector('.panels').scrollTop = 400")
     page.wait_for_timeout(400)  # the scroll is saved once it settles
     page.add_init_script(FRAMES)
-    page.reload()
+    reload_kept(page)
     wait_for_update(page, 0)
     assert opened(page) == want
     page.wait_for_timeout(500)  # the panes have filled in
@@ -114,7 +114,7 @@ def test_open_and_shut_panes_and_the_scroll_survive_a_reload(page: Page, base_ur
     page.locator("#panel-scope > summary").click(position={"x": 40, "y": 10})
     expect(page.locator("#panel-scope canvas").first).to_be_visible()
     menu(page, "view-menu", "menu-reset-panes")
-    page.reload()
+    reload_kept(page)
     wait_for_update(page, 0)
     assert opened(page) == [p for p in DEFAULT if p != "panel-dc"]
 
@@ -126,7 +126,7 @@ def test_large_views_come_back_as_bars(page: Page, base_url: str) -> None:
     page.locator("#stages-expand").click()
     page.locator("#frequency-expand").click()  # Bias & headroom shrinks to its bar
     expect(page.locator("#panel-stages")).not_to_have_attribute("open", "")
-    page.reload()
+    reload_kept(page)
     wait_for_update(page, 0)
     for pane in ("panel-stages", "panel-frequency"):
         expect(page.locator(f"#{pane}")).to_have_class(re.compile("large-view"))
@@ -143,7 +143,7 @@ def test_large_views_come_back_as_bars(page: Page, base_url: str) -> None:
     page.locator("#frequency-expand").click()
     expect(page.locator("#panel-frequency")).not_to_have_class(re.compile("large-view"))
     expect(page.locator("#panel-frequency")).to_have_attribute("open", "")
-    page.reload()
+    reload_kept(page)
     wait_for_update(page, 0)
     expect(page.locator("#panel-frequency")).not_to_have_class(re.compile("large-view"))
     expect(page.locator("#panel-stages")).to_have_class(re.compile("large-view"))

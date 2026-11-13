@@ -191,6 +191,19 @@ def test_a_sweep_plays_from_buttons_like_the_slots(
     # the click started it, from the take preloaded when it finished
     page.wait_for_function("!document.querySelector('#audio-body audio').paused")
     assert page.evaluate("document.querySelector('#audio-body audio').src").startswith("blob:")
+    # the WAV is saved, never opened in place of the app (the Mac app's window), and the
+    # two download buttons stay one line tall however narrow the pane (D-312)
+    wav = page.locator("#audio-body a.button", has_text="Download WAV")
+    expect(wav).to_have_attribute("download", "")
+    both = page.locator(".audio-downloads > a.button, .audio-downloads > button")
+    expect(both).to_have_count(2)
+    one_line = page.get_by_role("button", name="Render", exact=True).bounding_box()
+    assert one_line is not None
+    for i in range(2):
+        expect(both.nth(i)).to_have_css("white-space", "nowrap")
+        expect(both.nth(i)).to_have_css("flex-shrink", "0")
+        box = both.nth(i).bounding_box()
+        assert box is not None and box["height"] == pytest.approx(one_line["height"], abs=2)
     # every take in one zip, each with what it was made from
     with page.expect_download() as download:
         page.get_by_role("button", name="Download all (.zip)").click()

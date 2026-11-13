@@ -15,13 +15,14 @@ const SVG = "http://www.w3.org/2000/svg";
 /**
  * Help → Documentation and Help → Formulas (D-290): the user guide in a large window. The
  * pages are the server's (`/manual/<page>`, each with the page list and a search box), so
- * the window only frames them; "Open in a new tab" shows the page it is on in a tab of
- * its own. Escape closes it from inside the page too.
+ * the window only frames them; the pop-out button (an icon: the Mac app has no tabs to
+ * name, D-312) shows the page it is on in a tab of its own, or in the Mac app outside
+ * its window. Escape closes it from inside the page too.
  * @param {string} [page] the page to open on (the first page when left out)
  */
 export function manualSheet(page = "") {
   const frame = /** @type {HTMLIFrameElement} */ (h("iframe", { class: "manual-frame", src: `manual/${page}`, title: "Solum Builder guide" }));
-  const popOut = h("button", { type: "button", id: "manual-pop-out", title: "Open this page in a new browser tab" }, ["Open in a new tab"]);
+  const popOut = h("button", { type: "button", id: "manual-pop-out", class: "icon-button", title: "Open this page in its own tab or window", "aria-label": "Open this page in its own tab or window" }, [popOutIcon()]);
   popOut.addEventListener("click", () => window.open(frame.contentWindow?.location.href ?? frame.src, "_blank", "noopener"));
   const { close } = sheet({ title: "Documentation", id: "manual", wide: true, head: [popOut], body: [frame] });
   const onMessage = (/** @type {MessageEvent} */ e) => {
@@ -29,6 +30,16 @@ export function manualSheet(page = "") {
     if (e.source === frame.contentWindow && e.data === "manual-close") close();
   };
   window.addEventListener("message", onMessage);
+}
+
+/** The open-externally mark: a square with an arrow leaving its top right corner. */
+function popOutIcon() {
+  const svg = document.createElementNS(SVG, "svg");
+  for (const [k, v] of Object.entries({ viewBox: "0 0 16 16", width: "14", height: "14", fill: "none", stroke: "currentColor", "stroke-width": "1.5", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" })) svg.setAttribute(k, v);
+  const path = document.createElementNS(SVG, "path");
+  path.setAttribute("d", "M6.5 3.5h-3v9h9v-3M9.5 2.5h4v4M13.5 2.5l-6 6");
+  svg.append(path);
+  return svg;
 }
 
 /** Help → Choosing capacitors. */

@@ -36,7 +36,7 @@ import { reorderable } from "./panes.js";
 import { liveCurves, liveValues, nearestStep, readingRows } from "./live.js";
 import { h, knobControl, paneInfo, restoreLargeViews, shrinkLargeViews, renderDc, renderKnobs, renderNodeView, renderPartView, renderProblems, renderReadings, renderSweepSummary, showKnob } from "./panels.js";
 import { barPlot, curvePlot, forgetColours, linePlot, liveLinePlot } from "./plots.js";
-import { themeSheet } from "./theme-sheet.js";
+import { settingsSheet } from "./settings.js";
 import { Schematic, supplyKind } from "./schematic/render.js";
 import { setSwitchKinds } from "./schematic/symbols.js";
 import {
@@ -52,7 +52,7 @@ const CAP_TYPES_KEY = "solum.capTypes";
 const MARKS_KEY = "solum.problemMarks";
 
 /**
- * A switch as this browser last left it (kept as 1 or 0): Auto-run and View → Capacitor
+ * A switch as it was last left (kept as 1 or 0; Auto-run with the preferences, the View ones in this browser): Auto-run and View → Capacitor
  * types are off unless turned on (D-065); View → Problem marks is on unless turned off (D-176).
  * @param {string} key @param {boolean} fallback
  */
@@ -355,10 +355,10 @@ const menus = appMenus($("canvas-body"), schematic, {
   toggleCapTypes: () => toggleCapTypes(),
   toggleMarks: () => toggleMarks(),
   resetPanes: () => resetPanes(),
-  chooseTheme: () => themeSheet(() => {
+  openSettings: () => report(settingsSheet(() => {
     forgetColours();
     if (state.run) render(currentNet());
-  }),
+  })),
 });
 const tiles = palette($("palette"), schematic, {
   circuit: () => state.circuit,
@@ -713,7 +713,7 @@ function run() {
   return refresh();
 }
 
-/** @param {boolean} on run after every edit (remembered in this browser; off by default, D-065) */
+/** @param {boolean} on run after every edit (remembered with the preferences; off by default, D-065) */
 function setAutorun(on) {
   state.autorun = on;
   /** @type {HTMLInputElement} */ ($("autorun")).checked = on;

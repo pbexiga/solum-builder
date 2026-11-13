@@ -7,7 +7,6 @@
 
 import { closeForm, openForm } from "./editor/form.js";
 import { exportSheet } from "./export.js";
-import { currentTheme } from "./theme-sheet.js";
 import { aboutSheet, capacitorSheet, hotkeysSheet, manualSheet, resistorGuideSheet } from "./help.js";
 import { menu, openMenu } from "./menus.js";
 import { isNamedNet, nameNet, setNetNote, setPartNote } from "./notes-logic.js";
@@ -57,7 +56,7 @@ import { addModelSheet, converterSheet, partsSheet, resistorSheet } from "./tool
  * @property {() => void} toggleCapTypes
  * @property {() => void} toggleMarks
  * @property {() => void} resetPanes
- * @property {() => void} chooseTheme
+ * @property {() => void} openSettings File → Settings… (D-310)
  */
 
 /**
@@ -91,6 +90,8 @@ export function appMenus(host, schematic, app) {
       { label: "New major version…", id: "menu-new-major", disabled: !app.files.ownFile() || !app.file()?.current, run: app.files.newMajor },
       "-",
       { label: "Export…", id: "menu-export", hint: "parts list and build package, from the last save", run: () => exportSheet({ source: app.source(), dirty: app.dirty(), dismissed: app.circuit()?.dismissed, onPick: (ref) => app.select({ kind: "part", id: ref }) }) },
+      "-",
+      { label: "Settings…", id: "menu-settings", hint: "folders, cache, theme", run: app.openSettings },
       "-",
       { label: app.isBlock() ? "Delete this block…" : "Delete this circuit…", id: "menu-delete-circuit", disabled: !app.files.ownFile(), run: app.files.deleteCircuit },
     ];
@@ -136,7 +137,6 @@ export function appMenus(host, schematic, app) {
       { label: "Capacitor types", id: "menu-cap-types", checked: app.shown().capTypes, hint: "100n film", run: app.toggleCapTypes },
       { label: "Problem marks", id: "menu-marks", checked: app.shown().marks, hint: "each problem on the sheet", run: app.toggleMarks },
       "-",
-      { label: "Theme…", id: "menu-theme", hint: currentTheme().name, run: app.chooseTheme },
       { label: "Reset pane order", id: "menu-reset-panes", hint: "every pane open, in the column", run: app.resetPanes },
     ];
   }

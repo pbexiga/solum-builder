@@ -17,15 +17,17 @@ import uvicorn
 from playwright.sync_api import Browser, Page, expect, sync_playwright
 
 from solum.api.app import create_app
-from solum.config import load_settings
+from solum.config import Settings, load_settings
+from solum.settings_file import SETTINGS_FILE
 
 REPO = Path(__file__).parents[2]
 
 
 @pytest.fixture(scope="session")
-def base_url(tmp_path_factory: pytest.TempPathFactory) -> Iterator[str]:
+def ui_settings(tmp_path_factory: pytest.TempPathFactory) -> Settings:
+    """Where the test server keeps things: temporary folders."""
     tmp = tmp_path_factory.mktemp("ui")
-    settings = load_settings(
+    return load_settings(
         {
             "CACHE_DIR": str(tmp / "cache"),
             "DATA_DIR": str(tmp / "data"),
@@ -33,6 +35,18 @@ def base_url(tmp_path_factory: pytest.TempPathFactory) -> Iterator[str]:
             "LIBRARY_DIR": str(REPO / "library"),
         }
     )
+
+
+@pytest.fixture(autouse=True)
+def _no_kept_settings(ui_settings: Settings) -> None:
+    """Each test starts as a first visit: the preferences are the server's (D-311), so
+    without this one test's theme and pane order would be the next one's."""
+    (ui_settings.data_dir / SETTINGS_FILE).unlink(missing_ok=True)
+
+
+@pytest.fixture(scope="session")
+def base_url(ui_settings: Settings) -> Iterator[str]:
+    settings = ui_settings
     with socket.socket() as s:
         s.bind(("127.0.0.1", 0))
         port = s.getsockname()[1]
@@ -108,6 +122,13 @@ def open_circuit(
 ) -> None:
     page.goto(f"{base_url}#{circuit_id}")
     wait_for_update(page, 0, timeout)
+
+
+def reload_kept(page: Page) -> None:
+    """Reload once the preferences just changed have reached the server (D-311): the page
+    marks `<html data-saving>` while one is on its way."""
+    page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
+    page.reload()
 
 
 _saves = itertools.count(1)

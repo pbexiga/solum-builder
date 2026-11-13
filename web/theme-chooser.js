@@ -1,14 +1,14 @@
 /**
- * View → Theme… (DOM, D-303): the three themes as cards; a click puts it on at once and
- * this browser keeps it. Canvas plots can't follow CSS, so `onChange` redraws them.
+ * The theme chooser in File → Settings… (DOM, D-303, D-310): the three themes as cards; a
+ * click puts it on at once and it is kept with the preferences (storage.js). Canvas
+ * plots can't follow CSS, so `onChange` redraws them.
  */
 
-import { sheet } from "./editor/form.js";
 import { h } from "./panels.js";
 import { remember, remembered } from "./storage.js";
 import { THEMES, THEME_KEY, themeFor } from "./theme.js";
 
-/** @returns {import("./theme.js").Theme} the theme this browser chose */
+/** @returns {import("./theme.js").Theme} the theme chosen */
 export const currentTheme = () => themeFor(remembered(THEME_KEY));
 
 /** @param {"solum" | "dark" | "light"} id */
@@ -25,8 +25,11 @@ function preview(t) {
   ]);
 }
 
-/** @param {() => void} onChange called after a theme goes on */
-export function themeSheet(onChange) {
+/**
+ * @param {() => void} onChange called after a theme goes on
+ * @returns {HTMLElement} the cards, the one in use pressed
+ */
+export function themeChooser(onChange) {
   const cards = THEMES.map((t) => {
     const card = /** @type {HTMLButtonElement} */ (h("button", { type: "button", class: "theme-option", "data-theme-id": t.id }, [
       preview(t), h("span", { class: "theme-name" }, [t.name]), h("span", { class: "theme-about" }, [t.about]),
@@ -43,8 +46,5 @@ export function themeSheet(onChange) {
     for (const c of cards) c.setAttribute("aria-pressed", String(c.dataset.themeId === on));
   };
   mark();
-  sheet({ title: "Theme", id: "theme", body: [
-    h("p", {}, ["How Solum Builder looks in this browser. Exports and printed schematics keep their own paper colours."]),
-    h("div", { class: "theme-options" }, cards),
-  ] });
+  return h("div", { class: "theme-options" }, cards);
 }

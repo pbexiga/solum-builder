@@ -55,4 +55,4 @@ It may name a model you don't have. Problems says which (*Model not in the libra
 
 ## Where are my files?
 
-In the data folder (`DATA_DIR` in `.env`): circuits, blocks, models and audio uploads. The cache folder (`CACHE_DIR`) only holds saved results and the search index and can be deleted at any time; the app rebuilds it.
+In the data folder (`data/` in the app's folder, unless `DATA_DIR` names another): circuits, blocks, models and audio uploads. File → **Settings…** shows where it is ([Settings](settings.md)). The cache folder (`CACHE_DIR`) only holds saved results and the search index and can be deleted at any time; the app rebuilds it.

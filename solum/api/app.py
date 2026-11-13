@@ -101,6 +101,7 @@ from solum.probe import (
     sweep_view,
 )
 from solum.rules.run import RUN_ERRORS, CantSimulate, Checker, rule_book
+from solum.settings_file import SettingsError, SettingsFile, cache_max_gb, with_preferences
 from solum.sim.engine import EngineUnavailable, SimEngine, SimError, engine_from_settings
 from solum.simulate import (
     MAX_AMPLITUDE,
@@ -121,11 +122,18 @@ SCHEMATIC_MAX = 8_000_000  # bytes: a drawn schematic is well under this (D-205)
 USER_ERRORS = (
     CircuitError, ConnectivityError, NetlistError, BiasError, ModelError, StoreError, SweepError,
     CantSimulate, LiveError, LinearError, AssetError, NamError, RenderError, WavError,
-    MarkingError, CurveError, FixError,
+    MarkingError, CurveError, FixError, SettingsError,
 )  # fmt: skip
 # what makes a render request fail; a lookup (`cached_only`) answers "not rendered" instead
 LOOKUP_MISSES = (*USER_ERRORS, SimError, HTTPException)
 Level = Literal["soft", "med", "hard"]
+
+
+class SettingsChange(BaseModel):
+    """What Settings (or the page, for its preferences) changes; what is left out stays."""
+
+    cache_max_gb: float | None = None
+    preferences: dict[str, Any] | None = None  # a null forgets one
 
 
 class RunRequest(BaseModel):
@@ -387,6 +395,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     except EngineUnavailable as err:
         engine, problem = None, str(err)
     renders = cache_from_settings(settings)  # the one cache: simulations, renders, searches
+    kept = SettingsFile(settings.data_dir)  # what Settings changed, and the page's preferences
     sim = simulator_from_settings(settings, engine, renders) if engine else None
     models = sim.models if sim else model_library(settings)
     starters = starter_paths(settings.library_dir)
@@ -546,6 +555,33 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.get("/api/health")
     def health() -> dict[str, Any]:
         return health_report(engine, problem)
+
+    def settings_view() -> dict[str, Any]:
+        saved = kept.load()
+        return {
+            "data_dir": str(settings.data_dir.resolve()),
+            "cache_dir": str(settings.cache_dir.resolve()),
+            "host_data_dir": settings.host_data_dir,
+            "host_cache_dir": settings.host_cache_dir,
+            "cache_max_gb": cache_max_gb(settings, saved),
+            "cache_used_bytes": renders.size(),
+            "can_move_folders": settings.can_move_folders,
+            "preferences": saved.preferences,
+        }
+
+    @app.get("/api/settings")
+    def read_settings() -> dict[str, Any]:
+        """What File → Settings… shows (D-310), and the page's preferences (D-311)."""
+        return settings_view()
+
+    @app.put("/api/settings")
+    def change_settings(change: SettingsChange) -> dict[str, Any]:
+        """Keep a new largest cache size (it holds at once: the oldest results go now if
+        the cache is over it) and/or some of the page's preferences."""
+        kept.change(change.cache_max_gb, change.preferences)
+        if change.cache_max_gb is not None:
+            renders.trim()
+        return settings_view()
 
     @app.get("/api/starters")
     def list_starters() -> list[dict[str, str]]:
@@ -1212,7 +1248,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def manual_page(slug: str = "") -> Response:
         """A page of the user guide (Help → Documentation, D-290); `/manual/` is the first."""
         try:
-            return page(page_html(manual, manual.get(slug)))
+            return page(with_preferences(page_html(manual, manual.get(slug)), kept.load()))
         except ManualError as err:
             raise HTTPException(404, str(err)) from None
 
@@ -1220,6 +1256,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def manual_search(q: str = "") -> list[dict[str, Any]]:
         """The guide's sections holding every word of `q`, a match in a heading first."""
         return [asdict(r) for r in manual.search(q)]
+
+    @app.get("/")
+    @app.get("/index.html")
+    def app_page() -> Response:
+        """The app's page, with the theme and the preferences kept here put in (D-311)."""
+        html = (settings.web_dir / "index.html").read_text(encoding="utf-8")
+        return page(with_preferences(html, kept.load()))
 
     if (settings.guide_dir / "img").is_dir():  # the guide's pictures, linked as `img/…`
         app.mount("/manual/img", StaticFiles(directory=settings.guide_dir / "img"), name="guide")

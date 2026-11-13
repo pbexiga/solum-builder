@@ -30,7 +30,7 @@ Needs internet access on the NAS (Debian packages and PyPI); the build takes a f
 
 ## Serving the app
 ```sh
-cp .env.example .env    # edit DATA_DIR (a share you back up) and CACHE_DIR (local disk)
+cp .env.example .env    # optional: edit DATA_DIR (a share you back up) and CACHE_DIR (local disk)
 sudo docker compose up -d
 ```
 Open `http://<nas-ip>:8000`. `http://<nas-ip>:8000/api/health` should show `"engine": "native"`.

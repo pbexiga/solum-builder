@@ -14,7 +14,7 @@ Tools → **Resistor colour code…** works both ways: type a **Value** to see i
 
 ## Help sheets
 
-- Help → **Documentation…**: this guide, in a large window with a search across every page. **Open in a new tab** shows the page you're on in its own browser tab.
+- Help → **Documentation…**: this guide, in a large window with a search across every page. The pop-out button beside **Close** (a square with an arrow leaving it) shows the page you're on in its own tab or window.
 - Help → **Formulas…**: the sums a pedal builder needs, each with a worked pedal example: [Formulas](formulas.md).
 - Help → **Choosing capacitors…**: which kind of capacitor goes where (film, C0G ceramic, other ceramics, electrolytic, tantalum), their usual values and what to watch out for. The kind doesn't change the simulation; it's for the build and the advice in Problems.
 - Help → **Resistor colour code and values…**: the colour chart, how values are written (`4k7`, `0R47`, `2M2`, `100p`, `2u2`), and the standard series of values (E12, E24, E96).

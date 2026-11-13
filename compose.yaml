@@ -1,5 +1,6 @@
 # `docker compose up` serves Solum Builder on http://<host>:${PORT:-8000}
-# Settings come from `.env` next to this file (copy `.env.example`).
+# It runs as it is. To keep things elsewhere or use another port, copy `.env.example` to
+# `.env` next to this file and edit it.
 services:
   solum-builder:
     image: solum-builder:latest
@@ -10,6 +11,9 @@ services:
       - "${PORT:-8000}:8000"
     environment:
       CACHE_MAX_GB: ${CACHE_MAX_GB:-2}
+      # the folders below as this machine names them, for File → Settings… to show (D-313)
+      HOST_DATA_DIR: ${DATA_DIR:-./data}
+      HOST_CACHE_DIR: ${CACHE_DIR:-./cache}
     volumes:
       # Host folders. DATA_DIR holds your circuits: back it up.
       # CACHE_DIR must be on a local disk (SQLite), and is safe to delete.

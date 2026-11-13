@@ -30,6 +30,7 @@ def test_reads_environment_values() -> None:
     ("env", "message"),
     [
         ({"CACHE_MAX_GB": "lots"}, "CACHE_MAX_GB must be a number"),
+        ({"CACHE_MAX_GB": "0"}, "CACHE_MAX_GB must be more than 0"),
         ({"PORT": "eighty"}, "PORT must be a whole number"),
     ],
 )
@@ -45,3 +46,9 @@ def test_cache_limit() -> None:
         load_settings({"CACHE_MAX_GB": "lots"})
     with pytest.raises(ValueError, match="more than 0"):
         load_settings({"CACHE_MAX_GB": "0"})
+
+
+def test_only_the_launcher_lets_settings_move_the_folders() -> None:
+    """D-310: false in Docker and from source; the Mac app's launcher sets the flag."""
+    assert load_settings({}).can_move_folders is False
+    assert load_settings({"CAN_MOVE_FOLDERS": "1"}).can_move_folders is True

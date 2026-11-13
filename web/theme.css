@@ -32,7 +32,7 @@
   src: url("fonts/lora/Lora-Italic[wght].ttf") format("truetype");
 }
 
-/* each theme's block also holds for View → Theme's preview of it (D-303) */
+/* each theme's block also holds for the theme chooser's preview of it (D-303) */
 :root, .theme-swatch[data-theme="solum"] {
   /* Brand palette (solumfx.com) */
   --ink: #1E1E1B;
@@ -132,7 +132,7 @@
   color-scheme: dark;
 }
 
-/* View → Theme (D-303). The Solum Builder theme, the brand's warm dark, is :root above; these two replace
+/* The themes (D-303; chosen in File → Settings…, D-310). The Solum Builder theme, the brand's warm dark, is :root above; these two replace
    its roles. The brand palette itself and the resistor bands stay as they are. */
 :root[data-theme="dark"], .theme-swatch[data-theme="dark"] {
   --surface-0: #1B1D21;

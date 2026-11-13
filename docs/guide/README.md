@@ -33,6 +33,7 @@ This guide opens in the app from **Help → Documentation**. Type in the search 
 
 ## Reference
 
+- [Settings](settings.md): the folders, the cache's largest size, and the theme.
 - [Tools and help sheets](tools.md): the unit converter, the resistor colour code and the Help menu's sheets.
 - [Formulas](formulas.md): the sums a pedal builder needs, each with a worked example.
 - [Troubleshooting](troubleshooting.md): what to do when something doesn't work.

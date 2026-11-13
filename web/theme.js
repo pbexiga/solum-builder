@@ -1,10 +1,10 @@
 /**
- * The themes View → Theme offers (D-303): their names. Pure:
- * the colours themselves are theme.css's; `theme-start.js` puts the chosen one on the page
- * before it draws, and `theme-sheet.js` is the window.
+ * The themes Settings offers (D-303, D-310): their names. Pure:
+ * the colours themselves are theme.css's; the server puts the chosen one on the page
+ * it sends (D-311), and `theme-chooser.js` is the cards.
  */
 
-/** Where the choice is kept (storage.js); theme-start.js reads the same key. */
+/** Where the choice is kept (storage.js: with the server's preferences); theme-start.js reads the same key. */
 export const THEME_KEY = "solum.theme";
 
 /**

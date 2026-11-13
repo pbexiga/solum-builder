@@ -251,7 +251,7 @@ export function audioPanel(el, app) {
   const renderButton = h("button", { type: "button", class: "primary flip" }, [h("span", { "data-label": "go" }, ["Render"]), h("span", { "data-label": "stop" }, ["Cancel render"])]);
   const bar = /** @type {HTMLProgressElement} */ (h("progress", { max: "1", value: "0", hidden: "" }));
   const player = /** @type {HTMLAudioElement} */ (h("audio", { controls: "", preload: "auto" }));
-  const download = /** @type {HTMLAnchorElement} */ (h("a", { class: "button", hidden: "" }, ["Download WAV"]));
+  const download = /** @type {HTMLAnchorElement} */ (h("a", { class: "button", hidden: "", download: "" }, ["Download WAV"]));
   const downloadAll = h("button", { type: "button", hidden: "", title: "Every take, with the circuit each was rendered from and a note of its knobs, clip, amp and cab" }, ["Download all (.zip)"]);
   const keep = h("button", { type: "button", disabled: "" }, ["Keep as snapshot"]);
   const loop = /** @type {HTMLInputElement} */ (h("input", { type: "checkbox" }));

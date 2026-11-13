@@ -5,11 +5,14 @@ check the pages show it."""
 
 import re
 from pathlib import Path
+from typing import Any
 
 import pytest
 from playwright.sync_api import Page, expect
 
-from tests.ui.conftest import open_circuit, run
+from solum.config import Settings
+from solum.settings_file import SETTINGS_FILE
+from tests.ui.conftest import open_circuit, reload_kept, run, wait_for_update
 from tests.ui.test_editor import menu
 
 
@@ -373,7 +376,12 @@ def test_help_documentation_opens_the_guide_with_search(page: Page, base_url: st
     expect(guide.locator("#manual-results .empty")).to_have_text(
         "Nothing in the guide matches that."
     )
-    # the page it is on, in a tab of its own
+    # the page it is on, in a tab of its own: an icon with a tooltip, no "tab" in words (D-312)
+    pop_out = page.locator("#manual-pop-out")
+    expect(pop_out).to_have_text("")
+    expect(pop_out.locator("svg")).to_be_visible()
+    expect(pop_out).to_have_attribute("title", "Open this page in its own tab or window")
+    expect(pop_out).to_have_attribute("aria-label", "Open this page in its own tab or window")
     with page.context.expect_page() as tab:
         page.locator("#manual-pop-out").click()
     assert tab.value.url.endswith("/manual/formulas#voltage-divider")
@@ -388,17 +396,27 @@ def test_help_documentation_opens_the_guide_with_search(page: Page, base_url: st
     expect(page.locator("#manual")).to_have_count(0)
 
 
-def test_view_theme(page: Page, base_url: str) -> None:
-    """D-303: View → Theme puts a theme on at once, this browser keeps it from the first
-    paint of the next visit, and the guide's pages follow it."""
+def kept_settings(page: Page, base_url: str) -> Any:
+    return page.request.get(f"{base_url}api/settings").json()
+
+
+def test_settings_theme(page: Page, base_url: str) -> None:
+    """D-303, D-310, D-311: File → Settings… puts a theme on at once; the server keeps it
+    and sends the next visit's page with it on (the app's and the guide's), for any
+    browser; View no longer has Theme…."""
     open_circuit(page, base_url)
     background = "() => getComputedStyle(document.body).backgroundColor"
     solum = page.evaluate(background)
-    menu(page, "view-menu", "menu-theme")
-    theme = page.locator("#theme")
+    page.locator("#view-menu").click()
+    expect(page.locator("#menu-reset-panes")).to_be_visible()
+    expect(page.locator("#menu-theme")).to_have_count(0)
+    page.keyboard.press("Escape")
+    menu(page, "file-menu", "menu-settings")
+    theme = page.locator("#settings")
     expect(theme.locator(".theme-option")).to_have_count(3)
     expect(theme.locator('[data-theme-id="solum"]')).to_have_attribute("aria-pressed", "true")
-    theme.locator('[data-theme-id="light"]').click()
+    with page.expect_response(lambda r: r.url.endswith("api/settings") and r.request.method == "PUT"):  # fmt: skip
+        theme.locator('[data-theme-id="light"]').click()
     expect(page.locator("html")).to_have_attribute("data-theme", "light")
     assert page.evaluate(background) == "rgb(244, 245, 247)"  # --surface-0, light
     expect(page.locator("header img.logo")).to_have_css(
@@ -409,15 +427,94 @@ def test_view_theme(page: Page, base_url: str) -> None:
     )
     page.keyboard.press("Escape")
     expect(theme).to_have_count(0)
-    # the next visit starts light: set before any module runs
-    page.reload()
+    assert kept_settings(page, base_url)["preferences"]["solum.theme"] == "light"
+    # the next visit arrives light, from the server: nothing of it is in this browser
+    assert page.evaluate("localStorage.getItem('solum.theme')") is None
+    assert '<html data-theme="light"' in page.request.get(base_url).text()
+    reload_kept(page)
     assert page.evaluate("document.documentElement.dataset.theme") == "light"
     page.goto(base_url + "manual/")
     expect(page.locator("html")).to_have_attribute("data-theme", "light")
     # back to Solum: the attribute goes and nothing is kept
     open_circuit(page, base_url)
-    menu(page, "view-menu", "menu-theme")
-    page.locator('#theme [data-theme-id="solum"]').click()
+    menu(page, "file-menu", "menu-settings")
+    with page.expect_response(lambda r: r.url.endswith("api/settings") and r.request.method == "PUT"):  # fmt: skip
+        page.locator('#settings [data-theme-id="solum"]').click()
     expect(page.locator("html")).not_to_have_attribute("data-theme", "light")
     assert page.evaluate(background) == solum
+    assert "solum.theme" not in kept_settings(page, base_url)["preferences"]
+
+
+def test_settings_folders_and_cache_size(page: Page, base_url: str, ui_settings: Settings) -> None:
+    """D-310: Settings shows the two folders (changed in `.env` here: only the Mac app's
+    launcher lets them move) and the cache; a new largest size holds at once, is still
+    there after a reload, and a bad one is refused in plain English."""
+    open_circuit(page, base_url)
+    menu(page, "file-menu", "menu-settings")
+    sheet = page.locator("#settings")
+    expect(sheet.locator("#settings-data-dir .settings-path")).to_have_text(
+        str(ui_settings.data_dir.resolve())
+    )
+    expect(sheet.locator("#settings-data-dir .settings-how")).to_have_text(
+        "Set in .env (DATA_DIR), then restart."
+    )
+    expect(sheet.locator("#settings-cache-dir .settings-path")).to_have_text(
+        str(ui_settings.cache_dir.resolve())
+    )
+    expect(sheet.locator("#settings-cache-dir .settings-how")).to_contain_text("CACHE_DIR")
+    size = sheet.locator("#settings-cache-size")
+    expect(size).to_have_value("2")
+    expect(sheet.locator("#settings-cache-used")).to_have_text(
+        re.compile(r"^Using \d+ MB of 2\.0 GB now\.$")
+    )
+    size.fill("0")
+    size.press("Enter")
+    expect(sheet.locator(".error")).to_have_text("The largest cache size must be more than 0.")
+    assert kept_settings(page, base_url)["cache_max_gb"] == 2
+    size.fill("1.5")
+    size.press("Enter")
+    expect(sheet.locator("#settings-cache-used")).to_contain_text("of 1.5 GB now.")
+    expect(sheet.locator(".error")).to_be_hidden()
+    assert kept_settings(page, base_url)["cache_max_gb"] == 1.5  # no restart
+    page.reload()
+    wait_for_update(page, 0)
+    menu(page, "file-menu", "menu-settings")
+    expect(page.locator("#settings-cache-size")).to_have_value("1.5")
+
+
+def test_a_browsers_old_preferences_are_carried_over_once(
+    page: Page, base_url: str, ui_settings: Settings
+) -> None:
+    """D-311: a browser that chose a theme and a pane order before they moved to the
+    server keeps them: the first visit starts in its theme (no flash) and hands them over;
+    what stays in the browser is left alone."""
+    page.goto(base_url)  # the page's origin, to fill its storage as an older version left it
+    page.evaluate(
+        """() => {
+          localStorage.setItem("solum.theme", '"dark"');
+          localStorage.setItem("solum.autorun", "1");
+          localStorage.setItem("solum.panes.open", '{"panel-scope": false}');
+          localStorage.setItem("solum.capTypes", "1");
+        }"""
+    )
+    (ui_settings.data_dir / SETTINGS_FILE).unlink()
+    with page.expect_response(lambda r: r.url.endswith("api/settings") and r.request.method == "PUT"):  # fmt: skip
+        page.reload()
+    # on from the first paint: the early script ran before any module
+    expect(page.locator("html")).to_have_attribute("data-theme", "dark")
+    expect(page.locator("#autorun")).to_be_checked()
+    assert page.eval_on_selector("#panel-scope", "(d) => d.open") is False
+    page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
+    kept = kept_settings(page, base_url)["preferences"]
+    assert (kept["solum.theme"], kept["solum.autorun"]) == ("dark", 1)
+    assert kept["solum.panes.open"]["panel-scope"] is False
+    page.wait_for_function("localStorage.getItem('solum.theme') === null")
+    assert '<html data-theme="dark"' in page.request.get(base_url).text()
+    left = page.evaluate("Object.keys(localStorage)")
+    assert "solum.capTypes" in left  # the browser's own: stays
+    assert not {"solum.theme", "solum.autorun", "solum.panes", "solum.panes.open"} & set(left)
+    # from now on they are the server's: a browser's stale copy changes nothing
+    page.evaluate("localStorage.setItem('solum.theme', '\"light\"')")
+    page.reload()
+    assert page.evaluate("document.documentElement.dataset.theme") == "dark"
     assert page.evaluate("localStorage.getItem('solum.theme')") is None

@@ -2,6 +2,6 @@
 (the UI layer's server and browser, D-047)."""
 
 from tests.sim.conftest import engine
-from tests.ui.conftest import base_url, browser, browser_errors, js, page
+from tests.ui.conftest import base_url, browser, browser_errors, js, page, ui_settings
 
-__all__ = ["base_url", "browser", "browser_errors", "engine", "js", "page"]
+__all__ = ["base_url", "browser", "browser_errors", "engine", "js", "page", "ui_settings"]

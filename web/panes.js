@@ -1,7 +1,8 @@
 /**
  * Result panes the user can reorder (drag a pane's grip, or focus the grip and press
  * the up and down arrow keys). The order, which panes are open or shut, and how far the
- * pane list is scrolled are remembered in this browser (D-121); View → Reset pane order
+ * pane list is scrolled are remembered (D-121: the order and open or shut with the
+ * preferences, the scroll in this browser, D-311); View → Reset pane order
  * puts the default order back and each pane open or shut as the page starts (DC shut,
  * the rest open).
  * `paneOrder`, `movePane` and `openStates` are DOM-free (tested); `reorderable` wires up

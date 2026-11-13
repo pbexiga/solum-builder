@@ -591,6 +591,7 @@ table.readout tr.rail th { color: var(--text-2); }
 .audio-downloads { position: relative; flex: 1; display: inline-flex; gap: 8px; align-items: center; }
 .audio-downloads > progress { position: absolute; left: 0; right: 0; top: 50%; transform: translateY(-50%); width: auto; }
 .audio-downloads.busy > :not(progress) { visibility: hidden; }
+.audio-downloads > a.button, .audio-downloads > button { white-space: nowrap; flex: none; } /* WebKit wrapped them, twice as tall (D-312) */
 /* every large view's Expand / Collapse: the last item in its tool row, at the far right */
 /* the sweep's setup lines up over its takes: positions over the first three take buttons,
    Render sweep over the last two, the pot dropdown (the row's label) takes the rest */
@@ -637,6 +638,13 @@ table.readout tr.rail th { color: var(--text-2); }
 .sheet { max-width: 560px; width: 100%; max-height: calc(100vh - 32px); display: flex; flex-direction: column; background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; }
 .sheet.wide { max-width: 900px; }
 .sheet-tools { display: flex; align-items: center; gap: 8px; }
+.icon-button { display: inline-flex; align-items: center; padding: 5px 7px; }
+/* File → Settings… (D-310) */
+.settings-folder { display: grid; grid-template-columns: 130px 1fr; gap: 2px 10px; margin-bottom: 10px; }
+.settings-label { color: var(--text); }
+.settings-path { overflow-wrap: anywhere; }
+.settings-how { grid-column: 2; font-size: 12px; color: var(--text-3); }
+#settings .form-row input { width: 80px; }
 /* Help → Documentation (D-290): the guide's pages framed in a large window */
 #manual.sheet { max-width: 1200px; height: calc(100vh - 32px); }
 #manual .sheet-body { flex: 1; padding: 0; overflow: hidden; display: flex; }

@@ -22,6 +22,7 @@ from pathlib import Path
 import numpy as np
 
 from solum.config import Settings
+from solum.settings_file import SettingsFile, cache_max_gb
 from solum.sim.engine import DEFAULT_TIMEOUT, Plot, SimEngine, SimResult
 
 
@@ -54,11 +55,12 @@ def result_from_bytes(data: bytes) -> SimResult:
 
 
 class SimCache:
-    """Results by key, least-recently-used eviction above `max_bytes`."""
+    """Results by key, least-recently-used eviction above `max_bytes`: a size, or what
+    gives the size in force now (Settings changes it while the app runs, D-310)."""
 
-    def __init__(self, cache_dir: Path, max_bytes: int) -> None:
+    def __init__(self, cache_dir: Path, max_bytes: int | Callable[[], int]) -> None:
         self.dir = cache_dir
-        self.max_bytes = max_bytes
+        self._limit = max_bytes if callable(max_bytes) else lambda: max_bytes
         self._lock = threading.Lock()
         self._conn: sqlite3.Connection | None = None
         self._pid = 0
@@ -148,13 +150,23 @@ class SimCache:
                        (key, len(data), time.time()))  # fmt: skip
             self._evict(db)
 
+    @property
+    def max_bytes(self) -> int:
+        return self._limit()
+
+    def trim(self) -> None:
+        """Drop the oldest results now if the cache is over its size (after the size changes)."""
+        with self._lock, self._db() as db:
+            self._evict(db)
+
     def _evict(self, db: sqlite3.Connection) -> None:
         total = db.execute("SELECT COALESCE(SUM(bytes), 0) FROM sim_cache").fetchone()[0]
-        if total <= self.max_bytes:
+        limit = self.max_bytes
+        if total <= limit:
             return
         rows = db.execute("SELECT key, bytes FROM sim_cache ORDER BY last_used").fetchall()
         for key, size in rows:
-            if total <= self.max_bytes:
+            if total <= limit:
                 break
             self._blob(key).unlink(missing_ok=True)
             db.execute("DELETE FROM sim_cache WHERE key = ?", (key,))
@@ -169,9 +181,12 @@ RECENT_BYTES = 64_000_000  # results a CachedEngine also holds in memory, most r
 
 
 def cache_from_settings(settings: Settings) -> SimCache:
-    """The app's cache: `CACHE_DIR`, up to `CACHE_MAX_GB`. One per process is enough: the
-    server's simulator, API and render jobs share theirs; each render worker has its own."""
-    return SimCache(settings.cache_dir, max_bytes=int(settings.cache_max_gb * 1e9))
+    """The app's cache: `CACHE_DIR`, up to the size the settings file holds, else
+    `CACHE_MAX_GB`, read each time it is needed so a change in Settings holds at once in
+    every process (D-310). One per process is enough: the server's simulator, API and
+    render jobs share theirs; each render worker has its own."""
+    file = SettingsFile(settings.data_dir)
+    return SimCache(settings.cache_dir, lambda: int(cache_max_gb(settings, file.load()) * 1e9))
 
 
 def result_bytes(result: SimResult) -> int:

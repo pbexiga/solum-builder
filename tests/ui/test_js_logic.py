@@ -725,3 +725,92 @@ def test_impedance_overlay_text(js: Page) -> None:
         "Changes with VR1 (Volume)",
     ]
     assert r[3] == {"lines": ["Zout: saturated"], "title": "Output impedance: Q1 is saturated."}
+
+
+def test_server_preferences_are_read_at_once_and_sent_in_order(js: Page) -> None:
+    """D-311: storage.js holds the server's preferences as the page was served; changes
+    go one request at a time, the ones made meanwhile together, a null forgetting a key;
+    the browser's stale copies are dropped."""
+    got = run(
+        js,
+        """
+        const { serverKept } = await m('storage.js');
+        const store = new Map([["solum.theme", '"light"'], ["solum.audio", '{"clip":"a"}']]);
+        const local = {getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v), removeItem: (k) => store.delete(k)};
+        const sent = [];
+        let finish = [];
+        const send = (changes) => { sent.push(changes); return new Promise((ok) => finish.push(ok)); };
+        const kept = serverKept({"solum.theme": "dark", "solum.autorun": 1}, local, send);
+        const first = [kept.get("solum.theme"), kept.get("solum.autorun"), kept.get("solum.panes")];
+        const local0 = [...store.keys()];
+        kept.set("solum.autorun", 1);  // as it is: nothing is sent
+        kept.set("solum.panes", ["a", "b"]);
+        kept.set("solum.panes", ["b", "a"]);
+        kept.set("solum.theme", null);
+        const whileBusy = sent.length;
+        finish.shift()();
+        await new Promise((r) => setTimeout(r));
+        const read = [kept.get("solum.theme"), kept.get("solum.panes")];
+        kept.set("solum.autorun", 0);
+        kept.flush();  // the page is leaving: what waits goes now
+        return {first, local0, whileBusy, sent, read};
+        """,
+    )
+    assert got["first"] == ["dark", 1, None]
+    assert got["local0"] == ["solum.audio"]  # the server has them: the browser's copy went
+    assert got["whileBusy"] == 1
+    assert got["sent"] == [
+        {"solum.panes": ["a", "b"]},
+        {"solum.panes": ["b", "a"], "solum.theme": None},
+        {"solum.autorun": 0},
+    ]
+    assert got["read"] == [None, ["b", "a"]]
+
+
+def test_a_browsers_old_preferences_go_to_the_server_once(js: Page) -> None:
+    """D-311: the server keeps none yet (`null`): this browser's old values are used and
+    sent (an empty set too, so it is asked once), and dropped here only once it has them;
+    a server that can't be reached leaves them for the next visit."""
+    got = run(
+        js,
+        """
+        const { serverKept } = await m('storage.js');
+        const fill = () => new Map([["solum.theme", '"dark"'], ["solum.panes", '["x"]'], ["solum.layers", '["knees"]']]);
+        const localOf = (store) => ({getItem: (k) => store.get(k) ?? null, setItem: (k, v) => store.set(k, v), removeItem: (k) => store.delete(k)});
+        const out = {};
+        for (const [name, answer] of [["ok", () => Promise.resolve({})], ["down", () => Promise.reject(new Error("down"))]]) {
+          const store = fill();
+          const sent = [];
+          const kept = serverKept(null, localOf(store), (c) => { sent.push(c); return answer(); });
+          const read = [kept.get("solum.theme"), kept.get("solum.panes"), kept.get("solum.large")];
+          await new Promise((r) => setTimeout(r));
+          out[name] = {sent, read, left: [...store.keys()].sort()};
+        }
+        const sent = [];
+        serverKept(null, null, (c) => { sent.push(c); return Promise.resolve({}); });  // storage blocked
+        out.blocked = sent;
+        return out;
+        """,
+    )
+    carried = {"solum.theme": "dark", "solum.panes": ["x"]}
+    assert got["ok"] == {"sent": [carried], "read": ["dark", ["x"], None], "left": ["solum.layers"]}
+    assert got["down"]["sent"] == [carried]
+    assert got["down"]["left"] == ["solum.layers", "solum.panes", "solum.theme"]
+    assert got["blocked"] == [{}]
+
+
+def test_settings_sizes_and_what_is_wrong_with_one(js: Page) -> None:
+    got = run(
+        js,
+        """
+        const { sizeText, cacheSizeProblem } = await m('settings.js');
+        return {
+          sizes: [0, 340e6, 999.4e6, 1e9, 1.25e9, 20e9].map(sizeText),
+          problems: ["2", " 0,5 ", "0", "-1", "", "lots"].map(cacheSizeProblem),
+        };
+        """,
+    )
+    assert got["sizes"] == ["0 MB", "340 MB", "999 MB", "1.0 GB", "1.3 GB", "20.0 GB"]
+    more = "The largest cache size must be more than 0."
+    number = "Type the largest cache size as a number of gigabytes, such as 2 or 0.5."
+    assert got["problems"] == [None, None, more, more, number, number]

@@ -20,6 +20,7 @@ from tests.ui.conftest import (
     click_part,
     open_circuit,
     part_pos,
+    reload_kept,
     to_screen,
     updates,
     wait_for_update,
@@ -787,7 +788,7 @@ def test_autorun_runs_after_each_edit_and_is_remembered(page: Page, base_url: st
     wait_for_view(page, before)
     wait_for_update(page, after)  # ran by itself
     expect(page.locator("#stale")).to_be_hidden()
-    page.reload()
+    reload_kept(page)
     wait_for_update(page, 0)
     expect(page.locator("#autorun")).to_be_checked()
     page.locator("#autorun").uncheck()

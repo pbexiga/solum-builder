@@ -150,17 +150,24 @@ def test_two_caches_on_one_folder_share_it(tmp_path: Path) -> None:
 
 
 def test_evicts_least_recently_used(tmp_path: Path) -> None:
-    cache = SimCache(tmp_path, max_bytes=10**6)
+    limit = [10**6]
+    cache = SimCache(tmp_path, max_bytes=lambda: limit[0])  # a size that changes (D-310)
     engine = CachedEngine(CountingEngine(), cache)
     engine.run("a")
     one = cache.size()
-    cache.max_bytes = int(one * 2.5)
+    limit[0] = int(one * 2.5)
     engine.run("b")
     engine.run("a")  # touch a: b is now the oldest
     engine.run("c")
     assert cache.size() <= cache.max_bytes
     assert cache.get(engine.key("b")) is None
     assert cache.get(engine.key("a")) is not None
+    assert cache.get(engine.key("c")) is not None
+    # a smaller size holds as soon as the cache is trimmed, the oldest going first
+    limit[0] = int(one * 1.5)
+    cache.trim()
+    assert cache.size() == one
+    assert cache.get(engine.key("a")) is None
     assert cache.get(engine.key("c")) is not None
 
 

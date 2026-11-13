@@ -17,7 +17,7 @@ The originals' wordmark is SVG `<text>` set in Fahkwang, and an SVG loaded throu
 ## Colour tokens
 Defined once in `web/theme.css` as CSS custom properties. Nothing else in the codebase hard-codes a colour.
 
-**Themes (D-303):** the tokens below are the **Solum** theme, the default. View → Theme… also offers **Dark** (neutral greys, a blue highlight) and **Light** (dark text on white, a blue highlight): each is a `:root[data-theme="…"]` block in `theme.css` that replaces the UI, status, schematic and plot roles; the brand palette and the resistor bands stay. Light shows the ink logo (`solum-logo-currentcolor-outlined.svg`). Exports and printed schematics keep their own paper colours (`.print`, D-205). Every theme meets the same contrast and hue rules (`tests/unit/test_theme.py`).
+**Themes (D-303):** the tokens below are the **Solum** theme, the default. File → Settings… (D-310) also offers **Dark** (neutral greys, a blue highlight) and **Light** (dark text on white, a blue highlight): each is a `:root[data-theme="…"]` block in `theme.css` that replaces the UI, status, schematic and plot roles; the brand palette and the resistor bands stay. Light shows the ink logo (`solum-logo-currentcolor-outlined.svg`). Exports and printed schematics keep their own paper colours (`.print`, D-205). Every theme meets the same contrast and hue rules (`tests/unit/test_theme.py`).
 
 **Brand palette (from solumfx.com `:root`)**
 | Token | Hex | Site name |

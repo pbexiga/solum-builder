@@ -5,6 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from solum.api import app as app_module
+from solum.cache import cache_from_settings
 from solum.config import load_settings
 from solum.model_import import Added, make_model
 from solum.models import ModelLibrary, ModelType
@@ -51,6 +52,87 @@ def test_health_explains_missing_engine(monkeypatch: pytest.MonkeyPatch) -> None
         "engine": None,
         "message": "ngspice isn't installed.",
     }
+
+
+def test_settings_show_the_folders_and_the_cache(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """D-310: what File → Settings… shows; nothing is written until something changes."""
+    monkeypatch.setenv("CACHE_MAX_GB", "3")
+    body = client(monkeypatch, lambda _s: FakeEngine()).get("/api/settings").json()
+    assert body == {
+        "data_dir": str(tmp_path / "data"),
+        "cache_dir": str(tmp_path / "cache"),
+        "cache_max_gb": 3.0,
+        "cache_used_bytes": 0,
+        "can_move_folders": False,
+        "preferences": None,
+    }
+    assert not (tmp_path / "data" / "solum-settings.json").exists()
+
+
+def test_settings_say_when_the_folders_can_move(monkeypatch: pytest.MonkeyPatch) -> None:
+    monkeypatch.setenv("CAN_MOVE_FOLDERS", "1")
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    assert c.get("/api/settings").json()["can_move_folders"] is True
+
+
+def test_cache_size_changes_at_once_and_survives_a_restart(
+    monkeypatch: pytest.MonkeyPatch, tmp_path: Path
+) -> None:
+    """D-310: the new size holds without a restart (the oldest results go now), and once
+    set it wins over CACHE_MAX_GB."""
+    monkeypatch.setenv("CACHE_MAX_GB", "2")
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    cache = cache_from_settings(load_settings())
+    for key in ("a", "b", "c"):
+        cache.put_bytes(key, bytes(400_000))
+    assert c.get("/api/settings").json()["cache_used_bytes"] == 1_200_000
+    body = c.put("/api/settings", json={"cache_max_gb": 0.001}).json()
+    assert body["cache_max_gb"] == pytest.approx(0.001)
+    assert body["cache_used_bytes"] == 800_000  # the oldest went
+    assert not cache.has("a") and cache.has("c")
+    restarted = client(monkeypatch, lambda _s: FakeEngine())
+    assert restarted.get("/api/settings").json()["cache_max_gb"] == pytest.approx(0.001)
+
+
+@pytest.mark.parametrize(
+    ("change", "message"),
+    [
+        ({"cache_max_gb": 0}, "The largest cache size must be more than 0."),
+        (
+            {"preferences": {"solum.nope": 1}},
+            "'solum.nope' isn't a preference Solum Builder keeps.",
+        ),
+    ],
+)
+def test_bad_settings_are_refused_in_plain_english(
+    monkeypatch: pytest.MonkeyPatch, change: dict[str, object], message: str
+) -> None:
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    refused = c.put("/api/settings", json=change)
+    assert refused.status_code == 422
+    assert refused.json() == {"message": message}
+
+
+def test_preferences_are_kept_and_sent_inside_the_pages(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-311: the theme is on the app's page and the guide's as they arrive (no flash of
+    another), with the preferences for storage.js; `null` until some are kept."""
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    for url in ("/", "/index.html", "/manual/"):
+        first = c.get(url).text
+        assert '<script id="solum-prefs" type="application/json">null</script>' in first
+        assert "data-theme" not in first.split("<body")[0]
+    kept = c.put("/api/settings", json={"preferences": {"solum.theme": "dark", "solum.autorun": 1}})
+    assert kept.json()["preferences"] == {"solum.theme": "dark", "solum.autorun": 1}
+    for url in ("/", "/index.html", "/manual/"):
+        page = c.get(url)
+        assert page.headers["cache-control"] == "no-cache"  # never an old copy's theme
+        assert '<html data-theme="dark" lang="en">' in page.text
+        assert '"solum.autorun": 1' in page.text.split("</script>")[0]
+    forgot = c.put("/api/settings", json={"preferences": {"solum.theme": None}})
+    assert forgot.json()["preferences"] == {"solum.autorun": 1}
+    assert "data-theme" not in c.get("/").text.split("<body")[0]
 
 
 def test_index_page_is_served(monkeypatch: pytest.MonkeyPatch) -> None:

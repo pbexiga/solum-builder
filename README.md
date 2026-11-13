@@ -56,7 +56,7 @@ Then open http://localhost:8000. The first `docker compose up` builds the image,
 
 - `DATA_DIR`: your circuits, blocks, models and audio files. **Back this folder up.**
 - `CACHE_DIR`: the search index and saved simulation results. Safe to delete at any time; keep it on a local disk.
-- `CACHE_MAX_GB`: the largest the cache may grow (2 GB); the oldest results are dropped first.
+- `CACHE_MAX_GB`: the largest the cache may grow (2 GB); the oldest results are dropped first. File → Settings… changes it while the app runs, and its value then wins over this one.
 - `PORT`: the port the app is served on (8000).
 
 The repo comes with the two default folders, `data/` and `cache/`. If you point `DATA_DIR` or `CACHE_DIR` somewhere else, or start the image yourself with `podman run` or `docker run`, create the folders first (`mkdir -p /path/to/data /path/to/cache`): Podman stops with an error when a folder it should mount isn't there.

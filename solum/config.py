@@ -18,6 +18,20 @@ class Settings:
     port: int
     ngspice_library: str | None
     cache_max_gb: float = 2.0
+    # Settings may change the two folders: only the Mac app's launcher sets it (D-310)
+    can_move_folders: bool = False
+
+
+def cache_gb(value: object, name: str) -> float:
+    """A largest cache size in gigabytes, from the environment or Settings. ValueError in
+    plain English, starting with `name`."""
+    try:
+        size = float(value)  # type: ignore[arg-type]
+    except (TypeError, ValueError):
+        raise ValueError(f"{name} must be a number of gigabytes (got {value!r}).") from None
+    if not 0 < size < float("inf"):
+        raise ValueError(f"{name} must be more than 0.")
+    return size
 
 
 def load_settings(env: Mapping[str, str] | None = None) -> Settings:
@@ -31,15 +45,7 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         port = int(port_text)
     except ValueError:
         raise ValueError(f"PORT must be a whole number (got {port_text!r}).") from None
-    cache_text = env.get("CACHE_MAX_GB", "2")
-    try:
-        cache_max_gb = float(cache_text)
-    except ValueError:
-        raise ValueError(
-            f"CACHE_MAX_GB must be a number of gigabytes (got {cache_text!r})."
-        ) from None
-    if cache_max_gb <= 0:
-        raise ValueError("CACHE_MAX_GB must be more than 0.")
+    cache_max_gb = cache_gb(env.get("CACHE_MAX_GB", "2"), "CACHE_MAX_GB")
     return Settings(
         data_dir=Path(env.get("DATA_DIR", "./data")),
         cache_dir=Path(env.get("CACHE_DIR", "./cache")),
@@ -49,4 +55,5 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         port=port,
         ngspice_library=env.get("NGSPICE_LIBRARY") or None,
         cache_max_gb=cache_max_gb,
+        can_move_folders=env.get("CAN_MOVE_FOLDERS", "") == "1",
     )

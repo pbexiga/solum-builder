@@ -86,7 +86,6 @@ export async function settingsSheet(onTheme) {
       used,
       error,
       h("h3", {}, ["Appearance"]),
-      h("p", {}, ["How Solum Builder looks. Exports and printed schematics keep their own paper colours."]),
       themeChooser(onTheme),
     ],
   });

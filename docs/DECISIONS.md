@@ -1707,9 +1707,11 @@ Each `##` section of `docs/guide/README.md` heads a group in the left-hand list,
 - solumfx.com sits under the logo in the README and in Help → About; About also has a Source row linking the repository (`SITE`, `REPO` in `web/help.js`).
 *Alternatives:* a `<picture>` of the two SVGs (the GitHub app shows neither).
 
-**D-309 — New work gets its own spec and phases in `notes/`; `docs/SPEC.md` describes the app as it is** (2026-11-13) `project` `docs`
-- A new piece of work (a feature, a new packaging, a rework) starts with a spec in `notes/<NAME>-SPEC.md` and phases in `notes/PHASES.md`, both local to the maintainer doing it and git-ignored. A small change needs no spec. What the project keeps from the work reaches the repo as it's built: decisions here, what the app now does in `docs/SPEC.md`, modules in ARCHITECTURE.md.
-- `docs/SPEC.md` stays, with a note at its top: it is the original spec, kept current, and says what the app does today. It is not where new work is planned.
+**D-309 — Specs: new work is specified and planned in `notes/`; finished specs are kept in `docs/specs/`** (2026-11-13) `project` `docs`
+- A new piece of work (a feature, a new packaging, a rework) starts with a spec in `notes/<NAME>-SPEC.md` and phases in `notes/PHASES.md`, both local to the maintainer doing it and git-ignored. A small change needs no spec.
+- When the feature is finished, its spec is copied to `docs/specs/<NAME>-SPEC.md` in the feature's last pull request, brought up to date: what was built, open questions answered, the building plan taken out, decisions cited.
+- `docs/SPEC.md` moved to `docs/specs/ORIGINAL-SPEC.md`: the spec v1 was built from. Specs are consulted for the area being changed, not read at the start of a session. DECISIONS.md still wins over a spec, and the spec is fixed in the same change. Entries before this one that say SPEC.md mean that file.
 - `notes/PHASES.md` holds only the work in hand. Finished, accepted work moves to `notes/PHASES-<name>.md`.
-- Why: the user found the plan had grown too large to read at the start of a session (it held all of v1), and the docs didn't say where a contributor starting something new should put their spec and plan, or that SPEC.md wasn't the place.
-*Alternatives:* removing `docs/SPEC.md` (it is the one place that says what the whole app does, and AGENTS.md keeps it in step with the decisions); specs for new work in `docs/` (they'd be other people's unfinished plans in everyone's clone; the decisions and SPEC.md carry what lasts).
+- A session reads only `AGENTS.md`, `notes/PHASES.md` and the current phase's spec at its start (the user: keep the first read lean). `docs/maintain/working-docs.md` is no longer read up front (this changes D-306): AGENTS.md says when to consult it.
+- Why: the user found the plan had grown too large to read at the start of a session (it held all of v1); the docs didn't say where a contributor starting something new should put their spec and plan; and one ever-growing product spec isn't something a session should have to read to start.
+*Alternatives:* removing the original spec (it is the one place that says what v1 as a whole does); keeping one `docs/SPEC.md` and folding each feature into it (it grows without end, and the feature's own reasoning is lost); specs for unfinished work in `docs/` (other people's plans in everyone's clone).

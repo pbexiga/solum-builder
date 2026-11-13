@@ -644,6 +644,7 @@ table.readout tr.rail th { color: var(--text-2); }
 .settings-label { color: var(--text); }
 .settings-path { overflow-wrap: anywhere; }
 .settings-how { grid-column: 2; font-size: 12px; color: var(--text-3); }
+#settings .form-row { grid-template-columns: 130px 80px 1fr; }
 #settings .form-row input { width: 80px; }
 /* Help → Documentation (D-290): the guide's pages framed in a large window */
 #manual.sheet { max-width: 1200px; height: calc(100vh - 32px); }

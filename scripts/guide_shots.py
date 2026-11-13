@@ -21,7 +21,7 @@ from contextlib import contextmanager
 from pathlib import Path
 
 import uvicorn
-from playwright.sync_api import Browser, Page, sync_playwright
+from playwright.sync_api import Browser, Page, Route, sync_playwright
 
 from solum.api.app import create_app
 from solum.config import load_settings
@@ -222,6 +222,23 @@ def export(page: Page, base: str) -> None:
     shoot(page, "export", "#export")
 
 
+def settings(page: Page, base: str) -> None:
+    """File → Settings… as Docker shows it: the folders are the container's (the script's
+    own are temporary ones, which nobody would see)."""
+    opened(page, base, probe=None)
+
+    def as_docker(route: Route) -> None:
+        answer = route.fetch()
+        shown = {**answer.json(), "data_dir": "/data", "cache_dir": "/cache"}
+        route.fulfill(response=answer, json=shown)
+
+    page.route("**/api/settings", as_docker)
+    menu(page, "file-menu", "menu-settings")
+    page.wait_for_selector("#settings .theme-option")
+    shoot(page, "settings", "#settings")
+    page.unroute("**/api/settings")
+
+
 def audio_large(page: Page, base: str) -> None:
     """A made-up riff (plucked notes) through the TS808, no amp or cab: the pedal's output.
     Also readme-audio, the large view alone."""
@@ -284,6 +301,7 @@ SHOTS: dict[str, Callable[[Page, str], None]] = {
     "blocks-dialog": blocks_dialog,
     "open-dialog": open_dialog,
     "export": export,
+    "settings": settings,
     "audio-large": audio_large,
     "readme": readme,
     "readme-logo": readme_logo,

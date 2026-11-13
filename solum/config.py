@@ -20,6 +20,9 @@ class Settings:
     cache_max_gb: float = 2.0
     # Settings may change the two folders: only the Mac app's launcher sets it (D-310)
     can_move_folders: bool = False
+    # in a container: the two folders as the host names them, for Settings to show (D-313)
+    host_data_dir: str | None = None
+    host_cache_dir: str | None = None
 
 
 def cache_gb(value: object, name: str) -> float:
@@ -56,4 +59,6 @@ def load_settings(env: Mapping[str, str] | None = None) -> Settings:
         ngspice_library=env.get("NGSPICE_LIBRARY") or None,
         cache_max_gb=cache_max_gb,
         can_move_folders=env.get("CAN_MOVE_FOLDERS", "") == "1",
+        host_data_dir=env.get("HOST_DATA_DIR") or None,
+        host_cache_dir=env.get("HOST_CACHE_DIR") or None,
     )

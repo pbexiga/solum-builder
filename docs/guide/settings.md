@@ -11,7 +11,9 @@ Where the app keeps things, shown so you can find and back them up:
 - **Circuits, blocks, models and audio**: everything you make or add. Back this folder up.
 - **Cache**: saved results and the search index. It is always safe to delete; the app rebuilds it.
 
-With Docker, or running from source, the folders are chosen outside the app, so each says **Set in `.env` (`DATA_DIR`), then restart** (`CACHE_DIR` for the cache). With Docker the paths shown are the ones inside the container, `/data` and `/cache`; the folders on your machine are the ones `.env` names, `data/` and `cache/` beside `compose.yaml` unless you changed them.
+With Docker, or running from source, the folders are chosen outside the app, so each says how: **To change it, set `DATA_DIR` (in `.env` or the environment), then restart** (`CACHE_DIR` for the cache). Without a `.env` they are `data/` and `cache/` in the app's own folder.
+
+With Docker each folder is shown twice: the path inside the container (`/data`, `/cache`), then the **host path**, which is the folder on your machine and the one to back up. A host path like `./data` is beside `compose.yaml`.
 
 ## Cache
 

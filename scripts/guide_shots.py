@@ -229,7 +229,8 @@ def settings(page: Page, base: str) -> None:
 
     def as_docker(route: Route) -> None:
         answer = route.fetch()
-        shown = {**answer.json(), "data_dir": "/data", "cache_dir": "/cache"}
+        shown = {**answer.json(), "data_dir": "/data", "cache_dir": "/cache",
+                 "host_data_dir": "./data", "host_cache_dir": "./cache"}  # fmt: skip
         route.fulfill(response=answer, json=shown)
 
     page.route("**/api/settings", as_docker)

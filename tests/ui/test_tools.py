@@ -456,8 +456,9 @@ def test_settings_folders_and_cache_size(page: Page, base_url: str, ui_settings:
         str(ui_settings.data_dir.resolve())
     )
     expect(sheet.locator("#settings-data-dir .settings-how")).to_have_text(
-        "Set in .env (DATA_DIR), then restart."
+        "To change it, set DATA_DIR (in .env or the environment), then restart."
     )
+    expect(sheet.locator(".settings-host")).to_have_count(0)  # not in a container
     expect(sheet.locator("#settings-cache-dir .settings-path")).to_have_text(
         str(ui_settings.cache_dir.resolve())
     )

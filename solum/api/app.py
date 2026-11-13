@@ -561,6 +561,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {
             "data_dir": str(settings.data_dir.resolve()),
             "cache_dir": str(settings.cache_dir.resolve()),
+            "host_data_dir": settings.host_data_dir,
+            "host_cache_dir": settings.host_cache_dir,
             "cache_max_gb": cache_max_gb(settings, saved),
             "cache_used_bytes": renders.size(),
             "can_move_folders": settings.can_move_folders,

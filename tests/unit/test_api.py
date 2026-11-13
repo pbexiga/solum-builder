@@ -63,12 +63,22 @@ def test_settings_show_the_folders_and_the_cache(
     assert body == {
         "data_dir": str(tmp_path / "data"),
         "cache_dir": str(tmp_path / "cache"),
+        "host_data_dir": None,
+        "host_cache_dir": None,
         "cache_max_gb": 3.0,
         "cache_used_bytes": 0,
         "can_move_folders": False,
         "preferences": None,
     }
     assert not (tmp_path / "data" / "solum-settings.json").exists()
+
+
+def test_settings_name_the_host_folders_in_a_container(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-313: compose passes the folders as the host names them, for the dialog to show."""
+    monkeypatch.setenv("HOST_DATA_DIR", "/volume1/solum/data")
+    monkeypatch.setenv("HOST_CACHE_DIR", "./cache")
+    body = client(monkeypatch, lambda _s: FakeEngine()).get("/api/settings").json()
+    assert (body["host_data_dir"], body["host_cache_dir"]) == ("/volume1/solum/data", "./cache")
 
 
 def test_settings_say_when_the_folders_can_move(monkeypatch: pytest.MonkeyPatch) -> None:

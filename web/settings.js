@@ -1,7 +1,8 @@
 /**
  * File → Settings… (DOM, D-310): one dialog for every version (Docker, from source, the
  * Mac app). Folders: where the circuits and the cache are (the server's, shown; changed
- * outside the app unless the server says they can move). Cache: its largest size, which
+ * outside the app unless the server says they can move; in a container, with the host's
+ * name for each beside it, D-313). Cache: its largest size, which
  * holds at once, and how much is used. Appearance: the theme chooser.
  * `sizeText` and `cacheSizeProblem` are DOM-free (tested).
  */
@@ -33,13 +34,15 @@ export function cacheSizeProblem(text) {
 
 /**
  * @param {string} id @param {string} label @param {string} path
- * @param {string | null} how how to change it, when the app can't
+ * @param {string | null} host in a container: the folder as the host names it (D-313)
+ * @param {string | null} how the variable that changes it, when the app can't
  */
-function folderRow(id, label, path, how) {
+function folderRow(id, label, path, host, how) {
   return h("div", { class: "settings-folder", id }, [
     h("span", { class: "settings-label" }, [label]),
     h("code", { class: "settings-path" }, [path]),
-    ...(how ? [h("span", { class: "settings-how" }, ["Set in ", h("code", {}, [".env"]), " (", h("code", {}, [how]), "), then restart."])] : []),
+    ...(host ? [h("span", { class: "settings-host" }, ["(host path: ", h("code", {}, [host]), ")"])] : []),
+    ...(how ? [h("span", { class: "settings-how" }, ["To change it, set ", h("code", {}, [how]), " (in ", h("code", {}, [".env"]), " or the environment), then restart."])] : []),
   ]);
 }
 
@@ -75,8 +78,8 @@ export async function settingsSheet(onTheme) {
     id: "settings",
     body: [
       h("h3", {}, ["Folders"]),
-      folderRow("settings-data-dir", "Circuits, blocks, models and audio", now.data_dir, now.can_move_folders ? null : "DATA_DIR"),
-      folderRow("settings-cache-dir", "Cache", now.cache_dir, now.can_move_folders ? null : "CACHE_DIR"),
+      folderRow("settings-data-dir", "Circuits, blocks, models and audio", now.data_dir, now.host_data_dir, now.can_move_folders ? null : "DATA_DIR"),
+      folderRow("settings-cache-dir", "Cache", now.cache_dir, now.host_cache_dir, now.can_move_folders ? null : "CACHE_DIR"),
       h("h3", {}, ["Cache"]),
       h("p", {}, ["Results are kept so the same run is instant the next time. When the cache is full the oldest go first; it is always safe to delete."]),
       h("div", { class: "form-row" }, [h("label", { for: "settings-cache-size" }, ["Largest size"]), size, h("span", { class: "unit" }, ["GB"])]),

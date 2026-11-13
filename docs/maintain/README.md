@@ -89,10 +89,11 @@ The project is built in sessions, mostly by an AI agent, with a person deciding 
 | File | What it is |
 |---|---|
 | [`AGENTS.md`](../../AGENTS.md) | The working agreement for agents and people: stack, coding standards, testing, how a session starts and ends. |
-| `notes/PHASES.md` | The plan, phase by phase, and the note for the next session. Kept by each maintainer, git-ignored, not in the repo: start your own. |
+| `notes/PHASES.md` | The plan for the work in hand, phase by phase, and the note for the next session. Kept by each maintainer, git-ignored, not in the repo: start your own. |
+| `notes/<NAME>-SPEC.md` | The spec for a new piece of work, written before its phases. Also local and git-ignored; copied to `docs/specs/` when the feature is finished. |
 | [`docs/DECISIONS.md`](../DECISIONS.md) | Every decision, numbered (D-001 on), with why and what was turned down. |
 | [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) | The data flow and the module map: where each piece of code lives. |
-| [`docs/SPEC.md`](../SPEC.md) | The product spec (DECISIONS.md wins where they differ). |
+| [`docs/specs/`](../specs/) | The specs of what has been built: [the original](../specs/ORIGINAL-SPEC.md) and one per feature added since. For consulting (DECISIONS.md wins where they differ). |
 | [`docs/DESIGN.md`](../DESIGN.md) | The look: brand, colours, type. |
 | [`docs/guide/`](../guide/README.md) | The users' guide, also shown in the app. |
 
@@ -113,7 +114,7 @@ In this folder:
 
 The instructions are in [`AGENTS.md`](../../AGENTS.md), the file coding agents read, Claude Code included. The skills are in Claude Code's format.
 
-**What the agent reads.** The agent loads `AGENTS.md` at the start of every session. It tells the agent to read [`working-docs.md`](working-docs.md) (how the project's documents work) and `notes/PHASES.md` (the current phase and the last session's note; local and git-ignored), and to search `docs/DECISIONS.md` by area tag rather than read all of it. It sets the rules: reuse before writing, tests with the code, one owner per concept, no new dependency without a decision, nothing installed outside a container, and how to end a session.
+**What the agent reads.** The agent loads `AGENTS.md` at the start of every session. It tells the agent to read [`working-docs.md`](working-docs.md) (what is where and how the project's documents are kept) and `notes/PHASES.md` (the current phase and the last session's note; local and git-ignored), and to keep the first read short beyond that: it searches `docs/DECISIONS.md` by area tag rather than read all of it, and consults the specs in `docs/specs/` when it needs them. It sets the rules: reuse before writing, tests with the code, one owner per concept, no new dependency without a decision, nothing installed outside a container, and how to end a session.
 
 **Starting from a fresh clone.** Install Podman or Docker, `make` and the agent, clone, and start the agent in the repo's top folder. With no `notes/PHASES.md`, the agent builds the dev image, installs the hook and runs `make check` itself, then asks what you want to work on and proposes a plan in phases for you to agree. You can run the same steps by hand: `make dev-image`, `make hooks`, `make check`.
 

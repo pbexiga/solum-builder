@@ -8,11 +8,12 @@ So these files are part of the code. A change that makes one of them wrong updat
 
 | File | What it holds | Updated when |
 |---|---|---|
-| `AGENTS.md` | The working agreement: what the project is, the stack, coding standards, testing, how a session starts and ends. The agent reads it at the start of every session. | A rule changes (rarely). |
-| `notes/PHASES.md` | The plan: phases, each with a checklist and *Accept when*; dated notes of what each session did; the **Next session** note. Local and git-ignored: each maintainer keeps their own (a fresh clone has none; start one). | Every session: tick what's done, add a dated note, rewrite Next session. |
+| `AGENTS.md` | The working agreement: what the project is, the stack, coding standards, testing, how a session starts and ends. The agent reads it at the start of every session, with this page and the plan; the rest is consulted when needed. | A rule changes (rarely). |
+| `notes/PHASES.md` | The plan for the work in hand: phases, each with a checklist and *Accept when*; dated notes of what each session did; the **Next session** note. Local and git-ignored: each maintainer keeps their own (a fresh clone has none; start one). | Every session: tick what's done, add a dated note, rewrite Next session. |
+| `notes/<NAME>-SPEC.md` | The spec for a new piece of work (a feature, a new packaging, a rework): what it's for, what the person gets, how it works, what's out of scope, the open questions. Local and git-ignored, like the plan. | Before the work is planned; then as the person's answers settle its open questions. |
 | `docs/DECISIONS.md` | Numbered decisions, `D-001` onwards, newest at the bottom: the context, what was decided, and the alternatives turned down. Each heading ends with area tags (listed at the top); searched by tag, not read whole. | Any choice a later session would otherwise re-open: a library, a format, an algorithm, a trade-off, a change the user asked for. |
 | `docs/ARCHITECTURE.md` | The data flow, the **module map** (one line per module and public function), where browser code goes, the other files. | Any new public function or module, or one that moves. |
-| `docs/SPEC.md` | The product spec, written first. | When DECISIONS overrides it, in the same change. |
+| `docs/specs/` | The specs of what has been built: `ORIGINAL-SPEC.md`, the spec the app was first built from, and one per feature added since (`<NAME>-SPEC.md`). For consulting, not read at the start of a session. Not where new work is planned. | A feature is finished: its spec is copied in. DECISIONS overrides one: fixed in the same change. |
 | `docs/DESIGN.md` | The look: brand assets, colour tokens, type, layout. | When the look changes. |
 | `notes/TESTLIST-*.md` | Local and git-ignored, like PHASES.md. The person's checks by hand: what to open, do and see, for what the automated tests can't judge (does it read well, look right). | When a feature needs eyes or ears. |
 | `docs/guide/` | The users' guide, shown in the app (Help → Documentation). See [Updating the guide](updating-the-guide.md). | After a major UI change, now or in a later full docs pass, as the person decides (D-298). |
@@ -22,7 +23,7 @@ So these files are part of the code. A change that makes one of them wrong updat
 
 ## Order of authority
 
-When two disagree, the newer wins: **DECISIONS.md over SPEC.md**, and the fix to SPEC.md goes in the same change. When the person asks for something that conflicts with `AGENTS.md`, the person wins, and the change is recorded in DECISIONS.md.
+When two disagree, the newer wins: **DECISIONS.md over a spec in `docs/specs/`**, and the fix to the spec goes in the same change. When the person asks for something that conflicts with `AGENTS.md`, the person wins, and the change is recorded in DECISIONS.md.
 
 ## DECISIONS.md
 
@@ -42,7 +43,24 @@ Code, commits, tests and other docs point to entries by number (`D-284`), so the
 
 The first rule of the working agreement is *reuse before you write*: before writing a function, look for one that does the job. The module map is where that search starts. Each module has a row naming its public functions and what they do. Some concepts have exactly one owner (units parsing, netlist generation, running ngspice, the pot model and others listed in `AGENTS.md`); the map shows where each lives. A function missing from the map gets written again, and then there are two to keep in step.
 
+## Where the notes live
+
+`notes/` is at the top of the repo and git-ignored. It holds what belongs to one maintainer's work and not to the project: specs for work in hand, the plan, test lists. Nothing in the repo depends on it, and a fresh clone has none. What the project needs to keep from a piece of work goes into the repo as it's built: the decisions into DECISIONS.md, the modules into ARCHITECTURE.md, and at the end its spec into `docs/specs/`.
+
+## Starting something new
+
+A new piece of work gets its own spec and its own phases, both in `notes/`:
+
+1. **The spec**, `notes/<NAME>-SPEC.md` (for the Mac app, `notes/MAC-APP-SPEC.md`). The agent drafts it from what the person asks for, after reading the code it touches: the goal, what the person gets, how it works, what's out of scope, the decisions it will need, the open questions. The person reads it and answers the questions. A small change (a fix, one dialog) needs no spec: it goes straight into the plan.
+2. **The phases**, in `notes/PHASES.md`, written from the spec in the layout below and agreed by the person before anything is built.
+3. **The work**, a phase at a time. As each phase lands, its decisions go into DECISIONS.md.
+4. **The spec goes into the repo**, in the feature's last pull request: copied from `notes/` to `docs/specs/<NAME>-SPEC.md`, brought up to date first. It says what was built (not what was first proposed), its open questions are answered, the plan for building it (spikes, phases) is taken out, and it cites the decisions by number. If the feature changed something an earlier spec describes, that spec is fixed in the same change.
+
+`docs/specs/` is never where new work is planned: it holds what has been built. A session doesn't read it at the start; it consults the spec that covers the area it's changing.
+
 ## PHASES.md
+
+`notes/PHASES.md` holds the work in hand and nothing else. When a body of work is finished and accepted, move its phases and session notes to an archive beside it (`notes/PHASES-<name>.md`), so the plan a session reads at its start stays short.
 
 Work happens in phases; a session works only on the current one. Something needed from a later phase is noted there, not built. Each phase's checklist gets ticked as items land, and the person accepts a phase against its *Accept when* line.
 
@@ -54,9 +72,9 @@ A session ends by:
 4. updating ARCHITECTURE.md's module map;
 5. writing a 3-5 line **Next session** note at the bottom of PHASES.md: what's done, what's next, anything waiting on the person.
 
-The next session reads `AGENTS.md`, this page and PHASES.md first, and searches DECISIONS.md for the area it's changing (D-306).
+The next session reads `AGENTS.md`, this page and PHASES.md first (and the spec in `notes/` for the phase, if there is one), and searches DECISIONS.md for the area it's changing (D-306, D-309).
 
-On a fresh clone there's no PHASES.md. The agent gets the machine ready (`make dev-image`, `make hooks`, `make check`), asks what to work on, and writes the plan in this layout for the person to agree:
+On a fresh clone there's no `notes/` folder. The agent gets the machine ready (`make dev-image`, `make hooks`, `make check`), asks what to work on, writes a spec in `notes/` if the work needs one (see Starting something new), and writes the plan in `notes/PHASES.md` in this layout for the person to agree:
 
 ```markdown
 # Plan

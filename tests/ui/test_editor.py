@@ -539,9 +539,14 @@ def test_try_several_values(page: Page, base_url: str) -> None:
     assert scope == 5
     # the runs side by side as numbers: one row per value
     expect(page.locator("#sweep-summary tbody tr")).to_have_count(4)
+    # and the Probe pane shows R8 itself at each value: a column per value (D-318)
+    probe = page.locator("#probe-body")
+    expect(probe.locator(".tried-part thead th")).to_have_text(["", "470", "1k", "2k2", "4k7"])
+    expect(probe.locator(".tried-part td[data-field='current']")).to_have_count(4)
     page.locator('form.popup [data-action="cancel"]').click()
     page.locator("#sweep-clear").click()
     expect(page.locator("#sweep-tools")).to_be_hidden()
+    expect(page.locator("#probe-body .tried-part")).to_have_count(0)
 
 
 # ---- files -----------------------------------------------------------------------

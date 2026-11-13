@@ -230,10 +230,14 @@ function partDetail(part) {
 
 /**
  * The part view (SPEC §2). Returns the element for the device curve, if the part has one.
+ * While "try several values" is on for this part (`tried`), its readings and its pins' DC
+ * are a column per value tried, with no device curve (D-318).
  * @param {HTMLElement} el @param {any} part /api/part result @param {(net: string) => void} onNet
+ * @param {{values: string[], parts: any[]} | null} [tried] the sweep's values and the part's view at each
  * @returns {HTMLElement | null}
  */
-export function renderPartView(el, part, onNet) {
+export function renderPartView(el, part, onNet, tried = null) {
+  if (tried?.parts.length) return renderTriedPart(el, part, onNet, tried);
   const pinRows = Object.entries(part.pins).map(([pin, info]) => {
     const row = h("tr", { class: "clickable", "data-net": /** @type {any} */ (info).net }, [
       h("th", {}, [`pin ${pin}`]),
@@ -243,7 +247,9 @@ export function renderPartView(el, part, onNet) {
     row.addEventListener("click", () => onNet(/** @type {any} */ (info).net));
     return row;
   });
-  const detail = partDetail(part);
+  // a part no current can reach is left out of the simulation (D-165): no readings to
+  // show, so the pane says why in their place (D-318)
+  const detail = part.loose ? { rows: [], curve: false, hint: `${part.ref} isn't wired into the circuit, so the simulation leaves it out and there is nothing to measure. Wire it where it belongs to see its readings; Problems says what is open.` } : partDetail(part);
   const curveEl = detail.curve ? h("div", { class: "plot subplot", id: "device-plot" }) : null;
   el.replaceChildren(
     h("div", { class: "probe-title" }, [h("span", { class: "name", "data-testid": "probe-name" }, [part.ref]), h("span", { class: "kind" }, [`${part.type} · ${part.text}`])]),
@@ -254,6 +260,47 @@ export function renderPartView(el, part, onNet) {
     h("table", { class: "readout subplot" }, [h("thead", {}, [h("tr", {}, [h("th", {}, ["Pin"]), h("th", {}, ["Net"]), h("th", {}, ["DC"])])]), h("tbody", {}, pinRows)]),
   );
   return curveEl;
+}
+
+/**
+ * The part view while "try several values" is on for the part: each reading, and each
+ * pin's DC, at every value tried, side by side (D-318).
+ * @param {HTMLElement} el @param {any} part @param {(net: string) => void} onNet
+ * @param {{values: string[], parts: any[]}} tried @returns {null}
+ */
+function renderTriedPart(el, part, onNet, tried) {
+  const details = tried.parts.map((p) => (p.loose ? [] : partDetail(p).rows));
+  /** @type {Array<[string, ...(Node|string)[]]>} */
+  const rows = (details[0] ?? []).map(([label], i) => [label, ...details.map((d) => d[i]?.[1] ?? "—")]);
+  const pinRows = Object.entries(part.pins).map(([pin, info]) => {
+    const row = h("tr", { class: "clickable", "data-net": /** @type {any} */ (info).net }, [
+      h("th", {}, [`pin ${pin}`]),
+      h("td", {}, [/** @type {any} */ (info).net]),
+      ...tried.parts.map((p) => h("td", {}, [volts(p.pins[pin]?.dc)])),
+    ]);
+    row.addEventListener("click", () => onNet(/** @type {any} */ (info).net));
+    return row;
+  });
+  el.replaceChildren(
+    h("div", { class: "probe-title" }, [h("span", { class: "name", "data-testid": "probe-name" }, [part.ref]), h("span", { class: "kind" }, [`${part.type} · ${tried.values.length} values tried`])]),
+    ...noteBlock(part.note),
+    h("div", { class: "tried-part" }, [table(rows, ["", ...tried.values])]),
+    h("p", { class: "empty" }, [`${part.ref} at each value tried. Clear sweep (in Frequency) shows it at its own value again.`]),
+    h("table", { class: "readout subplot" }, [h("thead", {}, [h("tr", {}, ["Pin", "Net", ...tried.values].map((t) => h("th", {}, [t])))]), h("tbody", {}, pinRows)]),
+  );
+  return null;
+}
+
+/**
+ * The Probe pane when what's selected couldn't be measured (the run failed or was
+ * refused): its name and why, never the last selection's readings under it (D-318).
+ * @param {HTMLElement} el @param {string} name the part or net selected @param {string} message
+ */
+export function renderProbeFailed(el, name, message) {
+  el.replaceChildren(
+    h("div", { class: "probe-title" }, [h("span", { class: "name", "data-testid": "probe-name" }, [name]), h("span", { class: "kind" }, ["no readings"])]),
+    h("p", { class: "empty", "data-testid": "probe-failed" }, [message]),
+  );
 }
 
 /**

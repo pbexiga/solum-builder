@@ -100,7 +100,9 @@ def test_cancel_puts_the_value_back_and_undo_is_one_step(page: Page, base_url: s
     open_inspector(page, "R1")
     with page.expect_response(lambda r: r.url.endswith("/api/live")):
         drag_to(page, 0, release=True)
-    expect(page.locator("#field-value")).to_have_value("10k")
+    expect(page.locator("#field-value")).to_have_value(
+        "10"
+    )  # the first step of a resistor's range (D-316)
     page.locator("form.popup [data-action='cancel']").click()
     open_inspector(page, "R1")
     assert saved_value(page) == "100k"

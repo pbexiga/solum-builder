@@ -22,7 +22,7 @@ Notes about the build (a capacitor with no kind, no enclosure chosen) gather und
 - **The working point**, after the DC simulation: a transistor cut off or saturated, a JFET pinched off or in its ohmic region, an op-amp stuck at a supply or with its inputs out of range, DC at the output, a part over its voltage, current or power rating (or close to it), an electrolytic reversed, a supply sagging on its way in, a regulator that can't regulate.
 - **The simulation itself**: when ngspice can't find a solution, or a bias target can't be reached.
 
-Some problems stop the run: ngspice would make up a voltage on a net with no DC path, so nothing is simulated and the banner says *Can't simulate yet:* and why. A part joined by only one pin is left out instead, and the rest runs.
+Some problems stop the run: ngspice would make up a voltage on a net with no DC path, so nothing is simulated and the banner says *Can't simulate yet:* and why. A part joined by only one pin is left out instead, and the rest runs; click it and Probe says it isn't wired in, with no readings. When a run is refused or fails, Probe names what you have selected and says why there is nothing to show.
 
 ## Dismissing a problem
 

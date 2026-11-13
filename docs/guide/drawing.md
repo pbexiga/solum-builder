@@ -49,7 +49,7 @@ Scroll to zoom, drag empty space to pan. The **+**, **−** and **Fit** buttons 
 Double-click a part, or select it and press **Enter**, to open its form. **Apply** (or Enter) keeps the changes; **Cancel** (or Esc) leaves it as it was. Every Apply is one step to undo.
 
 - **Value**: type it the way it's written on a schematic: `4k7`, `22n`, `2M2`, `100p`, `4.7k` and `4700` all work, and `u` stands for `µ`. A value the part can't have (`4k7F` on a resistor, `10F` on a capacitor) is refused with the reason. The value is kept in its standard form: `100uf` becomes `100µ`.
-- **Slide**: a slider over the standard values from a tenth to ten times the value. The Frequency curve follows as you drag; letting go applies the value and runs again. It works on a sheet that can't be simulated yet, without the live curve.
+- **Slide**: a slider over the standard values pedals use, the same range whatever the part's value: 10 Ω to 10 MΩ for a resistor, 10p to 470µ for a capacitor, 1k to 1M for a pot or trimmer (an inductor's runs from a tenth to ten times its value). The Frequency curve follows as you drag; letting go applies the value and runs again. It works on a sheet that can't be simulated yet, without the live curve.
 - **Model**: for diodes, LEDs, transistors, op-amps and chips, the list of models in the library. See [Models](models.md).
 - **ⓘ** at the top of a form says how to measure a value, what the datasheet's range is and the background, where a part has any.
 - **Try** at the bottom compares several values or models at once. See [Frequency and knobs](frequency.md#trying-several-values).

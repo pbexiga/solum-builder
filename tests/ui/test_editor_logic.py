@@ -195,6 +195,31 @@ def assert_path(
     assert len(wires) == bends + 1, wires
 
 
+def test_four_turns_leave_the_wires_as_they_began(js: Page) -> None:
+    """The user (2026-11-13): V+ down through R1 to ground, a wire from under R1 across to
+    R2, R2 to ground; turning R2 a full circle left the straight wire with kinks, more
+    each time round. A turned part's wires are routed afresh (D-317), so four turns bring
+    back the wires it began with, and eight the same again."""
+    r = run(
+        js,
+        """
+        const e = await m('editor/edit.js');
+        const c = { parts: [{ ref: 'R1', type: 'resistor', pos: [0, 0], rot: 90, value: '100k' },
+                            { ref: 'R2', type: 'resistor', pos: [100, 60], rot: 90, value: '10k' }],
+                    wires: [{ from: [0, -60], to: [0, -20] }, { from: [0, 20], to: [0, 100] },
+                            { from: [0, 40], to: [100, 40] }, { from: [100, 80], to: [100, 120] }],
+                    labels: [{ net: 'V+', pos: [0, -60] }, { net: 'GND', pos: [0, 100] }, { net: 'GND', pos: [100, 120] }] };
+        const ends = (x) => x.wires.map((w) => [w.from, w.to].map(String).sort().join(' ')).sort();
+        const seen = [];
+        let x = c;
+        for (let i = 0; i < 8; i++) seen.push(ends((x = e.rotatePart(x, 'R2'))));
+        return { began: ends(c), seen };
+        """,
+    )
+    assert r["seen"][3] == r["seen"][7] == r["began"]
+    assert r["seen"][:4] == r["seen"][4:]  # each turn the same the second time round
+
+
 def test_move_and_rotate_drag_connections_along(js: Page) -> None:
     """R1 at (100, 100) has pins at (80, 100) and (120, 100). A wire leaves pin 2 and a
     label sits on pin 1; both follow the part, and the wire stays square."""

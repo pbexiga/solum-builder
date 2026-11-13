@@ -1,8 +1,7 @@
 # AGENTS.md — working agreement for Solum Builder
 
-At the start of every session read this file and `notes/PHASES.md` (the maintainer's plan for the work in hand: local and git-ignored; on a fresh clone there is none, see "Starting on a fresh clone" below), and the spec in `notes/` for the current phase's work if there is one. Nothing else up front; consult the rest when you need it:
+At the start of every session read this file, `docs/maintain/working-docs.md` (what is where: the plan, the decisions log, the specs and the module map, and how each is kept) and `notes/PHASES.md` (the maintainer's plan for the work in hand: local and git-ignored; on a fresh clone there is none, see "Starting on a fresh clone" below), and the spec in `notes/` for the current phase's work if there is one. Consult the rest when you need it:
 - `docs/DECISIONS.md`: never read whole. Search it by the tags of the areas you're changing (each heading ends with tags such as `` `panes` ``; the list is at its top), and read every D-number cited in the code you touch.
-- `docs/maintain/working-docs.md`: how the plan, the decisions log, the specs and the module map are kept. Read it before writing a decision, starting something new or finishing a feature.
 - `docs/specs/`: the specs of what has been built (`ORIGINAL-SPEC.md` for v1, one per feature since). Consult the one for the area you're changing. DECISIONS.md wins over a spec (it is newer), and you fix the spec in the same change.
 
 ## What this is

@@ -8,7 +8,7 @@ So these files are part of the code. A change that makes one of them wrong updat
 
 | File | What it holds | Updated when |
 |---|---|---|
-| `AGENTS.md` | The working agreement: what the project is, the stack, coding standards, testing, how a session starts and ends. With the plan, it is all a session reads at its start, so it's kept short; everything else is consulted when needed. | A rule changes (rarely). |
+| `AGENTS.md` | The working agreement: what the project is, the stack, coding standards, testing, how a session starts and ends. The agent reads it at the start of every session, with this page and the plan; the rest is consulted when needed. | A rule changes (rarely). |
 | `notes/PHASES.md` | The plan for the work in hand: phases, each with a checklist and *Accept when*; dated notes of what each session did; the **Next session** note. Local and git-ignored: each maintainer keeps their own (a fresh clone has none; start one). | Every session: tick what's done, add a dated note, rewrite Next session. |
 | `notes/<NAME>-SPEC.md` | The spec for a new piece of work (a feature, a new packaging, a rework): what it's for, what the person gets, how it works, what's out of scope, the open questions. Local and git-ignored, like the plan. | Before the work is planned; then as the person's answers settle its open questions. |
 | `docs/DECISIONS.md` | Numbered decisions, `D-001` onwards, newest at the bottom: the context, what was decided, and the alternatives turned down. Each heading ends with area tags (listed at the top); searched by tag, not read whole. | Any choice a later session would otherwise re-open: a library, a format, an algorithm, a trade-off, a change the user asked for. |
@@ -72,7 +72,7 @@ A session ends by:
 4. updating ARCHITECTURE.md's module map;
 5. writing a 3-5 line **Next session** note at the bottom of PHASES.md: what's done, what's next, anything waiting on the person.
 
-The next session reads `AGENTS.md` and PHASES.md first (and the spec in `notes/` for the phase, if there is one), and searches DECISIONS.md for the area it's changing (D-306, D-309). It comes to this page when it writes a decision, starts something new or finishes a feature.
+The next session reads `AGENTS.md`, this page and PHASES.md first (and the spec in `notes/` for the phase, if there is one), and searches DECISIONS.md for the area it's changing (D-306, D-309).
 
 On a fresh clone there's no `notes/` folder. The agent gets the machine ready (`make dev-image`, `make hooks`, `make check`), asks what to work on, writes a spec in `notes/` if the work needs one (see Starting something new), and writes the plan in `notes/PHASES.md` in this layout for the person to agree:
 

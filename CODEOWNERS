@@ -1,2 +1,7 @@
-# Every file: Pedro reviews every pull request automatically.
-*       @pbexiga
+# Paths that change who can merge what, or what runs with the repo's permissions.
+# A pull request touching one of these needs the owner's approval (the "protect main" ruleset
+# requires code owner review). Everything else needs only the normal single approval.
+# The last matching pattern wins, so keep this list specific: no catch-all "*".
+/CODEOWNERS     @pbexiga
+/SECURITY.md    @pbexiga
+/.github/       @pbexiga

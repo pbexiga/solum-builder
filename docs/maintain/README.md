@@ -89,10 +89,11 @@ The project is built in sessions, mostly by an AI agent, with a person deciding 
 | File | What it is |
 |---|---|
 | [`AGENTS.md`](../../AGENTS.md) | The working agreement for agents and people: stack, coding standards, testing, how a session starts and ends. |
-| `notes/PHASES.md` | The plan, phase by phase, and the note for the next session. Kept by each maintainer, git-ignored, not in the repo: start your own. |
+| `notes/PHASES.md` | The plan for the work in hand, phase by phase, and the note for the next session. Kept by each maintainer, git-ignored, not in the repo: start your own. |
+| `notes/<NAME>-SPEC.md` | The spec for a new piece of work, written before its phases. Also local and git-ignored. |
 | [`docs/DECISIONS.md`](../DECISIONS.md) | Every decision, numbered (D-001 on), with why and what was turned down. |
 | [`docs/ARCHITECTURE.md`](../ARCHITECTURE.md) | The data flow and the module map: where each piece of code lives. |
-| [`docs/SPEC.md`](../SPEC.md) | The product spec (DECISIONS.md wins where they differ). |
+| [`docs/SPEC.md`](../SPEC.md) | The product spec: the original one, kept current, so it says what the app does today (DECISIONS.md wins where they differ). |
 | [`docs/DESIGN.md`](../DESIGN.md) | The look: brand, colours, type. |
 | [`docs/guide/`](../guide/README.md) | The users' guide, also shown in the app. |
 

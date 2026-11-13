@@ -1,5 +1,7 @@
 # Solum Builder — Product spec
 
+This is the spec the app was first built from, kept current since: where a decision changed it, the text was changed and cites the decision (D-number), so it describes what the app does today. It is not a plan. New work gets its own spec and phases in `notes/`, local to whoever is building it (see `docs/maintain/working-docs.md`), and this file is updated as that work lands.
+
 ## Goal
 See and hear what every part of a pedal circuit does before soldering it. The headline difference from existing tools (PedalSpice, CircuitJS, LTspice): **click any point or part and get a view made for that point** (waveform, harmonics, DC, what it is and why), plus live curves while turning knobs.
 

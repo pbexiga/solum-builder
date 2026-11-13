@@ -2,7 +2,8 @@
 
 At the start of every session read this file, `docs/maintain/working-docs.md` (how the plan, the decisions log and the module map work) and `notes/PHASES.md` (the maintainer's plan: local and git-ignored; on a fresh clone there is none, see "Starting on a fresh clone" below).
 Don't read `docs/DECISIONS.md` whole (it's long): search it by the tags of the areas you're changing (each heading ends with tags such as `` `panes` ``; the list is at its top), and read every D-number cited in the code you touch.
-`docs/SPEC.md` is the product spec. When they disagree, DECISIONS.md wins (it is newer), and you fix SPEC.md in the same change.
+`docs/SPEC.md` is the product spec: the original spec the app was built from, kept current, so it says what the app does today. When they disagree, DECISIONS.md wins (it is newer), and you fix SPEC.md in the same change.
+New work is never planned in `docs/`: its spec (`notes/<NAME>-SPEC.md`) and its phases (`notes/PHASES.md`) live in `notes/`, local to each maintainer and git-ignored. If `notes/` has a spec for the current phase's work, read it too.
 
 ## What this is
 A local, self-hosted circuit simulator for guitar-pedal builders. You draw a circuit, probe any node (waveform, harmonics, DC), see frequency curves update as you turn knobs, check the circuit against plain-English rules, and render audio through it into a NAM amp model.
@@ -89,10 +90,12 @@ A pre-commit hook runs ruff, `make jslint` and `make test`, except on commits th
 ### Starting on a fresh clone
 When there is no `notes/PHASES.md`:
 1. Get the machine ready yourself: `make dev-image`, `make hooks`, then `make check`. They need Podman (or Docker) and `make`; if either is missing, tell the person what to install, never install it yourself. If `make check` isn't green, say so before changing anything.
-2. Ask what the person wants to work on, and turn it into phases: related work grouped together, each phase small enough to check and accept in one sitting. Write them in `notes/PHASES.md` in the layout `docs/maintain/working-docs.md` gives (goal, checklist, *Accept when*), and have the person agree the plan before building.
+2. Ask what the person wants to work on. For anything larger than a small change, first write its spec in `notes/<NAME>-SPEC.md` (goal, what the person gets, how it works, out of scope, open questions) and have the person answer its questions. Then turn it into phases: related work grouped together, each phase small enough to check and accept in one sitting. Write them in `notes/PHASES.md` in the layout `docs/maintain/working-docs.md` gives (goal, checklist, *Accept when*), and have the person agree the plan before building.
 
 ### Working in sessions
 - Work only on the current phase in `notes/PHASES.md` (local, git-ignored). If you discover something needed from a later phase, note it there; don't build it.
+- When the person asks for something new that isn't in the plan, it gets its own spec and phases in `notes/` before it's built ("Starting something new" in `docs/maintain/working-docs.md`); a small change goes straight into the plan.
+- When a body of work is finished and accepted, move its phases and notes out of `notes/PHASES.md` to `notes/PHASES-<name>.md`: the plan holds only the work in hand.
 - When you make a choice that a future session would otherwise re-debate (library, format, algorithm, trade-off), add it to `docs/DECISIONS.md` in the same commit.
 - End every session by: running the full test suite, updating the phase checklist in `notes/PHASES.md`, adding decisions, updating ARCHITECTURE.md's module map, and writing a 3–5 line "Next session" note at the bottom of PHASES.md.
 - Small, focused commits with clear messages.

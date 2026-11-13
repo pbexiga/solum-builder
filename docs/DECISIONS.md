@@ -1706,3 +1706,10 @@ Each `##` section of `docs/guide/README.md` heads a group in the left-hand list,
 - GitHub's mobile app shows no SVG in a README (a broken-image mark), so the README's logo is `docs/guide/img/readme-logo.png`: the silver outlined logo on the Solum theme's ink in a rounded square, drawn at twice the size shown by `scripts/guide_shots.py readme-logo`. The logo itself isn't redrawn (`docs/DESIGN.md`).
 - solumfx.com sits under the logo in the README and in Help → About; About also has a Source row linking the repository (`SITE`, `REPO` in `web/help.js`).
 *Alternatives:* a `<picture>` of the two SVGs (the GitHub app shows neither).
+
+**D-309 — New work gets its own spec and phases in `notes/`; `docs/SPEC.md` describes the app as it is** (2026-11-13) `project` `docs`
+- A new piece of work (a feature, a new packaging, a rework) starts with a spec in `notes/<NAME>-SPEC.md` and phases in `notes/PHASES.md`, both local to the maintainer doing it and git-ignored. A small change needs no spec. What the project keeps from the work reaches the repo as it's built: decisions here, what the app now does in `docs/SPEC.md`, modules in ARCHITECTURE.md.
+- `docs/SPEC.md` stays, with a note at its top: it is the original spec, kept current, and says what the app does today. It is not where new work is planned.
+- `notes/PHASES.md` holds only the work in hand. Finished, accepted work moves to `notes/PHASES-<name>.md`.
+- Why: the user found the plan had grown too large to read at the start of a session (it held all of v1), and the docs didn't say where a contributor starting something new should put their spec and plan, or that SPEC.md wasn't the place.
+*Alternatives:* removing `docs/SPEC.md` (it is the one place that says what the whole app does, and AGENTS.md keeps it in step with the decisions); specs for new work in `docs/` (they'd be other people's unfinished plans in everyone's clone; the decisions and SPEC.md carry what lasts).

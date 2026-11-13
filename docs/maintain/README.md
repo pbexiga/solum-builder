@@ -118,12 +118,13 @@ The instructions are in [`AGENTS.md`](../../AGENTS.md), the file coding agents r
 
 **Starting from a fresh clone.** Install Podman or Docker, `make` and the agent, clone, and start the agent in the repo's top folder. With no `notes/PHASES.md`, the agent builds the dev image, installs the hook and runs `make check` itself, then asks what you want to work on and proposes a plan in phases for you to agree. You can run the same steps by hand: `make dev-image`, `make hooks`, `make check`.
 
-**Skills.** Two jobs are long and particular enough to have agent skills, in `.claude/skills/`. Claude Code finds them by itself and uses one when a request fits:
+**Skills.** Three jobs are long and particular enough to have agent skills, in `.claude/skills/`. Claude Code finds them by itself and uses one when a request fits:
 
 | Skill | What it does |
 |---|---|
 | `fit-model` | Fits our own SPICE model to a maker's datasheet (BJT, diode, LED, JFET, op-amp) and adds it to `library/models/` with its record and measured checks. Holds the fitting tools (`tools/`) and the worked fits the model records cite (`worked/`). |
 | `build-starter` | Turns a published pedal schematic into a starter circuit with its acceptance file: drawn by script, models checked, expected values from the source, no Problems. Holds a worked example (`make_klon.py`). |
+| `draw-circuit` | Draws a circuit worked out with the user as a file they open in the app: parts placed and wired by script, the drawn nets checked against the netlist meant, looked at in the real app (Problems, DC voltages, a picture), then copied into their circuits folder. Holds a worked example (`example_boost.py`) and the look (`look.py`). |
 
 The skills are in Claude Code's format; another agent can read a skill's `SKILL.md` and follow it.
 

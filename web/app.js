@@ -1033,6 +1033,7 @@ async function tryEdit(next, label, source = "") {
     return /** @type {Error} */ (err).message;
   }
   await edit(next, label, view, source, true); // checked first, so one edit on its own: no wait
+  sessionRerun(); // in Edit curve, Auto-run off: re-run as undo does, so it shows Keep and Discard
   return null;
 }
 
@@ -1888,7 +1889,10 @@ async function start() {
   state.chips = chips;
   state.capKinds = capacitors.kinds;
   state.pickups = pickups.pickups;
-  if (source) await open(source, true);
+  // what the address says now: it may have changed while the lists loaded, and opening
+  // the one read before them would put a stale sheet over the newer one
+  const now = sourceFromHash();
+  if (now) await open(now, true);
 }
 
 start().catch((err) => showError(err.message));

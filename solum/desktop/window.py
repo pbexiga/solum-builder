@@ -18,6 +18,7 @@ from logging.handlers import RotatingFileHandler
 from pathlib import Path
 from typing import IO, Any
 
+from solum.api.serving import LocalServer
 from solum.desktop.folders import (
     APP_NAME,
     AppFolders,
@@ -31,7 +32,6 @@ from solum.desktop.folders import (
     server_environment,
     write_spinit,
 )
-from solum.desktop.server import LocalServer
 
 BUNDLE_ID = "io.github.solum-builder"
 log = logging.getLogger("solum.desktop")

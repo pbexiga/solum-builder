@@ -2,7 +2,6 @@
 
 import json
 import os
-import urllib.request
 from pathlib import Path
 
 import pytest
@@ -23,7 +22,6 @@ from solum.desktop.folders import (
     spinit_text,
     write_spinit,
 )
-from solum.desktop.server import HOST, LocalServer, free_port, wait_for_health
 
 
 @pytest.fixture
@@ -216,33 +214,3 @@ def test_the_servers_environment_is_what_the_settings_read(
     assert env["SPICE_SCRIPTS"] == str(folders.caches / "ngspice-scripts")
     assert env["DYLD_FALLBACK_LIBRARY_PATH"] == str(root)
     assert env["FONTCONFIG_FILE"] == str(root / "fonts" / "fonts.conf")
-
-
-def test_a_free_port_is_on_this_machine_only() -> None:
-    assert HOST == "127.0.0.1"
-    assert 1024 < free_port() < 65536
-
-
-def test_waiting_for_a_server_that_isnt_there_gives_up() -> None:
-    assert wait_for_health(free_port(), seconds=0.2) is False
-
-
-def test_the_server_starts_answers_and_stops(
-    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
-) -> None:
-    monkeypatch.setenv("DATA_DIR", str(tmp_path / "data"))
-    monkeypatch.setenv("CACHE_DIR", str(tmp_path / "cache"))
-    server = LocalServer()
-    server.stop()  # nothing started: nothing to do
-    assert server.start() is True
-    assert server.url == f"http://127.0.0.1:{server.port}/"
-    with urllib.request.urlopen(server.url + "api/settings") as r:
-        assert json.load(r)["data_dir"] == str(tmp_path / "data")
-    first = server.port
-    server.stop()
-    assert wait_for_health(first, seconds=0.2) is False
-    monkeypatch.setenv("DATA_DIR", str(tmp_path / "moved"))  # a moved folder: started again
-    assert server.start() is True
-    with urllib.request.urlopen(server.url + "api/settings") as r:
-        assert json.load(r)["data_dir"] == str(tmp_path / "moved")
-    server.stop()

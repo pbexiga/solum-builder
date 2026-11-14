@@ -8,6 +8,7 @@ import pytest
 from solum.circuit.build import CircuitBuilder
 from solum.circuit.connectivity import (
     ConnectivityError,
+    clash_message,
     connect,
     loose_parts,
     on_segment,
@@ -108,8 +109,17 @@ def test_wire_end_on_another_wire_is_a_junction() -> None:
 def test_two_names_on_one_net_is_an_error() -> None:
     data = _two_resistors([{"from": [20, 0], "to": [100, -20]}])
     data["labels"] = [{"net": "A", "pos": [20, 0]}, {"net": "B", "pos": [100, -20]}]
-    with pytest.raises(ConnectivityError, match="Net labels A and B are wired together"):
+    with pytest.raises(ConnectivityError, match="That joins A and B, and a net can have only"):
         connect(parse_circuit(data))
+
+
+def test_clash_message_says_what_the_wire_does() -> None:
+    """D-335: a supply to ground or to the other supply is a short; a supply to a net of
+    its own bypasses what's between; other names are two names for one net."""
+    assert clash_message({"V+", "GND"}).startswith("That joins V+ to GND: a dead short across")
+    assert clash_message({"V+", "V-"}).startswith("That joins V+ and V-: a short between")
+    assert clash_message({"V+", "V+F"}).startswith("That joins V+ to V+F, so whatever is")
+    assert clash_message({"TONE", "IN"}).startswith("That joins IN and TONE, and a net can")
 
 
 def test_same_label_joins_distant_points(circuit: Callable[..., CircuitBuilder]) -> None:

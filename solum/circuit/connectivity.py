@@ -12,6 +12,7 @@ from functools import lru_cache
 
 from solum.circuit.parts import pin_positions
 from solum.circuit.schema import (
+    SUPPLY_SIGNS,
     CHIP_UNITS,
     AmpInput,
     Bjt,
@@ -128,6 +129,25 @@ def connect(circuit: Circuit) -> Nets:
     return _nets(pins, wires, labels, active)
 
 
+def clash_message(names: set[str]) -> str:
+    """Why labels wired together are refused, worded by what the wire does (D-335): a
+    supply shorted to ground or to another supply, a supply joined to a net made from it
+    (whatever lies between bypassed), else two names for one net."""
+    rails = sorted(n for n in names if n in SUPPLY_SIGNS)
+    rest = sorted(names - {GROUND, *rails})
+    fix = "Remove the wire, or one of the labels if they're meant to be one net."
+    if rails and GROUND in names:
+        return (f"That joins {' and '.join(rails)} to {GROUND}: a dead short across the "
+                f"supply. {fix}")  # fmt: skip
+    if len(rails) > 1:
+        return f"That joins {' and '.join(rails)}: a short between the supplies. {fix}"
+    if rails:
+        return (f"That joins {rails[0]} to {' and '.join(rest)}, so whatever is between them "
+                f"is bypassed (a filter resistor, a regulator). {fix}")  # fmt: skip
+    return (f"That joins {' and '.join(sorted(names))}, and a net can have only one name. "
+            "Remove the wire, or one of the labels to join them.")  # fmt: skip
+
+
 @lru_cache(maxsize=CONNECT_MEMO)
 def _nets(
     pin_list: tuple[tuple[str, str, Point], ...],
@@ -156,11 +176,7 @@ def _nets(
         names_by_root[uf.find(pos)].add(net)
     for names in names_by_root.values():
         if len(names) > 1:
-            raise ConnectivityError(
-                f"Net labels {' and '.join(sorted(names))} are wired together. A net can have "
-                "only one name: remove a label or the wire joining them.",
-                tuple(sorted(names)),
-            )
+            raise ConnectivityError(clash_message(names), tuple(sorted(names)))
 
     pins_by_root: dict[Point, list[PinRef]] = defaultdict(list)
     for pin_ref, pos in sorted(pins.items()):

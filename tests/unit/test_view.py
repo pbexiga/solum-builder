@@ -393,9 +393,23 @@ def test_contradictory_wiring_still_draws() -> None:
     data = wired()
     data["wires"] = [*data["wires"], {"from": [80, 100], "to": [150, 200]}]  # IN to GND
     view = circuit_view(parse_circuit(data))
-    assert view["problem"] is not None and "GND and IN are wired together" in view["problem"]
+    assert view["problem"] is not None and "That joins GND and IN" in view["problem"]
     assert view["nets"] == {}
     assert [p["ref"] for p in view["parts"]] == ["R1", "R2", "R3"]
+
+
+def test_contradictory_wiring_draws_with_a_battery() -> None:
+    """A battery's + wired to GND: the view still draws and says why, rather than failing
+    (the battery's rails were worked out from the nets outside the view's catch, D-335)."""
+    data = wired()
+    battery = {"ref": "BAT1", "type": "battery", "pos": [300, 100]}  # + at (300, 80)
+    data["parts"] = [*data["parts"], battery]
+    data["power"] = {"rails": {"V+": 9.0}}
+    data["labels"] = [*data["labels"], {"net": "V+", "pos": [300, 80]}]
+    data["wires"] = [*data["wires"], {"from": [300, 80], "to": [150, 200]}]  # V+ to GND
+    view = circuit_view(parse_circuit(data))
+    assert view["problem"] is not None and "GND" in view["problem"] and "V+" in view["problem"]
+    assert "BAT1" in [p["ref"] for p in view["parts"]]
     assert view["parts"][0]["pins"] == [
         {"name": "1", "pos": [80, 100], "net": None},
         {"name": "2", "pos": [120, 100], "net": None},

@@ -33,6 +33,7 @@ import { actionFor } from "./editor/keys.js";
 import { db, volts } from "./fixed.js";
 import { closeMenus } from "./menus.js";
 import { reorderable } from "./panes.js";
+import { refusalBar } from "./refusal.js";
 import { liveCurves, liveValues, nearestStep, readingRows } from "./live.js";
 import { h, knobControl, paneInfo, restoreLargeViews, shrinkLargeViews, renderDc, renderKnobs, renderNodeView, renderPartView, renderProbeFailed, renderProblems, renderReadings, renderSweepSummary, showKnob } from "./panels.js";
 import { barPlot, curvePlot, forgetColours, linePlot, liveLinePlot } from "./plots.js";
@@ -203,6 +204,8 @@ const notes = notesPane($("notes-body"), $("notes-count"), {
     pane.scrollIntoView({ block: "nearest" });
   },
 });
+/** Why an edit was refused, over the canvas (D-335). */
+const refusal = refusalBar($("refusal"));
 const renameNote = renameNotice($("rename-notice"), {
   circuit: () => state.circuit,
   edit: (next, label) => tryEdit(next, label),
@@ -533,6 +536,7 @@ async function editSession(name, source, owner) {
 /** @param {Source} source @param {boolean} [reload] the page's first open: large views put back by `restoreLargeViews` stay out */
 async function open(source, reload = false) {
   showError(null);
+  refusal.hide();
   if (!reload) backToEditor();
   const token = openRequests.next();
   opening = hashOf(source);
@@ -702,7 +706,7 @@ async function setCircuit(next, view, onRefused, restore, now = false) {
     onRefused?.();
     state.circuit = before;
     updateButtons();
-    showError(/** @type {Error} */ (err).message);
+    refusal.show(/** @type {Error} */ (err).message);
     return;
   }
   show(view, { fit: false });

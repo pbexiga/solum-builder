@@ -440,6 +440,8 @@ body:has(.panels details.moving) { cursor: grabbing; }
   background: var(--info-bg);
 }
 .error { margin: 12px 16px 0; color: var(--text); border-left: 3px solid var(--error); white-space: pre-line; }
+/* the Results column's error stays in view as the panes scroll under it (D-335) */
+.panels > .error { position: sticky; top: 8px; z-index: 3; box-shadow: 0 0 0 8px var(--surface-1); }
 .error::before { content: "■ "; color: var(--error); }
 .warning { border-left: 3px solid var(--warning); color: var(--text); }
 .warning::before { content: "▲ "; color: var(--warning); }
@@ -1109,3 +1111,27 @@ button.flip.cancel > [data-label="go"], button.flip:not(.cancel) > [data-label="
 .rename-notice .mentions li { margin: 4px 0; }
 .rename-notice .mention-text { color: var(--text-3); }
 .rename-notice mark { background: none; color: var(--text); font-weight: 600; }
+
+/* An edit the server refused: why, over the canvas's foot, for a few seconds (D-335) */
+.refusal {
+  position: absolute; left: 50%; bottom: 16px; transform: translateX(-50%); z-index: 6;
+  width: max-content; max-width: min(640px, calc(100% - 32px));
+  display: flex; align-items: flex-start; gap: 10px;
+  padding: 8px 8px 8px 12px; border-radius: 3px;
+  background: var(--info-bg); color: var(--text); border-left: 3px solid var(--error);
+  box-shadow: 0 0 0 1px var(--error);
+}
+.refusal[hidden] { display: none; }
+.refusal-text::before { content: "■ "; color: var(--error); }
+.refusal-close { border: 0; background: none; color: var(--text-2); cursor: pointer; font: inherit; line-height: 1; padding: 2px 4px; }
+.refusal.pulse { animation: refusal-pulse 0.9s ease-out; }
+@keyframes refusal-pulse {
+  0%, 40% { box-shadow: 0 0 0 6px var(--error); }
+  20%, 60% { box-shadow: 0 0 0 1px var(--error); }
+  80% { box-shadow: 0 0 0 4px var(--error); }
+  100% { box-shadow: 0 0 0 1px var(--error); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .refusal.pulse { animation: refusal-fade 0.3s ease-out; }
+  @keyframes refusal-fade { from { opacity: 0; } to { opacity: 1; } }
+}

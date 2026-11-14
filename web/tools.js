@@ -149,48 +149,40 @@ function filterAnswer(f) {
 /** Rows of a small two-column answer table. @param {Array<[string, string]>} rows */
 const answerTable = (rows) => h("table", {}, [h("tbody", {}, rows.map(([a, b]) => h("tr", {}, [h("th", {}, [a]), h("td", { class: "values" }, [b])])))]);
 
-/** Filter: the corner from R and C, and a second pair to compare (D-319). @param {Record<string, string>} kinds */
-function filterCalculator(kinds) {
+/**
+ * Filter (D-319, D-320): two of R, C and the corner, the third worked out (a part as the
+ * nearest standard value too), and a second pair to compare.
+ * @param {Record<string, string>} kinds @param {Record<string, string>} series
+ */
+function filterCalculator(kinds, series) {
   const kind = selectRow("filter-kind", "Filter", kinds);
   const r = inputRow("filter-r", "Resistor", "e.g. 100k");
   const c = inputRow("filter-c", "Capacitor", "e.g. 1u, 47n");
+  const freq = inputRow("filter-freq", "Corner (Hz)", "blank to find it, e.g. 100, 1k");
+  const values = selectRow("filter-series", "Standard values", series);
   const r2 = inputRow("filter-r2", "Compare with R", "the same");
   const c2 = inputRow("filter-c2", "and C", "e.g. 10u");
+  const filled = () => [r, c, freq].filter((row) => row.input.value.trim()).length;
+  const showSeries = () => (values.row.hidden = !freq.input.value.trim());
+  freq.input.addEventListener("input", showSeries);
+  showSeries();
   return calculator({
     key: "filter",
-    intro: "A resistor and a capacitor make a filter. Type both, the way they're written on a schematic, to see where it starts cutting and what that does to a guitar. Fill in Compare with to see what another value would do.",
-    rows: [kind.row, r.row, c.row, r2.row, c2.row],
-    fields: [kind.select, r.input, c.input, r2.input, c2.input],
-    ready: () => Boolean(r.input.value.trim() && c.input.value.trim()),
-    url: () => `api/tools/filter?kind=${kind.select.value}&r=${typed(r)}&c=${typed(c)}&r2=${typed(r2)}&c2=${typed(c2)}`,
+    intro: "A resistor and a capacitor make a filter. Fill in any two of the resistor, the capacitor and the corner, the way they're written on a schematic, and leave the third blank: it works out the third, where the filter starts cutting and what that does to a guitar. Fill in Compare with to see what another value would do.",
+    rows: [kind.row, r.row, c.row, freq.row, values.row, r2.row, c2.row],
+    fields: [kind.select, r.input, c.input, freq.input, values.select, r2.input, c2.input],
+    ready: () => filled() >= 2, // all three: the server says to leave one blank
+    url: () => `api/tools/filter?kind=${kind.select.value}&r=${typed(r)}&c=${typed(c)}&freq=${typed(freq)}&series=${values.select.value}&r2=${typed(r2)}&c2=${typed(c2)}`,
     show: (body) => [
-      h("p", {}, [`The corner, where the level is 3 dB down: ${body.formula}`]),
+      ...(body.find
+        ? [
+            h("p", {}, [`The ${body.find.name}: ${body.find.formula}`]),
+            h("h3", { id: "filter-found" }, [`${body.find.exact}: use ${body.find.standard} (${body.find.series})`]),
+            h("p", {}, [`With ${body.find.standard} the corner is ${body.find.filter.corner_text}, ${body.find.corner_off} from the one asked for.`]),
+          ]
+        : [h("p", {}, [`The corner, where the level is 3 dB down: ${body.formula}`])]),
       ...body.filters.map(filterAnswer),
       ...(body.change ? [h("p", { id: "filter-change" }, [body.change])] : []),
-    ],
-  });
-}
-
-/** Filter: the part a corner needs, given the other (D-320). @param {Record<string, string>} kinds @param {Record<string, string>} series */
-function filterPartCalculator(kinds, series) {
-  const kind = selectRow("part-kind", "Filter", kinds);
-  const freq = inputRow("part-freq", "Corner (Hz)", "e.g. 100, 1k");
-  const r = inputRow("part-r", "Resistor", "e.g. 1M, or blank to find it");
-  const c = inputRow("part-c", "Capacitor", "e.g. 47n, or blank to find it");
-  const values = selectRow("part-series", "Standard values", series);
-  const one = () => Boolean(r.input.value.trim()) !== Boolean(c.input.value.trim());
-  return calculator({
-    key: "filter-part",
-    intro: "Start from the corner you want: type it and one of the two parts, and leave the other blank. It works out the blank one and the nearest value you can buy.",
-    rows: [kind.row, freq.row, r.row, c.row, values.row],
-    fields: [kind.select, freq.input, r.input, c.input, values.select],
-    ready: () => Boolean(freq.input.value.trim()) && one(),
-    url: () => `api/tools/filter/part?kind=${kind.select.value}&freq=${typed(freq)}&r=${typed(r)}&c=${typed(c)}&series=${values.select.value}`,
-    show: (body) => [
-      h("p", {}, [`The ${body.find}: ${body.formula}`]),
-      h("h3", { id: "part-answer" }, [`${body.exact}: use ${body.standard} (${body.series})`]),
-      h("p", {}, [`With ${body.standard} the corner is ${body.filter.corner_text}, ${body.corner_off} from the one asked for.`]),
-      filterAnswer(body.filter),
     ],
   });
 }
@@ -267,8 +259,7 @@ function dbCalculator() {
 }
 
 const CALCULATORS = {
-  filter: "Filter: the corner from R and C",
-  "filter-part": "Filter: a part for the corner you want",
+  filter: "Filter (high-pass or low-pass)",
   divider: "Voltage divider",
   combine: "Parallel and series",
   db: "Decibels",
@@ -281,7 +272,7 @@ const CALCULATORS = {
 export async function calculatorsSheet() {
   const { filters, series } = await tables();
   const pick = selectRow("calc-pick", "Calculator", CALCULATORS);
-  const sections = [filterCalculator(filters), filterPartCalculator(filters, series), dividerCalculator(), combineCalculator(series), dbCalculator()];
+  const sections = [filterCalculator(filters, series), dividerCalculator(), combineCalculator(series), dbCalculator()];
   const showPicked = () => {
     for (const s of sections) s.hidden = s.id !== `calc-${pick.select.value}`;
     remember("solum.calculator", pick.select.value);

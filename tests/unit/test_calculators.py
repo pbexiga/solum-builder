@@ -11,7 +11,6 @@ from solum.calculators import (
     db_view,
     divider_view,
     effect,
-    filter_part_view,
     filter_view,
     level_db,
 )
@@ -76,12 +75,14 @@ def test_one_filter_has_no_comparison_and_the_same_corner_says_so() -> None:
     ("args", "says"),
     [
         (("band", "10k", "100n"), "Choose high-pass or low-pass."),
-        (("high", "", "100n"), "value"),
+        (("high", "", "100n"), "leave the third blank"),
         (("high", "4k7F", "100n"), "ohms"),
         (("high", "0", "100n"), "The resistor must be above 0."),
+        (("high", "10k", "100n", "1k"), "leave the third blank"),
+        (("high", "10k"), "leave the third blank"),
     ],
 )
-def test_values_it_cant_use_are_refused_in_words(args: tuple[str, str, str], says: str) -> None:
+def test_values_it_cant_use_are_refused_in_words(args: tuple[str, ...], says: str) -> None:
     with pytest.raises(FilterError) as err:
         filter_view(*args)
     assert says in str(err.value)
@@ -93,38 +94,47 @@ def test_values_it_cant_use_are_refused_in_words(args: tuple[str, str, str], say
 def test_a_capacitor_from_the_corner_and_the_resistor() -> None:
     """A bass cut at 100 Hz into a 1M input: C = 1 / (2π × 100 × 1M) = 1.59 nF; E12's
     nearest is 1n5, which puts the corner at 106 Hz, 6.1 % high."""
-    view = filter_part_view("high", "100", r="1M")
-    assert view["find"] == "capacitor"
-    assert view["formula"] == "C = 1 / (2 × π × f × R)"
-    assert (view["exact"], view["standard"], view["series"]) == ("1.59 nF", "1n5", "E12")
-    assert view["filter"]["corner_text"] == "106 Hz" and view["corner_off"] == "+6.1 %"
-    assert view["filter"]["c"] == "1n5" and view["filter"]["r"] == "1M"
+    found = filter_view("high", r="1M", freq="100")["find"]
+    assert found["name"] == "capacitor"
+    assert found["formula"] == "C = 1 / (2 × π × f × R)"
+    assert (found["exact"], found["standard"], found["series"]) == ("1.59 nF", "1n5", "E12")
+    assert found["filter"]["corner_text"] == "106 Hz" and found["corner_off"] == "+6.1 %"
+    assert found["filter"]["c"] == "1n5" and found["filter"]["r"] == "1M"
 
 
 def test_a_resistor_from_the_corner_and_the_capacitor() -> None:
     # the Tube Screamer's treble cut: 720 Hz with 47n wants 4.70 kΩ, which is 4k7
-    view = filter_part_view("low", "720", c="47n")
-    assert (view["find"], view["exact"], view["standard"]) == ("resistor", "4.7 kΩ", "4k7")
-    assert view["corner_off"] == "+0.1 %"  # 4k7 itself gives 720.5 Hz
+    found = filter_view("low", c="47n", freq="720")["find"]
+    assert (found["name"], found["exact"], found["standard"]) == ("resistor", "4.7 kΩ", "4k7")
+    assert found["corner_off"] == "+0.1 %"  # 4k7 itself gives 720.5 Hz
     # 1 kHz with 47n wants 3.39 kΩ: E12's nearest is 3k3, E24's 3k3 too, E6's 3k3
     assert [
-        filter_part_view("low", "1k", c="47n", series=s)["standard"] for s in ("E12", "E24", "E6")
+        filter_view("low", c="47n", freq="1k", series=s)["find"]["standard"]
+        for s in ("E12", "E24", "E6")
     ] == ["3k3"] * 3
+
+
+def test_a_found_part_can_be_compared_too() -> None:
+    """The found filter is the first of a comparison: 100 Hz into 1M is 1n5 at 106 Hz, and
+    a 15n instead puts the corner ten times lower."""
+    view = filter_view("high", r="1M", freq="100", c2="15n")
+    assert view["filters"][0]["c"] == "1n5" and view["filters"][1]["r"] == "1M"
+    assert view["change"].startswith("The corner moves 10 times lower, from 106 Hz to 10.6 Hz")
+    assert "find" not in filter_view("high", "1M", "1n5")
 
 
 @pytest.mark.parametrize(
     ("args", "says"),
     [
-        (("high", "100", "1M", "1n"), "leave the other blank"),
-        (("high", "100", "", ""), "leave the other blank"),
-        (("high", "0", "1M", ""), "corner frequency must be above 0"),
+        (("high", "", "", "100"), "leave the third blank"),
+        (("high", "1M", "", "0"), "corner frequency must be above 0"),
     ],
 )
-def test_finding_a_part_needs_exactly_one(args: tuple[str, str, str, str], says: str) -> None:
+def test_finding_a_part_needs_one_of_them(args: tuple[str, str, str, str], says: str) -> None:
     with pytest.raises(FilterError, match=says):
-        filter_part_view(*args)
+        filter_view(*args)
     with pytest.raises(FilterError, match="Choose one of E12"):
-        filter_part_view("high", "100", r="1M", series="E3")
+        filter_view("high", r="1M", freq="100", series="E3")
 
 
 # ---- voltage divider

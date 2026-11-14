@@ -1,8 +1,7 @@
 """Tools → Calculators… (D-319, D-320): the sums a builder does by hand, worked out with
 the numbers shown. Pure; values parsed and written by `units`.
 
-- An RC filter's corner from its parts (`filter_view`), and a part from the corner
-  (`filter_part_view`).
+- An RC filter: its corner from its parts, or a part from the corner (`filter_view`).
 - A voltage divider, and how far a load pulls its middle down (`divider_view`).
 - Resistors or capacitors in series and in parallel, and the standard pair that makes a
   value (`combine_view`).
@@ -135,24 +134,13 @@ def _read(text: str, unit: str, name: str) -> float:
     return value
 
 
-def filter_view(kind: str, r: str, c: str, r2: str = "", c2: str = "") -> dict[str, Any]:
-    """The calculator's answer: the filter from `r` and `c` as typed (`100k`, `1u`), and,
-    when `r2` or `c2` is given, a second one to compare (a blank one keeps the first's)
-    with what the change did. Each: its corner, the sum written out, its level at
-    `LEVEL_HZ` and its `effect`."""
-    if kind not in KINDS:
-        raise FilterError("Choose high-pass or low-pass.")
-    which: Kind = "high" if kind == "high" else "low"
-    ohms, farads = _read(r, "Ω", "resistor"), _read(c, "F", "capacitor")
-    filters = [_filter(which, ohms, farads)]
-    if r2.strip() or c2.strip():
-        other_r = _read(r2, "Ω", "resistor") if r2.strip() else ohms
-        other_c = _read(c2, "F", "capacitor") if c2.strip() else farads
-        filters.append(_filter(which, other_r, other_c))
-    view: dict[str, Any] = {"kind": which, "formula": "f = 1 / (2 × π × R × C)", "filters": filters}
-    if len(filters) == 2:
-        view["change"] = _moved(filters[0], filters[1])
-    return view
+FORMULA = "f = 1 / (2 \u00d7 \u03c0 \u00d7 R \u00d7 C)"
+FIND_C = "C = 1 / (2 \u00d7 \u03c0 \u00d7 f \u00d7 R)"
+FIND_R = "R = 1 / (2 \u00d7 \u03c0 \u00d7 f \u00d7 C)"
+LEAVE_ONE = (
+    "Fill in two of the resistor, the capacitor and the corner, "
+    "and leave the third blank to find it."
+)
 
 
 def _series(series: str) -> str:
@@ -167,40 +155,26 @@ def _off(got: float, wanted: float) -> str:
     return "0 %" if abs(pct) < 0.05 else f"{pct:+.1f} %".replace("-", "\u2212")
 
 
-# ---- a filter's part from its corner ---------------------------------------------------
-
-FIND_C = "C = 1 / (2 \u00d7 \u03c0 \u00d7 f \u00d7 R)"
-FIND_R = "R = 1 / (2 \u00d7 \u03c0 \u00d7 f \u00d7 C)"
-
-
-def filter_part_view(
-    kind: str, freq: str, r: str = "", c: str = "", series: str = "E12"
-) -> dict[str, Any]:
-    """The other part of an RC filter with corner `freq`, given one of `r` or `c`: its exact
-    value, the nearest standard one in `series`, and the filter that one makes (as
-    `filter_view` gives it, so its corner, levels and effect)."""
-    if kind not in KINDS:
-        raise FilterError("Choose high-pass or low-pass.")
-    which: Kind = "high" if kind == "high" else "low"
+def _found(
+    which: Kind, freq: str, r: str, c: str, series: str
+) -> tuple[dict[str, Any], float, float]:
+    """The blank part of a filter with corner `freq`: its exact value, the nearest standard
+    one in `series` and the filter that one makes; and that filter's R and C."""
     corner = _read(freq, "Hz", "corner frequency")
-    if bool(r.strip()) == bool(c.strip()):
-        raise FilterError(
-            "Give the resistor or the capacitor, and leave the other blank to find it."
-        )
     series = _series(series)
     if r.strip():
         ohms = _read(r, OHM, "resistor")
         exact, unit, name = 1.0 / (2.0 * math.pi * corner * ohms), "F", "capacitor"
         standard = snap_to_series(exact, series)
-        made = _filter(which, ohms, standard)
+        farads = standard
     else:
         farads = _read(c, "F", "capacitor")
         exact, unit, name = 1.0 / (2.0 * math.pi * corner * farads), OHM, "resistor"
         standard = snap_to_series(exact, series)
-        made = _filter(which, standard, farads)
-    return {
-        "kind": which,
-        "find": name,
+        ohms = standard
+    made = _filter(which, ohms, farads)
+    found = {
+        "name": name,
         "formula": FIND_C if unit == "F" else FIND_R,
         "exact": format_quantity(exact, unit),
         "standard": format_value(standard, 4),
@@ -208,6 +182,45 @@ def filter_part_view(
         "corner_off": _off(made["corner"], corner),
         "filter": made,
     }
+    return found, ohms, farads
+
+
+def filter_view(
+    kind: str,
+    r: str = "",
+    c: str = "",
+    freq: str = "",
+    r2: str = "",
+    c2: str = "",
+    series: str = "E12",
+) -> dict[str, Any]:
+    """The filter calculator's answer from two of `r`, `c` and `freq` as typed (`100k`,
+    `1u`, `1k`): from R and C, the corner; from the corner and one part, the other
+    (`find`: exact, the nearest standard one in `series`, how far that moves the corner).
+    When `r2` or `c2` is given, a second filter to compare (a blank one keeps the
+    first's) with what the change did. Each filter: its corner, the sum written out, its
+    level at `LEVEL_HZ` and its `effect`."""
+    if kind not in KINDS:
+        raise FilterError("Choose high-pass or low-pass.")
+    which: Kind = "high" if kind == "high" else "low"
+    given = [bool(x.strip()) for x in (r, c, freq)]
+    if sum(given) != 2:
+        raise FilterError(LEAVE_ONE)
+    view: dict[str, Any] = {"kind": which, "formula": FORMULA}
+    if freq.strip():
+        view["find"], ohms, farads = _found(which, freq, r, c, series)
+        first = view["find"]["filter"]
+    else:
+        ohms, farads = _read(r, OHM, "resistor"), _read(c, "F", "capacitor")
+        first = _filter(which, ohms, farads)
+    filters = [first]
+    if r2.strip() or c2.strip():
+        other_r = _read(r2, OHM, "resistor") if r2.strip() else ohms
+        other_c = _read(c2, "F", "capacitor") if c2.strip() else farads
+        filters.append(_filter(which, other_r, other_c))
+        view["change"] = _moved(filters[0], filters[1])
+    view["filters"] = filters
+    return view
 
 
 # ---- voltage divider -------------------------------------------------------------------

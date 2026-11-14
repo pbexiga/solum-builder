@@ -542,13 +542,16 @@ def test_calculators(page: Page, base_url: str, browser_errors: list[str]) -> No
     page.locator("#filter-c").fill("47x")
     expect(page.locator("#calc-filter .error")).to_contain_text("Couldn't read the value")
 
-    # Filter part: 100 Hz into 1M wants 1.59 nF, so 1n5
-    pick.select_option("filter-part")
-    expect(page.locator("#calc-filter")).to_be_hidden()
-    page.locator("#part-freq").fill("100")
-    page.locator("#part-r").fill("1M")
-    expect(page.locator("#part-answer")).to_have_text("1.59 nF: use 1n5 (E12)")
-    expect(page.locator("#filter-part-result")).to_contain_text("106 Hz, +6.1 %")
+    # the same calculator from the corner: 100 Hz into 1M wants 1.59 nF, so 1n5
+    page.locator("#filter-c2").fill("")
+    expect(page.locator("#filter-series")).to_be_hidden()
+    page.locator("#filter-freq").fill("100")
+    expect(page.locator("#calc-filter .error")).to_contain_text("leave the third blank")
+    expect(page.locator("#filter-series")).to_be_visible()
+    page.locator("#filter-r").fill("1M")
+    page.locator("#filter-c").fill("")
+    expect(page.locator("#filter-found")).to_have_text("1.59 nF: use 1n5 (E12)")
+    expect(result).to_contain_text("106 Hz, +6.1 %")
 
     # Voltage divider: 9 V, 10k and 10k, then a 100k load
     pick.select_option("divider")

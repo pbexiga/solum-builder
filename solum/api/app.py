@@ -42,7 +42,6 @@ from solum.calculators import (
     combine_view,
     db_view,
     divider_view,
-    filter_part_view,
     filter_view,
 )
 from solum.circuit.connectivity import ConnectivityError
@@ -744,17 +743,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return resistor_view(ohms)
 
     @app.get("/api/tools/filter")
-    def rc_filter(kind: str, r: str, c: str, r2: str = "", c2: str = "") -> dict[str, Any]:
-        """Calculators → Filter (D-319): an RC high-pass or low-pass from `r` and `c` as
-        typed, and a second pair to compare."""
-        return filter_view(kind, r, c, r2, c2)
-
-    @app.get("/api/tools/filter/part")
-    def rc_filter_part(
-        kind: str, freq: str, r: str = "", c: str = "", series: str = "E12"
+    def rc_filter(
+        kind: str,
+        r: str = "",
+        c: str = "",
+        freq: str = "",
+        r2: str = "",
+        c2: str = "",
+        series: str = "E12",
     ) -> dict[str, Any]:
-        """Calculators → Filter part (D-320): the part an RC filter needs for a corner."""
-        return filter_part_view(kind, freq, r, c, series)
+        """Calculators → Filter (D-319, D-320): an RC high-pass or low-pass from two of `r`,
+        `c` and the corner `freq` as typed, the third found; and a second pair to compare."""
+        return filter_view(kind, r, c, freq, r2, c2, series)
 
     @app.get("/api/tools/divider")
     def divider(supply: str, r1: str, r2: str, load: str = "") -> dict[str, Any]:

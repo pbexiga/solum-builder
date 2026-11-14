@@ -14,6 +14,8 @@ Tools → **Resistor colour code…** works both ways: type a **Value** to see i
 
 ## Calculators
 
+![The filter calculator: 1µ into 100k, compared with 10µ](img/calculators.png)
+
 Tools → **Calculators…** holds the sums a builder does by hand, each worked out as you type, with the numbers shown. Pick one at the top; the one you used last opens next time. Type values the way they're written on a schematic (`100k`, `47n`, `2M2`).
 
 - **Filter.** A resistor and a capacitor make a filter: pick **High-pass** (the capacitor in the signal's path, the resistor to ground: a bass cut) or **Low-pass** (the resistor in the path, the capacitor to ground: a treble cut). Fill in any two of the resistor, the capacitor and the **Corner**, and leave the third blank to find it.

@@ -408,8 +408,9 @@ def test_contradictory_wiring_draws_with_a_battery() -> None:
     data["labels"] = [*data["labels"], {"net": "V+", "pos": [300, 80]}]
     data["wires"] = [*data["wires"], {"from": [300, 80], "to": [150, 200]}]  # V+ to GND
     view = circuit_view(parse_circuit(data))
-    assert view["problem"] is not None and "GND" in view["problem"] and "V+" in view["problem"]
+    assert view["problem"] is not None and "dead short" in view["problem"]
     assert "BAT1" in [p["ref"] for p in view["parts"]]
+    assert view["clash"] == [[150, 200], [300, 80]]  # the two labels the wire joins
     assert view["parts"][0]["pins"] == [
         {"name": "1", "pos": [80, 100], "net": None},
         {"name": "2", "pos": [120, 100], "net": None},

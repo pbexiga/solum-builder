@@ -41,6 +41,7 @@ class Problem:
     refs: tuple[str, ...]
     nets: tuple[str, ...]
     build: bool = False  # also in Export's "Ready to build" list (D-203)
+    at: tuple[tuple[int, int], ...] = ()  # where on the sheet, when no part or net says (D-335)
 
 
 def problem(rule: Rule, hit: Hit) -> Problem:
@@ -56,6 +57,7 @@ def problem(rule: Rule, hit: Hit) -> Problem:
         refs=((hit.ref,) if hit.ref else ()) + hit.refs,
         nets=hit.nets,
         build=rule.build,
+        at=hit.at,
     )
 
 

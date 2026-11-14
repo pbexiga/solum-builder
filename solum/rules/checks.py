@@ -13,7 +13,14 @@ from functools import cached_property
 from solum.analysis.dc import Saturation, opamp_input_limits, saturation
 from solum.bias import BiasError
 from solum.circuit.chips import halves, spare_ota, supply_nets, unused_halves
-from solum.circuit.connectivity import GROUND, ConnectivityError, Nets, loose_parts, spare_poles
+from solum.circuit.connectivity import (
+    GROUND,
+    ConnectivityError,
+    Nets,
+    clash_text,
+    loose_parts,
+    spare_poles,
+)
 from solum.circuit.parts import (
     COMP_PINS,
     EXTRA_PINS,
@@ -93,6 +100,7 @@ class Hit:
     nets: tuple[str, ...] = ()
     values: Mapping[str, str] = field(default_factory=dict)
     refs: tuple[str, ...] = ()  # more parts to highlight, after `ref` (a grouped problem)
+    at: tuple[tuple[int, int], ...] = ()  # spots on the sheet, when no part or net says where
 
 
 @dataclass
@@ -224,7 +232,8 @@ def _v(x: float) -> str:
 @check("topology")
 def labels_joined(ctx: Context) -> Iterator[Hit]:
     if ctx.wiring_error is not None:
-        yield Hit(values={"labels": listing(list(ctx.wiring_error.names))})
+        err = ctx.wiring_error
+        yield Hit(values={"what": clash_text(set(err.names))}, at=err.at)  # D-335
 
 
 def _pins_left_open(part: Part) -> set[str]:

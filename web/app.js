@@ -44,7 +44,7 @@ import { setSwitchKinds } from "./schematic/symbols.js";
 import {
   capacitorSeries, deviceCurve, frequencySeries, harmonicBars, scopeSeries, snapshotOf, sweepSummary, valueSweepSeries,
 } from "./series.js";
-import { dismissProblem, problemTarget, restoreProblem } from "./problems.js";
+import { dismissProblem, labelsAt, problemTarget, restoreProblem } from "./problems.js";
 import { debounce, focusNet, keptControls, latestOnly, oneAtATime, openingOf, withControls } from "./state.js";
 
 const KNOB_DEBOUNCE_MS = 120;
@@ -372,11 +372,22 @@ const tiles = palette($("palette"), schematic, {
 
 
 /** @param {string | null} message */
-function showError(message) {
+/** What clicking the Results column's error shows on the sheet, if anything (D-335). */
+let errorPick = /** @type {(() => void) | null} */ (null);
+
+/**
+ * The Results column's error (null clears it). `pick`: clicking it shows where on the sheet.
+ * @param {string | null} message @param {(() => void) | null} [pick]
+ */
+function showError(message, pick = null) {
   const el = $("error");
   el.hidden = !message;
   el.textContent = message ?? "";
+  errorPick = message ? pick : null;
+  el.classList.toggle("pick", Boolean(errorPick));
+  el.title = errorPick ? "Show where on the sheet" : "";
 }
+$("error").addEventListener("click", () => errorPick?.());
 
 // ---- opening circuits ------------------------------------------------------------
 
@@ -1349,6 +1360,7 @@ function showProblems() {
   const count = renderProblems(body, result, (p) => {
     const target = problemTarget(p);
     if (target) select(target);
+    else if (p.at?.length) selectItems(labelsAt(state.view, p.at)); // labels wired together (D-335)
   }, state.openProblems, { dismissed: state.circuit?.dismissed, onDismiss: dismissDialog, onRestore: (p) => problemEdit(restoreProblem(state.circuit, p), "Bring back problem") });
   $("problem-count").textContent = count ? `\u00b7 ${count}` : "";
   schematic.showMarks(state.marks && result ? result.problems : []);
@@ -1430,7 +1442,8 @@ async function runSelected() {
   if (!shown) return;
   if (!isUnwired(state.circuit)) checkProblems();
   if (state.view?.problem) {
-    showError(state.view.problem);
+    const clash = state.view.clash ?? [];
+    showError(state.view.problem, clash.length ? () => selectItems(labelsAt(state.view, clash)) : null);
     return;
   }
   setStale(false);

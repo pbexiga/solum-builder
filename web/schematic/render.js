@@ -502,11 +502,11 @@ export class Schematic {
       const { spot } = mark;
       const at = spot.kind === "part" ? this.partCorner(spot.ref) : [spot.pos[0] + MARK, spot.pos[1] - MARK];
       if (!at) continue;
-      const id = spot.kind === "net" ? `net:${spot.net}` : spot.kind === "pin" ? `pin:${spot.ref}.${spot.pin}` : `part:${spot.ref}`;
+      const id = spot.kind === "net" ? `net:${spot.net}` : spot.kind === "pin" ? `pin:${spot.ref}.${spot.pin}` : spot.kind === "spot" ? `spot:${spot.pos}` : `part:${spot.ref}`;
       const n = taken.get(id) ?? 0;
       taken.set(id, n + 1);
       const [x, y] = [at[0] + n * MARK_GAP, at[1]];
-      const g = el("g", { class: `problem-mark sev-${mark.severity}`, "data-mark": mark.key, "data-for": spot.kind === "net" ? spot.net : spot.ref, ...(spot.kind === "pin" ? { "data-pin": spot.pin } : {}) }, this.markLayer);
+      const g = el("g", { class: `problem-mark sev-${mark.severity}`, "data-mark": mark.key, "data-for": spot.kind === "net" ? spot.net : spot.kind === "spot" ? "" : spot.ref, ...(spot.kind === "pin" ? { "data-pin": spot.pin } : {}) }, this.markLayer);
       const r = MARK / 2;
       if (mark.severity === "error") el("rect", { x: x - r, y: y - r, width: MARK, height: MARK, rx: 1 }, g);
       else if (mark.severity === "warning") el("path", { d: `M${x},${y - r - 1} L${x + r + 1},${y + r} L${x - r - 1},${y + r} Z` }, g);

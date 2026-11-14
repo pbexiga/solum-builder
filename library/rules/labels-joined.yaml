@@ -3,12 +3,12 @@ layer: topology
 severity: error
 check: labels_joined
 stops_sim: true
-title: Two names on one net
-message: "Net labels {labels} are wired together."
+title: Labels wired together
+message: "{what}"
 why: >
-  A net has one name. Two labels on one net join nets you meant to keep apart (a supply
-  and ground, say), or one of them is a leftover.
-fix: Remove one of the labels, or the wire that joins them.
+  A net has one name. Two labels wired together join nets you meant to keep apart (a
+  supply and ground is a dead short), or one of them is a leftover.
+fix: Remove the wire, or one of the labels if they're meant to be one net.
 fixtures:
   bad:
     - parts:

@@ -86,7 +86,8 @@ def test_contradictory_wiring_only_reports_the_wiring() -> None:
     checker = Checker(rule_book(LIBRARY), load_models([LIBRARY / "models"]))
     found = checker.topology(c)
     assert [p.rule for p in found] == ["labels-joined"]
-    assert found[0].message == "Net labels a and b are wired together."
+    assert found[0].message == "That joins a and b, and a net can have only one name."
+    assert found[0].at == ((80, 100),)  # the label wired to pin 1, not a's others (D-335)
 
 
 def test_topology_checks_on_a_hand_built_circuit() -> None:

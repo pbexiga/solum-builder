@@ -441,6 +441,8 @@ body:has(.panels details.moving) { cursor: grabbing; }
 }
 .error { margin: 12px 16px 0; color: var(--text); border-left: 3px solid var(--error); white-space: pre-line; }
 /* the Results column's error stays in view as the panes scroll under it (D-335) */
+.error.pick { cursor: pointer; }
+.error.pick:hover { border-left-width: 5px; }
 .panels > .error { position: sticky; top: 8px; z-index: 3; box-shadow: 0 0 0 8px var(--surface-1); }
 .error::before { content: "■ "; color: var(--error); }
 .warning { border-left: 3px solid var(--warning); color: var(--text); }

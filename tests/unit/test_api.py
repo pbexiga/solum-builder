@@ -560,7 +560,7 @@ def test_problems_lists_every_problem(monkeypatch: pytest.MonkeyPatch) -> None:
     assert rules[0] == "no-dc-path" and "part-not-simulated" in rules
     first = body["problems"][0]
     assert set(first) == {"rule", "layer", "severity", "title", "message", "why", "fix",
-                          "refs", "nets", "build"}  # fmt: skip
+                          "refs", "nets", "build", "at"}  # fmt: skip
     assert first["nets"] == ["a"]
 
 

@@ -5,8 +5,9 @@
  */
 
 /** @typedef {{rule: string, layer: string, severity: "error" | "warning" | "info", title: string,
- *   message: string, why: string, fix: string, refs: string[], nets: string[], build?: boolean}} Problem
- *   `build`: a build check, also in File → Export's Ready to build (D-203) */
+ *   message: string, why: string, fix: string, refs: string[], nets: string[], build?: boolean, at?: number[][]}} Problem
+ *   `build`: a build check, also in File → Export's Ready to build (D-203); `at`: spots on the
+ *   sheet when no part or net says where (labels wired together, D-335) */
 
 const WORDS = { error: ["error", "errors"], warning: ["warning", "warnings"], info: ["note", "notes"] };
 
@@ -107,10 +108,11 @@ export function restoreProblem(circuit, problem) {
 /**
  * Where a problem's mark goes on the sheet (as KiCad's ERC markers): on the pin of its part
  * that is on its net, when exactly one is; else on its part; a problem naming only nets,
- * at its first net's anchor. Null when the drawing has none of these (a part since
- * deleted, a problem about the whole circuit). `view`: the server's circuit view.
+ * at its first net's anchor; else at its first spot (`at`, D-335). Null when the drawing has
+ * none of these (a part since deleted, a problem about the whole circuit). `view`: the
+ * server's circuit view.
  * @param {Problem} problem @param {any} view
- * @returns {{kind: "pin", ref: string, pin: string, pos: number[]} | {kind: "part", ref: string} | {kind: "net", net: string, pos: number[]} | null}
+ * @returns {{kind: "pin", ref: string, pin: string, pos: number[]} | {kind: "part", ref: string} | {kind: "net", net: string, pos: number[]} | {kind: "spot", pos: number[]} | null}
  */
 export function markSpot(problem, view) {
   const [ref] = problem.refs;
@@ -122,7 +124,19 @@ export function markSpot(problem, view) {
   if (ref) return null;
   const [net] = problem.nets;
   const anchor = net ? view?.nets[net]?.anchors[0] : null;
-  return anchor ? { kind: "net", net, pos: anchor } : null;
+  if (anchor) return { kind: "net", net, pos: anchor };
+  return problem.at?.length ? { kind: "spot", pos: problem.at[0] } : null;
+}
+
+/**
+ * The labels sitting on these spots (a clash's, D-335), as items to select.
+ * @param {any} view @param {number[][]} at
+ * @returns {{parts: string[], wires: number[], labels: number[], texts: number[]}}
+ */
+export function labelsAt(view, at) {
+  const on = new Set(at.map((p) => `${p[0]},${p[1]}`));
+  const labels = (view?.labels ?? []).flatMap((/** @type {any} */ lb, /** @type {number} */ i) => (on.has(`${lb.pos[0]},${lb.pos[1]}`) ? [i] : []));
+  return { parts: [], wires: [], labels, texts: [] };
 }
 
 /**

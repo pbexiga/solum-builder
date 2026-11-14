@@ -10,53 +10,20 @@ Run in the dev image: make run CMD="python .claude/skills/build-starter/make_klo
 """
 
 import json
-from collections import defaultdict
-from itertools import pairwise
 from pathlib import Path
 
-from pydantic import TypeAdapter
-
-from solum.circuit.connectivity import connect
+from solum.circuit.draw import Drawing, net_differences
 from solum.circuit.io import parse_circuit
-from solum.circuit.parts import pin_positions
-from solum.circuit.schema import Part
 
 OUT = Path("scratch/example/klon-centaur.json")  # the circuit alone, to start from
 OUT_BUILT = Path("scratch/example/klon-centaur-built.json")  # with its bypass board
-_P = TypeAdapter(Part)
 
-parts: list[dict] = []
-wires: list[dict] = []
-labels: list[dict] = []
-
-
-def part(ref: str, type_: str, pos: tuple[int, int], rot: int = 0, **f) -> None:
-    d = {"ref": ref, "pos": list(pos), "type": type_, **f}
-    if rot:
-        d["rot"] = rot
-    parts.append(d)
-
-
-def pin(ref: str, name: str) -> tuple[int, int]:
-    d = next(p for p in parts if p["ref"] == ref)
-    return tuple(pin_positions(_P.validate_python(d))[name])
-
-
-def pt(p):
-    return pin(*p.split(".")) if isinstance(p, str) else tuple(p)
-
-
-def wire(*path) -> None:
-    pts = [pt(p) for p in path]
-    for a, b in pairwise(pts):
-        assert a[0] == b[0] or a[1] == b[1], f"not straight: {a} {b}"
-        assert a != b, f"zero-length wire at {a}"
-        wires.append({"from": list(a), "to": list(b)})
-
-
-def label(net: str, *at) -> None:
-    for p in at:
-        labels.append({"net": net, "pos": list(pt(p))})
+# The drawing's steps (`solum/circuit/draw.py`): part() places a part, wire() runs pin
+# to pin ("R1.2") or point to point, label() names nets, stub() ends a short wire in a
+# label.
+sheet = Drawing()
+part, wire, label, stub = sheet.part, sheet.wire, sheet.label, sheet.stub
+parts, wires, labels = sheet.parts, sheet.wires, sheet.labels
 
 
 R = "resistor"
@@ -98,11 +65,11 @@ part("IC2C", "powerunit", (920, S + 20), model="TL072")
 label("V+", "IC3.in", "IC1C.V+", "D3.A")
 label("VB", "D4.K", "C22.1", "IC2C.V+")
 for _p in ("C19.2", "IC2C.V-"):  # bottom pins: the bar points down, clear of the part
-    labels.append({"net": "-VA", "pos": list(pt(_p)), "rot": 180})
-labels.append({"net": "-VA", "pos": list(pin("IC3", "out")), "rot": 90})
-labels.append({"net": "GND", "pos": list(pin("IC3", "gnd")), "rot": 90})
+    label("-VA", _p, rot=180)
+label("-VA", "IC3.out", rot=90)
+label("GND", "IC3.gnd", rot=90)
 label("GND", "C17.2", "Z1.A", "R30.2", "C18.2", "C22.2", "IC1C.V-")
-labels.append({"net": "GND", "pos": list(pt("C19.1")), "rot": 180})  # top pin: points up
+label("GND", "C19.1", rot=180)  # top pin: points up
 
 # --- Input buffer (Aion's IC1A, pins 5-7: our IC1B)
 label("pcb-in", (20, 0))
@@ -206,7 +173,7 @@ wire((360, 340), "VR1B.1")
 wire("VR1B.2", (440, 200), (1280, 200))
 label("VR", "VR1B.3")
 for _r in ("R8.2", "R9.2"):  # bottom pins: the supply bar points down
-    labels.append({"net": "VR", "pos": list(pt(_r)), "rot": 180})
+    label("VR", _r, rot=180)
 
 # --- Summing amp (IC2A) and its mix of R16, R19, R17 and C12/R18
 part("R17", R, (1220, 140), V, value="27k")
@@ -264,13 +231,6 @@ label("GND", "RPD1.2", "D1.K", "D2.A", "VR3.1", "C16.2")
 # SW2 is the 3PDT
 # footswitch: Aion's FSA and FSC, with FSB lighting the LED as on every 3PDT board. Our
 # footswitch lug 1 is On, so Aion's A1/A3 and C1/C3 trade names here.
-def stub(pinref: str, net: str, dx: int, rot: int = 0) -> None:
-    a = pin(*pinref.split("."))
-    b = (a[0] + dx, a[1])
-    wire(a, b)
-    labels.append({"net": net, "pos": list(b), **({"rot": rot} if rot else {})})
-
-
 SLIDE = {"type": "switch", "kind": "3pdt", "label": "Bypass mode",
          "names": ["True bypass", "Buffered"], "position": 1}  # fmt: skip
 STOMP = {"type": "switch", "kind": "footswitch", "label": "Bypass"}
@@ -305,7 +265,7 @@ part("LED1", "led", (1780, 460), model="APT1608SURCK")
 label("V+", "LEDR1.1")
 wire("LEDR1.2", "LED1.A")
 wire("LED1.K", (1820, 460), "SW2B.B2")
-stub("SW2B.B1", "GND", 40, 270)
+stub("SW2B.B1", "GND", 40, rot=270)
 stub("SW2C.C2", "out", -40)
 stub("SW2C.C1", "effect-out", 40)
 stub("SW2C.C3", "bypass", 40)
@@ -463,21 +423,8 @@ data = {
 
 
 def check_and_write(data: dict, intended: list[set[str]], out: Path) -> None:
-    nets = connect(parse_circuit(data))
-    got = defaultdict(set)
-    for (ref, p), net in nets.by_pin.items():
-        if (p in ("V+", "V-") and ref not in ("IC1C", "IC2C")) or p.startswith("comp"):
-            continue
-        if ref == "IC3" and p in ("1", "6", "7"):  # the LT1054's pins the circuit leaves open
-            continue
-        got[net].add(f"{ref}.{p}")
-    want = {frozenset(s) for s in intended}
-    have = {frozenset(s) for s in got.values()}
-    for s in want - have:
-        print("MISSING", sorted(s))
-    for s in have - want:
-        print("EXTRA  ", sorted(s), [n for n, v in got.items() if frozenset(v) == s])
-    assert want == have, f"{out}: drawing doesn't match the intended netlist"
+    differences = net_differences(parse_circuit(data), intended)
+    assert not differences, "\n".join([f"{out}: not the intended netlist", *differences])
     out.write_text(json.dumps(data, indent=1, ensure_ascii=False) + "\n", encoding="utf-8")
     print("wrote", out, len(data["parts"]), "parts", len(data["wires"]), "wires")
 

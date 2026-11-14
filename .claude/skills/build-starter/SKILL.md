@@ -29,16 +29,18 @@ how an agent does it, since an agent can't draw in the app.
    the `fit-model` skill when the user wants the real part.
 3. **Write the netlist you intend:** a list of sets of pins (`"R1.1"`, `"Q1.B"`) per net.
    This is what the drawing is checked against.
-4. **Draw by script.** `make_klon.py` here is the worked example: `part()` places a part,
-   `pin()` gives a pin's position, wires run pin to pin, and `check_and_write()` compares
-   the drawn connectivity (`solum.circuit.connectivity.connect`) with the intended netlist
-   before writing the file, printing every net that is missing or extra. Lay it out as the
+4. **Draw by script,** with `Drawing` (`solum/circuit/draw.py`; the `draw-circuit` skill
+   has its calls, the sheet's rules and how to lay a drawing out). `make_klon.py` here is
+   the worked example: `part()` places a part, wires run pin to pin, and
+   `check_and_write()` compares the drawn connectivity with the intended netlist
+   (`net_differences`) before writing the file, saying every net that is missing or extra. Lay it out as the
    source draws it: signal left to right, supply at the top, ground at the bottom, refs as
    the source numbers them. Write to `library/starters/<id>.json` with `"starter": true`.
    Run it with `make run CMD="python <script>"`.
-5. **Look at it.** A drawing that passes the net check can still be unreadable. Take a
-   screenshot with Playwright (the UI tests show how the page is opened) and fix overlaps,
-   crossed labels and wires through parts.
+5. **Look at it.** A drawing that passes the net check can still be unreadable.
+   `make run CMD="python .claude/skills/draw-circuit/look.py <file>"` saves a picture of it
+   as the app draws it (and prints its Problems and DC voltages): fix overlaps, crossed
+   labels and wires through parts.
 6. **Notes, description, parts list:** as the how-to's points 4 and 5.
 7. **The acceptance file,** `tests/fixtures/acceptance/<id>.expected.yaml`: copy one that
    is close; the how-to's step 3 lists its fields.

@@ -43,11 +43,10 @@ def test_kept_steps_and_a_value_off_the_series(sim: Simulator) -> None:
     tmb = jig(core_block("fender-tmb"))
     first = live_view(sim, tmb, [], [("R1", "value")])["sliders"][0]
     shown = [step["value"] for step in first["steps"]]
-    assert shown[0] == "10k" and shown[-1] == "1M"
+    assert shown[0] == "10" and shown[-1] == "10M"  # a resistor's fixed range (D-316)
     # each step's value as a number too, so the page never parses one (Edit mode's handles)
-    assert first["steps"][0]["si"] == pytest.approx(10e3) and first["steps"][-1][
-        "si"
-    ] == pytest.approx(1e6)
+    assert first["steps"][0]["si"] == pytest.approx(10.0)
+    assert first["steps"][-1]["si"] == pytest.approx(10e6)
     moved = tmb.with_part("R1", value="90k")
     again = live_view(sim, moved, [], [("R1", "value")], {"R1.value": shown})["sliders"][0]
     values = [s["value"] for s in again["steps"]]

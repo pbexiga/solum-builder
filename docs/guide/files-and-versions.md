@@ -9,6 +9,7 @@ Your circuits and blocks are plain JSON files in the app's data folder (`DATA_DI
 - **Open…**: your circuits. See [Opening a circuit](#opening-a-circuit).
 - **Save** (Ctrl+S): saves over the open file. A new sheet, a starter or a read-only file asks for a name instead.
 - **Save as…**: a copy under a new name, in My circuits.
+- **Import…**: a Solum Builder file from somewhere else becomes a new circuit of yours. See [Importing a file](#importing-a-file).
 - **Properties…**: the name, tags, description and enclosure, with the file's details.
 - **New major version…**: keeps the current version as final and carries on with the next.
 - **Export…**: the parts list and build package. See [Export and build](export.md).
@@ -21,6 +22,12 @@ Opening something else, or closing the tab, with unsaved changes asks first: **S
 Click the **pencil** after the name in the header. The name becomes a box and the pencil a tick: type the new name, then press Enter or click the tick. Esc, or a click elsewhere, puts the old name back. A name that's empty or already taken is said under the box.
 
 For a saved circuit the file is renamed at once, every version's file with it; changes you haven't saved stay unsaved. A starter, a core block or a final version can't be renamed, and the app says why.
+
+## Importing a file
+
+![File → Import… with a circuit file chosen](img/import-dialog.png)
+
+File → **Import…** takes a Solum Builder file from somewhere else: a circuit or a block someone sent you, or one an AI assistant wrote. **Choose File**, and **Save it as** fills in with the file's own name; type another if you already have one called that. **Import** saves it as a new circuit (or block) of yours and opens it. It takes only the `.json` files Solum Builder saves, not SPICE netlists or other programs' schematics, and says so if you pick one. A file copied straight into the circuits folder shows in Open… too.
 
 ## Opening a circuit
 

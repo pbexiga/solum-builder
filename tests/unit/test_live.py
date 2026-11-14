@@ -8,7 +8,15 @@ import pytest
 
 from solum.circuit.build import CircuitBuilder
 from solum.circuit.schema import Circuit
-from solum.live import CAP_RANGE, ROTATION_STEPS, LiveError, slider, value_steps
+from solum.live import (
+    CAP_RANGE,
+    POT_RANGE,
+    RESISTOR_RANGE,
+    ROTATION_STEPS,
+    LiveError,
+    slider,
+    value_steps,
+)
 from solum.models import ModelLibrary, load_models
 
 Builder = Callable[..., CircuitBuilder]
@@ -66,8 +74,25 @@ def test_resistor_slider(stage: Circuit, models: ModelLibrary) -> None:
     at = s["steps"][s["index"]]
     assert at["value"] == "10k" and at["text"] == "10k"
     assert at["elements"] == {"R1": 10000.0}
-    assert s["steps"][0]["elements"] == {"R1": pytest.approx(1000.0)}
     assert s["series"] == "E12" and s["nearest"] is None
+
+
+def test_a_resistor_slider_has_a_fixed_pedal_range(circuit: Builder, models: ModelLibrary) -> None:
+    """The user (2026-11-13): as a capacitor's, a resistor's slider runs over one range
+    whatever its value, 10 Ω to 10 MΩ in E12, in place of a tenth to ten times (D-316)."""
+    assert RESISTOR_RANGE == (10.0, 10e6)
+    ends = []
+    for value in ("100", "10k", "2M2"):
+        c = circuit().part("R1", "resistor", "a", "0", value=value).build()
+        s = slider(c, models, "R1", "value")
+        ends.append((s["steps"][0]["text"], s["steps"][-1]["text"], len(s["steps"])))
+        assert s["steps"][s["index"]]["value"] == value
+    assert ends == [("10", "10M", 73)] * 3  # six decades of E12, both ends included
+
+
+def test_inductors_and_the_amp_keep_a_decade_each_way(stage: Circuit, models: ModelLibrary) -> None:
+    amp = slider(stage, models, "OUT", "value")
+    assert (amp["steps"][0]["text"], amp["steps"][-1]["text"]) == ("47k", "4M7")
 
 
 def test_capacitor_and_amp_sliders(stage: Circuit, models: ModelLibrary) -> None:
@@ -91,8 +116,10 @@ def test_pots_step_through_the_values_they_are_sold_in(
     s = slider(stage, models, "VR1", "value")
     assert s["series"] == "pot"
     texts = [step["text"] for step in s["steps"]]
-    assert texts[:5] == ["10k", "20k", "25k", "50k", "100k"]
-    assert texts[-1] == "1M"
+    # every value sold, 1k to 1M, whatever the pot's own (D-316)
+    assert texts == ["1k", "2k", "2k5", "5k", "10k", "20k", "25k", "50k", "100k", "200k",
+                     "250k", "500k", "1M"]  # fmt: skip
+    assert POT_RANGE == (1e3, 1e6)
 
 
 def test_rotation_slider_applies_the_taper(stage: Circuit, models: ModelLibrary) -> None:

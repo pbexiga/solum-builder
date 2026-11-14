@@ -10,7 +10,7 @@ import { exportSheet } from "./export.js";
 import { aboutSheet, capacitorSheet, hotkeysSheet, manualSheet, resistorGuideSheet } from "./help.js";
 import { menu, openMenu } from "./menus.js";
 import { isNamedNet, nameNet, setNetNote, setPartNote } from "./notes-logic.js";
-import { addModelSheet, converterSheet, partsSheet, resistorSheet } from "./tools.js";
+import { addModelSheet, converterSheet, partsSheet, calculatorsSheet, resistorSheet } from "./tools.js";
 
 /**
  * @typedef {import("./menus.js").MenuItem} MenuItem
@@ -83,6 +83,7 @@ export function appMenus(host, schematic, app) {
       { label: "New sheet", id: "menu-new", run: app.files.newSheet },
       { label: "New from starter", id: "menu-starters", items: starterItems() },
       { label: "Open…", id: "menu-open", run: app.files.openDialog },
+      { label: "Import…", id: "menu-import", hint: "a Solum Builder file, not a netlist", run: app.files.importDialog },
       "-",
       { label: "Save", id: "menu-save", hint: "Ctrl+S", run: () => app.files.save() },
       { label: "Save as…", id: "menu-save-as", run: () => app.files.saveAs() },
@@ -146,6 +147,7 @@ export function appMenus(host, schematic, app) {
     return [
       { label: "Unit converter…", id: "menu-converter", hint: "pF, nF, µF; cap codes", run: () => app.report(converterSheet()) },
       { label: "Resistor colour code…", id: "menu-resistor", hint: "bands ↔ value, E-series", run: () => app.report(resistorSheet()) },
+      { label: "Calculators…", id: "menu-calculators", hint: "filters, dividers, parallel and series, dB", run: () => app.report(calculatorsSheet()) },
       "-",
       { label: "Parts and datasheets…", id: "menu-parts", hint: "every model, its sheet and caveats", run: () => app.report(partsSheet()) },
       { label: "Add a model…", id: "menu-add-model", hint: "from a maker's SPICE file", run: () => app.report(addModelSheet(app.refreshModels)) },

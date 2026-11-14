@@ -71,6 +71,6 @@ Every part form with a value or a model has a box at the bottom: *Compare resist
 
 ![Three values of C3 compared on the TS808](img/sweep.png)
 
-Each value is a full simulation, bias and all, so this is the way to see what a part that sets a bias really does. The Frequency and Scope panes draw one line per value; the pane's title says what is compared (*C3: 3 values*), **at** picks which net to show, and a table gives each value's DC, gain at 1 kHz and peaks. Layers and Edit curve are off while a comparison is shown. **Clear sweep** ends it. The part's own value doesn't change.
+Each value is a full simulation, bias and all, so this is the way to see what a part that sets a bias really does. The Frequency and Scope panes draw one line per value; the pane's title says what is compared (*C3: 3 values*), **at** picks which net to show, and a table gives each value's DC, gain at 1 kHz and peaks. The Probe pane shows the part itself at each value, a column per value: a resistor's current and power, a transistor's voltages. Layers and Edit curve are off while a comparison is shown. **Clear sweep** ends it. The part's own value doesn't change.
 
 Power → Custom… does the same for the supply voltage: *Compare supply voltages, overlaid on the plots (up to 5)*.

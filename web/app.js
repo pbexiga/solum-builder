@@ -34,7 +34,7 @@ import { db, volts } from "./fixed.js";
 import { closeMenus } from "./menus.js";
 import { reorderable } from "./panes.js";
 import { liveCurves, liveValues, nearestStep, readingRows } from "./live.js";
-import { h, knobControl, paneInfo, restoreLargeViews, shrinkLargeViews, renderDc, renderKnobs, renderNodeView, renderPartView, renderProblems, renderReadings, renderSweepSummary, showKnob } from "./panels.js";
+import { h, knobControl, paneInfo, restoreLargeViews, shrinkLargeViews, renderDc, renderKnobs, renderNodeView, renderPartView, renderProbeFailed, renderProblems, renderReadings, renderSweepSummary, showKnob } from "./panels.js";
 import { barPlot, curvePlot, forgetColours, linePlot, liveLinePlot } from "./plots.js";
 import { settingsSheet } from "./settings.js";
 import { Schematic, supplyKind } from "./schematic/render.js";
@@ -1439,7 +1439,11 @@ async function runSelected() {
     forms.showTargetRotation();
     stagesMeasuring = stages.refresh().catch(() => {});
   } catch (err) {
-    if (requests.isCurrent(token)) showError(/** @type {Error} */ (err).message);
+    if (requests.isCurrent(token)) {
+      showError(/** @type {Error} */ (err).message);
+      // the pane is about what's selected: say it has no readings and why (D-318)
+      if (sel.id) renderProbeFailed($("probe-body"), sel.id, /** @type {Error} */ (err).message);
+    }
   } finally {
     if (requests.isCurrent(token)) {
       document.body.dataset.busy = "false";
@@ -1490,7 +1494,8 @@ function render(net) {
   const { view, run, part, sweep } = state;
   const out = view.probes.out;
   if (part) {
-    const curveEl = renderPartView($("probe-body"), part, (n) => select({ kind: "net", id: n }));
+    const tried = sweep?.ref === part.ref && sweep.parts?.length ? sweep : null; // its readings at each value tried (D-318)
+    const curveEl = renderPartView($("probe-body"), part, (n) => select({ kind: "net", id: n }), tried);
     const curve = deviceCurve(part);
     if (curveEl && curve) curvePlot(curveEl, curve);
   } else {

@@ -11,19 +11,16 @@ port with a temporary data folder, as the UI tests do (real ngspice, empty cache
 changed before committing the pictures.
 """
 
-import socket
+import json
 import sys
 import tempfile
-import threading
-import time
 from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-import uvicorn
 from playwright.sync_api import Browser, Page, Route, sync_playwright
 
-from solum.api.app import create_app
+from solum.api.serving import serving
 from solum.config import load_settings
 from tests.ui.conftest import click_part, part_pos, updates, wait_for_update
 from tests.ui.test_audio import plucks, render_and_wait, upload
@@ -45,17 +42,8 @@ def server() -> Iterator[str]:
             "LIBRARY_DIR": str(REPO / "library"),
         }
     )
-    with socket.socket() as s:
-        s.bind(("127.0.0.1", 0))
-        port = s.getsockname()[1]
-    srv = uvicorn.Server(
-        uvicorn.Config(create_app(settings), host="127.0.0.1", port=port, log_level="warning")
-    )
-    threading.Thread(target=srv.run, daemon=True).start()
-    while not srv.started:
-        time.sleep(0.05)
-    yield f"http://127.0.0.1:{port}/"
-    srv.should_exit = True
+    with serving(settings) as base:
+        yield base
 
 
 def shoot(page: Page, name: str, selector: str | None = None) -> None:
@@ -215,6 +203,18 @@ def open_dialog(page: Page, base: str) -> None:
     shoot(page, "open-dialog", "form.popup")
 
 
+def import_dialog(page: Page, base: str) -> None:
+    """File → Import… with a friend's circuit file chosen: its name filled in."""
+    opened(page, base, probe=None)
+    circuit = json.loads((REPO / "library" / "starters" / "fuzz-face.json").read_text())
+    shared = Path(tempfile.mkdtemp()) / "fuzz-from-sam.json"
+    shared.write_text(json.dumps({**circuit, "name": "Fuzz from Sam", "starter": False}))
+    menu(page, "file-menu", "menu-import")
+    page.locator("#import-file").set_input_files(str(shared))
+    page.wait_for_function("document.querySelector('#field-name').value !== ''")
+    shoot(page, "import-dialog", "form.popup")
+
+
 def export(page: Page, base: str) -> None:
     opened(page, base, probe=None)
     menu(page, "file-menu", "menu-export")
@@ -238,6 +238,18 @@ def settings(page: Page, base: str) -> None:
     page.wait_for_selector("#settings .theme-option")
     shoot(page, "settings", "#settings")
     page.unroute("**/api/settings")
+
+
+def calculators(page: Page, base: str) -> None:
+    """Tools → Calculators…, the filter: the user's 1 µF into 100 kΩ, compared with 10 µF."""
+    opened(page, base, probe=None)
+    menu(page, "tools-menu", "menu-calculators")
+    page.locator("#calc-pick").select_option("filter")
+    page.locator("#filter-r").fill("100k")
+    page.locator("#filter-c").fill("1u")
+    page.locator("#filter-c2").fill("10u")
+    page.wait_for_selector("#filter-change")
+    shoot(page, "calculators", "#calculators")
 
 
 def audio_large(page: Page, base: str) -> None:
@@ -301,8 +313,10 @@ SHOTS: dict[str, Callable[[Page, str], None]] = {
     "problems": problems,
     "blocks-dialog": blocks_dialog,
     "open-dialog": open_dialog,
+    "import-dialog": import_dialog,
     "export": export,
     "settings": settings,
+    "calculators": calculators,
     "audio-large": audio_large,
     "readme": readme,
     "readme-logo": readme_logo,

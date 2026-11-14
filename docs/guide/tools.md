@@ -12,6 +12,22 @@ For a capacitor it also reads and writes the **code printed on the part**: `223`
 
 Tools → **Resistor colour code…** works both ways: type a **Value** to see its bands, or pick the bands (**4 bands** or **5 bands**) to read the value and tolerance. It says whether the value is a standard one (E6, E12, E24…), and if not, the nearest standard values each side. Read a resistor from the end where the bands bunch together; the tolerance band (often gold, or brown on 1 % parts) sits apart at the other end.
 
+## Calculators
+
+![The filter calculator: 1µ into 100k, compared with 10µ](img/calculators.png)
+
+Tools → **Calculators…** holds the sums a builder does by hand, each worked out as you type, with the numbers shown. Pick one at the top; the one you used last opens next time. Type values the way they're written on a schematic (`100k`, `47n`, `2M2`).
+
+- **Filter.** A resistor and a capacitor make a filter: pick **High-pass** (the capacitor in the signal's path, the resistor to ground: a bass cut) or **Low-pass** (the resistor in the path, the capacitor to ground: a treble cut). Fill in any two of the resistor, the capacitor and the **Corner**, and leave the third blank to find it.
+  - From the two parts, it shows the corner, where the level is 3 dB down, with the sum written out (`1 / (2 × π × 100 kΩ × 1 µF) = 1.59 Hz`).
+  - From the corner and one part, it works out the other, the nearest value you can buy (pick **Standard values**: E12, E24 or E6), and where that value really puts the corner: a 100 Hz bass cut into a 1M input wants 1.59 nF, so 1n5, which gives 106 Hz.
+  - Either way it shows how far the filter turns down a guitar's lowest note (82 Hz), 1 kHz and 5 kHz, and what that means in a sentence. Fill in **Compare with** (either value; a blank one stays the same) to see a second filter beside the first and how far the corner moved: 1µ into 100k passes the whole guitar, and 10µ puts the corner ten times lower still.
+- **Voltage divider.** The supply and two resistors give the voltage in the middle, the current the pair draws, and what the middle looks like to whatever it feeds (the two resistors in parallel), with the load it holds within 1 % and 10 % for. Give the **Load on the middle** to see how far it pulls the voltage down: 9 V through 10k and 10k is 4.5 V, and a 100k load drops it to 4.29 V.
+- **Parallel and series.** List resistors or capacitors (`10k, 22k`) to see them in series and in parallel. Or type a value you need under **Make this value**: it gives the nearest single standard value and the nearest pair each way, with how far each lands. 6k5 isn't a standard value; 4k7 and 1k8 in series make it exactly.
+- **Decibels.** Type a level in dB or a ratio in times and the other fills in: +20 dB is ten times, +6 dB twice, −6 dB half. Give a **Signal in** to see what comes out: 300 mV through +20 dB is 3 V.
+
+The sums themselves are on [Formulas](formulas.md).
+
 ## Help sheets
 
 - Help → **Documentation…**: this guide, in a large window with a search across every page. The pop-out button beside **Close** (a square with an arrow leaving it) shows the page you're on in its own tab or window.

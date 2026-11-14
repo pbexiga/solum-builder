@@ -443,6 +443,37 @@ def test_sweep_view_of_a_dc_source_on_its_own_net(sim: Simulator, circuit: Build
     assert view["dc_all"]["V+"] == pytest.approx([9.0, 9.0, 9.0], abs=1e-6)
 
 
+def test_sweep_view_has_the_parts_own_readings_at_each_value(
+    sim: Simulator, circuit: Builder
+) -> None:
+    """The Probe pane's columns while values are tried (D-318): R1 from 9 V to ground
+    carries 9 V / R at each value; a supply rail is no part, so it has none."""
+    c = circuit("load").rail("V+", 9.0).part("R1", "resistor", "V+", "0", value="10k").build()
+    view = sweep_view(sim, c, "R1", "value", ["1k", "9k"], [], "med")
+    assert [p["text"] for p in view["parts"]] == ["1k", "9k"]
+    assert [p["detail"]["current"] for p in view["parts"]] == pytest.approx([9e-3, 1e-3])
+    assert [p["pins"]["1"]["dc"] for p in view["parts"]] == pytest.approx([9.0, 9.0])
+    assert sweep_view(sim, c, "V+", "rail", ["9", "12"], [], "med")["parts"] == []
+
+
+def test_a_part_left_out_of_the_simulation_says_so(sim: Simulator, circuit: Builder) -> None:
+    """The user (2026-11-13): R2 with its ground taken away hangs by one pin, so no current
+    can flow (D-165). Its view is still its own: `loose`, no readings, its open pin with no
+    DC, never an error or another part's view (D-318)."""
+    c = (
+        circuit("open")
+        .rail("V+", 9.0)
+        .part("R1", "resistor", "V+", "0", value="10k")
+        .part("R2", "resistor", "V+", "open", value="100k")
+        .build()
+    )
+    wired, loose = part_view(sim, c, "R1", "med"), part_view(sim, c, "R2", "med")
+    assert wired["loose"] is False and wired["detail"]["across"] == pytest.approx(9.0)
+    assert loose["loose"] is True and loose["detail"] == {}
+    assert loose["pins"]["1"] == {"net": "V+", "dc": pytest.approx(9.0)}
+    assert loose["pins"]["2"]["dc"] is None
+
+
 def test_sweep_view_of_a_supply_rail(sim: Simulator, circuit: Builder) -> None:
     """Comparing supply voltages directly (D-068): plain numbers keep the rail's sign, so
     "9, 18" on V- is -9 and -18 V."""

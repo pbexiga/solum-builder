@@ -4,6 +4,7 @@ import zipfile
 
 from playwright.sync_api import Page, expect
 
+from solum.circuit.schema import SCHEMA_VERSION
 from tests.ui.conftest import click_part, open_circuit, updates, wait_for_update
 from tests.ui.test_editor import (
     api,
@@ -137,8 +138,39 @@ def test_a_floating_net_stops_the_run_with_a_plain_message(
         "Can't simulate yet: net x has no DC path to ground."
     )
     expect(page.locator("#problems-body")).to_contain_text("wasn't simulated")
+    # the Probe pane is about what's selected: it says there are no readings and why,
+    # and never shows another net's (D-318)
+    expect(page.locator("#probe-body [data-testid='probe-name']")).to_have_text("out")
+    expect(page.locator("#probe-body [data-testid='probe-failed']")).to_have_text(
+        "Can't simulate yet: net x has no DC path to ground."
+    )
     assert all("422" in e for e in browser_errors)  # the refused run, expected
     browser_errors.clear()
+
+
+def test_a_part_not_wired_in_has_its_own_probe_view(page: Page, base_url: str) -> None:
+    """The user (2026-11-13): V+, a resistor, ground; with the ground taken off, the
+    selected resistor's Probe showed the last net probed (the page tripped on a view with
+    no readings). It shows the resistor, why it has none, and its pins (D-165, D-318)."""
+    circuit = {
+        "schema": SCHEMA_VERSION, "id": "open", "name": "open", "power": {"rails": {"V+": 9.0}},
+        "parts": [
+            {"ref": "IN", "type": "guitar", "pos": [-300, 0]},
+            {"ref": "OUT", "type": "amp", "pos": [300, 0]},
+            {"ref": "R1", "type": "resistor", "pos": [0, 100], "rot": 90, "value": "100k"},
+        ],
+        "wires": [{"from": [-280, 0], "to": [280, 0]}, {"from": [0, 60], "to": [0, 80]}],
+        "labels": [{"net": "V+", "pos": [0, 60]}],
+    }  # fmt: skip
+    saved = page.request.post(f"{base_url}api/circuits", data={"circuit": circuit}).json()
+    open_circuit(page, base_url, f"circuit/{saved['circuit']['id']}")
+    click_part(page, "R1")
+    probe = page.locator("#probe-body")
+    expect(probe.locator("[data-testid='probe-name']")).to_have_text("R1")
+    expect(probe).to_contain_text("R1 isn't wired into the circuit")
+    expect(probe.locator("tr[data-net='V+'] td").last).to_have_text("9.00 V")
+    expect(probe.locator("tr[data-net='R1.2'] td").last).to_have_text("\u2014")
+    expect(page.locator("#error")).to_be_hidden()
 
 
 def test_a_part_left_hanging_is_named_and_the_rest_runs(page: Page, base_url: str) -> None:

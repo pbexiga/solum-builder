@@ -12,7 +12,7 @@ Single user, runs in one Docker container (or from source). No accounts, no clou
 Follow `docs/DESIGN.md`. Brand assets are in `web/assets/brand/`; never redraw the logo. Colours come only from the tokens in `web/theme.css`.
 
 ## Agent skills
-Two long jobs have skills in `.claude/skills/`: `fit-model` (our own SPICE model from a maker's datasheet) and `build-starter` (a published schematic as a starter with its acceptance file). Use the skill when a request fits. They're in Claude Code's format; another agent reads the skill's `SKILL.md` and follows it. The other jobs are how-tos in `docs/maintain/`.
+Three long jobs have skills in `.claude/skills/`: `fit-model` (our own SPICE model from a maker's datasheet), `build-starter` (a published schematic as a starter with its acceptance file) and `draw-circuit` (a circuit worked out with the user, drawn as a file they open in the app). Use the skill when a request fits. They're in Claude Code's format; another agent reads the skill's `SKILL.md` and follows it. The other jobs are how-tos in `docs/maintain/`.
 
 ## Stack (see DECISIONS.md for why)
 - Backend: Python 3.12, FastAPI, numpy/scipy. Simulator: ngspice as a shared library (`libngspice`) via ctypes (no WASM fallback, D-087).

@@ -5,18 +5,14 @@ image). Runs with `make accept`."""
 import itertools
 import json
 import os
-import socket
-import threading
-import time
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
 
 import pytest
-import uvicorn
 from playwright.sync_api import Browser, Page, expect, sync_playwright
 
-from solum.api.app import create_app
+from solum.api.serving import serving
 from solum.config import Settings, load_settings
 from solum.settings_file import SETTINGS_FILE
 
@@ -46,23 +42,8 @@ def _no_kept_settings(ui_settings: Settings) -> None:
 
 @pytest.fixture(scope="session")
 def base_url(ui_settings: Settings) -> Iterator[str]:
-    settings = ui_settings
-    with socket.socket() as s:
-        s.bind(("127.0.0.1", 0))
-        port = s.getsockname()[1]
-    server = uvicorn.Server(
-        uvicorn.Config(create_app(settings), host="127.0.0.1", port=port, log_level="warning")
-    )
-    thread = threading.Thread(target=server.run, daemon=True)
-    thread.start()
-    deadline = time.monotonic() + 15
-    while not server.started:
-        if time.monotonic() > deadline:
-            raise RuntimeError("The test server didn't start.")
-        time.sleep(0.05)
-    yield f"http://127.0.0.1:{port}/"
-    server.should_exit = True
-    thread.join(timeout=5)
+    with serving(ui_settings) as url:
+        yield url
 
 
 @pytest.fixture(scope="session")

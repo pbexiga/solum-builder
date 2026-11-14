@@ -481,7 +481,8 @@ def sweep_view(
     level: str,
 ) -> dict[str, Any]:
     """ "Try several values": one run per value of a part's `value` or `model`, with DC,
-    the frequency response and the scope at `nodes` and the output, ready to overlay."""
+    the frequency response and the scope at `nodes` and the output, ready to overlay, and
+    the part's own view at each value (`parts`)."""
     circuits = _swept(circuit, ref, field, values)
     nets = connect(circuit)
     out = probe_nets(circuit, nets).output
@@ -501,6 +502,9 @@ def sweep_view(
         },
         "ac": None,
         "tran": None,
+        # the part's own readings at each value, for the Probe pane's columns (D-318);
+        # none for a supply rail, which is no part
+        "parts": [] if field == "rail" else [part_view(sim, c, ref, level) for c in circuits],
     }
     if input_part(circuit) is not None:
         result["ac"] = ac_sweep(sim, circuits, wanted)
@@ -722,14 +726,17 @@ def part_view(
         if not (isinstance(part, ChargePump) and pin in SPARE_PINS and net not in ctx.op.voltages)
     }
     view = _VIEWS.get(type(part))
+    loose = ref in loose_parts(circuit, nets)
     return {
         "ref": ref,
         "type": part.type,
         "text": part_text(part, pickups),
         "note": part.note or None,
         "pins": pins,
-        # a loose part isn't simulated (D-165): its pins have no DC, it has no detail
-        "detail": view(ctx, part) if view and ref not in loose_parts(circuit, nets) else {},
+        # a loose part isn't simulated (D-165): its pins have no DC, it has no detail, and
+        # the pane says so in place of readings (`loose`, D-318)
+        "loose": loose,
+        "detail": view(ctx, part) if view and not loose else {},
     }
 
 

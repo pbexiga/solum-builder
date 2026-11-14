@@ -46,3 +46,22 @@ export const parseTag = (tag) => {
   const m = /^v(\d+)\.(\d+)$/.exec(tag);
   return m ? { major: Number(m[1]), minor: Number(m[2]) } : undefined;
 };
+
+/**
+ * A file picked in File → Import…, read as one of Solum Builder's own (D-315): a circuit
+ * or block as the app saves it, never a SPICE netlist. The server checks the rest.
+ * @param {string} text the file's text @param {string} filename
+ * @returns {{circuit: any, name: string, block: boolean} | {error: string}} `name`: the
+ *   file's own, to save it under; `block`: it's a block, for My blocks
+ */
+export function importedFile(text, filename) {
+  const not = `${filename} isn't a Solum Builder file. Import takes the .json files Solum Builder saves (a circuit or a block), not a SPICE netlist or another program's schematic.`;
+  let data;
+  try {
+    data = JSON.parse(text);
+  } catch {
+    return { error: not };
+  }
+  if (!data || typeof data !== "object" || !Number.isInteger(data.schema) || !Array.isArray(data.parts)) return { error: not };
+  return { circuit: data, name: typeof data.name === "string" ? data.name : "", block: data.template === true };
+}

@@ -505,12 +505,13 @@ export function splitAtJoins(wires, anchors) {
  * just moves with them. Labels on moved points go along when `labels` is set.
  * @param {Circuit} before the circuit before the move @param {Circuit} after with parts moved
  * @param {Array<[number[], number[]]>} moves (old point, new point)
- * @param {{labels?: boolean, joinPins?: boolean}} [opts] `joinPins`: a pin left at a moved
- *   point keeps its connection with a wire to the new point (off when a part is put in
- *   series there: `insertInSeries`)
+ * @param {{labels?: boolean, joinPins?: boolean, keepBends?: boolean}} [opts] `joinPins`: a
+ *   pin left at a moved point keeps its connection with a wire to the new point (off when a
+ *   part is put in series there: `insertInSeries`); `keepBends` off: every run from a moved
+ *   point is routed afresh (a turned part, D-317)
  * @returns {Circuit}
  */
-export function relay(before, after, moves, { labels = true, joinPins = true } = {}) {
+export function relay(before, after, moves, { labels = true, joinPins = true, keepBends = true } = {}) {
   // split first, so a wire that something joins part-way along (a T) is re-laid only up
   // to the join and the joining wire stays connected; `origin` says which wire each piece is from
   const all = before.wires ?? [];
@@ -543,7 +544,7 @@ export function relay(before, after, moves, { labels = true, joinPins = true } =
       const [dx, dy] = [to[0] - from[0], to[1] - from[1]];
       if (endTo && endTo[0] - run.end[0] === dx && endTo[1] - run.end[1] === dy) {
         for (const i of run.wires) shiftedBy.set(i, [dx, dy]);
-      } else if (!endTo && run.wires.length > 1) {
+      } else if (keepBends && !endTo && run.wires.length > 1) {
         stretched.push({ pieces: stretchRun(runPoints(wires, run.wires, from), to), ends: [to, run.end] });
       } else {
         jobs.push([endTo ?? run.end, to]);
@@ -773,6 +774,9 @@ export const moveParts = (circuit, refs, dx, dy) => moveItems(circuit, { parts: 
 
 /**
  * Rotate a part a quarter turn clockwise about its position; connections follow its pins.
+ * Each wire to it is routed afresh from its far end: a turned pin faces another way, so a
+ * bend kept from before (as a drag keeps them, D-164) would be a kink, and four turns
+ * would leave the wires other than they began (the user, D-317).
  * @param {Circuit} circuit @param {string} ref
  */
 export function rotatePart(circuit, ref) {
@@ -786,7 +790,7 @@ export function rotatePart(circuit, ref) {
   /** @type {Array<[number[], number[]]>} */
   const moves = Object.keys(before).map((name) => [before[name], after[name]]);
   const parts = circuit.parts.map((p) => (p.ref === ref ? turned : p));
-  return inSeries(relay(circuit, { ...circuit, parts }, moves), [ref]);
+  return inSeries(relay(circuit, { ...circuit, parts }, moves, { keepBends: false }), [ref]);
 }
 
 /**

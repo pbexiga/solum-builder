@@ -64,7 +64,7 @@ In the large view, a block's card has **Try changes**, to fix or reshape a stage
 - A **trimmer** next to the stage comes first: it's turned, or given a target so it holds. One that already has a target (a JFET's drain) gets a new one.
 - An op-amp stage biased from a reference elsewhere *can't be aimed*, and the card says why.
 
-**Gain** (*Find parts*) finds the parts next to the stage that move its gain most, each tried 10 % up. Each resistor or pot gets a slider over its standard values from a tenth to ten times its own, spread by the gain each value gives.
+**Gain** (*Find parts*) finds the parts next to the stage that move its gain most, each tried 10 % up. Each resistor or pot gets a slider over its standard values (10 Ω to 10 MΩ; a pot's 1k to 1M), spread by the gain each value gives.
 
 - The marks **S**, **M** and **H** are where something in the chain starts clipping at a soft, medium or hard pick. You can drag past them.
 - While you drag, each value shows its gain and what clips first. That's an estimate from the small-signal gain and each stage's room; letting go tries it and measures it properly.

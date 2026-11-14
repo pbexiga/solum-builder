@@ -9,7 +9,7 @@
 
 import { deleteJson, getJson, patchJson, postJson, putJson } from "./api.js";
 import { splitValues } from "./editor/edit.js";
-import { openSections, versionTag } from "./editor/files.js";
+import { importedFile, openSections, versionTag } from "./editor/files.js";
 import { closeForm, confirmed, openForm } from "./editor/form.js";
 import { h } from "./panels.js";
 import { debounce } from "./state.js";
@@ -153,6 +153,43 @@ export function fileDialogs(host, app) {
   /** A new sheet (unsaved, with a guitar input and an amp output). */
   function newSheet() {
     return app.leaveTo({ kind: "new", id: "" });
+  }
+
+  /** "Import…" (D-315): a Solum Builder file from somewhere else (a circuit or a block, as
+   * the app saves them: shared by someone, or written by an agent) saved as a new one of
+   * yours, under the file's name or another, then opened. Never a netlist. */
+  function importDialog() {
+    const file = /** @type {HTMLInputElement} */ (h("input", { type: "file", id: "import-file", accept: ".json,application/json" }));
+    /** @type {{circuit: any, name: string, block: boolean} | {error: string} | null} */
+    let read = null;
+    const handle = openForm(host, {
+      title: "Import",
+      subtitle: "a Solum Builder file (.json), not a netlist",
+      fields: [{ name: "name", label: "Save it as", kind: "text", value: "" }],
+      submit: "Import",
+      onSubmit: async (values) => {
+        if (!read) return "Choose a file first.";
+        if ("error" in read) return read.error;
+        const block = read.block;
+        try {
+          const view = await postJson(block ? "api/blocks" : "api/circuits", { circuit: read.circuit, name: values.name });
+          app.hint(`Imported ${view.circuit.name} into ${block ? "My blocks" : "My circuits"}.`);
+          app.leaveTo({ kind: block ? "block" : "circuit", id: view.file?.link ?? view.circuit.id });
+          return null;
+        } catch (err) {
+          return /** @type {Error} */ (err).message;
+        }
+      },
+    });
+    const name = /** @type {HTMLInputElement} */ (handle.form.querySelector("#field-name"));
+    // the file first, then the name it gives
+    name.closest(".form-row")?.before(h("div", { class: "form-row" }, [h("label", { for: "import-file" }, ["File"]), file, h("span", { class: "unit" }, [])]));
+    file.addEventListener("change", async () => {
+      const picked = file.files?.[0];
+      read = picked ? importedFile(await picked.text(), picked.name) : null;
+      handle.showError(read && "error" in read ? read.error : null);
+      if (read && !("error" in read)) name.value = read.name;
+    });
   }
 
   /** "Open…": the user's circuits in two sections, Recent (the last three saved) and All
@@ -418,5 +455,5 @@ export function fileDialogs(host, app) {
     }
   }
 
-  return { save, saveAs, newSheet, openDialog, deleteCircuit, nameEditor, properties, newMajor, ownFile, readonlyReason };
+  return { save, saveAs, newSheet, openDialog, importDialog, deleteCircuit, nameEditor, properties, newMajor, ownFile, readonlyReason };
 }

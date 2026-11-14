@@ -1,6 +1,6 @@
 /**
  * Tools menu pages (DOM, D-095): the unit converter, the resistor colour-code
- * calculator (its chart is in Help), the parts list (Parts and datasheets, 9c) and Add a
+ * calculator (its chart is in Help), the Calculators window (D-320), the parts list (Parts and datasheets, 9c) and Add a
  * model (9c). Every number is read and written by the server
  * (`/api/tools/*`, solum/markings.py, the one SI owner, D-045); this module only lays out
  * what it answers.
@@ -12,8 +12,9 @@ import { resistorDrawing, resistorGuideSheet } from "./help.js";
 import { h, infoPopup } from "./panels.js";
 import { ORIGIN_TAGS, SHOWS, checksText, excludedText, originText, partGroups } from "./parts.js";
 import { debounce, latestOnly } from "./state.js";
+import { remember, remembered } from "./storage.js";
 
-/** @returns {Promise<{colours: any[], quantities: Array<{unit: string, name: string, example: string}>}>} */
+/** @returns {Promise<{colours: any[], quantities: Array<{unit: string, name: string, example: string}>, filters: Record<string, string>}>} */
 const tables = () => getJson("api/tools");
 
 /**
@@ -101,6 +102,187 @@ export async function converterSheet() {
     ],
   });
   value.input.focus();
+}
+
+/**
+ * A labelled select in a tool sheet. @param {string} id @param {string} label
+ * @param {Record<string, string>} options value → text
+ */
+function selectRow(id, label, options) {
+  const select = /** @type {HTMLSelectElement} */ (h("select", { id }));
+  for (const [value, text] of Object.entries(options)) select.append(new Option(text, value));
+  return { select, row: h("div", { class: "form-row" }, [h("label", { for: id }, [label]), select, h("span", { class: "unit" }, [])]) };
+}
+
+/** @param {{input: HTMLInputElement}} row the row's value for an address */
+const typed = (row) => encodeURIComponent(row.input.value.trim());
+
+/**
+ * One calculator in the Calculators window (D-320): its rows, and its answer asked of the
+ * server whenever a field changes and `ready` says there is enough to ask with.
+ * @param {{key: string, intro: string, rows: Node[], fields: Array<HTMLInputElement | HTMLSelectElement>,
+ *   url: () => string, ready: () => boolean, show: (body: any) => Node[]}} spec
+ */
+function calculator({ key, intro, rows, fields, url, ready, show }) {
+  const error = h("p", { class: "error", role: "alert", hidden: "" });
+  const result = h("div", { class: "tool-result", id: `${key}-result` });
+  const ask = asker(error, url, (body) => result.replaceChildren(...show(body)));
+  const changed = () => {
+    if (ready()) return ask();
+    result.replaceChildren();
+    error.hidden = true;
+  };
+  for (const el of fields) el.addEventListener(el.tagName === "SELECT" ? "change" : "input", changed);
+  return h("div", { class: "calculator", id: `calc-${key}`, hidden: "" }, [h("p", {}, [intro]), ...rows, error, result]);
+}
+
+/** A filter as the server works it out: its parts and corner, the sum, what it does, its levels. @param {any} f */
+function filterAnswer(f) {
+  return h("div", { class: "filter-answer" }, [
+    h("h3", {}, [`${f.r} and ${f.c}: ${f.corner_text}`]),
+    h("p", { class: "values" }, [f.working]),
+    h("p", {}, [f.effect]),
+    h("table", {}, [h("tbody", {}, [h("tr", {}, f.levels.map((/** @type {any} */ lv) => h("th", {}, [`at ${lv.freq}`]))), h("tr", {}, f.levels.map((/** @type {any} */ lv) => h("td", { class: "values" }, [lv.db])))])]),
+  ]);
+}
+
+/** Rows of a small two-column answer table. @param {Array<[string, string]>} rows */
+const answerTable = (rows) => h("table", {}, [h("tbody", {}, rows.map(([a, b]) => h("tr", {}, [h("th", {}, [a]), h("td", { class: "values" }, [b])])))]);
+
+/**
+ * Filter (D-319, D-320): two of R, C and the corner, the third worked out (a part as the
+ * nearest standard value too), and a second pair to compare.
+ * @param {Record<string, string>} kinds @param {Record<string, string>} series
+ */
+function filterCalculator(kinds, series) {
+  const kind = selectRow("filter-kind", "Filter", kinds);
+  const r = inputRow("filter-r", "Resistor", "e.g. 100k");
+  const c = inputRow("filter-c", "Capacitor", "e.g. 1u, 47n");
+  const freq = inputRow("filter-freq", "Corner (Hz)", "blank to find it, e.g. 100, 1k");
+  const values = selectRow("filter-series", "Standard values", series);
+  const r2 = inputRow("filter-r2", "Compare with R", "the same");
+  const c2 = inputRow("filter-c2", "and C", "e.g. 10u");
+  const filled = () => [r, c, freq].filter((row) => row.input.value.trim()).length;
+  const showSeries = () => (values.row.hidden = !freq.input.value.trim());
+  freq.input.addEventListener("input", showSeries);
+  showSeries();
+  return calculator({
+    key: "filter",
+    intro: "A resistor and a capacitor make a filter. Fill in any two of the resistor, the capacitor and the corner, the way they're written on a schematic, and leave the third blank: it works out the third, where the filter starts cutting and what that does to a guitar. Fill in Compare with to see what another value would do.",
+    rows: [kind.row, r.row, c.row, freq.row, values.row, r2.row, c2.row],
+    fields: [kind.select, r.input, c.input, freq.input, values.select, r2.input, c2.input],
+    ready: () => filled() >= 2, // all three: the server says to leave one blank
+    url: () => `api/tools/filter?kind=${kind.select.value}&r=${typed(r)}&c=${typed(c)}&freq=${typed(freq)}&series=${values.select.value}&r2=${typed(r2)}&c2=${typed(c2)}`,
+    show: (body) => [
+      ...(body.find
+        ? [
+            h("p", {}, [`The ${body.find.name}: ${body.find.formula}`]),
+            h("h3", { id: "filter-found" }, [`${body.find.exact}: use ${body.find.standard} (${body.find.series})`]),
+            h("p", {}, [`With ${body.find.standard} the corner is ${body.find.filter.corner_text}, ${body.find.corner_off} from the one asked for.`]),
+          ]
+        : [h("p", {}, [`The corner, where the level is 3 dB down: ${body.formula}`])]),
+      ...body.filters.map(filterAnswer),
+      ...(body.change ? [h("p", { id: "filter-change" }, [body.change])] : []),
+    ],
+  });
+}
+
+/** Voltage divider, and how far a load pulls its middle down (D-320). */
+function dividerCalculator() {
+  const supply = inputRow("div-supply", "Supply (V)", "e.g. 9");
+  supply.input.value = "9";
+  const r1 = inputRow("div-r1", "Top resistor", "from the supply, e.g. 10k");
+  const r2 = inputRow("div-r2", "Bottom resistor", "to ground, e.g. 10k");
+  const load = inputRow("div-load", "Load on the middle", "optional, e.g. 1M");
+  return calculator({
+    key: "divider",
+    intro: "Two resistors from the supply to ground make a lower voltage in the middle: a bias (VREF) or a level. Whatever the middle feeds sits in parallel with the bottom resistor, so give it as the load to see how far the voltage drops.",
+    rows: [supply.row, r1.row, r2.row, load.row],
+    fields: [supply.input, r1.input, r2.input, load.input],
+    ready: () => Boolean(supply.input.value.trim() && r1.input.value.trim() && r2.input.value.trim()),
+    url: () => `api/tools/divider?supply=${typed(supply)}&r1=${typed(r1)}&r2=${typed(r2)}&load=${typed(load)}`,
+    show: (body) => [
+      h("h3", { id: "div-middle" }, [`The middle: ${body.middle}`]),
+      h("p", { class: "values" }, [body.working]),
+      h("p", {}, [`It draws ${body.current} from the supply, and looks like ${body.source} (R1 ‖ R2) to what it feeds. ${body.holds}`]),
+      ...(body.sag ? [h("p", { id: "div-sag" }, [body.sag])] : []),
+    ],
+  });
+}
+
+/** Parallel and series: values combined, and a value made from standard parts (D-320). @param {Record<string, string>} series */
+function combineCalculator(series) {
+  const kind = selectRow("comb-kind", "Parts", { resistor: "Resistors", capacitor: "Capacitors" });
+  const values = inputRow("comb-values", "Combine", "e.g. 10k, 22k");
+  const target = inputRow("comb-target", "Make this value", "e.g. 6k5");
+  const choice = selectRow("comb-series", "From", series);
+  return calculator({
+    key: "combine",
+    intro: "List values to see them in series and in parallel, or type a value you need to find the standard parts that make it. Resistors add in series; capacitors add in parallel.",
+    rows: [kind.row, values.row, target.row, choice.row],
+    fields: [kind.select, values.input, target.input, choice.select],
+    ready: () => Boolean(values.input.value.trim() || target.input.value.trim()),
+    url: () => `api/tools/combine?kind=${kind.select.value}&values=${typed(values)}&target=${typed(target)}&series=${choice.select.value}`,
+    show: (body) => [
+      ...(body.totals ? [h("h3", {}, [body.totals.listed]), answerTable([["In series", body.totals.series], ["In parallel", body.totals.parallel]])] : []),
+      ...(body.make
+        ? [
+            h("h3", {}, [`To make ${body.make.value} from ${body.make.series} values`]),
+            h("table", { id: "comb-make" }, [h("tbody", {}, body.make.options.map((/** @type {any} */ o) => h("tr", {}, [h("th", {}, [o.how]), h("td", { class: "values" }, [o.makes]), h("td", { class: "values" }, [o.off])])))]),
+          ]
+        : []),
+    ],
+  });
+}
+
+/** Decibels and voltage ratios, either way, and a signal through them (D-320). */
+function dbCalculator() {
+  const db = inputRow("db-db", "Level (dB)", "e.g. 22, -6");
+  const times = inputRow("db-times", "Ratio (times)", "e.g. 12.6, 0.5");
+  const volts = inputRow("db-volts", "Signal in", "optional, e.g. 300m");
+  let from = "db"; // the box typed in last: the other is filled from the answer
+  db.input.addEventListener("input", () => (from = "db"));
+  times.input.addEventListener("input", () => (from = "times"));
+  return calculator({
+    key: "db",
+    intro: "Gains in the app are in dB. Type a level in dB or a ratio in times and the other fills in. Every 6 dB doubles the voltage and every 20 dB makes it ten times; minus halves it and divides it. Give a signal to see what comes out.",
+    rows: [db.row, times.row, volts.row],
+    fields: [db.input, times.input, volts.input],
+    ready: () => Boolean((from === "db" ? db : times).input.value.trim()),
+    url: () => (from === "db" ? `api/tools/db?db=${typed(db)}` : `api/tools/db?times=${typed(times)}`) + `&volts=${typed(volts)}`,
+    show: (body) => {
+      if (from === "db") times.input.value = body.times;
+      else db.input.value = body.db.replace(" dB", "");
+      return [h("p", { class: "values" }, [body.working]), ...(body.out ? [h("p", { id: "db-out" }, [body.out])] : [])];
+    },
+  });
+}
+
+const CALCULATORS = {
+  filter: "Filter (high-pass or low-pass)",
+  divider: "Voltage divider",
+  combine: "Parallel and series",
+  db: "Decibels",
+};
+
+/**
+ * Tools → Calculators… (D-319, D-320): one window, a picker at the top; the last one used
+ * opens again. The server works every sum out (`solum/calculators.py`).
+ */
+export async function calculatorsSheet() {
+  const { filters, series } = await tables();
+  const pick = selectRow("calc-pick", "Calculator", CALCULATORS);
+  const sections = [filterCalculator(filters, series), dividerCalculator(), combineCalculator(series), dbCalculator()];
+  const showPicked = () => {
+    for (const s of sections) s.hidden = s.id !== `calc-${pick.select.value}`;
+    remember("solum.calculator", pick.select.value);
+    /** @type {HTMLInputElement | null} */ (sections.find((s) => !s.hidden)?.querySelector("input"))?.focus();
+  };
+  const last = remembered("solum.calculator");
+  if (typeof last === "string" && last in CALCULATORS) pick.select.value = last;
+  pick.select.addEventListener("change", showPicked);
+  sheet({ title: "Calculators", id: "calculators", body: [pick.row, ...sections] });
+  showPicked();
 }
 
 /** Tools → Resistor colour code. */

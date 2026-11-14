@@ -39,6 +39,10 @@ VALUE_SPAN = 10.0  # a value slider runs from value / span to value x span
 # a capacitor's slider runs over what pedals use, whatever its value (the user, D-164):
 # 10p (an op-amp's compensation) to 470µ (a supply filter), in E12
 CAP_RANGE = (10e-12, 470e-6)
+# a resistor's too, and a pot's or trimmer's (the user, D-316): 10 Ω (a supply's series
+# resistor) to 10 MΩ (an input's bias) in E12; pots over the values they're sold in
+RESISTOR_RANGE = (10.0, 10e6)
+POT_RANGE = (1e3, 1e6)
 ROTATION_STEPS = 101  # 0 to 100 % in 1 % steps
 VALUE_PARTS = (Resistor, Capacitor, Inductor, Pot, Trimmer, AmpInput)  # what has a value slider
 NUDGE = 0.1  # part influence nudges each part's value by +10 % (Phase 8b, D-097)
@@ -68,6 +72,18 @@ def value_steps(
     return steps
 
 
+def _span(part: Part) -> tuple[float, float] | None:
+    """The fixed range a part's value slider runs over, whatever its value; None: a
+    decade each way (an inductor, the amp's input)."""
+    if isinstance(part, Capacitor):
+        return CAP_RANGE
+    if isinstance(part, Resistor):
+        return RESISTOR_RANGE
+    if isinstance(part, Pot | Trimmer):
+        return POT_RANGE
+    return None
+
+
 def _series(part: Part) -> str:
     return POT_SERIES if isinstance(part, Pot | Trimmer) else SERIES
 
@@ -94,7 +110,7 @@ def slider(
             raise LiveError(f"{ref} has no value to slide.")
         series = _series(part)
         current = parse_value(part.value)
-        span = CAP_RANGE if isinstance(part, Capacitor) else None
+        span = _span(part)
         raw = value_steps(current, kept, series, span)
         values: list[Any] = [format_value(v, 6) for v in raw]
         numbers = raw

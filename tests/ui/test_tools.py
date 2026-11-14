@@ -365,7 +365,8 @@ def test_help_documentation_opens_the_guide_with_search(page: Page, base_url: st
         "Solum Builder guide"
     )
     guide.locator("#manual-search").fill("divider")
-    result = guide.locator("#manual-results a", has_text="Voltage divider")
+    # the Formulas section (Tools' Calculators section names it too, D-320)
+    result = guide.locator("#manual-results a", has_text="Formulas \u203a Voltage divider")
     expect(result.locator(".where")).to_have_text("Formulas \u203a Voltage divider")
     expect(guide.locator("#manual-pages")).to_be_hidden()
     result.click()
@@ -519,3 +520,69 @@ def test_a_browsers_old_preferences_are_carried_over_once(
     page.reload()
     assert page.evaluate("document.documentElement.dataset.theme") == "dark"
     assert page.evaluate("localStorage.getItem('solum.theme')") is None
+
+
+def test_calculators(page: Page, base_url: str, browser_errors: list[str]) -> None:
+    """Tools → Calculators… (D-319, D-320): one window, a picker, each calculator asked of
+    the server as you type, the last one used opening again."""
+    open_circuit(page, base_url)
+    menu(page, "tools-menu", "menu-calculators")
+    pick = page.locator("#calc-pick")
+    expect(pick).to_have_value("filter")
+
+    # Filter, with the user's example: 1 µF into 100 kΩ, then 10 µF
+    page.locator("#filter-r").fill("100k")
+    page.locator("#filter-c").fill("1u")
+    result = page.locator("#filter-result")
+    expect(result.locator(".filter-answer h3")).to_have_text(["100k and 1µ: 1.59 Hz"])
+    expect(result).to_contain_text("1 / (2 × π × 100 kΩ × 1 µF) = 1.59 Hz")
+    expect(result).to_contain_text("the whole guitar passes")
+    page.locator("#filter-c2").fill("10u")
+    expect(page.locator("#filter-change")).to_contain_text("The corner moves 10 times lower")
+    page.locator("#filter-c").fill("47x")
+    expect(page.locator("#calc-filter .error")).to_contain_text("Couldn't read the value")
+
+    # the same calculator from the corner: 100 Hz into 1M wants 1.59 nF, so 1n5
+    page.locator("#filter-c2").fill("")
+    expect(page.locator("#filter-series")).to_be_hidden()
+    page.locator("#filter-freq").fill("100")
+    expect(page.locator("#calc-filter .error")).to_contain_text("leave the third blank")
+    expect(page.locator("#filter-series")).to_be_visible()
+    page.locator("#filter-r").fill("1M")
+    page.locator("#filter-c").fill("")
+    expect(page.locator("#filter-found")).to_have_text("1.59 nF: use 1n5 (E12)")
+    expect(result).to_contain_text("106 Hz, +6.1 %")
+
+    # Voltage divider: 9 V, 10k and 10k, then a 100k load
+    pick.select_option("divider")
+    expect(page.locator("#div-supply")).to_have_value("9")
+    page.locator("#div-r1").fill("10k")
+    page.locator("#div-r2").fill("10k")
+    expect(page.locator("#div-middle")).to_have_text("The middle: 4.5 V")
+    page.locator("#div-load").fill("100k")
+    expect(page.locator("#div-sag")).to_have_text(
+        "The load pulls the middle down 4.8 %, from 4.5 V to 4.29 V."
+    )
+
+    # Parallel and series: 10k and 22k; 6k5 from E12 parts
+    pick.select_option("combine")
+    page.locator("#comb-values").fill("10k, 22k")
+    expect(page.locator("#combine-result")).to_contain_text("6.88 kΩ")
+    page.locator("#comb-target").fill("6k5")
+    expect(page.locator("#comb-make tr").nth(1)).to_contain_text("4k7 and 1k8 in series")
+
+    # Decibels, either way
+    pick.select_option("db")
+    page.locator("#db-db").fill("20")
+    expect(page.locator("#db-times")).to_have_value("10")
+    page.locator("#db-volts").fill("300m")
+    expect(page.locator("#db-out")).to_have_text("300 mV in, 3 V out")
+    page.locator("#db-times").fill("2")
+    expect(page.locator("#db-db")).to_have_value("+6.0")
+
+    assert all("422" in e for e in browser_errors)
+    browser_errors.clear()
+    # the last calculator used opens again
+    page.keyboard.press("Escape")
+    menu(page, "tools-menu", "menu-calculators")
+    expect(pick).to_have_value("db")

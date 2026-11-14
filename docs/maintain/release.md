@@ -1,5 +1,9 @@
 # Releasing a version
 
+The same steps every time, whoever does them. An agent asked to release follows this page
+in order, does the steps marked *(agent)*, and stops for the maintainer at the ones that
+are theirs: merging, tagging, approving and publishing (D-331).
+
 1. **Clean tree on `main`,** everything merged that is going in.
 2. **`make check` and `make accept`** both green. Go through the user's test list for
    anything changed since the last release.
@@ -7,7 +11,10 @@
    `pyproject.toml`, `/api/health`, Help → About, the exports and the Mac app's `.dmg` read
    it. `X.Y.Z`: Z for fixes and small additions, Y for something new to install or a
    feature users would look for in the release notes, X for a change that breaks
-   people's files or setups (D-328).
+   people's files or setups (D-328). *(agent)* Propose the number from what changed since
+   the last tag (`git log <last tag>..main`, the D-entries added since), with a line on
+   why, and let the maintainer agree it; then the bump goes in its own release pull
+   request, with nothing else in it but the notes it needs.
 4. **Format changes.** If the circuit schema changed, its migration and old-version
    fixture are in; `make schema` regenerates `docs/circuit.schema.json`.
 5. **Library.** `python3 scripts/models_index.py` leaves no diff; no model is flagged
@@ -37,11 +44,19 @@
    attests where the `.dmg` came from and makes a **draft release** with the `.dmg` and its
    `.sha256` (about 20 minutes).
 12. **Finish the draft.** Download its `.dmg` and open it on your Mac: it must ask for Open
-   Anyway (it's the downloaded one now), then run a starter. Write *What's new* in the notes
-   (the template, `packaging/mac/release-notes.md`, has the rest: the Open Anyway steps, that
+   Anyway (it's the downloaded one now), then run a starter. Paste *What's new* into the
+   notes (drafted in step 13; the template, `packaging/mac/release-notes.md`, has the rest: the Open Anyway steps, that
    it's signed by us and not by Apple, `make mac-app`, how to check the download, Docker's
    update). Once the app is signed by a Developer ID, replace the template's "Why macOS asks"
    paragraph. Then **Publish release**.
+13. **What's new** *(agent, while the build runs)*: drafted for the maintainer to edit and
+   paste, never published by the agent. From `git log <last tag>..v<new>`, the pull
+   requests merged since and the D-entries added since: what a user would look for, in
+   the guide's plain words (DESIGN.md), not how it was built. Grouped as **New**,
+   **Better**, **Fixed**, a line each, the biggest first; anything that changes what
+   people must do (a moved folder, a migration, a new requirement) at the top, said
+   plainly. No D-numbers, branch names or test counts. Given to the maintainer as
+   Markdown in the conversation, ready to paste under the draft's *What's new* heading.
 
 ## Once, in the repository's settings
 

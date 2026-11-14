@@ -10,7 +10,7 @@ import { exportSheet } from "./export.js";
 import { aboutSheet, capacitorSheet, hotkeysSheet, manualSheet, resistorGuideSheet } from "./help.js";
 import { menu, openMenu } from "./menus.js";
 import { isNamedNet, nameNet, setNetNote, setPartNote } from "./notes-logic.js";
-import { addModelSheet, converterSheet, partsSheet, filterSheet, resistorSheet } from "./tools.js";
+import { addModelSheet, converterSheet, partsSheet, calculatorsSheet, resistorSheet } from "./tools.js";
 
 /**
  * @typedef {import("./menus.js").MenuItem} MenuItem
@@ -147,7 +147,7 @@ export function appMenus(host, schematic, app) {
     return [
       { label: "Unit converter…", id: "menu-converter", hint: "pF, nF, µF; cap codes", run: () => app.report(converterSheet()) },
       { label: "Resistor colour code…", id: "menu-resistor", hint: "bands ↔ value, E-series", run: () => app.report(resistorSheet()) },
-      { label: "Filter calculator…", id: "menu-filter", hint: "RC high-pass and low-pass corners", run: () => app.report(filterSheet()) },
+      { label: "Calculators…", id: "menu-calculators", hint: "filters, dividers, parallel and series, dB", run: () => app.report(calculatorsSheet()) },
       "-",
       { label: "Parts and datasheets…", id: "menu-parts", hint: "every model, its sheet and caveats", run: () => app.report(partsSheet()) },
       { label: "Add a model…", id: "menu-add-model", hint: "from a maker's SPICE file", run: () => app.report(addModelSheet(app.refreshModels)) },

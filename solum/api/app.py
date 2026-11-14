@@ -35,6 +35,16 @@ from solum.bias import BiasError
 from solum.bias_sheet import bias_page, bias_sheet
 from solum.build_notes import notes_page
 from solum.cache import cache_from_settings, content_hash
+from solum.calculators import KINDS as FILTER_KINDS
+from solum.calculators import (
+    SERIES_CHOICES,
+    FilterError,
+    combine_view,
+    db_view,
+    divider_view,
+    filter_part_view,
+    filter_view,
+)
 from solum.circuit.connectivity import ConnectivityError
 from solum.circuit.enclosures import SIZES as ENCLOSURE_SIZES
 from solum.circuit.io import CircuitError, circuit_to_dict, load_circuit, parse_circuit
@@ -54,8 +64,6 @@ from solum.export import (
     schematic_page,
     zip_files,
 )
-from solum.filters import KINDS as FILTER_KINDS
-from solum.filters import FilterError, filter_view
 from solum.fixes import (
     FIXES_VERSION,
     Arranged,
@@ -708,9 +716,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/tools")
     def tool_tables() -> dict[str, Any]:
-        """The colour code, the converter's quantities and the filter calculator's kinds,
-        for the Tools pages' pickers."""
-        return {**tables(), "filters": FILTER_KINDS}
+        """The colour code, the converter's quantities, and the calculators' filter kinds and
+        E-series, for the Tools pages' pickers."""
+        return {**tables(), "filters": FILTER_KINDS, "series": SERIES_CHOICES}
 
     @app.get("/api/tools/convert")
     def convert(unit: str, value: str = "", code: str = "") -> dict[str, Any]:
@@ -737,9 +745,33 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.get("/api/tools/filter")
     def rc_filter(kind: str, r: str, c: str, r2: str = "", c2: str = "") -> dict[str, Any]:
-        """Tools → Filter calculator (D-319): an RC high-pass or low-pass from `r` and `c`
-        as typed, and a second pair to compare."""
+        """Calculators → Filter (D-319): an RC high-pass or low-pass from `r` and `c` as
+        typed, and a second pair to compare."""
         return filter_view(kind, r, c, r2, c2)
+
+    @app.get("/api/tools/filter/part")
+    def rc_filter_part(
+        kind: str, freq: str, r: str = "", c: str = "", series: str = "E12"
+    ) -> dict[str, Any]:
+        """Calculators → Filter part (D-320): the part an RC filter needs for a corner."""
+        return filter_part_view(kind, freq, r, c, series)
+
+    @app.get("/api/tools/divider")
+    def divider(supply: str, r1: str, r2: str, load: str = "") -> dict[str, Any]:
+        """Calculators → Voltage divider (D-320)."""
+        return divider_view(supply, r1, r2, load)
+
+    @app.get("/api/tools/combine")
+    def combine(
+        kind: str, values: str = "", target: str = "", series: str = "E12"
+    ) -> dict[str, Any]:
+        """Calculators → Parallel and series (D-320)."""
+        return combine_view(kind, values, target, series)
+
+    @app.get("/api/tools/db")
+    def decibels(db: str = "", times: str = "", volts: str = "") -> dict[str, Any]:
+        """Calculators → Decibels (D-320)."""
+        return db_view(db, times, volts)
 
     @app.post("/api/view")
     def view(req: CircuitRequest) -> dict[str, Any]:

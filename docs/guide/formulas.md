@@ -27,6 +27,8 @@ You need a 250k pot and only have a 500k. Put a `500k` resistor across the two l
 - Used as a variable resistor (the wiper and one end), the most you now get is 500k beside 500k = 250 kΩ.
 - The feel changes too. Halfway round, the pot's 250k sits beside the 500k: (250 × 500) / 750 = 167 kΩ, not the 125 kΩ a real 250k pot gives at half. The resistance rises quickly at first and flattens towards the end.
 
+Tools → **Calculators…** → *Parallel and series* combines any values, and finds the standard pair that makes one you need.
+
 ## Voltage divider
 
 Two resistors from a voltage to ground, with the output taken between them:
@@ -40,6 +42,8 @@ R1 is the top resistor, R2 the one to ground.
 
 A divider only holds its voltage while little current is drawn from the middle. Whatever it feeds sits in parallel with R2.
 
+Tools → **Calculators…** → *Voltage divider* works it out, with a load.
+
 ## RC corner frequency
 
 A resistor and a capacitor make a filter. Its corner, where the level is 3 dB down, is at:
@@ -52,7 +56,7 @@ with R in ohms, C in farads and f in hertz.
 - **Bass cut (high-pass):** an input capacitor of `22n` into a `1M` resistor gives 1 / (2 × π × 1000000 × 0.000000022) = 7.2 Hz, well below a guitar's lowest note (82 Hz), so nothing is lost.
 - A `10k` with a `100n` gives 159 Hz.
 
-Making either part ten times bigger moves the corner ten times lower. Tools → **Filter calculator…** does this sum for any two values and says what the filter does to a guitar.
+Making either part ten times bigger moves the corner ten times lower. Tools → **Calculators…** does this sum for any two values and says what the filter does to a guitar, or finds the part for the corner you want.
 
 ## Capacitors in parallel and in series
 
@@ -111,6 +115,8 @@ Decibels compare two voltages:
 | 0.1 | −20 |
 
 Gains in a row multiply; their decibels add.
+
+Tools → **Calculators…** → *Decibels* converts either way.
 
 ## Ohm's law and power
 

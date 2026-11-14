@@ -693,6 +693,10 @@ table.readout tr.rail th { color: var(--text-2); }
 .tool-result { margin-top: 6px; }
 .tool-result table { width: auto; min-width: 220px; }
 .tool-result td.values { text-align: right; color: var(--text); }
+.calculator > p:first-child { margin-top: 0; }
+#calculators .tool-result h3 { margin: 10px 0 2px; font-size: inherit; color: var(--text); }
+#calculators .tool-result th { font-weight: normal; text-align: left; padding-right: 14px; }
+#calculators .tool-result td.values { padding-right: 14px; }
 .filter-answer { margin-top: 10px; }
 .filter-answer h3 { margin: 0 0 2px; font-size: inherit; color: var(--text); }
 .filter-answer p { margin: 2px 0; }

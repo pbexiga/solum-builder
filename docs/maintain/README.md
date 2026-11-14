@@ -4,7 +4,7 @@ For people working on the code. Installing and using the app are in the [top REA
 
 ## Setting up
 
-Everything runs in a dev container (Python 3.12, ngspice, the test tools and a browser for the UI tests), so nothing is installed on your machine. You need Podman or Docker and `make`.
+Everything runs in a dev container (Python 3.12, ngspice, the test tools and a browser for the UI tests), so nothing is installed on your machine. You need Podman or Docker and `make`, on an x86-64 or ARM64 machine: the image builds its own ngspice from source on either (D-327), so the first `make dev-image` takes a few minutes longer. The Mac app is the one thing built outside the container (`make mac-app`, below).
 
     make dev-image   # once, and again after pyproject.toml or the Dockerfile changes
     make hooks       # once per clone: the pre-commit hook
@@ -31,6 +31,7 @@ Keep throwaway work (exploration scripts, dumps, screenshots) in `scratch/`, whi
 | `make bench` | `solum bench` in the runtime image: times a bench circuit through the simulator and prints a JSON report. See [Benchmarks and profiling](#benchmarks-and-profiling). | After performance work, or on a new machine. |
 | `make image-tar` | Builds the runtime image and saves it as `dist/solum-builder-image.tar.gz`, for a machine that won't build it. | Deploying to the NAS. |
 | `make schema` | Regenerates `docs/circuit.schema.json` from the circuit models. A test fails when it's stale. | After changing the circuit format. |
+| `make mac-app` | Builds the Mac app on an Apple Silicon Mac: brings its own Python, ngspice and PDF libraries into `build/mac/`, runs the tests against them, smoke-tests the app and writes `dist/Solum Builder-<version>.dmg`. Needs only Xcode's command-line tools; not run in the container. See [Building the Mac app](mac-app.md). | Before a release, or after changing anything the app bundles. |
 | `make hooks` | Installs the pre-commit hook: ruff, `jslint` and the unit tests before each commit (skipped for commits that only change Markdown notes). | Once per clone. |
 | `make run CMD="…"` | Any command in the dev image, from the repo's top folder. | Scripts, one-off checks. |
 

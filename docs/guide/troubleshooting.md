@@ -1,5 +1,9 @@
 # Troubleshooting
 
+## The Mac app doesn't start
+
+Its window says *Solum Builder couldn't start* and names the log, `~/Library/Logs/Solum Builder/solum.log`. Quit (Cmd-Q) and open it again; if it keeps happening, send that file with your report. If macOS won't open the app at all, the first time or after an update, see [Installing](mac-app.md#installing).
+
 ## The page shows only empty frames after an update
 
 The browser mixed new scripts with old ones from its cache. Reload once with **Ctrl+Shift+R** (Cmd+Shift+R on a Mac).

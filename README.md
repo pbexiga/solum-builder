@@ -49,7 +49,7 @@ Both run the same app, with the same simulator (ngspice 44.2, built the same way
 
 For a Mac with Apple Silicon (M1 or later) and macOS 14 or later. Intel Macs: use Docker.
 
-1. Download `Solum Builder-<version>.dmg` from the [Releases](../../releases) page.
+1. Download `Solum-Builder-<version>.dmg` from the [Releases](../../releases) page.
 2. Open it and drag **Solum Builder** to **Applications**.
 3. Open it from Applications. The first time, macOS says it can't check the app for malicious software. Open **System Settings → Privacy & Security**, scroll down to **Security**, and click **Open Anyway** next to *Solum Builder*; confirm. After that it opens with a double-click.
 

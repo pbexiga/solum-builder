@@ -21,6 +21,7 @@ from typing import IO, Any
 from solum.api.serving import LocalServer
 from solum.desktop.folders import (
     APP_NAME,
+    BUNDLE_ID,
     AppFolders,
     Chosen,
     app_folders,
@@ -33,7 +34,6 @@ from solum.desktop.folders import (
     write_spinit,
 )
 
-BUNDLE_ID = "io.github.solum-builder"
 log = logging.getLogger("solum.desktop")
 
 NOT_STARTED = """<body style="font: 15px -apple-system; margin: 3em; line-height: 1.5">

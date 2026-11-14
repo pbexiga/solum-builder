@@ -1,8 +1,11 @@
 #!/bin/bash
 # `make mac-app` (D-326): build the Mac app from this checkout, bringing everything it and
 # its tests need into build/mac/ (git-ignored). Needs only an Apple Silicon Mac with
-# Xcode's command-line tools. Writes dist/Solum Builder-<version>.dmg.
+# Xcode's command-line tools. Writes dist/Solum-Builder-<version>.dmg.
 #   SKIP_TESTS=1   leave the test suites out (the app's own smoke test still runs)
+#   MAC_SIGN_IDENTITY, NOTARY_KEY_FILE, NOTARY_KEY_ID, NOTARY_ISSUER_ID
+#                  sign with a Developer ID and notarise (scripts/mac_sign.sh, D-330);
+#                  without them the app is signed by us, ad hoc (D-326)
 # How it works and how to update what it pins: docs/maintain/mac-app.md
 set -euo pipefail
 
@@ -97,17 +100,37 @@ SOLUM_MAC_BUILD="$BUILD" DYLD_FALLBACK_LIBRARY_PATH="$FOUND" "$PY" -m PyInstalle
   || fail "PyInstaller failed; see $BUILD/pyinstaller.log"
 rm -rf "$DIST/Solum Builder"  # PyInstaller's folder form; the .app is what ships
 APP="$DIST/Solum Builder.app"
-codesign --verify --deep "$APP" || fail "the app's (ad-hoc) signature doesn't verify."
+if [ -n "${MAC_SIGN_IDENTITY:-}" ]; then
+  say "Signing ($MAC_SIGN_IDENTITY)"
+  scripts/mac_sign.sh app "$APP"
+else
+  codesign --verify --deep "$APP" || fail "the app's (ad-hoc) signature doesn't verify."
+fi
 
 say "Smoke test of the built app"
 "$PY" scripts/mac_smoke.py "$APP" "$BUILD"
+NOTARISE="${NOTARY_KEY_FILE:-}"
+if [ -n "$NOTARISE" ]; then
+  say "Notarising the app"
+  scripts/mac_sign.sh notarise "$APP"
+fi
 
 VERSION="$("$PY" -c 'import solum; print(solum.__version__)')"
-DMG="$DIST/Solum Builder-$VERSION.dmg"
+DMG="$DIST/Solum-Builder-$VERSION.dmg"
 say "The disk image"
 STAGE="$BUILD/dmg"
 rm -rf "$STAGE" "$DMG" && mkdir -p "$STAGE"
 cp -R "$APP" "$STAGE/" && ln -s /Applications "$STAGE/Applications"
 hdiutil create -quiet -volname "Solum Builder" -srcfolder "$STAGE" -format UDZO "$DMG"
 rm -rf "$STAGE"
-printf '\nBuilt %s (%s), signed by us (ad hoc), not by Apple.\n' "$DMG" "$(du -h "$DMG" | cut -f1)"
+BY="signed by us (ad hoc), not by Apple"
+if [ -n "${MAC_SIGN_IDENTITY:-}" ]; then
+  scripts/mac_sign.sh dmg "$DMG"
+  BY="signed by $MAC_SIGN_IDENTITY, not notarised"
+fi
+if [ -n "$NOTARISE" ]; then
+  say "Notarising the disk image"
+  scripts/mac_sign.sh notarise "$DMG"
+  BY="signed by $MAC_SIGN_IDENTITY and notarised by Apple"
+fi
+printf '\nBuilt %s (%s), %s.\n' "$DMG" "$(du -h "$DMG" | cut -f1)" "$BY"

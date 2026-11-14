@@ -4,10 +4,11 @@
 import os
 from pathlib import Path
 
+from solum.desktop.folders import BUNDLE_ID  # the one place it is set (D-329)
+
 REPO = Path(SPECPATH).resolve().parents[1]
 BUILD = Path(os.environ["SOLUM_MAC_BUILD"])
 NG = BUILD / "ngspice"
-BUNDLE_ID = "io.github.solum-builder"  # the same as solum/desktop/window.py's
 MIN_MACOS = "14.0"  # what ngspice is built for; every other library allows less (D-322)
 
 scope: dict = {}

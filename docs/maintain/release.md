@@ -20,13 +20,40 @@
    on both (an Apple Silicon Mac with Podman is an ARM64 machine).
 8. **Build the Mac app** on an Apple Silicon Mac: `make mac-app` (it runs the tests and a
    smoke test itself; [Building the Mac app](mac-app.md)). Quit any copy of the app first.
-   Open `dist/Solum Builder-<version>.dmg`, drag the app to Applications, open it, run a
+   Open `dist/Solum-Builder-<version>.dmg`, drag the app to Applications, open it, run a
    starter, export a build package, render a clip, and quit: nothing left in Activity
    Monitor. Once in a while, and when what it bundles changed, on a clean user account.
+   To check the runner builds it too before tagging: Actions → **Release** → Run workflow
+   on `main`, Approve; the `.dmg` comes back as the run's artifact.
 9. **Fresh-clone check:** clone into a new folder, `make dev-image`, `make check`,
    `docker compose up --build`, open the app.
-10. **Tag** `vX.Y.Z` on the commit and push the tag. `make image-tar` writes the image for
-   copying to a machine that won't build it (`docs/NAS.md`).
-11. **GitHub release** for the tag: the notes, and the `.dmg` attached. The notes say the
-   app is signed by us, not by Apple, give the Open Anyway steps (as the README does), and
-   that `make mac-app` builds the same app from the source.
+10. **Tag** `vX.Y.Z` on `main`'s merged commit and push the tag (`git tag vX.Y.Z`,
+   `git push origin vX.Y.Z`). `make image-tar` writes the image for copying to a machine
+   that won't build it (`docs/NAS.md`).
+11. **Approve the release build.** The tag starts the **Release** workflow
+   (`.github/workflows/release.yml`, D-330); it waits in the `release` environment until you
+   click **Review deployments → Approve** on the run. Then GitHub's macOS runner checks the
+   tag is `v` + `__version__`, runs the same `make mac-app` (tests, app, smoke test, `.dmg`),
+   attests where the `.dmg` came from and makes a **draft release** with the `.dmg` and its
+   `.sha256` (about 20 minutes).
+12. **Finish the draft.** Download its `.dmg` and open it on your Mac: it must ask for Open
+   Anyway (it's the downloaded one now), then run a starter. Write *What's new* in the notes
+   (the template, `packaging/mac/release-notes.md`, has the rest: the Open Anyway steps, that
+   it's signed by us and not by Apple, `make mac-app`, how to check the download, Docker's
+   update). Once the app is signed by a Developer ID, replace the template's "Why macOS asks"
+   paragraph. Then **Publish release**.
+
+## Once, in the repository's settings
+
+- **Environments → New environment `release`**: Required reviewers, yourself; *Prevent
+  self-review* off (you are the one who tags). Deployment branches and tags: *Selected*,
+  the tag rule `v*` and the branch `main`.
+- **Rules → New tag ruleset** for `v*`: restrict creations, updates and deletions, with
+  yourself (repository admin) in the bypass list, so only you can push a release tag.
+- **Signing, when there's an Apple Developer account** (the workflow signs only when they
+  exist): in the `release` environment's secrets, `MACOS_CERT_P12` (the Developer ID
+  Application certificate and its key exported as `.p12`, base64: `base64 -i cert.p12 | pbcopy`),
+  `MACOS_CERT_PASSWORD`, and for notarising `NOTARY_KEY` (the App Store Connect API key's
+  `.p8` text), `NOTARY_KEY_ID`, `NOTARY_ISSUER_ID`. Environment secrets reach only jobs you
+  approved; pull requests never run this workflow. A leaked certificate: revoke it in the
+  Apple account and make a new one.

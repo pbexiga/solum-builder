@@ -1,0 +1,126 @@
+# The Mac app, built by GitHub from a tagged commit (D-330). A v* tag builds it with the
+# same `make mac-app` as on a Mac, attests where it came from, and leaves a draft release
+# with the .dmg for the maintainer to write up and publish. Run by hand (Actions → Release →
+# Run workflow) it builds the .dmg as a workflow artifact only: a check before tagging.
+# Both wait in the `release` environment for the maintainer's Approve. Signed and notarised
+# only when the certificate secrets exist; pull requests never run this.
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  mac-app:
+    runs-on: macos-latest  # Apple Silicon; make mac-app refuses anything else
+    environment: release
+    timeout-minutes: 90
+    permissions:
+      contents: write  # the draft release
+      id-token: write  # the attestation's signing certificate
+      attestations: write
+    env:
+      SIGNED: ${{ secrets.MACOS_CERT_P12 != '' }}
+      NOTARISED: ${{ secrets.MACOS_CERT_P12 != '' && secrets.NOTARY_KEY != '' }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: The tag is the app's version
+        id: version
+        run: |
+          version="$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' solum/__init__.py)"
+          [ -n "$version" ] || { echo "::error::no __version__ in solum/__init__.py"; exit 1; }
+          if [ "$GITHUB_REF_TYPE" = tag ] && [ "$GITHUB_REF_NAME" != "v$version" ]; then
+            echo "::error::the tag is $GITHUB_REF_NAME but solum/__init__.py says $version: bump __version__ (D-305) or tag v$version"
+            exit 1
+          fi
+          echo "version=$version" >>"$GITHUB_OUTPUT"
+
+      - name: The certificate, in a keychain of this run's own
+        if: env.SIGNED == 'true'
+        env:
+          CERT_P12: ${{ secrets.MACOS_CERT_P12 }}
+          CERT_PASSWORD: ${{ secrets.MACOS_CERT_PASSWORD }}
+        run: |
+          keychain="$RUNNER_TEMP/signing.keychain-db"
+          password="$(openssl rand -hex 24)"
+          echo "$CERT_P12" | base64 --decode >"$RUNNER_TEMP/cert.p12"
+          security create-keychain -p "$password" "$keychain"
+          security set-keychain-settings -lut 3600 "$keychain"
+          security unlock-keychain -p "$password" "$keychain"
+          security import "$RUNNER_TEMP/cert.p12" -k "$keychain" -P "$CERT_PASSWORD" -T /usr/bin/codesign
+          security set-key-partition-list -S apple-tool:,apple: -k "$password" "$keychain" >/dev/null
+          security list-keychains -d user -s "$keychain" $(security list-keychains -d user | tr -d '"')
+          rm "$RUNNER_TEMP/cert.p12"
+          identity="$(security find-identity -v -p codesigning "$keychain" | sed -n 's/.*"\(Developer ID Application: .*\)"/\1/p' | head -1)"
+          [ -n "$identity" ] || { echo "::error::no Developer ID Application certificate in MACOS_CERT_P12"; exit 1; }
+          echo "MAC_SIGN_IDENTITY=$identity" >>"$GITHUB_ENV"
+
+      - name: The notary key
+        if: env.NOTARISED == 'true'
+        env:
+          NOTARY_KEY: ${{ secrets.NOTARY_KEY }}
+          NOTARY_KEY_ID: ${{ secrets.NOTARY_KEY_ID }}
+          NOTARY_ISSUER_ID: ${{ secrets.NOTARY_ISSUER_ID }}
+        run: |
+          printf '%s\n' "$NOTARY_KEY" >"$RUNNER_TEMP/notary.p8"
+          {
+            echo "NOTARY_KEY_FILE=$RUNNER_TEMP/notary.p8"
+            echo "NOTARY_KEY_ID=$NOTARY_KEY_ID"
+            echo "NOTARY_ISSUER_ID=$NOTARY_ISSUER_ID"
+          } >>"$GITHUB_ENV"
+
+      - name: make mac-app (the tests, the app, its smoke test, the .dmg)
+        run: make mac-app
+
+      - name: The checksum
+        id: dmg
+        env:
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          cd dist
+          dmg="Solum-Builder-$VERSION.dmg"
+          shasum -a 256 "$dmg" | tee "$dmg.sha256"
+          echo "path=dist/$dmg" >>"$GITHUB_OUTPUT"
+
+      - name: Attest where the .dmg came from
+        uses: actions/attest-build-provenance@4d101475d8b20a2381f78447822ac1eab6504dd8  # v4.2.2
+        with:
+          subject-path: ${{ steps.dmg.outputs.path }}
+
+      - name: The draft release
+        if: github.ref_type == 'tag'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+          DMG: ${{ steps.dmg.outputs.path }}
+        run: |
+          sed -e "s|@VERSION@|$VERSION|g" -e "s|@TAG@|$GITHUB_REF_NAME|g" -e "s|@REPO@|$GITHUB_REPOSITORY|g" \
+            packaging/mac/release-notes.md >"$RUNNER_TEMP/notes.md"
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
+            --title "Solum Builder $VERSION" --notes-file "$RUNNER_TEMP/notes.md" \
+            "$DMG" "$DMG.sha256"
+
+      - name: The .dmg as a workflow artifact (a run by hand)
+        if: github.ref_type != 'tag'
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
+        with:
+          name: Solum-Builder-${{ steps.version.outputs.version }}
+          path: dist/Solum-Builder-*.dmg*
+          retention-days: 7
+
+      - name: Remove the keychain and the key
+        if: always()
+        run: |
+          [ ! -f "$RUNNER_TEMP/signing.keychain-db" ] || security delete-keychain "$RUNNER_TEMP/signing.keychain-db"
+          rm -f "$RUNNER_TEMP/notary.p8"

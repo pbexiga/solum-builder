@@ -455,6 +455,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     app = FastAPI(title="Solum Builder", version=__version__)
     app.state.engine = engine
+    app.state.jobs = jobs  # for whoever stops the server to close its render workers (D-321)
 
     def error_text(err: BaseException) -> str:
         """What the page shows for an error: a user error's own words, a failed run

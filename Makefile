@@ -28,7 +28,7 @@ ACCEPT_JOBS ?= 4
 PAR := -n $(JOBS)
 ACCEPT_PAR := -n $(ACCEPT_JOBS) --dist loadfile
 
-.PHONY: help dev-image image image-tar run test ruff jslint lint check accept bench hooks schema
+.PHONY: help dev-image image image-tar run test ruff jslint lint check accept bench hooks schema mac-app
 
 help:
 	@echo "make dev-image  build the dev image (do this first, and after changing dependencies)"
@@ -44,6 +44,7 @@ help:
 	@echo "make image-tar  save the runtime image to dist/ for copying to the NAS"
 	@echo "make hooks      install the git pre-commit hook"
 	@echo "make schema     regenerate docs/circuit.schema.json from the Pydantic models"
+	@echo "make mac-app    build the Mac app into dist/ (on an Apple Silicon Mac; docs/maintain/mac-app.md)"
 
 dev-image:
 	$(CONTAINER) build --target dev -t $(DEV_IMAGE) .
@@ -101,3 +102,8 @@ hooks:
 # The circuit JSON Schema is generated from solum/circuit/schema.py (D-032).
 schema:
 	$(RUN) python -m solum.circuit.schema > docs/circuit.schema.json
+
+# The Mac app (D-326): outside the dev image, on the Mac itself. It brings its own Python,
+# ngspice and libraries into build/mac/ and runs the tests against them.
+mac-app:
+	scripts/mac_app.sh

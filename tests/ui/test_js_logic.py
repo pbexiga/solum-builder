@@ -814,3 +814,65 @@ def test_settings_sizes_and_what_is_wrong_with_one(js: Page) -> None:
     more = "The largest cache size must be more than 0."
     number = "Type the largest cache size as a number of gigabytes, such as 2 or 0.5."
     assert got["problems"] == [None, None, more, more, number, number]
+
+
+def test_what_settings_asks_before_the_data_folder_moves(js: Page) -> None:
+    """The Mac app's Change… (D-323): nothing to ask when the folder in use is empty; else
+    move the files or leave them, worded by whether the new folder has files already."""
+    got = run(
+        js,
+        """
+        const { moveQuestion } = await m('settings.js');
+        const picked = (here, there) => ({ path: "/Users/me/Pedals", problem: null, files_here: here, files_there: there });
+        return [moveQuestion(picked(false, false)), moveQuestion(picked(false, true)),
+                moveQuestion(picked(true, false)), moveQuestion(picked(true, true))];
+        """,
+    )
+    assert got[0] is None and got[1] is None
+    assert got[2]["stay"] == "Start empty" and "Move them to /Users/me/Pedals" in got[2]["text"]
+    assert got[3]["stay"] == "Use what is there"
+    assert "/Users/me/Pedals has files already" in got[3]["text"]
+
+
+def test_the_mac_apps_functions_are_absent_in_a_browser(js: Page) -> None:
+    got = run(
+        js,
+        """
+        const { desktopApi, desktopMenus } = await m('desktop.js');
+        const before = desktopApi();
+        globalThis.pywebview = { api: { show_folder: () => {} } };
+        const seen = [];
+        desktopMenus({ settings: () => seen.push("settings") });
+        window.dispatchEvent(new CustomEvent("solum-desktop", { detail: "settings" }));
+        window.dispatchEvent(new CustomEvent("solum-desktop", { detail: "unknown" }));
+        const after = typeof desktopApi()?.show_folder;
+        delete globalThis.pywebview;
+        return { before, after, seen };
+        """,
+    )
+    assert got == {"before": None, "after": "function", "seen": ["settings"]}
+
+
+def test_the_mac_app_is_told_when_unsaved_work_comes_and_goes(js: Page) -> None:
+    """Closing the Mac app's window asks first when there is unsaved work (D-321): the page
+    tells it when that changes, and only then."""
+    got = run(
+        js,
+        """
+        const { desktopUnsaved } = await m('desktop.js');
+        const told = [];
+        globalThis.pywebview = { api: { set_unsaved: (now) => told.push(now) } };
+        let dirty = false;
+        desktopUnsaved(() => dirty);
+        const wait = () => new Promise((done) => setTimeout(done, 1200));
+        await wait();
+        dirty = true;
+        await wait();
+        await wait();
+        dirty = false;
+        await wait();
+        delete globalThis.pywebview;
+        return told;
+        """,
+    )
+    assert got == [True, False]

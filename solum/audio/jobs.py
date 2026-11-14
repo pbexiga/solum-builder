@@ -338,5 +338,11 @@ class RenderJobs:
             return self._jobs.get(job_id)
 
     def close(self) -> None:
-        if self._pool is not None:
-            self._pool.shutdown(wait=False, cancel_futures=True)
+        """Stop the render workers now, a render running in one too: closing the Mac app's
+        window must not leave a worker finishing a render nobody will hear (D-321)."""
+        pool, self._pool = self._pool, None
+        if pool is None:
+            return
+        for process in list(pool._processes.values()):
+            process.kill()
+        pool.shutdown(wait=False, cancel_futures=True)

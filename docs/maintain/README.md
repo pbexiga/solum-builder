@@ -109,6 +109,7 @@ In this folder:
 | [Adding a starter circuit](add-a-starter.md) | adding a pedal to File → New from starter (with the wish list) |
 | [Adding a core block](add-a-block.md) | adding a block to the core library |
 | [Releasing a version](release.md) | cutting a version |
+| [Building the Mac app](mac-app.md) | making `Solum Builder.app`, or updating what its build pins |
 
 ## Working with an AI agent
 

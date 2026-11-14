@@ -36,6 +36,7 @@ import { reorderable } from "./panes.js";
 import { liveCurves, liveValues, nearestStep, readingRows } from "./live.js";
 import { h, knobControl, paneInfo, restoreLargeViews, shrinkLargeViews, renderDc, renderKnobs, renderNodeView, renderPartView, renderProbeFailed, renderProblems, renderReadings, renderSweepSummary, showKnob } from "./panels.js";
 import { barPlot, curvePlot, forgetColours, linePlot, liveLinePlot } from "./plots.js";
+import { desktopMenus, desktopUnsaved } from "./desktop.js";
 import { settingsSheet } from "./settings.js";
 import { Schematic, supplyKind } from "./schematic/render.js";
 import { setSwitchKinds } from "./schematic/symbols.js";
@@ -355,10 +356,7 @@ const menus = appMenus($("canvas-body"), schematic, {
   toggleCapTypes: () => toggleCapTypes(),
   toggleMarks: () => toggleMarks(),
   resetPanes: () => resetPanes(),
-  openSettings: () => report(settingsSheet(() => {
-    forgetColours();
-    if (state.run) render(currentNet());
-  })),
+  openSettings: () => openSettings(),
 });
 const tiles = palette($("palette"), schematic, {
   circuit: () => state.circuit,
@@ -421,6 +419,22 @@ async function confirmLeave() {
   });
   if (choice === "discard") return true;
   return choice === "save" ? files.save({ stay: true }) : false;
+}
+
+/** File → Settings… (D-310); in the Mac app also its menu bar's Settings… (D-321). */
+function openSettings() {
+  if (document.getElementById("settings")) return;
+  const onTheme = () => {
+    forgetColours();
+    if (state.run) render(currentNet());
+  };
+  // a moved folder reloads the page: ask about unsaved work first, as before any leaving
+  const leave = async () => {
+    if (!(await confirmLeave())) return false;
+    state.dirty = false; // answered: the reload must not ask again
+    return true;
+  };
+  report(settingsSheet(onTheme, leave));
 }
 
 /** Open `source` once leaving what's open is fine. @param {Source} source */
@@ -1812,6 +1826,8 @@ function wireControls() {
     if (state.dirty) e.preventDefault();
   });
   document.addEventListener("keydown", onKey);
+  desktopMenus({ settings: openSettings });
+  desktopUnsaved(() => state.dirty);
   // the schematic follows its own size (render.js); the plots redraw once the resize stops
   window.addEventListener("resize", debounce(() => {
     if (state.run) render(currentNet());

@@ -13,6 +13,7 @@ from dataclasses import dataclass
 from pathlib import Path
 
 APP_NAME = "Solum Builder"
+BUNDLE_ID = "com.solumfx.solum-builder"  # the app's id to macOS; never change it (D-329)
 SETTINGS_FILE = "settings.json"  # the launcher's own; the server's is `solum-settings.json`
 CODE_MODELS = ("spice2poly", "analog", "digital", "xtradev", "xtraevt", "table")
 # Folders a sync service owns, by where they sit in the home folder: SQLite's locks don't

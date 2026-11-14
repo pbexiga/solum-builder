@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<!-- The signed app's entitlements (D-330): none. The hardened runtime with nothing allowed
+     runs the app, its ngspice code models, ctypes and the render workers (the smoke test,
+     checked ad hoc); add one here only with the failure that needs it. -->
+<plist version="1.0">
+<dict>
+</dict>
+</plist>

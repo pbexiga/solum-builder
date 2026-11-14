@@ -28,12 +28,13 @@ This guide opens in the app from **Help → Documentation**. Type in the search 
 ## Keeping and building
 
 - [Files and versions](files-and-versions.md): saving, opening, renaming, versions and History.
-- [Notes](notes.md): general notes, notes on parts and nets, and notes from blocks.
 - [Export and build](export.md): the parts list, bias sheet, build notes and the build package.
+- [Notes](notes.md): general notes, notes on parts and nets, and notes from blocks.
 
 ## Reference
 
 - [Settings](settings.md): the folders, the cache's largest size, and the theme.
+- [The Mac app](mac-app.md): installing it, how it differs from the Docker version, why macOS asks before opening it, where it keeps your files, updating and removing it.
 - [Tools and help sheets](tools.md): the unit converter, the resistor colour code and the Help menu's sheets.
 - [Formulas](formulas.md): the sums a pedal builder needs, each with a worked example.
 - [Troubleshooting](troubleshooting.md): what to do when something doesn't work.

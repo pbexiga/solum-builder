@@ -8,7 +8,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page, Route, expect
 
 from solum.config import Settings
 from solum.settings_file import SETTINGS_FILE
@@ -350,6 +350,28 @@ def test_guide_pages_change_without_reloading(page: Page, base_url: str) -> None
     page.go_forward()
     expect(page.locator("main h1")).to_have_text("Formulas")
     assert page.evaluate("window.stayed") is True
+
+
+def test_help_documentation_shows_no_blank_frame_while_the_guide_loads(
+    page: Page, base_url: str
+) -> None:
+    """Until the guide's page has drawn, its frame is hidden: an empty frame is painted
+    white over a dark theme, a flash on every opening (D-333)."""
+    held: list[Route] = []
+    page.route("**/manual/", lambda route: held.append(route))
+    page.goto(base_url)
+    page.locator("#help-menu").click()
+    page.locator("#menu-documentation").click()
+    frame = page.locator("#manual iframe")
+    expect(frame).to_be_attached()
+    page.wait_for_timeout(300)  # the frame is there, its page not yet
+    assert held
+    assert frame.evaluate("f => getComputedStyle(f).visibility") == "hidden"
+    held[0].continue_()
+    expect(page.frame_locator("#manual iframe").locator("main h1")).to_have_text(
+        "Solum Builder guide"
+    )
+    expect(frame).to_be_visible()
 
 
 def test_help_documentation_opens_the_guide_with_search(page: Page, base_url: str) -> None:

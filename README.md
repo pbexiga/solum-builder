@@ -55,9 +55,11 @@ For a Mac with Apple Silicon (M1 or later) and macOS 14 or later. Intel Macs: us
 
 **Why macOS asks.** The app is signed by us, not by Apple: the project has no Apple Developer account, so the app isn't notarised and macOS doesn't know who made it. If you'd rather not trust a download, build the app yourself from this repository: on an Apple Silicon Mac with Xcode's command-line tools (`xcode-select --install`), run `make mac-app`. It fetches everything else into a build folder, runs the tests and writes the same `.dmg` into `dist/`; nothing is installed on your Mac. Details in [Building the Mac app](docs/maintain/mac-app.md).
 
+**Checking the download** (optional). Each release has the `.dmg`'s SHA-256 beside it (`Solum-Builder-<version>.dmg.sha256`): `shasum -a 256 Solum-Builder-<version>.dmg` should print the same. With GitHub's `gh` command, `gh attestation verify Solum-Builder-<version>.dmg --repo pbexiga/solum-builder` confirms it was built by this repository's release workflow from the tagged commit.
+
 Your circuits, blocks, models and audio go in `~/Library/Application Support/Solum Builder/` (**back this folder up**) and the cache in `~/Library/Caches/Solum Builder/`. **Solum Builder → Settings…** (Cmd-,) shows them, with **Show in Finder**, and **Change…** moves them elsewhere.
 
-To update, download the new `.dmg` and drag the app to Applications again, replacing the old one; your files are kept. To remove it, drag the app to the Trash, and delete the two folders above if you don't want your files any more.
+To update, download the new `.dmg` and drag the app to Applications again, replacing the old one; your files are kept (macOS asks for Open Anyway again for each new version). To remove it, drag the app to the Trash, and delete the two folders above if you don't want your files any more.
 
 ### Docker (any computer)
 

@@ -650,8 +650,9 @@ table.readout tr.rail th { color: var(--text-2); }
 #settings .form-row input { width: 80px; }
 /* Help → Documentation (D-290): the guide's pages framed in a large window */
 #manual.sheet { max-width: 1200px; height: calc(100vh - 32px); }
-#manual .sheet-body { flex: 1; padding: 0; overflow: hidden; display: flex; }
+#manual .sheet-body { flex: 1; padding: 0; overflow: hidden; display: flex; background: var(--surface-0); }
 .manual-frame { flex: 1; width: 100%; border: 0; background: var(--surface-0); }
+.manual-frame:not(.loaded) { visibility: hidden; } /* until its page has drawn (D-333) */
 .sheet-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 14px 18px 10px; border-bottom: 1px solid var(--border); }
 .sheet-title { margin: 0; font-family: var(--font-display); font-weight: 300; text-transform: uppercase; letter-spacing: 0.2em; font-size: 14px; color: var(--text); }
 .sheet-body { padding: 14px 18px 18px; overflow-y: auto; color: var(--text-2); }

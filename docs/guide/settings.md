@@ -11,7 +11,7 @@ Where the app keeps things, shown so you can find and back them up:
 - **Circuits, blocks, models and audio**: everything you make or add. Back this folder up.
 - **Cache**: saved results and the search index. It is always safe to delete; the app rebuilds it.
 
-**In the Mac app** (Solum Builder → **Settings…**, or Cmd-,) they start in `~/Library/Application Support/Solum Builder/` and `~/Library/Caches/Solum Builder/`. Each has **Show in Finder** and **Change…**, which opens a folder picker. For the circuits folder, if it holds files, the app asks whether to move them to the new folder or leave them and start from what's there; then it reloads (unsaved work is asked about first). The cache can't go in a folder that iCloud Drive, Dropbox, OneDrive, Google Drive or Box keeps in sync, or on a network drive: the app says so and keeps the old one.
+**In the Mac app** (Solum Builder → **Settings…**, or Cmd-,) they start in `~/Library/Application Support/Solum Builder/` and `~/Library/Caches/Solum Builder/`. Each has **Show in Finder** and **Change…**, which opens a folder picker. For the circuits folder, if it holds files, the app asks whether to move them to the new folder or leave them and start from what's there; then it reloads (unsaved work is asked about first). The cache can't go in a folder that iCloud Drive, Dropbox, OneDrive, Google Drive or Box keeps in sync, or on a network drive: the app says so and keeps the old one. More in [The Mac app](mac-app.md).
 
 With Docker, or running from source, the folders are chosen outside the app, so each says how: **To change it, set `DATA_DIR` (in `.env` or the environment), then restart** (`CACHE_DIR` for the cache). Without a `.env` they are `data/` and `cache/` in the app's own folder.
 

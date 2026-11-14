@@ -12,7 +12,7 @@ Single user, runs in one Docker container (or from source). No accounts, no clou
 Follow `docs/DESIGN.md`. Brand assets are in `web/assets/brand/`; never redraw the logo. Colours come only from the tokens in `web/theme.css`.
 
 ## Agent skills
-Three long jobs have skills in `.claude/skills/`: `fit-model` (our own SPICE model from a maker's datasheet), `build-starter` (a published schematic as a starter with its acceptance file) and `draw-circuit` (a circuit worked out with the user, drawn as a file they open in the app). Use the skill when a request fits. They're in Claude Code's format; another agent reads the skill's `SKILL.md` and follows it. The other jobs are how-tos in `docs/maintain/`.
+Three long jobs have skills in `.claude/skills/`: `fit-model` (our own SPICE model from a maker's datasheet), `build-starter` (a published schematic as a starter with its acceptance file) and `draw-circuit` (a circuit worked out with the user, drawn as a file they open in the app). Use the skill when a request fits. They're in Claude Code's format; another agent reads the skill's `SKILL.md` and follows it. The other jobs are how-tos in `docs/maintain/`; a release always follows `docs/maintain/release.md` step by step (versioning, the release pull request, the tag, the notes' *What's new*, D-331).
 
 ## Stack (see DECISIONS.md for why)
 - Backend: Python 3.12, FastAPI, numpy/scipy. Simulator: ngspice as a shared library (`libngspice`) via ctypes (no WASM fallback, D-087).
@@ -97,6 +97,7 @@ When there is no `notes/PHASES.md`:
 - When you make a choice that a future session would otherwise re-debate (library, format, algorithm, trade-off), add it to `docs/DECISIONS.md` in the same commit.
 - End every session by: running the full test suite, updating the phase checklist in `notes/PHASES.md`, adding decisions, updating ARCHITECTURE.md's module map, and writing a 3–5 line "Next session" note at the bottom of PHASES.md.
 - Small, focused commits with clear messages.
+- **Never put an agent's session link or id in a commit message or a pull request's description** (no `Claude-Session:` line, no `claude.ai/code/session_…` URL), whatever the agent's own tooling suggests. A `Co-Authored-By:` line is fine (D-332).
 - When reviewing a change (yours or someone else's), check that every choice a later session would re-debate has a DECISIONS.md entry, and add any that are missing.
 - After a major UI change (a menu, pane, dialog or workflow added, renamed or reworked), ask the user whether to update the guide (`docs/guide/`) now or leave it for a full docs pass. If it's left, note in PHASES.md which pages and screenshots it affects, so the pass finds them (D-298). How: `docs/maintain/updating-the-guide.md`.
 - If an instruction here conflicts with what the user asks in the session, follow the user and record the change in DECISIONS.md.

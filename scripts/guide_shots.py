@@ -240,6 +240,28 @@ def settings(page: Page, base: str) -> None:
     page.unroute("**/api/settings")
 
 
+def settings_mac(page: Page, base: str) -> None:
+    """Settings in the Mac app: its default folders, with Change… and Show in Finder. The
+    launcher's functions (`window.pywebview.api`, web/desktop.js) are stand-ins here."""
+    page.add_init_script("window.pywebview = {api: {set_unsaved: async () => {}}};")
+    opened(page, base, probe=None)
+    home = "/Users/you/Library"
+
+    def as_mac(route: Route) -> None:
+        answer = route.fetch()
+        shown = {**answer.json(), "can_move_folders": True,
+                 "data_dir": f"{home}/Application Support/Solum Builder",
+                 "cache_dir": f"{home}/Caches/Solum Builder",
+                 "host_data_dir": None, "host_cache_dir": None}  # fmt: skip
+        route.fulfill(response=answer, json=shown)
+
+    page.route("**/api/settings", as_mac)
+    menu(page, "file-menu", "menu-settings")
+    page.wait_for_selector("#settings .theme-option")
+    shoot(page, "settings-mac", "#settings")
+    page.unroute("**/api/settings")
+
+
 def calculators(page: Page, base: str) -> None:
     """Tools → Calculators…, the filter: the user's 1 µF into 100 kΩ, compared with 10 µF."""
     opened(page, base, probe=None)
@@ -316,6 +338,7 @@ SHOTS: dict[str, Callable[[Page, str], None]] = {
     "import-dialog": import_dialog,
     "export": export,
     "settings": settings,
+    "settings-mac": settings_mac,
     "calculators": calculators,
     "audio-large": audio_large,
     "readme": readme,

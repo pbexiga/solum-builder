@@ -1890,3 +1890,8 @@ Calculators → *Filter* (`filterCalculator` in `web/tools.js`, `GET /api/tools/
 - **The battery's rails** (`battery_rails`) are none while the wiring contradicts itself, so a circuit with a battery draws a clashing wire and reports it like any other (the view's own catch, `_unconnected_view`), where before the view failed and the wire was refused.
 - **Why:** the user wired a battery's + to ground: the wire vanished with its reason only at the top of the Results column, worded about net names, not the short.
 *Alternatives:* the message in the canvas's hint line (one line, cut short; it's where tool hints go); a fixed bar for every error, timing out (a failed run's reason would go while the panes stay empty); naming the parts a rail-to-net join bypasses (needs a path search; left until asked).
+
+**D-336 — The probe pane numbers a chip's pins as counted on the chip** (2026-11-14) `panes`
+- `part_view` gives each pin its datasheet `number` (`view.pin_number`, the schematic's lookup, D-140) and the part its `package` ("8-pin DIP"), for chip units, power units and regulators whose model record has a package. The pane's Pin column (`pinList`) lists such a part's pins in number order as "3 (+)", headed "Pin, 8-pin DIP"; a dual's half lists its own pins (IC1B: 5, 6, 7). Other parts stay "pin 1", in drawn order.
+- **Why:** the user: "pin +" doesn't say which leg it is on the chip in your hand.
+*Alternatives:* the number alone (loses what the pin does); transistors' leg order (TO-92 EBC) as well (their records' package names a leg order, not numbers; left until asked).

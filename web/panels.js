@@ -229,6 +229,25 @@ function partDetail(part) {
 }
 
 /**
+ * A part's pins as the Pin column lists them (D-336): a chip's by its datasheet number with
+ * what the pin does after it ("3 (+)"), in number order, as counted on the chip; any other
+ * part's by name ("pin 1"), as drawn.
+ * @param {Record<string, {net: string, dc?: number | null, number?: number | null}>} pins
+ * @returns {Array<{pin: string, label: string, net: string}>}
+ */
+export function pinList(pins) {
+  const rows = Object.entries(pins).map(([pin, info]) => ({ pin, net: info.net, number: info.number ?? null }));
+  if (!rows.some((r) => r.number !== null)) return rows.map((r) => ({ pin: r.pin, label: `pin ${r.pin}`, net: r.net }));
+  const order = (/** @type {number | null} */ n) => n ?? Infinity; // a pin the package doesn't number goes last
+  return rows
+    .sort((a, b) => order(a.number) - order(b.number))
+    .map((r) => ({ pin: r.pin, label: r.number === null ? r.pin : `${r.number} (${r.pin})`, net: r.net }));
+}
+
+/** The Pin column's heading: the package a chip's numbers are for. @param {any} part */
+const pinHeading = (part) => (part.package ? `Pin, ${part.package}` : "Pin");
+
+/**
  * The part view (SPEC §2). Returns the element for the device curve, if the part has one.
  * While "try several values" is on for this part (`tried`), its readings and its pins' DC
  * are a column per value tried, with no device curve (D-318).
@@ -238,13 +257,9 @@ function partDetail(part) {
  */
 export function renderPartView(el, part, onNet, tried = null) {
   if (tried?.parts.length) return renderTriedPart(el, part, onNet, tried);
-  const pinRows = Object.entries(part.pins).map(([pin, info]) => {
-    const row = h("tr", { class: "clickable", "data-net": /** @type {any} */ (info).net }, [
-      h("th", {}, [`pin ${pin}`]),
-      h("td", {}, [/** @type {any} */ (info).net]),
-      h("td", {}, [volts(/** @type {any} */ (info).dc)]),
-    ]);
-    row.addEventListener("click", () => onNet(/** @type {any} */ (info).net));
+  const pinRows = pinList(part.pins).map(({ pin, label, net }) => {
+    const row = h("tr", { class: "clickable", "data-net": net }, [h("th", {}, [label]), h("td", {}, [net]), h("td", {}, [volts(part.pins[pin].dc)])]);
+    row.addEventListener("click", () => onNet(net));
     return row;
   });
   // a part no current can reach is left out of the simulation (D-165): no readings to
@@ -257,7 +272,7 @@ export function renderPartView(el, part, onNet, tried = null) {
     table(detail.rows),
     ...(detail.hint ? [h("p", { class: "empty" }, [detail.hint])] : []),
     ...(curveEl ? [curveEl] : []),
-    h("table", { class: "readout subplot" }, [h("thead", {}, [h("tr", {}, [h("th", {}, ["Pin"]), h("th", {}, ["Net"]), h("th", {}, ["DC"])])]), h("tbody", {}, pinRows)]),
+    h("table", { class: "readout subplot" }, [h("thead", {}, [h("tr", {}, [h("th", {}, [pinHeading(part)]), h("th", {}, ["Net"]), h("th", {}, ["DC"])])]), h("tbody", {}, pinRows)]),
   );
   return curveEl;
 }
@@ -272,13 +287,9 @@ function renderTriedPart(el, part, onNet, tried) {
   const details = tried.parts.map((p) => (p.loose ? [] : partDetail(p).rows));
   /** @type {Array<[string, ...(Node|string)[]]>} */
   const rows = (details[0] ?? []).map(([label], i) => [label, ...details.map((d) => d[i]?.[1] ?? "—")]);
-  const pinRows = Object.entries(part.pins).map(([pin, info]) => {
-    const row = h("tr", { class: "clickable", "data-net": /** @type {any} */ (info).net }, [
-      h("th", {}, [`pin ${pin}`]),
-      h("td", {}, [/** @type {any} */ (info).net]),
-      ...tried.parts.map((p) => h("td", {}, [volts(p.pins[pin]?.dc)])),
-    ]);
-    row.addEventListener("click", () => onNet(/** @type {any} */ (info).net));
+  const pinRows = pinList(part.pins).map(({ pin, label, net }) => {
+    const row = h("tr", { class: "clickable", "data-net": net }, [h("th", {}, [label]), h("td", {}, [net]), ...tried.parts.map((p) => h("td", {}, [volts(p.pins[pin]?.dc)]))]);
+    row.addEventListener("click", () => onNet(net));
     return row;
   });
   el.replaceChildren(
@@ -286,7 +297,7 @@ function renderTriedPart(el, part, onNet, tried) {
     ...noteBlock(part.note),
     h("div", { class: "tried-part" }, [table(rows, ["", ...tried.values])]),
     h("p", { class: "empty" }, [`${part.ref} at each value tried. Clear sweep (in Frequency) shows it at its own value again.`]),
-    h("table", { class: "readout subplot" }, [h("thead", {}, [h("tr", {}, ["Pin", "Net", ...tried.values].map((t) => h("th", {}, [t])))]), h("tbody", {}, pinRows)]),
+    h("table", { class: "readout subplot" }, [h("thead", {}, [h("tr", {}, [pinHeading(part), "Net", ...tried.values].map((t) => h("th", {}, [t])))]), h("tbody", {}, pinRows)]),
   );
   return null;
 }

@@ -876,3 +876,19 @@ def test_the_mac_app_is_told_when_unsaved_work_comes_and_goes(js: Page) -> None:
         """,
     )
     assert got == [True, False]
+
+
+def test_pin_list_numbers_a_chip_as_counted_on_it(js: Page) -> None:
+    """D-336: a chip's pins by datasheet number in number order, its function after; any
+    other part's by name, as drawn."""
+    chip = {"out": {"net": "o", "number": 7}, "+": {"net": "p", "number": 5},
+            "-": {"net": "n", "number": 6}}  # fmt: skip
+    resistor = {"1": {"net": "a", "number": None}, "2": {"net": "b", "number": None}}
+    got = run(
+        js,
+        "const { pinList } = await m('panels.js'); return arg.map(pinList);",
+        [chip, resistor],
+    )
+    assert [r["label"] for r in got[0]] == ["5 (+)", "6 (-)", "7 (out)"]
+    assert [r["net"] for r in got[0]] == ["p", "n", "o"]
+    assert [r["label"] for r in got[1]] == ["pin 1", "pin 2"]

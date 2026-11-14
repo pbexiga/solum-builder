@@ -273,7 +273,7 @@ def _model_pins(part: Part, models: ModelLibrary | None) -> set[str]:
     return set(models.get(model).info.pins)
 
 
-def _pin_number(part: Part, pin: str, models: ModelLibrary | None) -> int | None:
+def pin_number(part: Part, pin: str, models: ModelLibrary | None) -> int | None:
     """A chip unit's pin's datasheet number (D-140, D-180), a power unit's (D-179) or a
     regulator's (D-227), when its model's record has them."""
     chips = (*CHIP_UNITS, PowerUnit, Regulator)
@@ -420,7 +420,7 @@ def circuit_view(
     parts = [
         _part_entry(
             p,
-            [{"name": name, "pos": list(pos), "net": net, "number": _pin_number(p, name, models)}
+            [{"name": name, "pos": list(pos), "net": net, "number": pin_number(p, name, models)}
              for name, (pos, net) in drawn_pins(circuit, nets, p, models).items()],
             models, pickups,
         )

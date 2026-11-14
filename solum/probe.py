@@ -79,7 +79,7 @@ from solum.stages import (
     stage_parts,
 )
 from solum.units import format_quantity, parse_value, signed_db
-from solum.view import controls, drawn_pins, part_text, probe_nets, rail_nets
+from solum.view import controls, drawn_pins, part_text, pin_number, probe_nets, rail_nets
 
 Progress = Callable[[int, int], None]  # steps done, of how many: a progress bar (D-123)
 
@@ -720,11 +720,17 @@ def part_view(
     nets = connect(circuit)
     ctx = _Ctx(sim, circuit, nets, sim.op(circuit), level)
     pins = {
-        pin: {"net": net, "dc": ctx.op.voltages.get(net)}
+        pin: {
+            "net": net,
+            "dc": ctx.op.voltages.get(net),
+            "number": pin_number(part, pin, sim.models),  # the datasheet's, for a chip (D-336)
+        }
         for pin, (_pos, net) in drawn_pins(circuit, nets, part, sim.models).items()
         # a pump's pin 6 or 7 left open has no voltage to show (v28)
         if not (isinstance(part, ChargePump) and pin in SPARE_PINS and net not in ctx.op.voltages)
     }
+    numbered = any(p["number"] is not None for p in pins.values())  # only when it has a model
+    package = sim.models.get(getattr(part, "model", "")).info.package if numbered else None
     view = _VIEWS.get(type(part))
     loose = ref in loose_parts(circuit, nets)
     return {
@@ -733,6 +739,8 @@ def part_view(
         "text": part_text(part, pickups),
         "note": part.note or None,
         "pins": pins,
+        # the package a chip's pin numbers are for ("8-pin DIP"), when they're known (D-336)
+        "package": package.name if package else None,
         # a loose part isn't simulated (D-165): its pins have no DC, it has no detail, and
         # the pane says so in place of readings (`loose`, D-318)
         "loose": loose,

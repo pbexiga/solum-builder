@@ -77,7 +77,7 @@ def test_poly_sources_need_code_models(engine: NativeNgspice) -> None:
 
 
 def test_a_run_that_takes_too_long_is_stopped(engine: NativeNgspice) -> None:
-    slow = spice("V1 a 0 SIN(0 1 1k)", "R1 a b 1k", "C1 b 0 1u", ".tran 1n 10")
+    slow = spice("V1 a 0 SIN(0 1 1k)", "R1 a b 1k", "C1 b 0 1u", ".tran 10n 10")
     with pytest.raises(SimError, match=r"took longer than 0\.2 s"):
         engine.run(slow, timeout=0.2)
     assert engine.run(divider()).plot("op").vectors["b"][0] == pytest.approx(6.0)
@@ -100,7 +100,7 @@ class Stop(Exception):
 def test_a_progress_callback_that_raises_stops_the_run(engine: NativeNgspice) -> None:
     """A cancelled render: the progress callback raises, ngspice is halted at once and the
     exception comes out of `run`; the engine runs the next netlist as usual."""
-    slow = spice("V1 a 0 SIN(0 1 1k)", "R1 a b 1k", "C1 b 0 1u", ".tran 1n 10")
+    slow = spice("V1 a 0 SIN(0 1 1k)", "R1 a b 1k", "C1 b 0 1u", ".tran 10n 10")
     calls: list[float] = []  # when the callback raised
 
     def stop(fraction: float) -> None:

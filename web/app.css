@@ -645,6 +645,7 @@ table.readout tr.rail th { color: var(--text-2); }
 .settings-path { overflow-wrap: anywhere; }
 .settings-host { grid-column: 2; font-size: 12px; overflow-wrap: anywhere; }
 .settings-how { grid-column: 2; font-size: 12px; color: var(--text-3); }
+.settings-tools { grid-column: 2; display: flex; gap: 8px; margin-top: 4px; } /* the Mac app's Change… and Show in Finder (D-323) */
 #settings .form-row { grid-template-columns: 130px 80px 1fr; }
 #settings .form-row input { width: 80px; }
 /* Help → Documentation (D-290): the guide's pages framed in a large window */

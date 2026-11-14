@@ -11,6 +11,8 @@ Where the app keeps things, shown so you can find and back them up:
 - **Circuits, blocks, models and audio**: everything you make or add. Back this folder up.
 - **Cache**: saved results and the search index. It is always safe to delete; the app rebuilds it.
 
+**In the Mac app** (Solum Builder → **Settings…**, or Cmd-,) they start in `~/Library/Application Support/Solum Builder/` and `~/Library/Caches/Solum Builder/`. Each has **Show in Finder** and **Change…**, which opens a folder picker. For the circuits folder, if it holds files, the app asks whether to move them to the new folder or leave them and start from what's there; then it reloads (unsaved work is asked about first). The cache can't go in a folder that iCloud Drive, Dropbox, OneDrive, Google Drive or Box keeps in sync, or on a network drive: the app says so and keeps the old one.
+
 With Docker, or running from source, the folders are chosen outside the app, so each says how: **To change it, set `DATA_DIR` (in `.env` or the environment), then restart** (`CACHE_DIR` for the cache). Without a `.env` they are `data/` and `cache/` in the app's own folder.
 
 With Docker each folder is shown twice: the path inside the container (`/data`, `/cache`), then the **host path**, which is the folder on your machine and the one to back up. A host path like `./data` is beside `compose.yaml`.
@@ -29,4 +31,4 @@ Three themes: **Solum** (the app's own colours: warm dark, brass highlights), **
 
 The theme, **Auto-run**, the order of the panes, which panes are open and which are out as large views are kept with your files, not in the browser. So they are the same in any browser you open the app from, and they survive clearing the browser's data. View → **Reset pane order** puts the panes back.
 
-Smaller things stay with the browser you set them in: how far the pane list is scrolled, list or grid in the Open and Blocks windows, the Frequency pane's layers, the Audio pane's picks, and View's **Capacitor types** and **Problem marks**.
+Smaller things stay with the browser you set them in (in the Mac app, until you quit it): how far the pane list is scrolled, list or grid in the Open and Blocks windows, the Frequency pane's layers, the Audio pane's picks, and View's **Capacitor types** and **Problem marks**.

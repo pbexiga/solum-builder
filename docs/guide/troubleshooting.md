@@ -34,7 +34,7 @@ Some circuits take seconds to settle: a compressor, a charge pump. The Bias & he
 
 ## "The simulator got stuck"
 
-Some circuits make ngspice's DC solve run forever, usually a chip or a model wired the wrong way round. The app stops waiting and says so; after that it can't simulate until it's restarted. Undo the last change, then restart the app (`docker compose restart`, or stop and start it).
+Some circuits make ngspice's DC solve run forever, usually a chip or a model wired the wrong way round. The app stops waiting and says so; after that it can't simulate until it's restarted. Undo the last change, then restart the app (the Mac app: quit and open it again; Docker: `docker compose restart`, or stop and start it).
 
 ## An upload is refused
 
@@ -55,4 +55,4 @@ It may name a model you don't have. Problems says which (*Model not in the libra
 
 ## Where are my files?
 
-In the data folder (`data/` in the app's folder, unless `DATA_DIR` names another): circuits, blocks, models and audio uploads. File → **Settings…** shows where it is ([Settings](settings.md)). The cache folder (`CACHE_DIR`) only holds saved results and the search index and can be deleted at any time; the app rebuilds it.
+In the data folder (in the Mac app `~/Library/Application Support/Solum Builder/` unless you changed it; with Docker `data/` in the app's folder, unless `DATA_DIR` names another): circuits, blocks, models and audio uploads. File → **Settings…** shows where it is ([Settings](settings.md)). The cache folder (`CACHE_DIR`) only holds saved results and the search index and can be deleted at any time; the app rebuilds it.

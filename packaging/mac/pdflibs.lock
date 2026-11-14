@@ -1,0 +1,36 @@
+# The PDF libraries the Mac app carries (Pango, HarfBuzz, fontconfig and what they need),
+# from conda-forge, whose builds run on macOS 11 and later (D-324). Exact packages with
+# their MD5s: `scripts/mac_app.sh` installs just these. To update: see docs/maintain/mac-app.md.
+# platform: osx-arm64
+@EXPLICIT
+https://conda.anaconda.org/conda-forge/osx-arm64/bzip2-1.0.8-h4e30115_10.conda#b50612e7d190b8061ab4e7dc119cf4d5
+https://conda.anaconda.org/conda-forge/osx-arm64/libexpat-2.9.0-h6111c0a_0.conda#f85a1fda9a2758a7aef2a7787d9c0203
+https://conda.anaconda.org/conda-forge/osx-arm64/libzlib-1.3.2-h8088a28_3.conda#f39288f0ea63ae962e1a2e4f355a0d75
+https://conda.anaconda.org/conda-forge/osx-arm64/libpng-1.6.59-hf5e6511_0.conda#4f99571d5354c39f2621b8b6e3a9afa3
+https://conda.anaconda.org/conda-forge/osx-arm64/libfreetype6-2.14.3-h2ed5691_2.conda#881cfb44ea02cc9849f612725a959660
+https://conda.anaconda.org/conda-forge/osx-arm64/libfreetype-2.14.3-hce30654_2.conda#ee1fc5bba400ff0cae27fbf141a1ae0c
+https://conda.anaconda.org/conda-forge/osx-arm64/libiconv-1.18-he4c29f2_3.conda#17f4744c0873e9f77ac9b5cd0a27c187
+https://conda.anaconda.org/conda-forge/osx-arm64/libintl-0.25.1-hae62183_2.conda#a3a4193101bc5427e6cf8be81d5eeddf
+https://conda.anaconda.org/conda-forge/osx-arm64/fontconfig-2.18.3-h81aa574_1.conda#8ac8cc3fe744b484de4387703134d8b2
+https://conda.anaconda.org/conda-forge/noarch/font-ttf-dejavu-sans-mono-2.37-hab24e00_0.tar.bz2#0c96522c6bdaed4b1566d11387caaf45
+https://conda.anaconda.org/conda-forge/noarch/font-ttf-inconsolata-3.000-h77eed37_0.tar.bz2#34893075a5c9e55cdafac56607368fc6
+https://conda.anaconda.org/conda-forge/noarch/font-ttf-source-code-pro-2.038-h77eed37_0.tar.bz2#4d59c254e01d9cde7957100457e2d5fb
+https://conda.anaconda.org/conda-forge/noarch/font-ttf-ubuntu-0.83-h77eed37_4.conda#1df978a6efeb98fa80b96f2860b9b280
+https://conda.anaconda.org/conda-forge/noarch/fonts-conda-forge-1-hc364b38_1.conda#a7970cd949a077b7cb9696379d338681
+https://conda.anaconda.org/conda-forge/noarch/fonts-conda-ecosystem-1-0.tar.bz2#fee5683a3f04bd15cbd8318b096a27ab
+https://conda.anaconda.org/conda-forge/osx-arm64/icu-79.1-py311h7f96da7_0.conda#401fd0e9c5a5dad761b9088dd437a0b2
+https://conda.anaconda.org/conda-forge/osx-arm64/libcxx-23.1.5-hc645fd0_2.conda#4a18f321414c5c2471fdb443ba47d7c2
+https://conda.anaconda.org/conda-forge/osx-arm64/libffi-3.7.0-h47dc5ef_1.conda#216bbcc23c11e9695b3db4a8771d76eb
+https://conda.anaconda.org/conda-forge/osx-arm64/pcre2-10.47-he63d830_1.conda#5ab90033816cbe4097e8a297e5179f67
+https://conda.anaconda.org/conda-forge/osx-arm64/libglib-2.90.0-hccd281b_0.conda#8f63a5f35547d0c6d819830ebe0d3245
+https://conda.anaconda.org/conda-forge/osx-arm64/pixman-0.46.4-h784d473_3.conda#9a99c0b60efe41c194d01c182d000733
+https://conda.anaconda.org/conda-forge/osx-arm64/cairo-1.18.6-hf699903_2.conda#b15575949a9df3f2e66da5129b4ac0bd
+https://conda.anaconda.org/conda-forge/osx-arm64/freetype-2.14.3-hce30654_2.conda#2f4cc7dc2e6622591735c49dda1b92aa
+https://conda.anaconda.org/conda-forge/osx-arm64/fribidi-1.0.18-hb001647_0.conda#08fef45968356b6a9093c19f05d2364e
+https://conda.anaconda.org/conda-forge/osx-arm64/graphite2-1.3.15-h784d473_1.conda#0c7b78d9ffff4f5a6ca28d346f734d8f
+https://conda.anaconda.org/conda-forge/osx-arm64/libharfbuzz-15.1.0-h3aa0ed0_0.conda#bc64b2bba5ebd11de4269a447f78dccd
+https://conda.anaconda.org/conda-forge/osx-arm64/libharfbuzz-devel-15.1.0-h3aa0ed0_0.conda#dfda0ba5875dadd4b190b41373d01f2d
+https://conda.anaconda.org/conda-forge/osx-arm64/harfbuzz-15.1.0-hce30654_0.conda#c9638e5fc3b7fd138572d53d4dc469a0
+https://conda.anaconda.org/conda-forge/osx-arm64/libpango-1.58.2-hc2ac4f2_3.conda#1261a045589c8d98219cbd258b71ea95
+https://conda.anaconda.org/conda-forge/osx-arm64/libpango-devel-1.58.2-haa2d88b_3.conda#4bac42499647d2567ef309b6193d63f6
+https://conda.anaconda.org/conda-forge/osx-arm64/pango-1.58.2-hc6efcc1_3.conda#17bb0626b5ac18be2c28e65b6d949e3a

@@ -30,6 +30,12 @@ dev = [
     "playwright>=1.47",
 ]
 
+# The Mac app (D-321): its window, and the bundler `make mac-app` uses.
+mac = [
+    "pywebview>=6.2",
+    "pyinstaller>=6.22",
+]
+
 [project.scripts]
 solum = "solum.cli:main"
 
@@ -57,6 +63,11 @@ packages = ["solum"]
 module = ["weasyprint", "weasyprint.*"]
 ignore_missing_imports = true
 
+# The Mac app's window (D-321): pywebview and pyobjc are installed for `make mac-app` only.
+[[tool.mypy.overrides]]
+module = ["webview", "webview.*", "AppKit", "Foundation", "PyObjCTools"]
+ignore_missing_imports = true
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 addopts = "-ra --strict-markers"
@@ -71,7 +82,8 @@ markers = [
 
 [tool.coverage.run]
 source = ["solum"]
-omit = ["solum/api/*"]
+# desktop/window.py: the Mac app's window, which needs macOS and a screen (D-321)
+omit = ["solum/api/*", "solum/desktop/window.py"]
 
 [tool.coverage.report]
 fail_under = 85

@@ -9,12 +9,12 @@ A circuit simulator for guitar-pedal builders that runs on your own computer. Dr
 
 ![Solum Builder with the Ibanez TS808 Tube Screamer open: the schematic with its DC voltages, the frequency curve at the output, and the clipped output on the scope](docs/guide/img/readme.png)
 
-It is for one person on one machine: no accounts, no cloud. Your circuits are plain JSON files in a folder you choose.
+It is for one person on one machine: no accounts, no cloud. Your circuits are plain JSON files in a folder you choose. It comes two ways: **a Mac app** (Apple Silicon), or **a Docker image** for any computer (Linux, Windows, an Intel Mac; x86-64 and ARM64).
 
 Solum Builder is **source-available**: you may use it, change it and share it, but not sell it (see [Licence](#licence)). Pedal makers are welcome: designing, building and selling pedals with it is allowed.
 
 - [A quick tour](#a-quick-tour)
-- [Install and run](#install-and-run)
+- [Install and run](#install-and-run): [the Mac app](#the-mac-app) or [Docker](#docker-any-computer)
 - [First steps](#first-steps)
 - [Working on Solum Builder](#working-on-solum-builder): a pointer to the maintainers' guide
 - [Licence](#licence)
@@ -43,7 +43,25 @@ Hear it: a guitar recording through the circuit, then through a NAM amp capture 
 
 ## Install and run
 
-You need Docker (or Podman) with Compose, on an x86-64 or ARM64 machine (Apple Silicon included). With Podman, run `podman compose` in place of `docker compose`; it needs a compose provider installed (`podman-compose`, or Docker Compose).
+Both run the same app, with the same simulator (ngspice 44.2, built the same way for each) and the same results. Pick the Mac app on an Apple Silicon Mac, Docker anywhere else.
+
+### The Mac app
+
+For a Mac with Apple Silicon (M1 or later) and macOS 14 or later. Intel Macs: use Docker.
+
+1. Download `Solum-Builder-<version>.dmg` from the [Releases](../../releases) page.
+2. Open it and drag **Solum Builder** to **Applications**.
+3. Open it from Applications. The first time, macOS says it can't check the app for malicious software. Open **System Settings → Privacy & Security**, scroll down to **Security**, and click **Open Anyway** next to *Solum Builder*; confirm. After that it opens with a double-click.
+
+**Why macOS asks.** The app is signed by us, not by Apple: the project has no Apple Developer account, so the app isn't notarised and macOS doesn't know who made it. If you'd rather not trust a download, build the app yourself from this repository: on an Apple Silicon Mac with Xcode's command-line tools (`xcode-select --install`), run `make mac-app`. It fetches everything else into a build folder, runs the tests and writes the same `.dmg` into `dist/`; nothing is installed on your Mac. Details in [Building the Mac app](docs/maintain/mac-app.md).
+
+Your circuits, blocks, models and audio go in `~/Library/Application Support/Solum Builder/` (**back this folder up**) and the cache in `~/Library/Caches/Solum Builder/`. **Solum Builder → Settings…** (Cmd-,) shows them, with **Show in Finder**, and **Change…** moves them elsewhere.
+
+To update, download the new `.dmg` and drag the app to Applications again, replacing the old one; your files are kept. To remove it, drag the app to the Trash, and delete the two folders above if you don't want your files any more.
+
+### Docker (any computer)
+
+You need Docker (or Podman) with Compose, on an x86-64 (amd64) or ARM64 machine (a Raspberry Pi 5, an Apple Silicon Mac). With Podman, run `podman compose` in place of `docker compose`; it needs a compose provider installed (`podman-compose`, or Docker Compose).
 
     git clone <this repository>
     cd solum-builder

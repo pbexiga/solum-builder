@@ -22,8 +22,11 @@ const SVG = "http://www.w3.org/2000/svg";
  */
 export function manualSheet(page = "") {
   const frame = /** @type {HTMLIFrameElement} */ (h("iframe", { class: "manual-frame", src: `manual/${page}`, title: "Solum Builder guide" }));
-  const popOut = h("button", { type: "button", id: "manual-pop-out", class: "icon-button", title: "Open this page in its own tab or window", "aria-label": "Open this page in its own tab or window" }, [popOutIcon()]);
-  popOut.addEventListener("click", () => window.open(frame.contentWindow?.location.href ?? frame.src, "_blank", "noopener"));
+  // a link, not `window.open`: the Mac app's window hands a clicked link to the default
+  // browser, and has nowhere to put a window opened by script (D-325)
+  const popOut = /** @type {HTMLAnchorElement} */ (h("a", { id: "manual-pop-out", class: "button icon-button", href: frame.src, target: "_blank", rel: "noopener", title: "Open this page in its own tab or window", "aria-label": "Open this page in its own tab or window" }, [popOutIcon()]));
+  const onPage = () => (popOut.href = frame.contentWindow?.location.href ?? frame.src); // the page shown now
+  for (const type of ["pointerdown", "focus", "click", "auxclick"]) popOut.addEventListener(type, onPage);
   const { close } = sheet({ title: "Documentation", id: "manual", wide: true, head: [popOut], body: [frame] });
   const onMessage = (/** @type {MessageEvent} */ e) => {
     if (!frame.isConnected) return window.removeEventListener("message", onMessage);

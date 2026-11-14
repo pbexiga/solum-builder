@@ -71,6 +71,24 @@ starter follows. Solum Builder is not connected with any of them.
 
 ## Not in this repository, installed when the image is built
 
-ngspice (BSD-3-Clause, from Debian), and from PyPI: FastAPI (MIT), Uvicorn
+ngspice 44.2 (BSD-3-Clause; built from the project's source release, as for the Mac app below), and from PyPI: FastAPI (MIT), Uvicorn
 (BSD-3-Clause), NumPy (BSD-3-Clause), Pydantic (MIT), PyYAML (MIT), WeasyPrint
 (BSD-3-Clause). Each comes with its own licence.
+
+## Not in this repository, inside the Mac app (`Solum Builder.app`)
+
+`make mac-app` builds or fetches these and puts them in the app; each keeps its own
+licence.
+
+- **ngspice 44.2** (BSD-3-Clause; its XSPICE code models and other parts under their own
+  permissive terms, see ngspice's `COPYING`), built from the project's source release.
+- **Python 3.12** (PSF License), from python-build-standalone, and from PyPI the packages
+  above with what they need, plus **pywebview** (BSD-3-Clause) and **pyobjc** (MIT) for
+  the window. **PyInstaller**'s bootloader (GPL-2.0 with an exception that allows
+  bundling programs under any licence) starts the app.
+- **The PDF libraries, from conda-forge**: Pango, GLib, FriBidi and libintl (LGPL-2.1 or
+  later), HarfBuzz and Graphite2 (MIT and LGPL-2.1/MPL), fontconfig, FreeType (FreeType
+  License), libpng, zlib, PCRE2, libffi, libexpat, bzip2, ICU, libiconv (LGPL), libc++
+  (Apache-2.0 with LLVM exceptions). They are separate library files in the app
+  (`Contents/Frameworks/`), as the LGPL asks: you may replace them with your own builds.
+  `packaging/mac/pdflibs.lock` lists the exact packages.

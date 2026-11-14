@@ -46,7 +46,13 @@ from solum.calculators import (
 )
 from solum.circuit.connectivity import ConnectivityError
 from solum.circuit.enclosures import SIZES as ENCLOSURE_SIZES
-from solum.circuit.io import CircuitError, circuit_to_dict, load_circuit, parse_circuit
+from solum.circuit.io import (
+    CircuitError,
+    circuit_to_dict,
+    circuit_to_json,
+    load_circuit,
+    parse_circuit,
+)
 from solum.circuit.schema import Circuit, Trimmer, turns
 from solum.circuit.switches import catalogue
 from solum.config import Settings, load_settings
@@ -1167,6 +1173,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         ready = ready_to_build(checker, sim, c)
         return {"name": c.name, "version": str(c.version), "simulates": ready.simulates,
                 "problems": [asdict(p) for p in ready.problems]}  # fmt: skip
+
+    @app.get("/api/export/{kind}/{cid}/circuit.json")
+    def export_circuit_file(kind: str, cid: str) -> Response:
+        """The last save's circuit file, to keep or open elsewhere (D-334)."""
+        c = saved_circuit(kind, cid)
+        data = circuit_to_json(c).encode("utf-8")
+        return attachment(data, "application/json", f"{c.name}.json")
 
     @app.get("/api/export/{kind}/{cid}/bom.csv")
     def export_bom_csv(kind: str, cid: str) -> Response:

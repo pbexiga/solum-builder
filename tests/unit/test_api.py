@@ -6,6 +6,7 @@ from fastapi.testclient import TestClient
 
 from solum.api import app as app_module
 from solum.cache import cache_from_settings
+from solum.circuit.io import parse_circuit
 from solum.config import load_settings
 from solum.model_import import Added, make_model
 from solum.models import ModelLibrary, ModelType
@@ -649,7 +650,12 @@ def test_export_works_from_the_last_save(monkeypatch: pytest.MonkeyPatch) -> Non
         wiring.content.startswith(b"%PDF") and "wiring.pdf" in wiring.headers["content-disposition"]
     )
     assert c.get("/api/export/starter/ts808/bias.html").status_code == 503  # no simulator
-    line = '<line x1="0" y1="0" x2="10" y2="10" stroke="black"/>'
+    circuit_file = c.get(f"/api/export/circuit/{untyped['circuit']['id']}/circuit.json")
+    assert circuit_file.headers["content-type"].startswith("application/json")
+    assert 'filename="Untyped.json"' in circuit_file.headers["content-disposition"]
+    opened = parse_circuit(circuit_file.json())  # the file as saved, opens again (D-334)
+    assert opened.name == "Untyped" and len(opened.parts) == len(starter["parts"])
+    line ='<line x1="0" y1="0" x2="10" y2="10" stroke="black"/>'
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">{line}</svg>'
     drawn = c.post("/api/export/starter/ts808/schematic.pdf", content=svg)
     assert drawn.status_code == 200 and drawn.content.startswith(b"%PDF")

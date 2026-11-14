@@ -1878,3 +1878,8 @@ Calculators → *Filter* (`filterCalculator` in `web/tools.js`, `GET /api/tools/
 - Help → Documentation's iframe (`manualSheet`, `web/help.js`) carries no `loaded` class until its first `load` event, and `.manual-frame:not(.loaded)` is `visibility: hidden`; the sheet's body has the theme's `--surface-0` behind it. Later pages change without a reload (D-300), so it is shown once per opening.
 - **Why:** the user saw the window flash light, then go back to the theme, on each opening. The guide's page is themed as it arrives (D-311), but until it has drawn, the frame holds an empty page, which browsers paint opaque white over a dark page (their `color-scheme` differs).
 *Alternatives:* `color-scheme` on the iframe element (WebKit and Chromium treat the blank page differently; not reliable in the Mac app's window); fetching the guide and writing it into the frame (the frame's own navigation and links, D-300, would need redoing).
+
+**D-334 — The circuit file as an output of its own** (2026-11-14) `build`
+- File → Export lists **Circuit file (JSON)**: `GET /api/export/{starter|circuit}/{id}/circuit.json`, the last save written by `circuit_to_json` (the same form the store keeps and the build package's `circuit.json`), downloaded as `<name>.json`.
+- **Why:** the user asked to export the circuit's JSON; it was only inside the build package zip.
+*Alternatives:* leave it in the package only (a zip to unpack for one file); a menu item outside Export (Export is where every file the app makes is found).

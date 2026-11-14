@@ -25,6 +25,7 @@ const OUTPUTS = [
   { id: "notes-pdf", label: "Notes (PDF)", file: "notes.pdf", download: true, hint: "the same page, A4" },
   { id: "wiring-page", label: "Wiring (page to print)", file: "wiring.html", download: false, hint: "generic for now: the footswitch, the jacks, the DC jack" },
   { id: "wiring-pdf", label: "Wiring (PDF)", file: "wiring.pdf", download: true, hint: "the same page, A4" },
+  { id: "circuit-json", label: "Circuit file (JSON)", file: "circuit.json", download: true, hint: "the circuit as saved, to keep, share or open again" },
   { id: "netlists", label: "Netlists and models (zip)", file: "netlists.zip", download: true, hint: "for ngspice: DC, frequency response and waveform, with every model's card" },
 ];
 

@@ -15,6 +15,7 @@ The top of the window checks the saved circuit for anything that stops you buyin
 - **Bias sheet**: the trimmer settings and the DC voltages to check on every transistor and chip once it's built, with your meter.
 - **Notes**: the description, the circuit's notes, and each knob and switch.
 - **Wiring**: the footswitch, the jacks and the DC jack. It's generic for now, not drawn from the circuit.
+- **Circuit file (JSON)**: the circuit as last saved, the same file the app keeps, to back up, share or open again.
 - **Netlists and models (zip)**: the circuit as ngspice netlists (DC, frequency response and waveform) with every model's card, to run outside the app.
 - **Schematic**: the drawing, ink on white, as SVG or as an A4 landscape PDF.
 

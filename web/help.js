@@ -22,6 +22,8 @@ const SVG = "http://www.w3.org/2000/svg";
  */
 export function manualSheet(page = "") {
   const frame = /** @type {HTMLIFrameElement} */ (h("iframe", { class: "manual-frame", src: `manual/${page}`, title: "Solum Builder guide" }));
+  // shown once its page has drawn: an empty frame is painted white over a dark theme (D-333)
+  frame.addEventListener("load", () => frame.classList.add("loaded"), { once: true });
   // a link, not `window.open`: the Mac app's window hands a clicked link to the default
   // browser, and has nowhere to put a window opened by script (D-325)
   const popOut = /** @type {HTMLAnchorElement} */ (h("a", { id: "manual-pop-out", class: "button icon-button", href: frame.src, target: "_blank", rel: "noopener", title: "Open this page in its own tab or window", "aria-label": "Open this page in its own tab or window" }, [popOutIcon()]));

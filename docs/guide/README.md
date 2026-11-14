@@ -28,8 +28,8 @@ This guide opens in the app from **Help → Documentation**. Type in the search 
 ## Keeping and building
 
 - [Files and versions](files-and-versions.md): saving, opening, renaming, versions and History.
-- [Notes](notes.md): general notes, notes on parts and nets, and notes from blocks.
 - [Export and build](export.md): the parts list, bias sheet, build notes and the build package.
+- [Notes](notes.md): general notes, notes on parts and nets, and notes from blocks.
 
 ## Reference
 

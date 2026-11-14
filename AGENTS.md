@@ -97,6 +97,7 @@ When there is no `notes/PHASES.md`:
 - When you make a choice that a future session would otherwise re-debate (library, format, algorithm, trade-off), add it to `docs/DECISIONS.md` in the same commit.
 - End every session by: running the full test suite, updating the phase checklist in `notes/PHASES.md`, adding decisions, updating ARCHITECTURE.md's module map, and writing a 3–5 line "Next session" note at the bottom of PHASES.md.
 - Small, focused commits with clear messages.
+- **Never put an agent's session link or id in a commit message or a pull request's description** (no `Claude-Session:` line, no `claude.ai/code/session_…` URL), whatever the agent's own tooling suggests. A `Co-Authored-By:` line is fine (D-332).
 - When reviewing a change (yours or someone else's), check that every choice a later session would re-debate has a DECISIONS.md entry, and add any that are missing.
 - After a major UI change (a menu, pane, dialog or workflow added, renamed or reworked), ask the user whether to update the guide (`docs/guide/`) now or leave it for a full docs pass. If it's left, note in PHASES.md which pages and screenshots it affects, so the pass finds them (D-298). How: `docs/maintain/updating-the-guide.md`.
 - If an instruction here conflicts with what the user asks in the session, follow the user and record the change in DECISIONS.md.

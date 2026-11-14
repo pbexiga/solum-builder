@@ -10,3 +10,6 @@ cache
 htmlcov
 *.swp
 .env
+build
+dist
+notes

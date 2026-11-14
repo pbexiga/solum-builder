@@ -15,7 +15,7 @@ It then runs the unit, simulation, rules and acceptance tests against that ngspi
 - First build: about 10 minutes (ngspice is compiled twice) and 1.5 GB in `build/mac/`. Later builds reuse it: 2 to 3 minutes.
 - `SKIP_TESTS=1 make mac-app` leaves the test suites out; the smoke test still runs.
 - Remove everything it brought: `rm -rf build/mac dist`.
-- The app is **unsigned on purpose** (D-326). Built on your own Mac it opens with a double-click; downloaded, macOS asks for System Settings → Privacy & Security → Open Anyway the first time.
+- The app is **signed by us, not by Apple** (D-326): an ad-hoc signature, which Apple Silicon requires, and no Developer ID or notarisation (the project has no Apple Developer account). Built on your own Mac it opens with a double-click; downloaded, macOS asks for System Settings → Privacy & Security → Open Anyway the first time. Anyone who'd rather not trust the download builds the same `.dmg` with `make mac-app`; the README says so.
 
 ## Run the tests on a Mac without building the app
 
@@ -42,10 +42,10 @@ On the person's Mac the app keeps: circuits, blocks, models and audio in `~/Libr
 
 ## Updating what the build pins
 
-Everything downloaded is pinned at the top of `scripts/mac_app.sh` with its SHA-256; a file that doesn't match stops the build.
+Everything downloaded is pinned with its SHA-256, at the top of `scripts/mac_app.sh` (ngspice's in `scripts/ngspice_build.sh`, shared with the Docker image); a file that doesn't match stops the build.
 
 - **uv, micromamba**: set the new version and the checksum their release pages publish.
-- **ngspice**: must stay the image's version (Debian's `libngspice0`), or the acceptance values may move. When the image's changes, set `NGSPICE_VERSION`, `NGSPICE_URL` and the tarball's checksum, and run the full build: the tests say whether the values hold. Keep `-ffp-contract=off` (D-322).
+- **ngspice**: built by `scripts/ngspice_build.sh`, the same script the Docker image runs (D-327), so the app and the image always have the same one. A new version may move the acceptance values: set `NGSPICE_VERSION` and the tarball's checksum there, then run `make dev-image`, `make check` and `make accept` (the image) and the full `make mac-app`. Keep `-ffp-contract=off` (D-322).
 - **The PDF libraries**: make a fresh environment and export it over the lock, keeping the comment lines at its top:
   ```
   export MAMBA_ROOT_PREFIX=$PWD/build/mac/mamba-root

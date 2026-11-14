@@ -71,7 +71,7 @@ starter follows. Solum Builder is not connected with any of them.
 
 ## Not in this repository, installed when the image is built
 
-ngspice (BSD-3-Clause, from Debian), and from PyPI: FastAPI (MIT), Uvicorn
+ngspice 44.2 (BSD-3-Clause; built from the project's source release, as for the Mac app below), and from PyPI: FastAPI (MIT), Uvicorn
 (BSD-3-Clause), NumPy (BSD-3-Clause), Pydantic (MIT), PyYAML (MIT), WeasyPrint
 (BSD-3-Clause). Each comes with its own licence.
 

@@ -232,7 +232,8 @@ Rules that keep it working:
 | `tests/unit/test_switches.py`, `tests/unit/test_supply.py`, `tests/sim/test_bypass_and_battery.py` | switch types and their contacts; what powers the circuit; the bypass blocks (on through the effect, bypassed a wire, the status LED) and the power block (plugged, each battery state, internal resistance) through ngspice (D-143) |
 | `web/fonts/`, `web/vendor/uplot/` | vendored Fahkwang + Lora (OFL) and uPlot 1.6.31 (MIT), with licences (D-046) |
 | `web/assets/brand/*-outlined.svg` | logo and favicon with the wordmark as paths; made by `scripts/outline_svg_text.py` (D-046) |
-| `Dockerfile` | `runtime` stage (shipped) and `dev` stage (adds test/lint tools); code models from the ngspice .deb (D-027) |
+| `Dockerfile` | `ngspice` stage (builds it, D-327), `runtime` stage (shipped: the library, code models and `spinit` copied in) and `dev` stage (adds test/lint tools and the ngspice program) |
+| `scripts/ngspice_build.sh` | ngspice built the one way, for the image (both architectures) and `make mac-app`: the version, tarball checksum, flags (`-ffp-contract=off`) and configure options live only here (D-327); `ngspice_build.sh PREFIX WORKDIR` builds the shared library and the program |
 | `compose.yaml`, `.env.example` | `docker compose up`; host paths for `DATA_DIR` / `CACHE_DIR`, `PORT`, `CACHE_MAX_GB` |
 | `Makefile` | `test`, `ruff`, `lint`, `check`, `accept`, `schema`, `bench`, `image`, `image-tar`, `dev-image`, `hooks`; runs in the dev container unless `LOCAL=1` |
 | `scripts/pre-commit` | ruff + `make jslint` + unit tests (`make hooks` installs it) |

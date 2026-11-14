@@ -12,6 +12,7 @@ of a starter drawn by script is in `.claude/skills/build-starter/`.
 
 | Script | What it does | Runs in |
 |---|---|---|
+| `ngspice_build.sh` | Builds ngspice (the shared library and the program) from the pinned release tarball, the one recipe for the Docker image and the Mac app: `ngspice_build.sh PREFIX WORKDIR`. The Dockerfile and `mac_app.sh` run it; nobody else needs to. | image build, Mac |
 | `pre-commit` | The git hook: ruff, the browser code's check and the unit tests before each commit. `make hooks` installs it (once per clone). | host |
 | `jscheck.sh`, `jscheck.js` | The browser code's static check (`make jslint`): names never declared or imported, unused imports, imports that don't exist. | dev image |
 | `models_index.py` | Rewrites the Shipped table of `data/spec-sheets/README.md` from the model records, with each model's licence review. A unit test fails when the table is out of date. | host (plain Python) |

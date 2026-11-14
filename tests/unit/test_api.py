@@ -655,7 +655,7 @@ def test_export_works_from_the_last_save(monkeypatch: pytest.MonkeyPatch) -> Non
     assert 'filename="Untyped.json"' in circuit_file.headers["content-disposition"]
     opened = parse_circuit(circuit_file.json())  # the file as saved, opens again (D-334)
     assert opened.name == "Untyped" and len(opened.parts) == len(starter["parts"])
-    line ='<line x1="0" y1="0" x2="10" y2="10" stroke="black"/>'
+    line = '<line x1="0" y1="0" x2="10" y2="10" stroke="black"/>'
     svg = f'<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 10 10">{line}</svg>'
     drawn = c.post("/api/export/starter/ts808/schematic.pdf", content=svg)
     assert drawn.status_code == 200 and drawn.content.startswith(b"%PDF")

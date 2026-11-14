@@ -12,8 +12,8 @@ from functools import lru_cache
 
 from solum.circuit.parts import pin_positions
 from solum.circuit.schema import (
-    SUPPLY_SIGNS,
     CHIP_UNITS,
+    SUPPLY_SIGNS,
     AmpInput,
     Bjt,
     Capacitor,

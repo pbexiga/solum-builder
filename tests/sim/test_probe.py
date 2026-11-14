@@ -479,7 +479,7 @@ def test_a_part_left_out_of_the_simulation_says_so(sim: Simulator, circuit: Buil
     wired, loose = part_view(sim, c, "R1", "med"), part_view(sim, c, "R2", "med")
     assert wired["loose"] is False and wired["detail"]["across"] == pytest.approx(9.0)
     assert loose["loose"] is True and loose["detail"] == {}
-    assert loose["pins"]["1"] == {"net": "V+", "dc": pytest.approx(9.0)}
+    assert loose["pins"]["1"] == {"net": "V+", "dc": pytest.approx(9.0), "number": None}
     assert loose["pins"]["2"]["dc"] is None
 
 

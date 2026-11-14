@@ -11,6 +11,7 @@ cut off only when its + goes through the DC jack's battery lug, as wired (D-185)
 anywhere else it stays connected beside the adapter.
 """
 
+from contextlib import suppress
 from typing import Literal
 
 from solum.circuit.connectivity import ConnectivityError, Nets, connect
@@ -53,10 +54,8 @@ def battery_rails(circuit: Circuit) -> frozenset[str]:
         return last[1]
     rails: frozenset[str] = frozenset()
     if _battery(circuit) is not None:
-        try:
+        with suppress(ConnectivityError):
             rails = _reached(circuit, connect(circuit))
-        except ConnectivityError:
-            pass
     _last = (circuit, rails)
     return rails
 

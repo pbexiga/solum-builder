@@ -1932,3 +1932,8 @@ Calculators → *Filter* (`filterCalculator` in `web/tools.js`, `GET /api/tools/
 - `html, body` have `overscroll-behavior: none`, and the History pane (`.history-pane`) `overscroll-behavior: contain`, as the Problems and DC lists already had.
 - **Why:** the user, in the Mac app: scrolling History to its end scrolled the whole app, which kept moving after History closed. The app's layout is exactly the window (nothing to scroll, as Chromium shows), but WebKit, the Mac app's window, rubber-bands the page from a trackpad once an inner list hands its scroll on.
 *Alternatives:* `overflow: hidden` on the page (WebKit still rubber-bands the root); turning off the window's elastic scrolling in the launcher (pywebview has no option for it; the browser on a NAS would still do it in Safari).
+
+**D-344 — The Mac app's window opens hidden and shows once its page has loaded** (2026-11-15) `project` `look`
+- `main()` creates the window with `hidden=True`, and `show_when_loaded` shows it on its first `loaded` event, or after 5 s (`SHOW_WAIT`) if that never comes, once only.
+- **Why:** the user: launching the app flashed white, then the theme. The page arrives already themed (D-311), but the web view paints white until the page first draws; a window colour can't know the person's theme.
+*Alternatives:* `background_color` on the window (pywebview colours the window, not the web view's own white, and it would be one theme's colour); a splash page in the theme (a second page to keep in step, and the same white before it).

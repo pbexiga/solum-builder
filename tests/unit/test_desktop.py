@@ -2,7 +2,9 @@
 
 import json
 import os
+from collections.abc import Callable
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -22,6 +24,7 @@ from solum.desktop.folders import (
     spinit_text,
     write_spinit,
 )
+from solum.desktop.window import show_when_loaded
 
 
 @pytest.fixture
@@ -214,3 +217,46 @@ def test_the_servers_environment_is_what_the_settings_read(
     assert env["SPICE_SCRIPTS"] == str(folders.caches / "ngspice-scripts")
     assert env["DYLD_FALLBACK_LIBRARY_PATH"] == str(root)
     assert env["FONTCONFIG_FILE"] == str(root / "fonts" / "fonts.conf")
+
+
+class _Handlers:
+    """A pywebview event: handlers added with +=, fired with `fire`."""
+
+    def __init__(self) -> None:
+        self.handlers: list[Callable[[], None]] = []
+
+    def __iadd__(self, handler: Callable[[], None]) -> "_Handlers":
+        self.handlers.append(handler)
+        return self
+
+    def fire(self) -> None:
+        for handler in self.handlers:
+            handler()
+
+
+class _Window:
+    def __init__(self) -> None:
+        self.events = SimpleNamespace(loaded=_Handlers())
+        self.shown = 0
+
+    def show(self) -> None:
+        self.shown += 1
+
+
+def test_the_window_shows_once_its_page_has_loaded() -> None:
+    """D-344: made hidden, shown when the page has loaded (already in its theme, no white
+    flash), and only once, the fallback's timer later or the page loading again."""
+    window = _Window()
+    timer = show_when_loaded(window, wait=0.05)
+    assert window.shown == 0
+    window.events.loaded.fire()
+    assert window.shown == 1
+    timer.join(1)
+    window.events.loaded.fire()  # a reload
+    assert window.shown == 1
+
+
+def test_the_window_shows_anyway_if_the_page_never_loads() -> None:
+    window = _Window()
+    show_when_loaded(window, wait=0.01).join(1)
+    assert window.shown == 1

@@ -181,6 +181,31 @@ class Desktop:
         )
 
 
+SHOW_WAIT = 5.0  # seconds: the window shows by then even if its page never says it loaded
+
+
+def show_when_loaded(window: Any, wait: float = SHOW_WAIT) -> threading.Timer:
+    """Show a window made hidden once its page has loaded, so it opens in the page's theme
+    instead of the web view's white first (D-344); after `wait` seconds whatever happens,
+    so it never stays hidden. Once: a reload doesn't show it again. Returns the timer."""
+    lock = threading.Lock()
+    shown = False
+
+    def show() -> None:
+        nonlocal shown
+        with lock:
+            if shown:
+                return
+            shown = True
+        window.show()
+
+    window.events.loaded += show
+    timer = threading.Timer(wait, show)
+    timer.daemon = True
+    timer.start()
+    return timer
+
+
 def serve(folders: AppFolders, server: LocalServer) -> bool:
     """Start the server on the folders the settings file names now."""
     chosen = load_chosen(folders)
@@ -243,8 +268,15 @@ def main() -> int:
     webview.settings["OPEN_EXTERNAL_LINKS_IN_BROWSER"] = True
     if started:
         desktop._window = webview.create_window(
-            APP_NAME, server.url, js_api=desktop, width=1440, height=900, min_size=(900, 600)
+            APP_NAME,
+            server.url,
+            js_api=desktop,
+            width=1440,
+            height=900,
+            min_size=(900, 600),
+            hidden=True,  # shown once the page has drawn in its theme: no white flash (D-344)
         )
+        show_when_loaded(desktop._window)
         menu = [Menu("__app__", [MenuAction("Settings…", lambda: desktop._page_menu("settings"))])]
 
         def closing() -> bool:

@@ -23,7 +23,7 @@ import { powerMenu } from "./power.js";
 import { inspector } from "./inspector.js";
 import { liveSliders, sliderFields } from "./live-sliders.js";
 import {
-  addLabel, addPart, addText, paletteEntry, groupRefs, withChips, addWires, applyDiff, deleteItems, drawnWire, findRef, moveWireEnd, wireDiff, moveItems, isUnwired, renameLabel, setText, addSupply, itemsAfterMove, itemsAt, rotateLabel, rotatePart, sameConnections, wireRun, updatePart,
+  addLabel, addPart, addText, clearSupplyRot, paletteEntry, groupRefs, withChips, addWires, applyDiff, deleteItems, drawnWire, findRef, moveWireEnd, wireDiff, moveItems, isUnwired, renameLabel, setText, addSupply, itemsAfterMove, itemsAt, rotateLabel, rotatePart, sameConnections, wireRun, updatePart,
 } from "./editor/edit.js";
 import { ask, closeForm, confirmed, formIsOpen, openForm } from "./editor/form.js";
 import { remember, remembered } from "./storage.js";
@@ -35,7 +35,7 @@ import { closeMenus } from "./menus.js";
 import { reorderable } from "./panes.js";
 import { refusalBar } from "./refusal.js";
 import { liveCurves, liveValues, nearestStep, readingRows } from "./live.js";
-import { h, knobControl, paneInfo, restoreLargeViews, shrinkLargeViews, renderDc, renderKnobs, renderNodeView, renderPartView, renderProbeFailed, renderProblems, renderReadings, renderSweepSummary, showKnob } from "./panels.js";
+import { h, knobControl, refreshPins, paneInfo, restoreLargeViews, shrinkLargeViews, renderDc, renderKnobs, renderNodeView, renderPartView, renderProbeFailed, renderProblems, renderReadings, renderSweepSummary, showKnob } from "./panels.js";
 import { barPlot, curvePlot, forgetColours, linePlot, liveLinePlot } from "./plots.js";
 import { desktopMenus, desktopUnsaved } from "./desktop.js";
 import { settingsSheet } from "./settings.js";
@@ -314,7 +314,11 @@ const schematic = new Schematic(/** @type {SVGSVGElement} */ (/** @type {unknown
   route: (a, b, horizontal, pending) => drawnWire(state.circuit, a, b, horizontal, pending),
   preview: (change) => {
     const next = "items" in change ? moveItems(state.circuit, change.items, change.dx, change.dy) : moveWireEnd(state.circuit, change.from, change.to);
-    return wireDiff(state.circuit.wires ?? [], next.wires ?? []);
+    // labels the move carries on a part's pins (a ground on R5), shown going along (D-339)
+    const before = state.circuit.labels ?? [];
+    const picked = new Set("items" in change ? change.items.labels ?? [] : []);
+    const labels = (next.labels ?? []).flatMap((/** @type {any} */ lb, /** @type {number} */ i) => (before[i] && !picked.has(i) && (before[i].pos[0] !== lb.pos[0] || before[i].pos[1] !== lb.pos[1]) ? [i] : []));
+    return { ...wireDiff(state.circuit.wires ?? [], next.wires ?? []), labels };
   },
   onPlace: (pos, wire) => place(pos, wire),
   onContext: (x, y, item) => menus.contextMenu(x, y, item),
@@ -592,6 +596,7 @@ function show(view, { fit }) {
   showTitle();
   schematic.capTypes = state.capTypes;
   schematic.draw(view, switchPositions(), { fit });
+  showDrawnPins();
   if (state.problems?.result) showProblems(); // the circuit's dismissals may have changed (an undo)
   if (controlsChanged) {
     renderKnobs($("knobs-body"), view.controls, state.controls, onKnob, grabKnob, knobInUse);
@@ -604,6 +609,18 @@ function show(view, { fit }) {
   power.show();
   updateButtons();
   document.body.dataset.views = String(++state.views);
+}
+
+/**
+ * The probed part's pins as the drawing has them now (D-337): pins added or taken away by
+ * an edit, and nets changed by rewiring, show at once; DC waits for the next run.
+ */
+function showDrawnPins() {
+  const { part, sweep, view } = state;
+  if (!part || state.selection?.kind !== "part" || state.selection.id !== part.ref) return;
+  if (sweep?.ref === part.ref && sweep.parts?.length) return; // values tried: their own columns
+  const drawn = view.parts.find((/** @type {any} */ p) => p.ref === part.ref);
+  if (drawn) refreshPins($("probe-body"), part, drawn.pins, (n) => select({ kind: "net", id: n }));
 }
 
 /** @type {{circuit: any, key: string, played: any}} */
@@ -959,7 +976,9 @@ function stopPlacing() {
 async function place(pos, wire) {
   const type = state.placing;
   if (!type) return;
-  const rot = schematic.ghost?.rot ?? 0;
+  const ghost = schematic.ghost;
+  // a supply dropped unturned turns clear of the wire or pin it lands on (D-338)
+  const rot = ghost?.supply && !ghost.rot ? clearSupplyRot(state.circuit, pos, ghost.supply) : ghost?.rot ?? 0;
   const block = state.placingBlock;
   stopPlacing();
   if (type === "block" && block) return dropBlock(block, pos, wire);

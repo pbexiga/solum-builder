@@ -892,3 +892,36 @@ def test_pin_list_numbers_a_chip_as_counted_on_it(js: Page) -> None:
     assert [r["label"] for r in got[0]] == ["5 (+)", "6 (-)", "7 (out)"]
     assert [r["net"] for r in got[0]] == ["p", "n", "o"]
     assert [r["label"] for r in got[1]] == ["pin 1", "pin 2"]
+
+
+def test_a_dropped_supply_turns_clear_of_its_wire(js: Page) -> None:
+    """D-338: as drawn when clear (a rail's bar up, ground down), else away from the wire,
+    else to the side: never on the wire it lands on."""
+    got = run(
+        js,
+        """
+        const { clearSupplyRot } = await m('editor/edit.js');
+        const c = { parts: [], wires: [{ from: [0, 0], to: [0, 40] }] };
+        return [[0, 0, 'rail'], [0, 40, 'rail'], [0, 20, 'rail'], [0, 0, 'ground'],
+                [0, 40, 'ground'], [100, 100, 'rail']].map(([x, y, k]) => clearSupplyRot(c, [x, y], k));
+        """,
+    )
+    assert got == [0, 180, 90, 180, 0, 0]
+
+
+def test_drawn_pins_keep_dc_only_on_the_same_net(js: Page) -> None:
+    """D-337: after an edit the pin list is the drawing's; a voltage stays only beside the
+    net it was measured on."""
+    got = run(
+        js,
+        """
+        const { drawnPins } = await m('panels.js');
+        return drawnPins({ 1: { net: 'a', dc: 1 }, 2: { net: 'b', dc: 2 } },
+          [{ name: '1', net: 'a', number: null }, { name: '2', net: 'c' }, { name: '3', net: 'd', number: 3 }]);
+        """,
+    )
+    assert got == {
+        "1": {"net": "a", "dc": 1, "number": None},
+        "2": {"net": "c", "dc": None, "number": None},
+        "3": {"net": "d", "dc": None, "number": 3},
+    }

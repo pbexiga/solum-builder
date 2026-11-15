@@ -248,6 +248,47 @@ export function pinList(pins) {
 const pinHeading = (part) => (part.package ? `Pin, ${part.package}` : "Pin");
 
 /**
+ * A part's pins as drawn now, with the last run's DC kept only where a pin is still on the
+ * net it was measured on (D-337): an edit's pins and nets show at once, voltages at the
+ * next run. `drawn`: the view's pins for the part.
+ * @param {Record<string, {net: string, dc?: number | null, number?: number | null}>} measured
+ * @param {Array<{name: string, net: string | null, number?: number | null}>} drawn
+ * @returns {Record<string, {net: string, dc: number | null, number: number | null}>}
+ */
+export function drawnPins(measured, drawn) {
+  return Object.fromEntries(drawn.map((p) => {
+    const was = measured[p.name];
+    const net = p.net ?? "";
+    return [p.name, { net, dc: was && was.net === net ? was.dc ?? null : null, number: p.number ?? null }];
+  }));
+}
+
+/**
+ * The pin table: each pin's net (click to probe it) and DC.
+ * @param {any} part @param {(net: string) => void} onNet
+ */
+function pinTable(part, onNet) {
+  const rows = pinList(part.pins).map(({ pin, label, net }) => {
+    const row = h("tr", { class: "clickable", "data-net": net }, [h("th", {}, [label]), h("td", {}, [net]), h("td", {}, [volts(part.pins[pin].dc)])]);
+    row.addEventListener("click", () => onNet(net));
+    return row;
+  });
+  return h("table", { class: "readout subplot pin-table" }, [h("thead", {}, [h("tr", {}, [h("th", {}, [pinHeading(part)]), h("th", {}, ["Net"]), h("th", {}, ["DC"])])]), h("tbody", {}, rows)]);
+}
+
+/**
+ * After an edit, before the next run: the part view's pin table redrawn from the drawing
+ * (`drawnPins`), the rest left as last run (D-337). Not while values are being tried.
+ * @param {HTMLElement} el @param {any} part the last /api/part result
+ * @param {Array<{name: string, net: string | null, number?: number | null}>} drawn
+ * @param {(net: string) => void} onNet
+ */
+export function refreshPins(el, part, drawn, onNet) {
+  const table = el.querySelector("table.pin-table");
+  if (table) table.replaceWith(pinTable({ ...part, pins: drawnPins(part.pins, drawn) }, onNet));
+}
+
+/**
  * The part view (SPEC §2). Returns the element for the device curve, if the part has one.
  * While "try several values" is on for this part (`tried`), its readings and its pins' DC
  * are a column per value tried, with no device curve (D-318).
@@ -257,11 +298,6 @@ const pinHeading = (part) => (part.package ? `Pin, ${part.package}` : "Pin");
  */
 export function renderPartView(el, part, onNet, tried = null) {
   if (tried?.parts.length) return renderTriedPart(el, part, onNet, tried);
-  const pinRows = pinList(part.pins).map(({ pin, label, net }) => {
-    const row = h("tr", { class: "clickable", "data-net": net }, [h("th", {}, [label]), h("td", {}, [net]), h("td", {}, [volts(part.pins[pin].dc)])]);
-    row.addEventListener("click", () => onNet(net));
-    return row;
-  });
   // a part no current can reach is left out of the simulation (D-165): no readings to
   // show, so the pane says why in their place (D-318)
   const detail = part.loose ? { rows: [], curve: false, hint: `${part.ref} isn't wired into the circuit, so the simulation leaves it out and there is nothing to measure. Wire it where it belongs to see its readings; Problems says what is open.` } : partDetail(part);
@@ -272,7 +308,7 @@ export function renderPartView(el, part, onNet, tried = null) {
     table(detail.rows),
     ...(detail.hint ? [h("p", { class: "empty" }, [detail.hint])] : []),
     ...(curveEl ? [curveEl] : []),
-    h("table", { class: "readout subplot" }, [h("thead", {}, [h("tr", {}, [h("th", {}, [pinHeading(part)]), h("th", {}, ["Net"]), h("th", {}, ["DC"])])]), h("tbody", {}, pinRows)]),
+    pinTable(part, onNet),
   );
   return curveEl;
 }

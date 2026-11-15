@@ -15,7 +15,7 @@
  * @typedef {{parts: string[], wires?: number[], labels?: number[], texts?: number[]}} Items
  */
 
-import { bodyBox, pinPositions, poleStep, textBoxes } from "../schematic/symbols.js";
+import { bodyBox, pinPositions, poleStep, rotateOffset, textBoxes } from "../schematic/symbols.js";
 import { findPath, key, throughBody, worldOf } from "./router.js";
 
 export const GRID = 10;
@@ -980,6 +980,45 @@ export function wireEnds(view) {
     net,
     kind: anchors.has(key(pos)) ? "pin" : count > 1 || onAnotherWire(pos) ? "bend" : "loose",
   }));
+}
+
+/**
+ * The directions taken at a point (D-338): along each wire ending there (both ways along
+ * one running through it), and along each pin's lead there, towards its part. As "dx,dy"
+ * on the axes. @param {Circuit} circuit @param {number[]} pos @returns {Set<string>}
+ */
+export function takenDirections(circuit, pos) {
+  const taken = new Set();
+  const add = (/** @type {number} */ dx, /** @type {number} */ dy) => taken.add(Math.abs(dx) >= Math.abs(dy) ? `${Math.sign(dx)},0` : `0,${Math.sign(dy)}`);
+  for (const w of circuit.wires ?? []) {
+    if (same(w.from, pos)) add(w.to[0] - pos[0], w.to[1] - pos[1]);
+    else if (same(w.to, pos)) add(w.from[0] - pos[0], w.from[1] - pos[1]);
+    else if (same(pointOnWire(w, pos), pos)) {
+      add(w.from[0] - pos[0], w.from[1] - pos[1]);
+      add(w.to[0] - pos[0], w.to[1] - pos[1]);
+    }
+  }
+  for (const part of circuit.parts ?? []) {
+    for (const pin of Object.values(pinPositions(part))) if (same(pin, pos)) add(part.pos[0] - pin[0], part.pos[1] - pin[1]);
+  }
+  taken.delete("0,0");
+  return taken;
+}
+
+/**
+ * A supply symbol's turn as it's dropped (D-338): as drawn (a rail's bar up, ground down)
+ * when that way is clear, else pointing away from what's there, else to the side (right,
+ * then left), so its bar and name never sit on a wire or a pin's lead. Clockwise degrees.
+ * @param {Circuit} circuit @param {number[]} pos @param {"ground" | "rail"} kind @returns {number}
+ */
+export function clearSupplyRot(circuit, pos, kind) {
+  const taken = takenDirections(circuit, pos);
+  const base = kind === "ground" ? [0, 1] : [0, -1];
+  for (const rot of [0, 180, 90, 270]) {
+    const [dx, dy] = rotateOffset(base, rot);
+    if (!taken.has(`${Math.sign(dx)},${Math.sign(dy)}`)) return rot;
+  }
+  return 0;
 }
 
 /**

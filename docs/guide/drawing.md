@@ -16,7 +16,7 @@ Every part gets a ref (designator) of its kind with the next free number: R1, C3
 Pick the **Wire** tool (W). Click to start, click again to add a bend, and click a pin, a label or another wire to finish. Wires make square bends, go around parts, and hop over wires they cross without joining them. A dot marks each junction, where wires join.
 
 - **Drag a ball** on a wire's end to move that end.
-- **Click a wire** to select all of it, through its bends, to its ends. Drag a selected wire to move the stretch you grabbed; what it connects stays connected.
+- **Click a wire** to select all of it, through its bends, to its ends. **Drag a wire**, selected or not, to move the stretch you grabbed; what it connects stays connected. New wires come from the Wire tool, or a press on a pin, as below.
 - A press on a pin's end, a label's point or a supply's point starts a new wire from there, whatever tool is picked.
 
 ## Names for nets: labels, ground and supplies

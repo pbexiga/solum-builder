@@ -162,7 +162,7 @@ export function drawShapes(shapes, parent) {
  *   onWire?: (segments: import("../editor/edit.js").Wire[]) => void,
  *   onMoveEnd?: (from: number[], to: number[]) => void,
  *   route?: (a: number[], b: number[], horizontal?: boolean, pending?: import("../editor/edit.js").Wire[]) => import("../editor/edit.js").Wire[],
- *   preview?: (change: {items: Items, dx: number, dy: number} | {from: number[], to: number[]}) => {added: import("../editor/edit.js").Wire[], removed: number[]} | null,
+ *   preview?: (change: {items: Items, dx: number, dy: number} | {from: number[], to: number[]}) => {added: import("../editor/edit.js").Wire[], removed: number[], labels?: number[]} | null,
  *   onPlace?: (pos: number[], wire?: number) => void,
  *   onEmpty?: () => void,
  *   onContext?: (x: number, y: number, item: {parts?: string[], wires?: number[], labels?: number[], texts?: number[]} | null) => void,
@@ -809,9 +809,8 @@ export class Schematic {
     const pin = target?.closest(".pin-hit");
     if (pin) return { kind: "wire", from: /** @type {string} */ (pin.getAttribute("data-at")).split(",").map(Number) };
     if (target?.classList.contains("hit")) {
-      // a selected wire drags (D-095); any other starts a new wire from the point pressed
-      const wire = Number(target.getAttribute("data-wire"));
-      if (target.hasAttribute("data-wire") && this.inSelection({ wires: [wire] })) return { kind: "move", wire };
+      // a wire drags, selected or not: new wires are drawn with the Wire tool (D-340)
+      if (target.hasAttribute("data-wire")) return { kind: "move", wire: Number(target.getAttribute("data-wire")) };
       return { kind: "wire", from: snapPoint(at) };
     }
     const text = target?.closest("g.text-block")?.getAttribute("data-text");
@@ -833,7 +832,7 @@ export class Schematic {
       this.handlers.onContext?.(e.clientX, e.clientY, item);
     });
     /** @type {{x: number, y: number, vb: import("./viewport.js").ViewBox, moved: boolean, at: number[], last: string,
-     *   add: boolean, ctrl: boolean, gesture: ReturnType<Schematic["gestureAt"]>} | null} */
+     *   add: boolean, ctrl: boolean, gesture: ReturnType<Schematic["gestureAt"]>, carried?: number[]} | null} */
     let press = null;
     this.svg.addEventListener("pointerdown", (e) => {
       if (e.button !== 0) return;
@@ -881,12 +880,20 @@ export class Schematic {
       } else {
         const [mx, my] = [snap(this.pointer[0] - press.at[0]), snap(this.pointer[1] - press.at[1])];
         const items = this.movingItems(g);
+        // the wires follow live, re-laid the way they will be on drop, and the labels on a
+        // moved part's pins go along (D-339)
+        if (`${mx},${my}` !== press.last) {
+          const relay = mx || my ? (this.handlers.preview?.({ items, dx: mx, dy: my }) ?? null) : null;
+          press.carried = relay?.labels ?? [];
+          this.showRelay(relay);
+        }
+        press.last = `${mx},${my}`;
         // what a moved part or label carries along: its DC voltage and impedance readings
         const refs = new Set(items.parts);
         const pins = (this.view?.parts ?? []).filter((/** @type {any} */ p) => refs.has(p.ref)).flatMap((/** @type {any} */ p) => p.pins.map((/** @type {any} */ pin) => pin.pos.join(",")));
         const nodes = [
           ...items.parts.flatMap((ref) => [...this.svg.querySelectorAll(`[data-ref="${CSS.escape(ref)}"], [data-for="${CSS.escape(ref)}"]`)]),
-          ...items.labels.flatMap((i) => [...this.svg.querySelectorAll(`[data-label="${i}"]:not(line), [data-dc-label="${i}"]`)]),
+          ...[...items.labels, ...(press.carried ?? [])].flatMap((i) => [...this.svg.querySelectorAll(`[data-label="${i}"]:not(line), [data-dc-label="${i}"]`)]),
           ...pins.flatMap((at) => [...this.dcLayer.querySelectorAll(`[data-at="${at}"]`)]),
           ...(items.texts ?? []).flatMap((i) => [...this.svg.querySelectorAll(`[data-text="${i}"]`)]),
         ];
@@ -894,9 +901,6 @@ export class Schematic {
           node.setAttribute("data-drag", "true");
           /** @type {SVGElement} */ (node).style.translate = `${mx}px ${my}px`;
         }
-        // the wires follow live, re-laid the way they will be on drop
-        if (`${mx},${my}` !== press.last) this.showRelay(mx || my ? (this.handlers.preview?.({ items, dx: mx, dy: my }) ?? null) : null);
-        press.last = `${mx},${my}`;
       }
     });
     this.svg.addEventListener("pointerup", (e) => {

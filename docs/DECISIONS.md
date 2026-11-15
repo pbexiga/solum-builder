@@ -426,7 +426,7 @@ Ctrl+click (Cmd+click on a Mac) or Shift+click puts one part, wire, label or tex
 - **Tools menu**: Unit converter (with capacitor codes both ways: `223` ↔ 22 nF) and Resistor colour code (4 or 5 bands both ways, whether the value is standard, the E24 and E96 values either side). All reading and formatting is the server's (`solum/markings.py` over `solum/units.py`): the pages lay out `/api/tools/*` answers. E96 is in `E_SERIES`. Band colours are theme tokens (`--band-*`).
 - **Right-click menu** on the canvas: the clicked thing is selected first (a selection stays); its own items (Edit, Rotate, Delete, Copy), Paste (follows the pointer until a click drops it, as Ctrl+V), and the header's menus as submenus built from the same item lists (`MENUS`). Nothing while placing or drawing a wire.
 
-- **Drag a wire**: a selected wire drags (via `moveItems` → `relay`) with its ends re-laid to what they joined; pressing on an unselected wire still starts a new wire. A drag of wires alone must keep every connection (`sameConnections` on the server's new view); otherwise nothing changes and the hint says so (refined in D-293).
+- **Drag a wire**: a selected wire drags (via `moveItems` → `relay`) with its ends re-laid to what they joined; pressing on an unselected wire still starts a new wire (superseded by D-340: an unselected wire drags too). A drag of wires alone must keep every connection (`sameConnections` on the server's new view); otherwise nothing changes and the hint says so (refined in D-293).
 - **A moved or pasted selection stays whole**: after a move or paste, wires and labels are found again by where they went (`itemsAfterMove`, `itemsAt`) and stay selected.
 - **Any other click lets go of the selection**: drawing a wire, dragging a wire end or something outside the selection drops it; only dragging the selection keeps it.
 - **Resistor chart in Help** (reference in Help, calculators in Tools): Help → Resistor colour code and values, one row per colour with all twelve multipliers and the IEC 60062 tolerance letters, worked examples, and the R/k/M notation. Data from the server (`tables()`).
@@ -567,7 +567,7 @@ The Audio pane's shrunk bar is always the bottom one (`pinBar`); its controls si
 *Alternatives:* turning a part to lie along the wire (a guess; Space turns the ghost); ending a wire with Enter.
 
 **D-113 — A press on anything in a selection moves the selection** (2026-10-26) `editor`
-- With several items selected, a drag starting on any of them (a part or its pin, a wire or its end ball, a label, a text block) moves them all (`grabsSelection` in `render.js`). Outside a selection, a pin, label or wire starts a wire and a ball moves its end.
+- With several items selected, a drag starting on any of them (a part or its pin, a wire or its end ball, a label, a text block) moves them all (`grabsSelection` in `render.js`). Outside a selection, a pin, label or wire starts a wire (a wire's body drags since D-340) and a ball moves its end.
 - **Any part placed, moved or turned onto a wire goes in series**: `inSeries` in `edit.js`, after `addPart`, `moveItems` and `rotatePart`, cuts a wire running through two of a part's pins (one of them part-way along it). A jumper drawn pin to pin stays, as does a wire touching one pin.
 
 **D-114 — A net label's text keeps off the wires; a part's probe uses one circuit** (2026-10-26) `editor`
@@ -1896,3 +1896,23 @@ Calculators → *Filter* (`filterCalculator` in `web/tools.js`, `GET /api/tools/
 - `part_view` gives each pin its datasheet `number` (`view.pin_number`, the schematic's lookup, D-140) and the part its `package` ("8-pin DIP"), for chip units, power units and regulators whose model record has a package. The pane's Pin column (`pinList`) lists such a part's pins in number order as "3 (+)", headed "Pin, 8-pin DIP"; a dual's half lists its own pins (IC1B: 5, 6, 7). Other parts stay "pin 1", in drawn order.
 - **Why:** the user: "pin +" doesn't say which leg it is on the chip in your hand.
 *Alternatives:* the number alone (loses what the pin does); transistors' leg order (TO-92 EBC) as well (their records' package names a leg order, not numbers; left until asked).
+
+**D-337 — The probe's pin list follows the drawing before the next run** (2026-11-15) `panes`
+- After an edit, the probed part's pin table is rebuilt from the new circuit view (`showDrawnPins` in `app.js`, `refreshPins` and `drawnPins` in `panels.js`): pins added or taken away (an op-amp's *Draw: all its pins*, a switch's type, a stereo jack, an LM308's compensation pins) and each pin's net, at once. A pin keeps its last DC only while it is on the net it was measured on; otherwise "—" until the next run. Readings above the table wait for the run, as before; not while values are being tried (their own columns).
+- **Why:** the user turned on all the op-amp's pins and the probe didn't show them until Run: which pins a part has and where they connect is the drawing, which the sheet already shows.
+*Alternatives:* re-running the part view after every edit with Auto-run off (a simulation the user turned off); leaving it to Run (the pane contradicts the sheet).
+
+**D-338 — A dropped supply turns clear of its wire** (2026-11-15) `editor`
+- A V+, V- or ground symbol dropped unturned (`ghost.rot` 0) gets `clearSupplyRot(circuit, pos, kind)`: as drawn (a rail's bar up, ground down) if that way is clear, else pointing the opposite way, else right, else left; "clear" is no wire leaving the point that way and no pin's lead (`takenDirections`). A ghost turned with Space before dropping keeps its turn; supplies already on the sheet aren't turned.
+- **Why:** the user dropped V+ at the foot of a wire coming down and in the middle of a wire: the bar and name sat on the wire. Supplies are drop-and-go; parts get turned before placing.
+*Alternatives:* turning supplies whenever their wiring changes (moves the user's own choice); plain net labels (they already find their own side).
+
+**D-339 — A move's preview carries the labels on the moved parts' pins** (2026-11-15) `editor`
+- The drag preview (`preview` in `app.js`) returns, with the re-laid wires, the labels `moveItems` moves because they sit on a moved part's pin; the sheet moves them with the part while dragging (`press.carried` in `render.js`), as the drop does.
+- **Why:** dragging R5 with a ground on its pin, the ground looked left behind until the drop, then jumped along.
+*Alternatives:* a wire put in between on such a move (changes the drawing the user made); leaving the label behind on drop (breaks the connection).
+
+**D-340 — Any wire drags; new wires come from the Wire tool, a pin or a label's point** (2026-11-15) `editor`
+- A press-and-drag on a wire's body moves it whether or not it's selected (`gestureAt`): the stretch grabbed alone, as D-293, or the selection when the wire is in it. A press on a pin's end, a label's or supply's point still starts a wire without the Wire tool (D-164); with the Wire tool, clicks draw as before (D-062).
+- **Why:** the user pressed on a wire to move it and got a new wire; selecting it first was a step nobody expects.
+*Alternatives:* keeping D-095's draw-from-a-wire drag (T-joins are made with the Wire tool or by ending a wire on another); requiring the Wire tool for pins too (dragging a wire out of a pin is quick and kept).

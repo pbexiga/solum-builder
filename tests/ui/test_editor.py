@@ -1214,6 +1214,23 @@ def test_drag_a_wire_keeps_its_connections(
     assert views(page) == before and wires(page) == moved
 
 
+def test_dragging_a_wire_moves_it_without_selecting_first(page: Page, base_url: str) -> None:
+    """D-340 (the user: a press on a wire drew a new one): a wire not selected drags too;
+    new wires come from the Wire tool, a pin or a label's point."""
+    page.goto(base_url)
+    wait_for_update(page, 0)
+    before = views(page)
+    drag(page, (-280, 0), (280, 0))  # from the guitar's pin: a new wire
+    wait_for_view(page, before)
+    expect(page.locator("line.wire.selected")).to_have_count(0)
+    before = views(page)
+    drag(page, (0, 0), (0, 40))  # its middle, not selected: it moves
+    wait_for_view(page, before)
+    drawn = wires(page)
+    assert (-280, 40, 280, 40) in drawn or (280, 40, -280, 40) in drawn
+    assert not any(w[0] == w[2] == 0 for w in drawn)  # no new wire down from (0, 0)
+
+
 def test_dragging_one_stretch_of_a_wire_stretches_the_rest(page: Page, base_url: str) -> None:
     """D-293 (the user: "I would like to stretch that wire up and out so it clears the
     blocks"): a bent wire is selected whole, but a drag moves only the stretch grabbed; its

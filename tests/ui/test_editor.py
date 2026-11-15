@@ -192,6 +192,27 @@ def api(page: Page, base_url: str, method: str, path: str, body: Any = None) -> 
 # ---- editing ---------------------------------------------------------------------
 
 
+def test_a_parts_form_opens_on_the_box_after_its_ref(page: Page, base_url: str) -> None:
+    """The user (2026-11-15): opening a cap or resistor put the cursor in Ref; the value is
+    what's edited. A part's form starts on its first box after Ref, IN and OUT too; a
+    label's form on its name (D-350)."""
+    new_circuit(page, base_url, "Focus test")
+    show_area(page, -60, -60, 420, 280)
+    got = {}
+    for n, key in enumerate(["r", "c", "u", "s", "i", "a"]):
+        place(page, key, 180 * (n % 3), 220 * (n // 3))
+        press(page, "Enter")
+        expect(page.locator("form.popup")).to_be_visible()
+        got[key] = page.evaluate("document.activeElement.id")
+        press(page, "Escape")
+        expect(page.locator("form.popup")).to_have_count(0)
+    press(page, "l")
+    got["l"] = page.evaluate("document.activeElement.id")
+    assert got["r"] == got["c"] == "field-value"
+    assert got["l"] == "field-net"
+    assert all(v.startswith("field-") and v != "field-ref" for v in got.values()), got
+
+
 def test_place_undo_redo(page: Page, base_url: str) -> None:
     new_circuit(page, base_url, "Undo test")
     place(page, "r", 0, 0)

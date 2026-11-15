@@ -1969,3 +1969,8 @@ Calculators → *Filter* (`filterCalculator` in `web/tools.js`, `GET /api/tools/
 - Now a stretch of wire pin to pin is cut whether or not it runs on past a pin, unless the part already had it pin to pin before the edit (`before`, passed by `moveItems` and `rotatePart`; a new part has none). A jumper the user drew across a part is carried along by its move or turn and stays, re-laid.
 - **Why:** the user (2026-11-15): dropped onto a line, a part should replace the wire under it; a wire that happens to fit it exactly is no jumper.
 *Alternatives:* never keeping a pin-to-pin wire (moving a deliberately jumpered part would delete its jumper); asking on each drop.
+
+**D-350 — A part's form opens on the box after its Ref** (2026-11-15) `editor`
+- `openForm` focuses the first box you can type in after Ref (`startField` in `web/editor/form.js`): a resistor's or cap's value, a chip's model, a switch's kind, the guitar's and amp's first box. A read-only, disabled or hidden box is skipped. A form with no Ref (a label's or supply's Name, the file dialogs) opens on its first usable box, as before; a part with nothing but Ref opens on Ref.
+- **Why:** the user (2026-11-15): the value is what's edited, so starting there makes editing more fluid; only labels, rails and ground should start on their name.
+*Alternatives:* a per-part-type focus field in `fields.js` (a list to keep up for one rule that holds for every part).

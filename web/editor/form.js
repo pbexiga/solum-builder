@@ -180,6 +180,20 @@ function linkFields(fields, rows, showError) {
 }
 
 /**
+ * The box a form opens on (D-350): a part's form on the first one you can type in after its
+ * Ref (a cap's value, a chip's model, a switch's kind; the guitar's and amp's first box
+ * too), so the usual edit needs no Tab. A form with nothing else, and a label's Name, open
+ * on their first box.
+ * @param {HTMLFormElement} form @returns {HTMLElement | null}
+ */
+function startField(form) {
+  /** @type {Array<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>} */
+  const boxes = [...form.querySelectorAll("input, select, textarea")];
+  const usable = boxes.filter((b) => !b.disabled && !(b instanceof HTMLSelectElement ? false : b.readOnly) && !b.closest("[hidden]") && b.type !== "hidden");
+  return usable.find((b) => b.id !== "field-ref") ?? usable[0] ?? boxes[0] ?? null;
+}
+
+/**
  * @param {HTMLElement} host where the popup goes
  * @param {{title: string, subtitle?: string, fields: import("./fields.js").Field[], submit?: string,
  *   onSubmit: (values: Record<string, string>) => Promise<string | null>, extra?: HTMLElement[],
@@ -248,7 +262,7 @@ export function openForm(host, spec) {
   host.append(form);
   const handle = { close: () => close(), form, showError, fields: spec.fields };
   open = handle;
-  /** @type {HTMLElement | null} */ (form.querySelector("input, select, textarea"))?.focus();
+  startField(form)?.focus();
   return handle;
 }
 

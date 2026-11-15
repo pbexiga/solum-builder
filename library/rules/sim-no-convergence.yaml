@@ -3,15 +3,34 @@ layer: sim_error
 severity: error
 check: sim_no_convergence
 title: No DC solution
-message: "Can't simulate: the simulator couldn't find the circuit's DC voltages."
+message: "Can't simulate: the simulator couldn't find the circuit's DC voltages.{where}"
 why: >
   The simulator finds the DC voltages by repeated refinement, and some circuits never
   settle: positive feedback, a part with an extreme value, or a transistor wired so it
   can't bias.
-fix: Undo the last change to see if it caused this, and check the other problems for a stage wired the wrong way.
+fix: >
+  Undo the last change to see if it caused this, and check the other problems for a stage
+  wired the wrong way. Where it got stuck is where to look first: the part to blame is that
+  one or one wired to it.
 fixtures:
   bad:
     - log: ["stderr Warning: gmin stepping failed", "stderr Warning: source stepping failed",
             "stderr doAnalyses: iteration limit reached"]
+    # a real circuit ngspice can't solve: a latch of two test transistors with absurd gain
+    - rails: {V+: 9}
+      parts:
+        - {ref: R1, type: resistor, nets: [V+, a], value: 10k}
+        - {ref: R2, type: resistor, nets: [V+, c], value: 4k7}
+        - {ref: Q1, type: bjt, nets: [c, a, e], model: TESTSTUCK}
+        - {ref: R3, type: resistor, nets: [e, GND], value: 1k}
+        - {ref: Q2, type: bjt, nets: [a, c, GND], model: TESTSTUCK}
+      expect: [Q1]
+    # the nodes ngspice stars as not settled, when it names no device
+    - log: ["stderr Warning: source stepping failed", "stdout Last Node Voltages",
+            "stdout Node                                   Last Voltage        Previous Iter",
+            "stdout a                                                 0         9.88476e+233 *",
+            "stdout v1#branch                                         0                    9 *",
+            "stdout b                                                 9                    9"]
+      nodes: {a: a, b: b}
   good:
     - log: ["stderr Error: Timestep too small"]

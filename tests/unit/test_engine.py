@@ -6,6 +6,7 @@ from solum.sim.engine import (
     SimResult,
     prepare_netlist,
     singular_nodes,
+    stuck_at,
 )
 
 
@@ -57,3 +58,28 @@ def test_singular_nodes_from_the_log() -> None:
     ]
     assert singular_nodes(log) == ["c16_2", "R1_1"]
     assert singular_nodes(["stdout all fine"]) == []
+
+
+def test_where_a_failed_run_got_stuck() -> None:
+    """D-345: ngspice 44.2's own lines (a latch of absurd transistors): the device or node
+    it names on a too-small time step wins over the nodes it stars as not settled."""
+    table = [
+        "stdout Last Node Voltages",
+        "stdout Node                                   Last Voltage        Previous Iter",
+        "stdout ----                                   ------------        -------------",
+        "stdout a                                                 0         9.88476e+233 *",
+        "stdout c                                                 0         9.88476e+233 *",
+        "stdout v1#branch                                         0                    9 *",
+        "stdout b                                                 9                    9",
+    ]
+    trouble = (
+        "stderr doAnalyses: TRAN:  Timestep too small; initial timepoint: "
+        "trouble with dx-instance d1"
+    )
+    assert stuck_at([*table, trouble]) == ["d1"]
+    assert stuck_at(table) == ["a", "c"]  # the branch current and the settled node left out
+    node = (
+        'stderr Error: Timestep too small; time = 0.01, timestep = 1e-17: trouble with node "xu1.5"'
+    )
+    assert stuck_at([node, node]) == ["xu1.5"]
+    assert stuck_at(["stderr Timestep too small; cause unrecorded.", "stdout all fine"]) == []

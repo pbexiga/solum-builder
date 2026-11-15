@@ -372,6 +372,11 @@ class ModelError(ValueError):
     """A model is missing or broken (plain-English message)."""
 
 
+class FitError(ValueError):
+    """A measured gain or leakage the tester can't be made to read (plain English): what a
+    `ModelLibrary.bjt_fit` fitter raises (`solum.tester.fit_bjt`)."""
+
+
 @dataclass(frozen=True)
 class BjtFit:
     """What a measured transistor's netlist sets (D-153): `scale`, the card's gain scaled

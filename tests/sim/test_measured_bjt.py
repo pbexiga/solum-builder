@@ -5,10 +5,10 @@ from pathlib import Path
 import pytest
 
 from solum.circuit.io import load_circuit
-from solum.models import ModelLibrary, load_models
+from solum.models import FitError, ModelLibrary, load_models
 from solum.sim.native import NativeNgspice
 from solum.simulate import Simulator
-from solum.tester import FitError, fit_bjt, read_tester
+from solum.tester import fit_bjt, read_tester
 
 REPO = Path(__file__).parents[2]
 

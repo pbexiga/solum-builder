@@ -25,7 +25,8 @@ Vector = npt.NDArray[np.float64] | npt.NDArray[np.complex128]
 
 class SimError(Exception):
     """A simulation failed. `str(err)` is plain English; `log` holds raw ngspice lines;
-    `nodes` (net → SPICE node, set by `Simulator`) lets the error rules name nets."""
+    `nodes` (net → SPICE node) and `elements` (SPICE element → part ref), both set by
+    `Simulator`, let the error rules name nets and parts."""
 
     def __init__(
         self, message: str, log: list[str] | None = None, nodes: dict[str, str] | None = None
@@ -33,6 +34,7 @@ class SimError(Exception):
         super().__init__(message)
         self.log = log or []
         self.nodes = nodes or {}
+        self.elements: dict[str, str] = {}
 
 
 class SimTimeout(SimError):
@@ -55,6 +57,22 @@ def singular_nodes(log: list[str]) -> list[str]:
     """Nodes ngspice named when its matrix was singular (usually no DC path to ground),
     each once, in the order reported."""
     return list(dict.fromkeys(m[1] for line in log if (m := SINGULAR_NODE.search(line))))
+
+
+TROUBLE = re.compile(r'trouble with (?:node "([^"]+)"|\S+-instance (\S+))', re.I)
+UNSETTLED = re.compile(r"^stdout (\S+)\s+\S+\s+\S+\s+\*\s*$")
+
+
+def stuck_at(log: list[str]) -> list[str]:
+    """The SPICE nodes and devices a failed run got stuck at, each once: the node or device
+    instance ngspice names when its time step gets too small (`trouble with node "x"`,
+    `trouble with <model>-instance q1`); else the nodes its "Last Node Voltages" table stars
+    as not settled (branch currents left out). Empty when it names none (D-345)."""
+    trouble = [m[1] or m[2] for line in log if (m := TROUBLE.search(line))]
+    if trouble:
+        return list(dict.fromkeys(trouble))
+    starred = (m[1] for line in log if (m := UNSETTLED.match(line)))
+    return list(dict.fromkeys(n for n in starred if "#" not in n))
 
 
 class EngineUnavailable(SimError):

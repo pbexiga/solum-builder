@@ -210,8 +210,9 @@ class Simulator:
                 self.engine.run(netlist.text, timeout=timeout, progress=progress).plot(kind).vectors
             )
         except SimError as err:
-            # the error rules (solum.rules) map ngspice's node names back to nets
+            # the error rules (solum.rules) map ngspice's names back to nets and parts
             err.nodes = netlist.nodes
+            err.elements = {e.tokens[0].lower(): e.ref for e in netlist.elements if e.ref}
             raise
 
     def _op(self, circuit: Circuit) -> OpResult:

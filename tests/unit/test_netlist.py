@@ -280,8 +280,9 @@ def test_ac_needs_a_guitar(models: ModelLibrary, circuit: Builder) -> None:
 
 def test_wrong_model_kind(models: ModelLibrary, circuit: Builder) -> None:
     c = circuit().part("Q1", "bjt", "a", "b", "0", model="J201").build()
-    with pytest.raises(NetlistError, match="J201, which is a jfet model, not a bjt"):
+    with pytest.raises(NetlistError, match="J201, which is a jfet model, not a bjt") as err:
         generate_netlist(c, models, Op())
+    assert err.value.ref == "Q1"  # the error points to the part (D-345)
 
 
 def test_doubler_diodes_must_be_plain_diodes(models: ModelLibrary, circuit: Builder) -> None:

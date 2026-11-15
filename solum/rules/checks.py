@@ -69,7 +69,7 @@ from solum.models import Model, ModelLibrary
 from solum.netlist import NetlistError, pump_frequency
 from solum.rules import graph
 from solum.rules.rule import Layer
-from solum.sim.engine import SimError, singular_nodes
+from solum.sim.engine import SimError, singular_nodes, stuck_at
 from solum.simulate import OpResult
 from solum.units import format_quantity, parse_value
 from solum.view import probe_nets, rail_nets
@@ -114,6 +114,7 @@ class Context:
     op: OpResult | None = None
     error: Exception | None = None  # a failed run (sim_error layer)
     nodes: Mapping[str, str] = field(default_factory=dict)  # SPICE node → net, for errors
+    elements: Mapping[str, str] = field(default_factory=dict)  # SPICE element → ref, for errors
 
     @property
     def n(self) -> Nets:
@@ -1140,10 +1141,32 @@ def sim_no_dc_path(ctx: Context) -> Iterator[Hit]:
         yield Hit(nets=tuple(found), values={"which": which})
 
 
+def _stuck(ctx: Context) -> Hit:
+    """Where a failed run got stuck (`stuck_at`), as parts and nets, with `where` for the
+    message: " It got stuck at Q1." (empty when ngspice named nowhere). A name inside a
+    chip's model (`xu1.5`, `q.xu1.q4`) is that chip; a plain node is its net (D-345)."""
+    log = ctx.error.log if isinstance(ctx.error, SimError) else []
+    net_of = {node.lower(): net for node, net in ctx.nodes.items()}
+    refs: list[str] = []
+    nets: list[str] = []
+    for name in (n.lower() for n in stuck_at(log)):
+        ref = next((ctx.elements[s] for s in name.split(".") if s in ctx.elements), None)
+        if ref is not None:
+            refs.append(ref)
+        elif name in net_of:
+            nets.append(net_of[name])
+    refs, nets = list(dict.fromkeys(refs)), list(dict.fromkeys(nets))
+    places = list(refs)
+    if nets:
+        places.append(f"net {nets[0]}" if len(nets) == 1 else f"nets {listing(nets)}")
+    where = f" It got stuck at {listing(places)}." if places else ""
+    return Hit(refs[0] if refs else None, tuple(nets), {"where": where}, tuple(refs[1:]))
+
+
 @check("sim_error")
 def sim_timestep_too_small(ctx: Context) -> Iterator[Hit]:
     if _log_has(ctx, "timestep too small"):
-        yield Hit()
+        yield _stuck(ctx)
 
 
 @check("sim_error")
@@ -1155,16 +1178,17 @@ def sim_no_convergence(ctx: Context) -> Iterator[Hit]:
         "iteration limit reached",
         "no convergence",
     ):
-        yield Hit()
+        yield _stuck(ctx)
 
 
 @check("sim_error")
 def bias_unreachable(ctx: Context) -> Iterator[Hit]:
     if isinstance(ctx.error, BiasError):
-        yield Hit(values={"detail": str(ctx.error)})
+        yield Hit(ctx.error.ref, values={"detail": str(ctx.error)})
 
 
 @check("sim_error")
 def sim_failed(ctx: Context) -> Iterator[Hit]:
     if ctx.error is not None:
-        yield Hit(values={"detail": str(ctx.error)})
+        ref = ctx.error.ref if isinstance(ctx.error, NetlistError) else None
+        yield Hit(ref, values={"detail": str(ctx.error)})

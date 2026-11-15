@@ -420,17 +420,21 @@ def test_api_error_messages(js: Page) -> None:
           json: async () => { if (body === undefined) throw new Error('not json'); return body; } });
         const failing = async () => { throw new TypeError('network'); };
         const out = [];
-        for (const f of [fake(422, { message: 'Plain words.' }), fake(500, undefined), failing]) {
-          try { await a.getJson('x', f); out.push('ok'); } catch (e) { out.push([e.message, e.status]); }
+        const where = { refs: ['Q1'], nets: [], at: [] };
+        for (const f of [fake(422, { message: 'Plain words.' }), fake(500, undefined), failing,
+                         fake(422, { message: 'Stuck.', where })]) {
+          try { await a.getJson('x', f); out.push('ok'); } catch (e) { out.push([e.message, e.status, e.where]); }
         }
         out.push(await a.postJson('x', { a: 1 }, fake(200, { fine: true })));
         return out;
         """,
     )
-    assert result[0] == ["Plain words.", 422]
+    assert result[0] == ["Plain words.", 422, None]
     assert result[1][1] == 500 and "error (500)" in result[1][0]
-    assert result[2] == ["Can't reach the Solum Builder server. Is it running?", 0]
-    assert result[3] == {"fine": True}
+    assert result[2] == ["Can't reach the Solum Builder server. Is it running?", 0, None]
+    # a failed run says where it points (D-345)
+    assert result[3] == ["Stuck.", 422, {"refs": ["Q1"], "nets": [], "at": []}]
+    assert result[4] == {"fine": True}
 
 
 def test_a_search_with_its_progress(js: Page) -> None:

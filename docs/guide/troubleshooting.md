@@ -10,7 +10,11 @@ The browser mixed new scripts with old ones from its cache. Reload once with **C
 
 ## "Can't simulate yet: …"
 
-Something in the drawing stops the simulation: a net with no DC path to ground (two capacitors in series with nothing else on the net between them), a chip with no power, a DC source on V+, a model that isn't in the library. The banner says which; Problems lists it with the fix. A half-drawn circuit says this until it's wired.
+Something in the drawing stops the simulation: a net with no DC path to ground (two capacitors in series with nothing else on the net between them), a chip with no power, a DC source on V+, a model that isn't in the library. The banner says which; click it to select the part or net it names. Problems lists it with the fix. A half-drawn circuit says this until it's wired.
+
+## "Can't simulate: … It got stuck at …"
+
+ngspice couldn't find the circuit's DC voltages, or its time step became too small, and it names where it gave up. Click the message to select that part. It's where to look first, not always the cause: check its value and model, and the parts wired to it (a transistor with a model card that's way off, positive feedback, an extreme value). Undo the last change to see if it caused this.
 
 ## The curve is greyed out
 

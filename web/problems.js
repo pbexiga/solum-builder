@@ -33,7 +33,8 @@ export const problemKey = (p) => [p.rule, ...p.refs, ...p.nets].join("|");
 
 /**
  * What clicking a problem selects: its part (probed like a click on it), else its first
- * net, else nothing. @param {Problem} problem
+ * net, else nothing. A run's error that points somewhere is taken alike (D-345).
+ * @param {{refs: string[], nets: string[]}} problem
  * @returns {{kind: "part" | "net", id: string} | null}
  */
 export function problemTarget(problem) {

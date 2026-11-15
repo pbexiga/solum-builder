@@ -405,6 +405,21 @@ function showError(message, pick = null) {
 }
 $("error").addEventListener("click", () => errorPick?.());
 
+/**
+ * What clicking a problem, or a run's error that points somewhere (D-345), shows on the
+ * sheet: its part, else its net, else the labels on its spots (a clash, D-335). Null when
+ * it points nowhere.
+ * @param {{refs: string[], nets: string[], at?: number[][]} | null | undefined} where
+ * @returns {(() => void) | null}
+ */
+function pickOf(where) {
+  if (!where) return null;
+  const target = problemTarget(where);
+  if (target) return () => select(target);
+  const at = where.at ?? [];
+  return at.length ? () => selectItems(labelsAt(state.view, at)) : null;
+}
+
 // ---- opening circuits ------------------------------------------------------------
 
 /** `#circuit/<id>`, `#starter/<id>`, `#block/<id>`, `#copy/core:<id>` or `#new` (an
@@ -1388,11 +1403,7 @@ function showProblems() {
     $("problem-count").textContent = "";
     return;
   }
-  const count = renderProblems(body, result, (p) => {
-    const target = problemTarget(p);
-    if (target) select(target);
-    else if (p.at?.length) selectItems(labelsAt(state.view, p.at)); // labels wired together (D-335)
-  }, state.openProblems, { dismissed: state.circuit?.dismissed, onDismiss: dismissDialog, onRestore: (p) => problemEdit(restoreProblem(state.circuit, p), "Bring back problem") });
+  const count = renderProblems(body, result, (p) => pickOf(p)?.(), state.openProblems, { dismissed: state.circuit?.dismissed, onDismiss: dismissDialog, onRestore: (p) => problemEdit(restoreProblem(state.circuit, p), "Bring back problem") });
   $("problem-count").textContent = count ? `\u00b7 ${count}` : "";
   schematic.showMarks(state.marks && result ? result.problems : []);
 }
@@ -1503,7 +1514,8 @@ async function runSelected() {
     stagesMeasuring = stages.refresh().catch(() => {});
   } catch (err) {
     if (requests.isCurrent(token)) {
-      showError(/** @type {Error} */ (err).message);
+      // clicked, it shows the part or net to blame, when the server says (D-345)
+      showError(/** @type {Error} */ (err).message, pickOf(/** @type {any} */ (err).where));
       // the pane is about what's selected: say it has no readings and why (D-318)
       if (sel.id) renderProbeFailed($("probe-body"), sel.id, /** @type {Error} */ (err).message);
     }

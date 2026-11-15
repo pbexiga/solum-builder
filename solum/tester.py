@@ -9,7 +9,7 @@ current with 2.2 MΩ from base to supply, less the leakage, over the base curren
 from dataclasses import dataclass
 
 from solum.circuit.build import CircuitBuilder
-from solum.models import BjtFit, Model, ModelLibrary
+from solum.models import BjtFit, FitError, Model, ModelLibrary
 from solum.netlist import Op, generate_netlist
 from solum.sim.engine import SimEngine
 
@@ -20,10 +20,6 @@ RTOL = 1e-3  # the fit stops once the tester reads within 0.1 %
 MAX_STEPS = 30
 SCALE_RANGE = (1e-3, 1e3)  # a thousandth to a thousand times the card's gain
 _fits: dict[tuple[str, str, float, float | None], BjtFit] = {}  # a fit depends on the card
-
-
-class FitError(ValueError):
-    """A measured gain or leakage the tester can't be made to read (plain English)."""
 
 
 @dataclass(frozen=True)

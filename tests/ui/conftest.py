@@ -5,6 +5,7 @@ image). Runs with `make accept`."""
 import itertools
 import json
 import os
+import shutil
 import time
 from collections.abc import Iterator
 from pathlib import Path
@@ -24,6 +25,12 @@ REPO = Path(__file__).parents[2]
 def ui_settings(tmp_path_factory: pytest.TempPathFactory) -> Settings:
     """Where the test server keeps things: temporary folders."""
     tmp = tmp_path_factory.mktemp("ui")
+    # a user model that no circuit using it as a latch can solve (D-345): Add a model's own
+    # check refuses it, so it goes in the models folder before the server reads that
+    models = tmp / "data" / "models" / "bjt"
+    models.mkdir(parents=True)
+    for f in (REPO / "tests" / "fixtures" / "rule-models" / "bjt").glob("TESTSTUCK.*"):
+        shutil.copy(f, models / f.name)
     return load_settings(
         {
             "CACHE_DIR": str(tmp / "cache"),

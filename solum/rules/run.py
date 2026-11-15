@@ -119,7 +119,8 @@ class Checker:
         net_of = {node: net for net, node in err.nodes.items()} if isinstance(err, SimError) else {}
         # the error rules look only at the error, so the circuit is a stand-in
         blank = Circuit.model_construct(schema_=SCHEMA_VERSION, id="error", name="", parts=[])
-        ctx = Context(blank, self.models, None, error=err, nodes=net_of)
+        elements = err.elements if isinstance(err, SimError) else {}
+        ctx = Context(blank, self.models, None, error=err, nodes=net_of, elements=elements)
         found = self._run("sim_error", ctx)
         if not found:
             found = [problem(r, hit) for r in self.book.layer("sim_error") if r.fallback

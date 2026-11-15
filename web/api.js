@@ -3,12 +3,25 @@
  * Every error the server sends has a plain-English `message`; that's what gets shown.
  */
 
+/** @typedef {{refs: string[], nets: string[], at: number[][]}} Where
+ *   where a refused or failed run points on the sheet (D-345) */
+
 export class ApiError extends Error {
-  /** @param {string} message @param {number} status */
-  constructor(message, status) {
+  /** @param {string} message @param {number} status @param {Where | null} [where] */
+  constructor(message, status, where = null) {
     super(message);
     this.status = status;
+    this.where = where;
   }
+}
+
+/**
+ * Where a failed response points on the sheet, if it says (D-345).
+ * @param {unknown} body parsed JSON, or null @returns {Where | null}
+ */
+export function errorWhere(body) {
+  const where = body && typeof body === "object" && "where" in body ? body.where : null;
+  return where && typeof where === "object" ? /** @type {Where} */ (where) : null;
 }
 
 /**
@@ -46,7 +59,7 @@ export async function request(url, init, fetchFn = fetch, as = "json") {
   } catch {
     body = null;
   }
-  if (!response.ok) throw new ApiError(errorMessage(response.status, body), response.status);
+  if (!response.ok) throw new ApiError(errorMessage(response.status, body), response.status, errorWhere(body));
   return body;
 }
 

@@ -42,7 +42,7 @@ from solum.circuit.schema import (
     VSource,
 )
 from solum.circuit.supply import battery_of, live_rails, on_battery
-from solum.models import Model, ModelCard, ModelLibrary, model_cards_text
+from solum.models import FitError, Model, ModelCard, ModelLibrary, model_cards_text
 from solum.units import parse_value
 
 SWITCH_ON = 0.01  # ohms across a closed contact
@@ -55,7 +55,12 @@ PUMP_LEAK = 1e9  # ohms holding a pump's inner node and CAP+/CAP- pins (keeps th
 
 
 class NetlistError(ValueError):
-    """The circuit can't be turned into a netlist (plain-English message)."""
+    """The circuit can't be turned into a netlist (plain-English message); `ref`: the part
+    it's about, when one is (D-345)."""
+
+    def __init__(self, message: str, ref: str | None = None) -> None:
+        super().__init__(message)
+        self.ref = ref
 
 
 @dataclass(frozen=True)
@@ -222,7 +227,8 @@ class _Emitter:
         if model.info.type != kind:
             raise NetlistError(
                 f"{part.ref} uses {part.model}, which is a {model.info.type} model, not a "
-                f"{kind} model. Pick a {kind} model."
+                f"{kind} model. Pick a {kind} model.",
+                part.ref,
             )
         self.used_models.append(model)
         return model
@@ -234,7 +240,7 @@ class _Emitter:
                 pins = {role: pins[role] for role in model.info.pins}
             except KeyError as err:
                 raise NetlistError(
-                    f"Model {model.id} has a pin {err} that {part.ref} lacks."
+                    f"Model {model.id} has a pin {err} that {part.ref} lacks.", part.ref
                 ) from None
         if self.sense:
             pins = self.sense_pins(part, pins)
@@ -279,9 +285,13 @@ class _Emitter:
         if card is None or model.bjt_spec() is None:
             raise NetlistError(
                 f"{part.ref}: a measured gain needs a transistor model card; {model.id} isn't "
-                "one. Pick another model or use the model's gain."
+                "one. Pick another model or use the model's gain.",
+                part.ref,
             )
-        fit = self.models.bjt_fit(model, part.measured.hfe, part.measured.leakage)
+        try:
+            fit = self.models.bjt_fit(model, part.measured.hfe, part.measured.leakage)
+        except FitError as err:  # the run's error, on this part (D-345)
+            raise NetlistError(str(err), part.ref) from None
         params = {**card.params, "bf": spice_number((model.param("bf") or 100.0) * fit.scale)}
         if (ise := model.param("ise")) is not None:
             params["ise"] = spice_number(ise / fit.scale)
@@ -296,12 +306,15 @@ class _Emitter:
         if card is None or model.jfet_spec() is None:
             raise NetlistError(
                 f"{part.ref}: measured Idss/Vp need a level-1 JFET model; {model.id} isn't one. "
-                "Pick another model or remove the measured values."
+                "Pick another model or remove the measured values.",
+                part.ref,
             )
         vp, idss = part.measured.vp, part.measured.idss
         if (vp > 0) != (model.polarity == "p"):
             sign = "negative" if model.polarity == "n" else "positive"
-            raise NetlistError(f"{part.ref}: an {model.id}'s pinch-off voltage is {sign}.")
+            raise NetlistError(
+                f"{part.ref}: an {model.id}'s pinch-off voltage is {sign}.", part.ref
+            )
         params = {**card.params, "vto": spice_number(vp), "beta": spice_number(idss / vp**2)}
         name = f"{card.name}_{part.ref}"
         self.extra_cards.append(ModelCard(name, card.type, params).text())
@@ -415,7 +428,8 @@ def _battery(e: _Emitter, p: Battery) -> None:
                 f"{p.ref}'s + is on {net}, so with the DC plug in the battery and the adapter "
                 f"both hold {net}, which can't be simulated. Wire {p.ref}'s + to the DC jack's "
                 "battery lug (bat) so the plug cuts it off, or give the battery an internal "
-                "resistance."
+                "resistance.",
+                p.ref,
             )
     if p.resistance is not None:
         inner = f"{p.ref.lower()}_cell"
@@ -452,7 +466,8 @@ def pump_frequency(part: ChargePump, models: ModelLibrary, boost: bool) -> float
     if model.info.type != "chargepump":
         raise NetlistError(
             f"{part.ref} uses {part.model}, which is a {model.info.type} model, not a charge "
-            "pump. Pick a charge-pump chip."
+            "pump. Pick a charge-pump chip.",
+            part.ref,
         )
     params = model.info.params
     return params["f_pump_boost"] if boost and "f_pump_boost" in params else params["f_pump"]
@@ -468,7 +483,9 @@ def pump_resistance(
     freq, sheet = pump_frequency(part, models, boost), params["r_out"]
     drawn = parse_value(cap.value)
     if drawn <= 0:
-        raise NetlistError(f"{cap.ref} has no value, so {part.ref} can't pump. Give it one.")
+        raise NetlistError(
+            f"{cap.ref} has no value, so {part.ref} can't pump. Give it one.", cap.ref
+        )
     return sheet - 1 / (freq * params["c_pump"]) + 1 / (freq * drawn)
 
 
@@ -483,7 +500,7 @@ def _chargepump(e: _Emitter, p: ChargePump) -> None:
     as a meter reads them (Aion's Klon: 5.02 and -4.66 V)."""
     wiring = pump_wiring(e.circuit, e.nets, p)
     if wiring.problems:
-        raise NetlistError(wiring.problems[0])
+        raise NetlistError(wiring.problems[0], p.ref)
     params = e.models.get(p.model).info.params
     drop = params.get("v_drop", 0.0)
     boosted = wiring.boost and "f_pump_boost" in params
@@ -525,11 +542,14 @@ def _doubler_diode(e: _Emitter, p: ChargePump, low: Diode, node: str, junction: 
     through in a real doubler (drawn D1, from V+, then sits reverse-biased)."""
     diode = e.models.get(low.model)
     if diode.info.type != "diode":
-        raise NetlistError(f"{low.ref} uses {low.model}, which isn't a diode model. Pick a diode.")
+        raise NetlistError(
+            f"{low.ref} uses {low.model}, which isn't a diode model. Pick a diode.", low.ref
+        )
     if diode.info.kind == "subckt":
         raise NetlistError(
             f"{low.ref} is a zener ({low.model}), but {p.ref}'s doubler needs a plain diode "
-            "there, such as the 1N5817."
+            "there, such as the 1N5817.",
+            low.ref,
         )
     e.used_models.append(diode)
     e.add(element_name("R", p.ref, "leak"), node, gnd, spice_number(PUMP_LEAK))
@@ -556,7 +576,8 @@ def _regulator(e: _Emitter, p: Regulator) -> None:
     if model.info.type != "regulator":
         raise NetlistError(
             f"{p.ref} uses {p.model}, which is a {model.info.type} model, not a regulator. "
-            "Pick a regulator."
+            "Pick a regulator.",
+            p.ref,
         )
     k = model.info.params
     pins = {name: e.pin(p, name) for name in ("in", "gnd", "out")}
@@ -627,7 +648,7 @@ def _leave_out(e: _Emitter, p: Part) -> None:
     """The guitar or the amp, left out (`Ac.open`)."""
     pin = {Guitar: "out", AmpInput: "in"}.get(type(p))
     if pin is None:
-        raise NetlistError(f"Only the guitar or the amp can be left out, not {p.ref}.")
+        raise NetlistError(f"Only the guitar or the amp can be left out, not {p.ref}.", p.ref)
     e.add(element_name("R", f"{p.ref}_open"), e.pin(p, pin), "0", spice_number(OPEN_OHMS))
 
 
@@ -840,7 +861,8 @@ def require_wired(circuit: Circuit, nets: Nets, net: str) -> None:
         verb, them = ("isn't", "it") if len(refs) == 1 else ("aren't", "them")
         raise NetlistError(
             f"{' and '.join(refs)} {verb} wired into the circuit yet, so the simulation "
-            f"leaves {them} out and there's nothing to measure here. Wire {them} in first."
+            f"leaves {them} out and there's nothing to measure here. Wire {them} in first.",
+            refs[0],
         )
 
 

@@ -20,9 +20,9 @@ Notes about the build (a capacitor with no kind, no enclosure chosen) gather und
 
 - **The drawing**, before any simulation: a net with no DC path to ground, a chip with no power, an op-amp with no feedback or an input with no bias, an LED with no resistor, a supply shorted, two names on one net, a part shorted out or not wired in, the signal path broken, a model not in the library, an electrolytic with no voltage rating, an unused half of a dual op-amp, a switch input with no pull-down (the pop when you stomp), a battery that the DC jack doesn't switch.
 - **The working point**, after the DC simulation: a transistor cut off or saturated, a JFET pinched off or in its ohmic region, an op-amp stuck at a supply or with its inputs out of range, DC at the output, a part over its voltage, current or power rating (or close to it), an electrolytic reversed, a supply sagging on its way in, a regulator that can't regulate.
-- **The simulation itself**: when ngspice can't find a solution, or a bias target can't be reached.
+- **The simulation itself**: when ngspice can't find a solution (it says where it got stuck: *It got stuck at Q1.*), or a bias target can't be reached.
 
-Some problems stop the run: ngspice would make up a voltage on a net with no DC path, so nothing is simulated and the banner says *Can't simulate yet:* and why. A part joined by only one pin is left out instead, and the rest runs; click it and Probe says it isn't wired in, with no readings. When a run is refused or fails, Probe names what you have selected and says why there is nothing to show.
+Some problems stop the run: ngspice would make up a voltage on a net with no DC path, so nothing is simulated and the banner says *Can't simulate yet:* and why. A part joined by only one pin is left out instead, and the rest runs; click it and Probe says it isn't wired in, with no readings. When a run is refused or fails, Probe names what you have selected and says why there is nothing to show. When the error in the Results column names a part or a net (a model not in the library, a net with no DC path, where ngspice got stuck, a trimmer that can't reach its bias target), click it to select that part or net on the sheet, as clicking its row in Problems does.
 
 ## Dismissing a problem
 

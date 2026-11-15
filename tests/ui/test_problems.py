@@ -1,9 +1,12 @@
 """The Problems panel in the browser (Phase 5, D-077)."""
 
+import re
 import zipfile
 
 from playwright.sync_api import Page, expect
 
+from solum.circuit.build import CircuitBuilder
+from solum.circuit.io import circuit_to_dict
 from solum.circuit.schema import SCHEMA_VERSION
 from tests.ui.conftest import click_part, open_circuit, updates, wait_for_update
 from tests.ui.test_editor import (
@@ -146,6 +149,57 @@ def test_a_floating_net_stops_the_run_with_a_plain_message(
         "Can't simulate yet: net x has no DC path to ground."
     )
     assert all("422" in e for e in browser_errors)  # the refused run, expected
+    browser_errors.clear()
+
+
+def test_a_refused_runs_error_shows_the_part_to_blame(
+    page: Page, base_url: str, browser_errors: list[str]
+) -> None:
+    """D-345: Results' error from a run that names a part (here a model not in the
+    library) is clickable, like a label clash's (D-335), and selects that part."""
+    circuit = page.request.get(f"{base_url}api/starters/ts808").json()["circuit"]
+    q1 = next(p for p in circuit["parts"] if p["ref"] == "Q1")
+    q1["model"] = "NOSUCH1"
+    saved = page.request.post(
+        f"{base_url}api/circuits", data={"circuit": circuit, "name": "no model"}
+    )
+    open_circuit(page, base_url, f"circuit/{saved.json()['circuit']['id']}")
+    error = page.locator("#error")
+    expect(error).to_contain_text("Q1 names the model NOSUCH1")
+    expect(error).to_have_class(re.compile(r"\bpick\b"))
+    expect(page.locator("#schematic .part.selected[data-ref='Q1']")).to_have_count(0)
+    error.click()
+    expect(page.locator("#schematic .part.selected[data-ref='Q1']")).not_to_have_count(0)
+    expect(error).to_contain_text("Q1 names the model NOSUCH1")  # still there, still says why
+    assert all("422" in e for e in browser_errors)  # the refused runs, expected
+    browser_errors.clear()
+
+
+def test_a_failed_runs_error_shows_where_it_got_stuck(
+    page: Page, base_url: str, browser_errors: list[str]
+) -> None:
+    """D-345: a latch of transistors with absurd gain (a user model, put in the models
+    folder by conftest), which ngspice can't solve: Results says where it got stuck, and
+    clicking it selects that part."""
+    latch = (
+        CircuitBuilder("latch").rail("V+", 9)
+        .part("R1", "resistor", "V+", "a", value="10k")
+        .part("R2", "resistor", "V+", "c", value="4k7")
+        .part("Q1", "bjt", "c", "a", "e", model="TESTSTUCK")
+        .part("R3", "resistor", "e", "GND", value="1k")
+        .part("Q2", "bjt", "a", "c", "GND", model="TESTSTUCK")
+    )  # fmt: skip
+    made = {"circuit": circuit_to_dict(latch.build()), "name": "stuck latch"}
+    saved = page.request.post(f"{base_url}api/circuits", data=made).json()["circuit"]["id"]
+    open_circuit(page, base_url, f"circuit/{saved}")
+    error = page.locator("#error")
+    expect(error).to_have_text(
+        "Can't simulate: the simulator couldn't find the circuit's DC voltages. It got stuck at Q1."
+    )
+    expect(error).to_have_class(re.compile(r"\bpick\b"))
+    error.click()
+    expect(page.locator("#schematic .part.selected[data-ref='Q1']")).not_to_have_count(0)
+    assert all("422" in e for e in browser_errors)  # the failed runs, expected
     browser_errors.clear()
 
 

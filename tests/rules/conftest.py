@@ -53,5 +53,6 @@ def fixture_problems(spec: dict[str, Any], checker: Checker, sim: Simulator) -> 
     if "log" in spec:
         err = SimError(spec.get("message", "The simulation failed."), spec["log"])
         err.nodes = {net: node for net, node in spec.get("nodes", {}).items()}
+        err.elements = dict(spec.get("elements", {}))
         return checker.explain(err)
     return checker.check(fixture_circuit(spec), sim)[0]

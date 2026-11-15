@@ -475,8 +475,29 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         log.exception("Unexpected error", exc_info=err)
         return "Something went wrong inside Solum Builder. The server log has details."
 
+    def error_where(err: BaseException) -> dict[str, Any] | None:
+        """Where on the sheet a refused or failed run points, for the page to mark when its
+        error is clicked (D-345): the first problem's parts, nets and spots, as the
+        Problems panel has them. None when it points nowhere."""
+        if isinstance(err, CantSimulate):
+            found = err.problems
+        elif isinstance(err, RUN_ERRORS) and not isinstance(err, ConnectivityError):
+            found = checker.explain(err)  # a clash is marked from the view (D-335)
+        else:
+            return None
+        if not found or not (found[0].refs or found[0].nets or found[0].at):
+            return None
+        first = found[0]
+        return {
+            "refs": list(first.refs),
+            "nets": list(first.nets),
+            "at": [list(p) for p in first.at],
+        }
+
     async def user_error(_request: Request, err: Exception) -> JSONResponse:
-        return JSONResponse({"message": error_text(err)}, status_code=422)
+        where = error_where(err)
+        body = {"message": error_text(err), **({"where": where} if where else {})}
+        return JSONResponse(body, status_code=422)
 
     for error in (*USER_ERRORS, SimError):
         app.add_exception_handler(error, user_error)

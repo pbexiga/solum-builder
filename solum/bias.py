@@ -20,7 +20,11 @@ OpFunction = Callable[[Circuit], Mapping[str, float]]  # circuit → node voltag
 
 
 class BiasError(ValueError):
-    """A bias target can't be reached (plain-English message)."""
+    """A bias target can't be reached (plain-English message); `ref`: the trimmer (D-345)."""
+
+    def __init__(self, message: str, ref: str | None = None) -> None:
+        super().__init__(message)
+        self.ref = ref
 
 
 @dataclass(frozen=True)
@@ -121,7 +125,7 @@ def target_reach(circuit: Circuit, ref: str, op: OpFunction) -> Reach:
     """The volts trimmer `ref` can hold its target's node at (it must have a target)."""
     trimmer = next((p for p in circuit.parts if p.ref == ref), None)
     if not isinstance(trimmer, Trimmer) or trimmer.bias_target is None:
-        raise BiasError(f"{ref} isn't a trimmer with a bias target.")
+        raise BiasError(f"{ref} isn't a trimmer with a bias target.", ref)
     node = connect(circuit).resolve(trimmer.bias_target.node)
     v_lo, v_hi = (op(circuit.with_part(ref, rotation=r))[node] for r in (0.0, 1.0))
     value = trimmer.value if isinstance(trimmer.value, str) else format_value(trimmer.value)
@@ -141,6 +145,7 @@ def _bisect(
         raise BiasError(
             f"{ref} can't set {node} to {target:g} V: turning it end to end only moves "
             f"{node} between {min(v_lo, v_hi):.2f} V and {max(v_lo, v_hi):.2f} V. Change "
-            f"{ref}'s value or the resistor in series with it."
+            f"{ref}'s value or the resistor in series with it.",
+            ref,
         )
     return found

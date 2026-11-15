@@ -16,6 +16,7 @@ fixtures:
       parts:
         - {ref: TR1, type: trimmer, nets: [V+, d, d], value: 50k, bias_target: {node: Q1.D, volts: 12}}
         - {ref: Q1, type: jfet, nets: [d, GND, GND], model: J201}
+      expect: [TR1]
   good:
     - rails: {V+: 9}
       parts:

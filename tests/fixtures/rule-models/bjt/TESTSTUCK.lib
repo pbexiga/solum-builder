@@ -1,0 +1,2 @@
+* TESTSTUCK: test only. An NPN with absurd gain and emission coefficient: no circuit using it as a latch has a DC solution
+.model TESTSTUCK NPN(is=1e-14 bf=1e9 nf=0.05)

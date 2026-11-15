@@ -1,0 +1,14 @@
+{
+  "id": "TESTSTUCK",
+  "type": "bjt",
+  "description": "Test only: an NPN with absurd gain (bf 1e9, nf 0.05), so a circuit can fail to find its DC voltages and the error can name the part (D-345)",
+  "spice_name": "TESTSTUCK",
+  "kind": "model",
+  "card": "TESTSTUCK.lib",
+  "source": {
+    "url": "https://github.com/pbexiga/solum-builder",
+    "retrieved": "2026-11-15",
+    "licence": "Made up for the tests: Solum Builder's own",
+    "original": "Solum Builder test fixture"
+  }
+}

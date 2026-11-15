@@ -9,11 +9,13 @@ import pytest
 from solum.circuit.build import CircuitBuilder
 from solum.circuit.connectivity import connect, on_segment
 from solum.circuit.io import load_circuit, parse_circuit
-from solum.circuit.parts import pin_positions
+from solum.circuit.parts import pin_positions, rotate
 from solum.circuit.refs import PREFIXES
 from solum.circuit.schema import SCHEMA_VERSION
 from solum.models import load_models
 from solum.view import (
+    _sign,
+    _wire_ways,
     circuit_view,
     controls,
     junctions,
@@ -253,6 +255,31 @@ def test_no_library_circuit_has_a_zero_length_wire_or_a_label_on_nothing(repo: P
             ]
             loose = [lb.net for lb in c.labels if lb.pos not in pins and lb not in on_wire]
             assert not loose, path.name
+
+
+def test_no_library_supply_symbol_points_along_its_own_wire(repo: Path) -> None:
+    """Bug: the TS808's VREF bars (a bias net drawn as a supply, D-225) stood up along the
+    wire below them, their name across it. A ground, rail or bias symbol in a starter or
+    block points away from its wires and pin leads, as a dropped one does (D-338, D-347)."""
+    for folder in ("starters", "blocks"):
+        for path in sorted((repo / "library" / folder).glob("*.json")):
+            c = load_circuit(path)
+            nets = circuit_view(c)["nets"]
+            leads: dict[tuple[int, int], set[tuple[int, int]]] = {}
+            for p in c.parts:
+                for pin in pin_positions(p).values():
+                    dx, dy = p.pos[0] - pin[0], p.pos[1] - pin[1]
+                    way = (_sign(dx), 0) if abs(dx) >= abs(dy) else (0, _sign(dy))
+                    leads.setdefault(pin, set()).add(way)
+            for lb in c.labels:
+                if lb.net == "GND":
+                    base = (0, 1)
+                elif nets[lb.net]["rail"] or nets[lb.net]["bias"]:
+                    base = (0, -1)
+                else:
+                    continue
+                taken = _wire_ways(c, lb.pos) | leads.get(lb.pos, set())
+                assert rotate(base, lb.rot) not in taken, f"{path.name}: {lb.net} at {lb.pos}"
 
 
 def test_every_starter_text_box_sits_next_to_its_circuit_and_clear_of_it(repo: Path) -> None:

@@ -6,49 +6,20 @@ Usage: python scripts/mac_smoke.py "dist/Solum Builder.app" [a folder outside th
 whose libraries it must not load ...]
 """
 
-import json
 import os
 import re
 import subprocess
 import sys
 import tempfile
 import time
-import urllib.error
-import urllib.parse
-import urllib.request
 from pathlib import Path
-from typing import Any
 
 import numpy as np
+from smoke import Client, check_server
 
 from solum.audio.wav import Audio, write_wav
 
 REPO = Path(__file__).resolve().parents[1]
-STARTERS = ("ts808", "proco-rat", "big-muff-pi-v3")  # the Rat: the op-amp that needs D-322
-PDFS = ("bom.pdf", "bias.pdf", "notes.pdf", "wiring.pdf")
-
-
-class Client:
-    def __init__(self, port: int) -> None:
-        self.base = f"http://127.0.0.1:{port}"
-
-    def call(self, method: str, path: str, body: Any = None, raw: bytes | None = None,
-             params: dict[str, str] | None = None) -> tuple[int, bytes]:  # fmt: skip
-        url = self.base + path + ("?" + urllib.parse.urlencode(params) if params else "")
-        data = raw if raw is not None else (json.dumps(body).encode() if body is not None else None)
-        request = urllib.request.Request(url, data=data, method=method)
-        if body is not None:
-            request.add_header("Content-Type", "application/json")
-        try:
-            with urllib.request.urlopen(request, timeout=300) as r:
-                return r.status, r.read()
-        except urllib.error.HTTPError as err:
-            return err.code, err.read()
-
-    def json(self, method: str, path: str, **kw: Any) -> Any:
-        status, data = self.call(method, path, **kw)
-        assert status == 200, f"{method} {path}: {status} {data[:300]!r}"
-        return json.loads(data)
 
 
 def wait_for_port(log: Path, process: "subprocess.Popen[bytes]", seconds: float = 60) -> int:
@@ -76,22 +47,10 @@ def loaded_from(pid: int, outside: list[str]) -> list[str]:
 
 
 def drive(client: Client, home: Path) -> None:
-    health = client.json("GET", "/api/health")
-    assert health["engine"] == "native" and health["ngspice"] == "44.2", health
+    circuits = check_server(client)  # what the Docker image is checked for too (D-346)
     settings = client.json("GET", "/api/settings")
     assert settings["can_move_folders"] is True
     assert settings["data_dir"].startswith(str(home)), settings["data_dir"]
-    circuits = {}
-    for sid in STARTERS:
-        circuits[sid] = client.json("GET", f"/api/starters/{sid}")["circuit"]
-        run = client.json("POST", "/api/run", body={"circuit": circuits[sid]})
-        assert {"op", "ac", "tran"} <= set(run), sorted(run)
-        assert client.json("POST", "/api/stages", body={"circuit": circuits[sid]})["rows"]
-        print(f"  ran {sid}")
-    for name in PDFS:
-        status, data = client.call("GET", f"/api/export/starter/ts808/{name}")
-        assert status == 200 and data[:5] == b"%PDF-", f"{name}: {status} {data[:200]!r}"
-    print(f"  exported {len(PDFS)} PDFs")
     t = np.arange(44100) / 44100
     clip = write_wav(Audio(44100, 0.5 * np.sin(2 * np.pi * 196 * t)))
     capture = (REPO / "tests" / "fixtures" / "nam" / "standard-random.nam").read_bytes()
@@ -145,7 +104,7 @@ def launch(app: Path, home: Path) -> "tuple[subprocess.Popen[bytes], Client, flo
     quiet = subprocess.DEVNULL  # or a worker left behind would hold this script's output open
     process = subprocess.Popen([program], env=env, stdout=quiet, stderr=quiet)
     port = wait_for_port(log, process)
-    return process, Client(port), time.monotonic() - started
+    return process, Client(f"http://127.0.0.1:{port}"), time.monotonic() - started
 
 
 def log_errors(home: Path) -> list[str]:

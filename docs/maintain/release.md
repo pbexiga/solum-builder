@@ -22,31 +22,33 @@ are theirs: merging, tagging, approving and publishing (D-331).
 6. **Docs.** The guide's pages and screenshots match the app; the README's install and
    update steps still work.
 7. **Build the image:** `make image`, then run it against an empty data folder and open a
-   starter, run it, render audio. The image is built on x86-64 and ARM64 alike (D-327);
-   the release run tests both on GitHub's Linux runners ([The Linux checks](#the-linux-checks)),
-   so a local run on one is enough (an Apple Silicon Mac with Podman is an ARM64 machine).
+   starter, run it, render audio (`python3 scripts/smoke.py http://127.0.0.1:8000` does all
+   but the audio). The image is built on x86-64 and ARM64 alike (D-327); the release run
+   builds and smoke-tests it on x86-64 ([The Linux check](#the-linux-check)), and an Apple
+   Silicon Mac with Podman is an ARM64 machine. When anything about ngspice or the
+   Dockerfile changed, run `make check` and `make accept` on an x86-64 machine too.
 8. **Build the Mac app** on an Apple Silicon Mac: `make mac-app` (it runs the tests and a
    smoke test itself; [Building the Mac app](mac-app.md)). Quit any copy of the app first.
    Open `dist/Solum-Builder-<version>.dmg`, drag the app to Applications, open it, run a
    starter, export a build package, render a clip, and quit: nothing left in Activity
    Monitor. Once in a while, and when what it bundles changed, on a clean user account.
    To check the runners before tagging: Actions → **Release** → Run workflow on `main`,
-   Approve; the Linux rows run too, and the `.dmg` comes back as the run's artifact.
+   Approve; the Linux check runs too, and the `.dmg` comes back as the run's artifact.
 9. **Fresh-clone check** *(optional)*: clone into a new folder, `make dev-image`, `make check`,
-   `docker compose up --build`, open the app. The release run's Linux rows do this on clean
-   machines (D-346); do it by hand when the Linux checks are off, or after a change to
-   `compose.yaml` or `.env.example`, which the rows don't use.
+   `docker compose up --build`, open the app. The release run's Linux check builds and runs
+   the image on a clean machine (D-346); do it by hand when the check is off, or after a
+   change to `compose.yaml` or `.env.example`, which it doesn't use.
 10. **Tag** `vX.Y.Z` on `main`'s merged commit and push the tag (`git tag vX.Y.Z`,
    `git push origin vX.Y.Z`). `make image-tar` writes the image for copying to a machine
    that won't build it (`docs/NAS.md`).
 11. **Approve the release build.** The tag starts the **Release** workflow
-   (`.github/workflows/release.yml`, D-330, D-346). The two Linux rows start at once
-   ([The Linux checks](#the-linux-checks)); the Mac build waits in the `release` environment
+   (`.github/workflows/release.yml`, D-330, D-346). The Linux check starts at once
+   ([The Linux check](#the-linux-check)); the Mac build waits in the `release` environment
    until you click **Review deployments → Approve** on the run. Then GitHub's macOS runner
    checks the tag is `v` + `__version__`, runs the same `make mac-app` (tests, app, smoke
    test, `.dmg`) and attests where the `.dmg` came from (about 20 minutes). When the Mac build
-   and both Linux rows are green, the `draft` job makes a **draft release** with the `.dmg`
-   and its `.sha256`. Any of them red: no draft.
+   and the Linux check are green, the `draft` job makes a **draft release** with the `.dmg`
+   and its `.sha256`. Either red: no draft.
 12. **Finish the draft.** Download its `.dmg` and open it on your Mac: it must ask for Open
    Anyway (it's the downloaded one now), then run a starter. Paste *What's new* into the
    notes (drafted in step 13; the template, `packaging/mac/release-notes.md`, has the rest: the Open Anyway steps, that
@@ -62,35 +64,35 @@ are theirs: merging, tagging, approving and publishing (D-331).
    plainly. No D-numbers, branch names or test counts. Given to the maintainer as
    Markdown in the conversation, ready to paste under the draft's *What's new* heading.
 
-## The Linux checks
+## The Linux check
 
-What a local run on the Mac misses is x86-64 Linux (Podman on an Apple Silicon Mac is ARM64)
-and a clean machine. So the release run tests Linux on GitHub's runners, on the tag, beside
-the Mac build (D-346); pull requests aren't checked, since the maintainer and the agent run
-`make check` and `make accept` before every one.
+What a local run on the Mac misses is x86-64 (Podman on an Apple Silicon Mac is ARM64) and
+a clean machine. So the release run builds the Docker image on GitHub's x86-64 runner from
+a clean checkout of the tag and smoke-tests it, beside the Mac build (D-346). The test
+suites aren't run there: the maintainer and the agent run `make check` and `make accept`
+before every pull request.
 
-- **What runs.** The `linux` job, one row per machine on the run's page:
-  **Linux (ubuntu-24.04)** (x86-64) and **Linux (ubuntu-24.04-arm)** (ARM64), at the same
-  time. Each builds the dev image (its layers kept between releases in GitHub's cache, so
-  the ngspice build runs only when the Dockerfile or its recipe changes), runs `make check`,
-  then `make accept` (the 25 known gaps stay strict xfails: one that starts passing turns
-  the row red, as locally), builds the runtime image, starts it on empty data and cache
-  folders as compose does, checks `/api/health` and runs the TS808 through `/api/run`.
-  About 15 minutes each, no secrets, read-only.
-- **A red row** means no draft release: the Mac build may finish, but `draft` doesn't run.
-  GitHub emails whoever started the run (pushed the tag). Open the row, read the failed
-  step. A real failure: fix it on a branch, merge, and release a new patch version (`vX.Y.Z+1`).
-  A flaky one (a runner's hiccup): **Re-run failed jobs** on the run; when they pass, `draft`
+- **What runs.** The `linux` job, **Linux image (x86-64)** on the run's page: it builds the
+  runtime image as `make image` does (its layers kept between releases in GitHub's cache,
+  so the ngspice build runs only when the Dockerfile or its recipe changes), starts it on
+  empty data and cache folders as compose does, and runs `scripts/smoke.py` against it:
+  `/api/health` (the native engine, ngspice 44.2, the version is `__version__`), the page
+  and its scripts, four starters (TS808, Rat, Big Muff, Fuzz Face) through DC, frequency,
+  transient and stages with no error in Problems, and the build package's four PDFs.
+  About 5 minutes (8 when the cache is cold), no secrets, read-only. The same script runs
+  against any server: `python3 scripts/smoke.py http://127.0.0.1:8000` checks a local
+  `docker compose up` (step 7).
+- **Red** means no draft release: the Mac build may finish, but `draft` doesn't run. GitHub
+  emails whoever started the run (pushed the tag). Open the job and read the failed step
+  and *The server's log*. A real failure: fix it on a branch, merge, and release a new patch
+  version. A runner's hiccup: **Re-run failed jobs** on the run; when it passes, `draft`
   runs. Don't move a published tag; an unpublished one may be deleted and pushed again
   (`git push origin :vX.Y.Z`, then tag the fixed commit).
-- **The switch: repository variable `LINUX_CHECKS`** (Settings → Secrets and variables →
-  Actions → Variables), no code change: unset or `both` runs both rows; `x64` only x86-64;
-  `arm` only ARM64; `off` none (the draft then waits only for the Mac build). If one row is
-  to go, drop ARM64 (`x64`): the Mac tests ARM64 locally, x86-64 is the gap. Any other value
-  runs both.
-- **Dropping `make accept` alone:** delete the *make accept* step from the `linux` job.
-- **Removing the Linux checks:** delete the `linux` job, and `linux` from the `draft` job's
-  `needs` and its `if` (`needs.linux.result …`).
+- **The switch:** the repository variable `LINUX_CHECKS` (Settings → Secrets and variables →
+  Actions → Variables) set to `off` skips the job, with no code change; the draft then waits
+  only for the Mac build. Unset (or anything else), it runs.
+- **Removing it:** delete the `linux` job, and `linux` from the `draft` job's `needs` and
+  its `if` (`needs.linux.result …`).
 
 ## Once, in the repository's settings
 

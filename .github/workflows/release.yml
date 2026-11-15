@@ -1,13 +1,12 @@
-# A release, built by GitHub from a tagged commit (D-330, D-346). A v* tag runs the test
-# suites on x86-64 and ARM64 Linux and smoke-tests the Docker image there (`linux`), builds
+# A release, built by GitHub from a tagged commit (D-330, D-346). A v* tag builds the
+# Docker image on x86-64 Linux from a clean checkout and smoke-tests it (`linux`), builds
 # the Mac app with the same `make mac-app` as on a Mac and attests where it came from
 # (`mac-app`, after the maintainer's Approve in the `release` environment), and, only when
 # both are green, leaves a draft release with the .dmg for the maintainer to write up and
 # publish (`draft`). Run by hand (Actions → Release → Run workflow) it does the same but
 # the draft: the .dmg stays a workflow artifact, a check before tagging.
-# The repository variable LINUX_CHECKS picks the Linux rows: both (unset), x64, arm or off
-# (docs/maintain/release.md). Signed and notarised only when the certificate secrets
-# exist; pull requests never run this.
+# The repository variable LINUX_CHECKS=off skips the Linux check (docs/maintain/release.md).
+# Signed and notarised only when the certificate secrets exist; pull requests never run this.
 name: Release
 
 on:
@@ -24,18 +23,12 @@ concurrency:
 
 jobs:
   linux:
-    name: Linux (${{ matrix.runner }})
+    name: Linux image (x86-64)
     if: vars.LINUX_CHECKS != 'off'
-    strategy:
-      fail-fast: false
-      matrix:
-        runner: ${{ fromJSON(vars.LINUX_CHECKS == 'x64' && '["ubuntu-24.04"]' || vars.LINUX_CHECKS == 'arm' && '["ubuntu-24.04-arm"]' || '["ubuntu-24.04", "ubuntu-24.04-arm"]') }}
-    runs-on: ${{ matrix.runner }}
-    timeout-minutes: 75
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
     permissions:
       contents: read
-    env:
-      CONTAINER: docker
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
         with:
@@ -43,58 +36,29 @@ jobs:
 
       - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069  # v4.4.1
 
-      # The images as `make dev-image` and `make image` build them, with the layers kept
-      # between releases (the ngspice build is most of it)
-      - name: The dev image
-        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
-        with:
-          context: .
-          target: dev
-          tags: solum-builder:dev
-          load: true
-          cache-from: type=gha,scope=${{ matrix.runner }}
-          cache-to: type=gha,scope=${{ matrix.runner }},mode=max
-
-      - name: make check
-        run: make check
-
-      # its own step, so it can be dropped alone (docs/maintain/release.md)
-      - name: make accept
-        run: make accept
-
-      - name: The runtime image
+      # The image as `make image` builds it, its layers kept between releases (the ngspice
+      # build is most of it)
+      - name: The image
         uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
         with:
           context: .
           target: runtime
           tags: solum-builder:latest
           load: true
-          cache-from: type=gha,scope=${{ matrix.runner }}
+          cache-from: type=gha,scope=runtime-x64
+          cache-to: type=gha,scope=runtime-x64,mode=max
 
-      - name: The image on empty folders, as compose runs it, and a starter through the API
+      - name: The image on empty folders, as compose runs it, smoke-tested
         run: |
           mkdir -p "$RUNNER_TEMP/data" "$RUNNER_TEMP/cache"
           docker run -d --name solum -p 8000:8000 \
             -v "$RUNNER_TEMP/data:/data" -v "$RUNNER_TEMP/cache:/cache" solum-builder:latest
-          for _ in $(seq 60); do curl -fsS http://127.0.0.1:8000/api/health >health.json 2>/dev/null && break; sleep 1; done
-          cat health.json; echo
-          jq -e '.engine == "native"' health.json >/dev/null || { docker logs solum; exit 1; }
-          curl -fsS http://127.0.0.1:8000/api/starters/ts808 | jq '{circuit: .circuit, nodes: []}' >run.json
-          curl -fsS -H 'Content-Type: application/json' -d @run.json http://127.0.0.1:8000/api/run >ran.json \
-            || { cat ran.json; docker logs solum; exit 1; }
-          echo "TS808 ran: $(jq -c 'keys' ran.json)"
+          version="$(sed -n 's/^__version__ = "\(.*\)"$/\1/p' solum/__init__.py)"
+          python3 scripts/smoke.py http://127.0.0.1:8000 "$version"
 
       - name: The server's log
         if: always()
         run: docker logs solum 2>&1 | tail -50 || true
-
-      # a red row says why: a process the kernel killed (out of memory) leaves no other trace
-      - name: The machine, after a failure
-        if: failure()
-        run: |
-          nproc; free -m; df -h / | tail -1
-          ps -eo pid,ppid,rss,etime,args --sort=-rss | head -15
-          sudo dmesg | grep -iE 'killed process|out of memory|oom|segfault|traps:' | tail -20 || true
 
   mac-app:
     runs-on: macos-latest  # Apple Silicon; make mac-app refuses anything else
@@ -191,9 +155,9 @@ jobs:
           [ ! -f "$RUNNER_TEMP/signing.keychain-db" ] || security delete-keychain "$RUNNER_TEMP/signing.keychain-db"
           rm -f "$RUNNER_TEMP/notary.p8"
 
-  # The draft release, only from a tag and only when the Mac app and every Linux row are
-  # green (the Linux rows switched off count as green). Remove `linux` from `needs` and
-  # this `if` to release without them.
+  # The draft release, only from a tag and only when the Mac app and the Linux check are
+  # green (the Linux check switched off counts as green). Remove `linux` from `needs` and
+  # this `if` to release without it.
   draft:
     needs: [linux, mac-app]
     if: >-

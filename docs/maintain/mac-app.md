@@ -49,7 +49,7 @@ The UI and parity tests need Playwright's browser and stay the dev image's (`mak
 | The launcher: folders, the server in a thread, the window, what Settings asks of macOS | `solum/desktop/` |
 | The page's side: Change… and Show in Finder in Settings, the Settings… menu item | `web/desktop.js`, `web/settings.js` |
 | The program PyInstaller freezes, its spec, the app's `fonts.conf`, the PDF libraries' lock | `packaging/mac/` |
-| The build, the icon, the smoke test, signing | `scripts/mac_app.sh`, `scripts/mac_icon.py`, `scripts/mac_smoke.py`, `scripts/mac_sign.sh` |
+| The build, the icon, the smoke test, signing | `scripts/mac_app.sh`, `scripts/mac_icon.py`, `scripts/mac_smoke.py` (with `scripts/smoke.py`, the checks it shares with the Docker image's), `scripts/mac_sign.sh` |
 | The release build on GitHub, the release notes' template, the entitlements | `.github/workflows/release.yml`, `packaging/mac/release-notes.md`, `packaging/mac/entitlements.plist` |
 
 On the person's Mac the app keeps: circuits, blocks, models and audio in `~/Library/Application Support/Solum Builder/` (or the folder chosen in Settings), the cache in `~/Library/Caches/Solum Builder/`, its log in `~/Library/Logs/Solum Builder/solum.log`.

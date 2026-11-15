@@ -1114,6 +1114,16 @@ def test_redraw_ts808_matches_the_starter(page: Page, base_url: str, half_drawn:
             click_at(page, *point)
         wait_for_view(page, before)
     press(page, "Escape")
+    # VREF draws as a supply once its cap is wired (D-225): select each turned one by its
+    # stem and turn it as the starter has it (D-347)
+    for label in starter["labels"]:
+        if label.get("rot"):
+            x, y = label["pos"]
+            click_at(page, x, y - 7)
+            for _ in range(label["rot"] // 90):
+                before = views(page)
+                press(page, "Space")
+                wait_for_view(page, before)
     press(page, "Control+s")
     expect(page.locator("#dirty")).to_be_hidden()
     # Half-drawn, parts may float with no DC path to ground: the panels say so plainly

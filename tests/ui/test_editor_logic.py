@@ -75,8 +75,8 @@ def test_refs_and_new_parts(js: Page) -> None:
 
 def test_a_part_dropped_on_a_wire_goes_in_series(js: Page) -> None:
     """A two-pin part placed, moved or turned onto a wire, both pins on it, cuts the wire
-    between them, so it isn't shorted (D-112, D-113); across a wire (one pin on it), or
-    with a jumper drawn from pin to pin, the wires stay."""
+    between them, so it isn't shorted (D-112, D-113); across a wire (one pin on it), the
+    wires stay. A wire ending exactly on its pins is cut too (D-348)."""
     r = run(
         js,
         """
@@ -99,14 +99,14 @@ def test_a_part_dropped_on_a_wire_goes_in_series(js: Page) -> None:
     assert r["inline"] == r["moved"] == cut
     assert r["atEnd"] == [{"from": [20, 0], "to": [100, 0]}]
     assert r["across"] == [rest, {"from": [-100, 0], "to": [100, 0]}]
-    assert r["jumper"] == [{"from": [-20, 0], "to": [20, 0]}]
+    assert r["jumper"] == []
     assert sorted(map(str, r["turned"])) == sorted(map(str, cut))
 
 
 def test_a_part_dropped_on_a_wire_joint_goes_in_series(js: Page) -> None:
     """The user's bug (2026-11-02): a trimmer dropped where two pieces of wire meet under
-    it stayed shorted, lugs 1 and 3 on one net (D-164). Any part: the pieces are cut. A
-    jumper in two pieces, pin to pin, stays."""
+    it stayed shorted, lugs 1 and 3 on one net (D-164). Any part: the pieces are cut, also
+    when they end exactly on its pins (D-348)."""
     r = run(
         js,
         """
@@ -125,7 +125,34 @@ def test_a_part_dropped_on_a_wire_joint_goes_in_series(js: Page) -> None:
     cut = [{"from": [0, 0], "to": [80, 0]}, {"from": [120, 0], "to": [200, 0]}]
     assert r["trimmer"] == r["resistor"] == r["three"] == cut
     assert r["gap"] == [{"from": [0, 0], "to": [90, 0]}, {"from": [110, 0], "to": [200, 0]}]
-    assert r["jumper"] == [{"from": [80, 0], "to": [100, 0]}, {"from": [100, 0], "to": [120, 0]}]
+    assert r["jumper"] == []
+
+
+def test_a_part_dropped_on_a_wire_its_own_length_goes_in_series(js: Page) -> None:
+    """The user's bug (2026-11-15): C1 dropped on the leg of a bent wire that ran exactly
+    pin to pin stayed shorted (the leg was taken for a jumper). Placed or moved onto such a
+    wire, a part cuts it (D-348); a jumper it already had pin to pin goes along with a move
+    or a turn and stays."""
+    r = run(
+        js,
+        """
+        const e = await m('editor/edit.js');
+        const bent = { parts: [], wires: [{ from: [40, -110], to: [-20, -110] }, { from: [-20, -110], to: [-20, -70] }] };
+        const placed = e.addPart(bent, 'capacitor', [-20, -90], 90).circuit;
+        const elsewhere = e.addPart(bent, 'capacitor', [200, -90], 90).circuit;
+        const jumpered = { ...placed, wires: [...placed.wires, { from: [-20, -110], to: [-20, -70] }] };
+        return {
+          placed: placed.wires,
+          moved: e.moveParts(elsewhere, ['C1'], -220, 0).wires,
+          carried: e.moveParts(jumpered, ['C1'], 100, 0).wires,
+          turned: e.rotatePart(jumpered, 'C1').wires.length - e.rotatePart(placed, 'C1').wires.length,
+        };
+        """,
+    )
+    leg = [{"from": [40, -110], "to": [-20, -110]}]
+    assert r["placed"] == r["moved"] == leg
+    assert {"from": [80, -110], "to": [80, -70]} in r["carried"]
+    assert r["turned"] > 0  # the jumper, re-laid to the turned pins, is still there
 
 
 def test_upright_two_pin_text_sits_together(js: Page) -> None:

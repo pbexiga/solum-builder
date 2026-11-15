@@ -1963,3 +1963,9 @@ Calculators → *Filter* (`filterCalculator` in `web/tools.js`, `GET /api/tools/
 - `test_no_library_supply_symbol_points_along_its_own_wire` (`tests/unit/test_view.py`) checks every library file, so a new starter drawn by script (the build-starter skill) gets told if a symbol needs a turn.
 - **Why:** the user saw the TS808's VREF name across its wire. D-225 began drawing bias nets as supply bars after those starters were drawn, when VREF was a plain label that found its own side (D-114).
 *Alternatives:* turning the symbols at load time in the view (the file would say one thing and the drawing another; a user's Space would start from a turn they never saw).
+
+**D-348 — A part dropped on a wire its own length goes in series; only a jumper it already had stays** (2026-11-15) `editor`
+- Narrows D-113 and D-164. `inSeries` took any wire running exactly pin to pin for a jumper and kept it, so a part placed or moved onto a wire whose ends met its pins stayed shorted (the user's C1 on the leg of a bent wire; moving the bend one step made it work).
+- Now a stretch of wire pin to pin is cut whether or not it runs on past a pin, unless the part already had it pin to pin before the edit (`before`, passed by `moveItems` and `rotatePart`; a new part has none). A jumper the user drew across a part is carried along by its move or turn and stays, re-laid.
+- **Why:** the user (2026-11-15): dropped onto a line, a part should replace the wire under it; a wire that happens to fit it exactly is no jumper.
+*Alternatives:* never keeping a pin-to-pin wire (moving a deliberately jumpered part would delete its jumper); asking on each drop.

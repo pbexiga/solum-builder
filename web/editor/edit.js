@@ -347,46 +347,67 @@ export function addPart(circuit, type, pos, rot = 0, models = {}) {
  * Put parts that landed on a wire in series with it (D-112, D-113): wire running through
  * two of a part's pins (one of them part-way along it) would short them, so it's cut
  * between them. The wire may be in pieces that meet under the part (D-164: a trimmer
- * dropped on a joint stayed shorted). A jumper from one pin to the other stays, even in
- * pieces: the wire is cut only when some of it runs on past a pin. A wire the part only
- * touches with one pin stays too. After placing, moving or turning parts.
+ * dropped on a joint stayed shorted), and may end exactly on the pins (D-348: a cap
+ * dropped on a wire its own length stayed shorted). A jumper the part already had pin to
+ * pin in `before` stays, carried along by a move or turn. A wire the part only touches
+ * with one pin stays too. After placing, moving or turning parts.
  * @param {Circuit} circuit @param {Iterable<string>} refs the parts placed or moved
+ * @param {Circuit} [before] the circuit before the edit (none for a new part)
  * @returns {Circuit}
  */
-export function inSeries(circuit, refs) {
+export function inSeries(circuit, refs, before) {
   const wanted = new Set(refs);
   let wires = circuit.wires ?? [];
   for (const part of circuit.parts.filter((p) => wanted.has(p.ref))) {
-    const pins = Object.values(pinPositions(part));
-    for (const [i, a] of pins.entries()) {
-      for (const b of pins.slice(i + 1)) wires = cutBetween(wires, a, b);
+    const old = before?.parts.find((p) => p.ref === part.ref);
+    const was = old ? pinPositions(old) : {};
+    const pins = Object.entries(pinPositions(part));
+    for (const [i, [na, a]] of pins.entries()) {
+      for (const [nb, b] of pins.slice(i + 1)) {
+        const jumper = Boolean(old && was[na] && was[nb] && wireStretch(before?.wires ?? [], was[na], was[nb]));
+        if (!jumper) wires = cutBetween(wires, a, b);
+      }
     }
   }
   return wires === (circuit.wires ?? wires) ? circuit : { ...circuit, wires };
 }
 
 /**
- * `wires` with the wire running straight from `a` to `b` taken out, when that stretch is
- * all wire and some of it runs on past `a` or `b` (`inSeries`). The same list otherwise.
+ * The wires lying along the straight line from `a` to `b` that together cover all of it,
+ * or null when some of it isn't wire (or `a` and `b` aren't in line).
+ * @param {Wire[]} wires @param {number[]} a @param {number[]} b
+ * @returns {{touching: Wire[], axis: number} | null}
+ */
+function wireStretch(wires, a, b) {
+  const axis = a[1] === b[1] ? 0 : a[0] === b[0] ? 1 : -1;
+  if (axis < 0 || same(a, b)) return null;
+  const other = 1 - axis;
+  const [lo, hi] = [Math.min(a[axis], b[axis]), Math.max(a[axis], b[axis])];
+  const along = (/** @type {Wire} */ w) => w.from[other] === a[other] && w.to[other] === a[other];
+  const touching = wires.filter((w) => along(w) && spanOf(w, axis)[1] > lo && spanOf(w, axis)[0] < hi);
+  let reach = lo;
+  for (const [s0, s1] of touching.map((w) => spanOf(w, axis)).sort((x, y) => x[0] - y[0])) {
+    if (s0 > reach) return null;
+    reach = Math.max(reach, s1);
+  }
+  return touching.length && reach >= hi ? { touching, axis } : null;
+}
+
+/** @param {Wire} w @param {number} axis @returns {number[]} the wire's low and high ends along `axis` */
+const spanOf = (w, axis) => [Math.min(w.from[axis], w.to[axis]), Math.max(w.from[axis], w.to[axis])];
+
+/**
+ * `wires` with the stretch running straight from `a` to `b` taken out when it is all wire
+ * (`inSeries`); the same list otherwise.
  * @param {Wire[]} wires @param {number[]} a @param {number[]} b
  * @returns {Wire[]}
  */
 function cutBetween(wires, a, b) {
-  const axis = a[1] === b[1] ? 0 : a[0] === b[0] ? 1 : -1;
-  if (axis < 0) return wires;
-  const other = 1 - axis;
+  const found = wireStretch(wires, a, b);
+  if (!found) return wires;
+  const { touching, axis } = found;
   const [lo, hi] = [Math.min(a[axis], b[axis]), Math.max(a[axis], b[axis])];
-  const along = (/** @type {Wire} */ w) => w.from[other] === a[other] && w.to[other] === a[other];
-  const span = (/** @type {Wire} */ w) => [Math.min(w.from[axis], w.to[axis]), Math.max(w.from[axis], w.to[axis])];
-  const touching = wires.filter((w) => along(w) && span(w)[1] > lo && span(w)[0] < hi);
-  if (!touching.length || !touching.some((w) => span(w)[0] < lo || span(w)[1] > hi)) return wires;
-  let reach = lo; // is lo..hi all wire?
-  for (const [s0, s1] of touching.map(span).sort((x, y) => x[0] - y[0])) {
-    if (s0 > reach) return wires;
-    reach = Math.max(reach, s1);
-  }
-  if (reach < hi) return wires;
-  const inside = (/** @type {Wire} */ w) => span(w)[0] >= lo && span(w)[1] <= hi;
+  const inside = (/** @type {Wire} */ w) => spanOf(w, axis)[0] >= lo && spanOf(w, axis)[1] <= hi;
   return wires.flatMap((w) => (touching.includes(w) ? splitAtJoins([w], [a, b]).filter((piece) => !inside(piece)) : [w]));
 }
 
@@ -763,7 +784,7 @@ export function moveItems(circuit, items, dx, dy) {
   const chosen = new Set(items.texts ?? []);
   const texts = (circuit.texts ?? []).map((t, i) => (chosen.has(i) ? { ...t, pos: [t.pos[0] + dx, t.pos[1] + dy] } : t));
   const after = { ...circuit, parts, ...(circuit.texts ? { texts } : {}) };
-  return inSeries(moves.size ? relay(circuit, after, [...moves.values()]) : after, wanted);
+  return inSeries(moves.size ? relay(circuit, after, [...moves.values()]) : after, wanted, circuit);
 }
 
 /**
@@ -790,7 +811,7 @@ export function rotatePart(circuit, ref) {
   /** @type {Array<[number[], number[]]>} */
   const moves = Object.keys(before).map((name) => [before[name], after[name]]);
   const parts = circuit.parts.map((p) => (p.ref === ref ? turned : p));
-  return inSeries(relay(circuit, { ...circuit, parts }, moves, { keepBends: false }), [ref]);
+  return inSeries(relay(circuit, { ...circuit, parts }, moves, { keepBends: false }), [ref], circuit);
 }
 
 /**

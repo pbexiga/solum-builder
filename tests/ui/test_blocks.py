@@ -503,6 +503,25 @@ def test_open_lists_recent_then_all(page: Page, base_url: str) -> None:
     page.wait_for_function("location.hash === '#circuit/charlie'")
 
 
+def test_open_shows_my_circuits_in_finder_only_in_the_mac_app(page: Page, base_url: str) -> None:
+    """The user (2026-11-15): Open's "my circuits" has a button, like the guide's pop-out,
+    that shows the folder in Finder. Only the Mac app has a Finder to show (D-349)."""
+    blank(page, base_url)
+    menu(page, "file-menu", "menu-open")
+    expect(page.locator(".open-list")).to_be_visible()
+    expect(page.locator("#show-circuits-folder")).to_have_count(0)
+    press(page, "Escape")
+    page.evaluate(
+        "globalThis.told = []; globalThis.pywebview = { api: { show_folder: (kind) => told.push(kind) } }"
+    )
+    menu(page, "file-menu", "menu-open")
+    button = page.locator(".popup-title #show-circuits-folder")
+    expect(button).to_be_visible()
+    expect(button).to_have_attribute("title", "Show the folder in Finder")
+    button.click()
+    assert page.evaluate("told") == ["circuits"]
+
+
 def test_block_manager(page: Page, base_url: str) -> None:
     """Blocks dialog: Core and My blocks toggles (one always on), A-Z / Z-A (remembered),
     version tags, Edit and Delete on my blocks, Edit only on core ones."""

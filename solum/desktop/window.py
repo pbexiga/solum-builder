@@ -95,6 +95,14 @@ def is_local(path: Path) -> bool:
     return bool(local) if ok else True
 
 
+def shown_folder(chosen: Chosen, kind: str) -> Path:
+    """The folder Show in Finder opens for `kind`: "data", "circuits" (My circuits, in the
+    data folder, as `CircuitStore` keeps them) or "cache"."""
+    if kind == "circuits":
+        return chosen.data_dir / "circuits"
+    return chosen.data_dir if kind == "data" else chosen.cache_dir
+
+
 class Desktop:
     """What the page asks of the Mac app (`web/desktop.js`), as `window.pywebview.api`.
     Each answer is a dict the page shows; a `problem` is plain English."""
@@ -169,10 +177,10 @@ class Desktop:
         self._unsaved = bool(unsaved)
 
     def show_folder(self, kind: str) -> None:
-        """Open the data or cache folder in Finder."""
-        now = self._now()
-        subprocess.run(["/usr/bin/open", str(now.data_dir if kind == "data" else now.cache_dir)],
-                       check=False)  # fmt: skip
+        """Open the data, circuits or cache folder in Finder."""
+        folder = shown_folder(self._now(), kind)
+        folder.mkdir(parents=True, exist_ok=True)  # no circuits saved yet: Finder shows it empty
+        subprocess.run(["/usr/bin/open", str(folder)], check=False)
 
     def _page_menu(self, item: str) -> None:
         """Open one of the page's own dialogs from the Mac menu bar."""

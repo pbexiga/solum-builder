@@ -207,6 +207,7 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 .popup-title { display: flex; align-items: baseline; gap: 10px; margin-bottom: 10px; }
 .popup-title .name { font-family: var(--font-mono); font-size: 15px; color: var(--text); }
 .popup-title .kind { color: var(--text-3); }
+.popup-title .icon-button { align-self: center; padding: 3px 5px; } /* Open's Show in Finder, beside "my circuits" (D-349) */
 .form-row { display: grid; grid-template-columns: 112px 1fr 26px; gap: 2px 8px; align-items: center; margin-bottom: 8px; }
 .form-row label { color: var(--text-2); }
 .form-row input, .form-row select, .form-row textarea, .sweep-row input, .custom-grid input, .custom-grid select {

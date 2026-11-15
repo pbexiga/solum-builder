@@ -196,9 +196,10 @@ function startField(form) {
 /**
  * @param {HTMLElement} host where the popup goes
  * @param {{title: string, subtitle?: string, fields: import("./fields.js").Field[], submit?: string,
- *   onSubmit: (values: Record<string, string>) => Promise<string | null>, extra?: HTMLElement[],
+ *   onSubmit: (values: Record<string, string>) => Promise<string | null>, extra?: HTMLElement[], head?: Node[],
  *   onClose?: (submitted: boolean) => void, onHelp?: (page: string) => void}} spec `onClose`: called once when the form goes
- *   (saved, cancelled, Escape, or another form opened); `onHelp`: a field's `help` link clicked
+ *   (saved, cancelled, Escape, or another form opened); `onHelp`: a field's `help` link clicked; `head`: buttons
+ *   beside the subtitle (Open's Show in Finder, D-349)
  * @returns {{close: () => void, form: HTMLFormElement, showError: (message: string | null) => void, fields: import("./fields.js").Field[]}}
  *   `fields`: the form's, read again each time its ⓘ opens (a field's `about` may be updated)
  */
@@ -219,7 +220,7 @@ export function openForm(host, spec) {
   const info = aboutButton(spec.title, spec.fields, rows);
   const form = /** @type {HTMLFormElement} */ (
     h("form", { class: "popup", "aria-label": spec.title }, [
-      h("div", { class: "popup-title" }, [h("span", { class: "name" }, [spec.title]), h("span", { class: "kind" }, [spec.subtitle ?? ""]), ...(info ? [info] : [])]),
+      h("div", { class: "popup-title" }, [h("span", { class: "name" }, [spec.title]), h("span", { class: "kind" }, [spec.subtitle ?? ""]), ...(spec.head ?? []), ...(info ? [info] : [])]),
       ...rows,
       error,
       h("div", { class: "popup-buttons" }, [

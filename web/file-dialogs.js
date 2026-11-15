@@ -8,9 +8,11 @@
  */
 
 import { deleteJson, getJson, patchJson, postJson, putJson } from "./api.js";
+import { desktopApi } from "./desktop.js";
 import { splitValues } from "./editor/edit.js";
 import { importedFile, openSections, versionTag } from "./editor/files.js";
 import { closeForm, confirmed, openForm } from "./editor/form.js";
+import { popOutIcon } from "./help.js";
 import { h } from "./panels.js";
 import { debounce } from "./state.js";
 import { remember, remembered } from "./storage.js";
@@ -87,6 +89,21 @@ export function listControls(view, draw) {
 
 /** A list row's version tag: `v1.12`, `· final` when frozen. @param {any} e */
 export const entryTag = (e) => h("span", { class: "tag" }, [e.problem ? "" : `${e.version}${e.final ? " \u00b7 final" : ""}`]);
+
+/**
+ * The Mac app's Show in Finder for a folder of the person's files, as an icon button like
+ * the guide's pop-out (D-349). None in a browser: the server may be in a container, where
+ * its folder means nothing to the browser's machine.
+ * @param {"circuits"} kind @returns {HTMLElement[]}
+ */
+function showInFinder(kind) {
+  const api = desktopApi();
+  if (!api) return [];
+  const label = "Show the folder in Finder";
+  const button = h("button", { type: "button", id: `show-${kind}-folder`, class: "icon-button", title: label, "aria-label": label }, [popOutIcon()]);
+  button.addEventListener("click", () => api.show_folder(kind));
+  return [button];
+}
 
 /**
  * @param {HTMLElement} host where the dialogs open (the canvas)
@@ -194,7 +211,8 @@ export function fileDialogs(host, app) {
 
   /** "Open…": the user's circuits in two sections, Recent (the last three saved) and All
    * circuits (by name, D-076); current versions only unless switched off. A search (by
-   * name, tag or part model) shows only its matches, no sections (D-287). */
+   * name, tag or part model) shows only its matches, no sections (D-287). In the Mac app,
+   * a button beside "my circuits" shows their folder in Finder (D-349). */
   function openDialog() {
     const view = listView("solum.open.view");
     const list = h("div", { class: "open-list", role: "listbox", "aria-label": "My circuits" });
@@ -226,6 +244,7 @@ export function fileDialogs(host, app) {
     const handle = openForm(host, {
       title: "Open",
       subtitle: "my circuits",
+      head: showInFinder("circuits"),
       fields: [{ name: "q", label: "Search", kind: "text", value: "" }],
       submit: "Open first",
       extra: [h("div", { class: "block-bar" }, listControls(view, draw)), list],

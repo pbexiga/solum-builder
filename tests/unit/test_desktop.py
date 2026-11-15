@@ -24,7 +24,7 @@ from solum.desktop.folders import (
     spinit_text,
     write_spinit,
 )
-from solum.desktop.window import show_when_loaded
+from solum.desktop.window import show_when_loaded, shown_folder
 
 
 @pytest.fixture
@@ -260,3 +260,12 @@ def test_the_window_shows_anyway_if_the_page_never_loads() -> None:
     window = _Window()
     show_when_loaded(window, wait=0.01).join(1)
     assert window.shown == 1
+
+
+def test_show_in_finder_opens_the_folder_asked_for(tmp_path: Path) -> None:
+    """Settings shows the data and cache folders; Open shows My circuits, in the data
+    folder (D-349)."""
+    chosen = Chosen(data_dir=tmp_path / "data", cache_dir=tmp_path / "cache")
+    assert shown_folder(chosen, "data") == tmp_path / "data"
+    assert shown_folder(chosen, "circuits") == tmp_path / "data" / "circuits"
+    assert shown_folder(chosen, "cache") == tmp_path / "cache"

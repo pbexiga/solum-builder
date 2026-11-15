@@ -17,7 +17,7 @@
  * @property {(kind: "data" | "cache") => Promise<Picked | null>} choose_folder null: cancelled
  * @property {(kind: "data" | "cache", path: string, move: boolean) => Promise<{problem: string | null}>} move_folder
  *   on success the server starts again on the folder and the page reloads
- * @property {(kind: "data" | "cache") => Promise<void>} show_folder in Finder
+ * @property {(kind: "data" | "cache" | "circuits") => Promise<void>} show_folder in Finder ("circuits": My circuits, D-349)
  * @property {(unsaved: boolean) => Promise<void>} set_unsaved closing the window then asks first
  */
 

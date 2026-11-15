@@ -38,7 +38,7 @@ export function manualSheet(page = "") {
 }
 
 /** The open-externally mark: a square with an arrow leaving its top right corner. */
-function popOutIcon() {
+export function popOutIcon() {
   const svg = document.createElementNS(SVG, "svg");
   for (const [k, v] of Object.entries({ viewBox: "0 0 16 16", width: "14", height: "14", fill: "none", stroke: "currentColor", "stroke-width": "1.5", "stroke-linecap": "round", "stroke-linejoin": "round", "aria-hidden": "true" })) svg.setAttribute(k, v);
   const path = document.createElementNS(SVG, "path");

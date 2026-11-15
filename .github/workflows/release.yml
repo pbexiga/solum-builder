@@ -88,6 +88,14 @@ jobs:
         if: always()
         run: docker logs solum 2>&1 | tail -50 || true
 
+      # a red row says why: a process the kernel killed (out of memory) leaves no other trace
+      - name: The machine, after a failure
+        if: failure()
+        run: |
+          nproc; free -m; df -h / | tail -1
+          ps -eo pid,ppid,rss,etime,args --sort=-rss | head -15
+          sudo dmesg | grep -iE 'killed process|out of memory|oom|segfault|traps:' | tail -20 || true
+
   mac-app:
     runs-on: macos-latest  # Apple Silicon; make mac-app refuses anything else
     environment: release

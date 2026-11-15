@@ -140,7 +140,8 @@ def test_a_floating_net_stops_the_run_with_a_plain_message(
     expect(page.locator("#problems-body")).to_contain_text("wasn't simulated")
     # the Probe pane is about what's selected: it says there are no readings and why,
     # and never shows another net's (D-318)
-    expect(page.locator("#probe-body [data-testid='probe-name']")).to_have_text("out")
+    # nothing selected: the amp rests in the Probe pane (D-341)
+    expect(page.locator("#probe-body [data-testid='probe-name']")).to_have_text("OUT")
     expect(page.locator("#probe-body [data-testid='probe-failed']")).to_have_text(
         "Can't simulate yet: net x has no DC path to ground."
     )

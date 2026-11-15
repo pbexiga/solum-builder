@@ -147,8 +147,9 @@ export function drawShapes(shapes, parent) {
 
 /**
  * @typedef {{parts: string[], wires: number[], labels: number[], texts?: number[]}} Items
- * @typedef {{kind: "net" | "part" | "items", id: string, wire?: number, run?: number[], label?: number, items?: Items}} Selection
- *   `wire`: the piece clicked; `run`: the whole wire it's part of (`edit.wireRun`, D-095)
+ * @typedef {{kind: "net" | "part" | "items", id: string, wire?: number, run?: number[], label?: number, items?: Items, resting?: boolean}} Selection
+ *   `wire`: the piece clicked; `run`: the whole wire it's part of (`edit.wireRun`, D-095);
+ *   `resting`: what's probed with nothing selected (the amp, D-341), not lit
  * @typedef {{
  *   onNet: (net: string, item: {wire?: number, label?: number}) => void,
  *   onPart: (ref: string) => void,
@@ -389,7 +390,7 @@ export class Schematic {
   select(selection) {
     this.selection = selection;
     for (const node of this.svg.querySelectorAll(".probed, .selected")) node.classList.remove("probed", "selected");
-    if (!selection) return;
+    if (!selection || selection.resting) return;
     if (selection.kind === "items") {
       const items = /** @type {Items} */ (selection.items);
       for (const ref of items.parts) for (const node of this.svg.querySelectorAll(`[data-ref="${CSS.escape(ref)}"]`)) node.classList.add("selected");
@@ -1022,7 +1023,7 @@ export class Schematic {
    */
   inSelection(item) {
     const sel = this.selection;
-    if (!sel) return false;
+    if (!sel || sel.resting) return false;
     if (sel.kind === "items" && sel.items) {
       const items = sel.items;
       return Boolean(item.parts?.some((r) => items.parts.includes(r)) || item.wires?.some((w) => items.wires.includes(w))

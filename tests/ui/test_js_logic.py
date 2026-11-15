@@ -902,11 +902,14 @@ def test_a_dropped_supply_turns_clear_of_its_wire(js: Page) -> None:
         """
         const { clearSupplyRot } = await m('editor/edit.js');
         const c = { parts: [], wires: [{ from: [0, 0], to: [0, 40] }] };
-        return [[0, 0, 'rail'], [0, 40, 'rail'], [0, 20, 'rail'], [0, 0, 'ground'],
-                [0, 40, 'ground'], [100, 100, 'rail']].map(([x, y, k]) => clearSupplyRot(c, [x, y], k));
+        const spots = [[0, 0, 'rail'], [0, 40, 'rail'], [0, 20, 'rail'], [0, 0, 'ground'],
+                       [0, 40, 'ground'], [100, 100, 'rail']].map(([x, y, k]) => clearSupplyRot(c, [x, y], k));
+        // a resistor at the origin (no pos in the file): its left pin's lead runs right
+        const r = { parts: [{ ref: 'R1', type: 'resistor', value: '1k' }], wires: [] };
+        return [...spots, clearSupplyRot(r, [-20, 0], 'ground')];
         """,
     )
-    assert got == [0, 180, 90, 180, 0, 0]
+    assert got == [0, 180, 90, 180, 0, 0, 0]
 
 
 def test_drawn_pins_keep_dc_only_on_the_same_net(js: Page) -> None:

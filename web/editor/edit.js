@@ -999,7 +999,8 @@ export function takenDirections(circuit, pos) {
     }
   }
   for (const part of circuit.parts ?? []) {
-    for (const pin of Object.values(pinPositions(part))) if (same(pin, pos)) add(part.pos[0] - pin[0], part.pos[1] - pin[1]);
+    const [px, py] = part.pos ?? [0, 0]; // the file leaves out a part at the origin's pos
+    for (const pin of Object.values(pinPositions(part))) if (same(pin, pos)) add(px - pin[0], py - pin[1]);
   }
   taken.delete("0,0");
   return taken;

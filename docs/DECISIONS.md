@@ -1916,3 +1916,8 @@ Calculators → *Filter* (`filterCalculator` in `web/tools.js`, `GET /api/tools/
 - A press-and-drag on a wire's body moves it whether or not it's selected (`gestureAt`): the stretch grabbed alone, as D-293, or the selection when the wire is in it. A press on a pin's end, a label's or supply's point still starts a wire without the Wire tool (D-164); with the Wire tool, clicks draw as before (D-062).
 - **Why:** the user pressed on a wire to move it and got a new wire; selecting it first was a step nobody expects.
 *Alternatives:* keeping D-095's draw-from-a-wire drag (T-joins are made with the Wire tool or by ending a wire on another); requiring the Wire tool for pins too (dragging a wire out of a pin is quick and kept).
+
+**D-341 — With nothing selected, the Probe pane rests on the amp** (2026-11-15) `panes` `editor`
+- What's probed when nothing is selected (`outputSelection` in `app.js`: on opening, a click on empty sheet, a selection let go) is the amp on the output, as a *resting* part selection (`Selection.resting`): the Probe pane shows its part view (its `in` pin's net and DC); the other panes show the output as before (`currentNet`). A resting selection isn't lit on the sheet and isn't acted on: Space, Delete, Enter, Copy and Ctrl+click see no selection (`chosen()`; the sheet's `inSelection`). With no amp on the output net (a block, a set `probes.out`), the output's net as before.
+- **Why:** the user: with nothing selected, the output net's view (gain, peaks, clipping, impedance) was too much and its wire lit up as if picked; the amp's one pin and DC is what an unselected sheet should say.
+*Alternatives:* a real selection of the amp (it would light up and turn with Space); an empty Probe pane (nothing to read until a click).

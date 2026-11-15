@@ -2,6 +2,8 @@
 
 Click any wire or part to probe it. The Probe, Scope, Harmonics and Frequency panes then show that point. Every number comes from a real simulation of the whole circuit (ngspice), run when you press **▶ Run** or, with **Auto-run** on, after every change.
 
+With nothing selected (a circuit just opened, or a click on empty sheet), Probe shows the amp: its input's net and DC voltage, what the pedal hands on. The amp isn't selected then: Space, Delete and Copy leave it alone.
+
 When the circuit has changed since the last run, a line at the top of the panes says so: *The circuit changed since these results*.
 
 ## The test signal

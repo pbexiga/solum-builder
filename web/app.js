@@ -65,8 +65,20 @@ const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.get
 /** The part called `ref` on the open sheet. @param {string | null} ref @returns {any} */
 const partOf = (ref) => state.circuit?.parts.find((/** @type {any} */ p) => p.ref === ref);
 
-/** The output's net as a selection (what's probed when nothing else is), or null. @returns {Selection | null} */
-const outputSelection = () => (state.view?.probes.out ? { kind: "net", id: state.view.probes.out } : null);
+/**
+ * What's probed when nothing is selected (D-341): the amp, its input pin and DC, as a
+ * resting selection (not lit, not turned, deleted or copied); with no amp on the output,
+ * the output's net; else null. @returns {Selection | null}
+ */
+function outputSelection() {
+  const out = state.view?.probes.out;
+  if (!out) return null;
+  const amp = state.view.parts.find((/** @type {any} */ p) => p.type === "amp" && p.pins.some((/** @type {any} */ pin) => pin.net === out));
+  return amp ? { kind: "part", id: amp.ref, resting: true } : { kind: "net", id: out };
+}
+
+/** The selection the keys and menus act on: none while only the amp is resting (D-341). @returns {Selection | null} */
+const chosen = () => (state.selection?.resting ? null : state.selection);
 
 /**
  * @typedef {{kind: "starter" | "circuit" | "block" | "new" | "copy", id: string}} Source
@@ -579,8 +591,8 @@ async function open(source, reload = false) {
   undoStack.clear();
   setDirty(false);
   show(view, { fit: true });
-  const start = view.probes.out ?? Object.keys(view.nets)[0];
-  await select(start ? { kind: "net", id: start } : null);
+  const first = Object.keys(view.nets)[0];
+  await select(outputSelection() ?? (first ? { kind: "net", id: first } : null));
 }
 
 /**
@@ -755,7 +767,7 @@ function setStale(stale) {
 
 /** The Run button: simulate the circuit as it is now, at the probed point (or the output). */
 function run() {
-  if (!state.selection && state.view?.probes.out) return select({ kind: "net", id: state.view.probes.out });
+  if (!state.selection && state.view?.probes.out) return select(outputSelection());
   return refresh();
 }
 
@@ -878,7 +890,7 @@ function updateButtons() {
 /** What Delete would remove: the selected part, or the clicked wire or label; never the
  * circuit's guitar input or amp (D-146). */
 function deletable() {
-  const sel = state.selection;
+  const sel = chosen();
   if (!sel) return null;
   const fixed = fixedRefs(state.circuit);
   if (sel.kind === "items") {
@@ -895,7 +907,7 @@ function deletable() {
 
 async function deleteSelection() {
   let what = deletable();
-  const fixed = [...fixedRefs(state.circuit)].filter((r) => state.selection?.id === r || state.selection?.items?.parts.includes(r));
+  const fixed = [...fixedRefs(state.circuit)].filter((r) => chosen()?.id === r || chosen()?.items?.parts.includes(r));
   // said after the edit, whose redraw puts the usual hint back
   const kept = () => {
     if (fixed.length) hint(`${fixed.join(" and ")} ${fixed.length > 1 ? "stay" : "stays"}: every circuit has a guitar input and an amp.`);
@@ -929,7 +941,7 @@ async function deleteSelection() {
 
 function rotate() {
   if (state.placing) return schematic.rotateGhost();
-  const sel = state.selection;
+  const sel = chosen();
   if (sel?.kind === "part") edit(rotatePart(state.circuit, sel.id), `Rotate ${sel.id}`);
   // a supply's symbol (ground, V+, V-) turns too; a plain label's name finds its own side
   const label = sel?.kind === "items" && sel.items?.labels.length === 1 && !sel.items.parts.length && !sel.items.wires.length ? sel.items.labels[0] : sel?.label;
@@ -1223,7 +1235,7 @@ function selectItems(items) {
  * @returns {import("./schematic/render.js").Items}
  */
 function currentItems() {
-  const sel = state.selection;
+  const sel = chosen();
   if (sel?.kind === "items" && sel.items) return sel.items;
   if (sel?.kind === "part") return { parts: [sel.id], wires: [], labels: [] };
   if (sel?.kind === "net" && sel.wire !== undefined) return { parts: [], wires: sel.run ?? [sel.wire], labels: [] };
@@ -1233,7 +1245,7 @@ function currentItems() {
 
 /** What the selection holds as items (a single part counts), or null. */
 function selectedItems() {
-  const sel = state.selection;
+  const sel = chosen();
   if (sel?.kind === "items" && sel.items && !isEmpty(sel.items)) return sel.items;
   if (sel?.kind === "part") return { parts: [sel.id], wires: [], labels: [] };
   return null;
@@ -1801,7 +1813,7 @@ function onKey(e) {
     case "wire": return setWireMode(!schematic.wireMode);
     case "rotate": return rotate();
     case "delete": return deleteSelection();
-    case "inspect": return state.selection?.kind === "part" ? forms.inspect(state.selection.id) : undefined;
+    case "inspect": return chosen()?.kind === "part" ? forms.inspect(/** @type {Selection} */ (chosen()).id) : undefined;
     case "undo": return undo();
     case "redo": return redo();
     case "save": return files.save().then(() => undefined);

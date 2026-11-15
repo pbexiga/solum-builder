@@ -262,7 +262,10 @@ export function openForm(host, spec) {
   host.append(form);
   const handle = { close: () => close(), form, showError, fields: spec.fields };
   open = handle;
-  startField(form)?.focus();
+  const start = startField(form);
+  start?.focus();
+  // its text selected, so typing replaces it: double-click, type, Enter (D-350)
+  if (start instanceof HTMLInputElement && start.type === "text") start.select(); // not a text area: a long note would go at one key
   return handle;
 }
 

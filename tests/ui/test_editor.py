@@ -195,7 +195,7 @@ def api(page: Page, base_url: str, method: str, path: str, body: Any = None) -> 
 def test_a_parts_form_opens_on_the_box_after_its_ref(page: Page, base_url: str) -> None:
     """The user (2026-11-15): opening a cap or resistor put the cursor in Ref; the value is
     what's edited. A part's form starts on its first box after Ref, IN and OUT too; a
-    label's form on its name (D-350)."""
+    label's form on its name, its text selected: double-click, type, Enter (D-350)."""
     new_circuit(page, base_url, "Focus test")
     show_area(page, -60, -60, 420, 280)
     got = {}
@@ -211,6 +211,15 @@ def test_a_parts_form_opens_on_the_box_after_its_ref(page: Page, base_url: str) 
     assert got["r"] == got["c"] == "field-value"
     assert got["l"] == "field-net"
     assert all(v.startswith("field-") and v != "field-ref" for v in got.values()), got
+    press(page, "Escape")
+    # double-click, type, Enter: the value is selected, so typing replaces it
+    before = views(page)
+    page.locator('g.part[data-ref="R1"]').dblclick()
+    expect(page.locator("#field-value")).to_be_focused()
+    page.keyboard.type("4k7")
+    press(page, "Enter")
+    wait_for_view(page, before)
+    expect(page.locator('g.part-text[data-ref="R1"] .value')).to_have_text("4k7")
 
 
 def test_place_undo_redo(page: Page, base_url: str) -> None:

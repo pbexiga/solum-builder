@@ -1,9 +1,13 @@
-# The Mac app, built by GitHub from a tagged commit (D-330). A v* tag builds it with the
-# same `make mac-app` as on a Mac, attests where it came from, and leaves a draft release
-# with the .dmg for the maintainer to write up and publish. Run by hand (Actions → Release →
-# Run workflow) it builds the .dmg as a workflow artifact only: a check before tagging.
-# Both wait in the `release` environment for the maintainer's Approve. Signed and notarised
-# only when the certificate secrets exist; pull requests never run this.
+# A release, built by GitHub from a tagged commit (D-330, D-346). A v* tag runs the test
+# suites on x86-64 and ARM64 Linux and smoke-tests the Docker image there (`linux`), builds
+# the Mac app with the same `make mac-app` as on a Mac and attests where it came from
+# (`mac-app`, after the maintainer's Approve in the `release` environment), and, only when
+# both are green, leaves a draft release with the .dmg for the maintainer to write up and
+# publish (`draft`). Run by hand (Actions → Release → Run workflow) it does the same but
+# the draft: the .dmg stays a workflow artifact, a check before tagging.
+# The repository variable LINUX_CHECKS picks the Linux rows: both (unset), x64, arm or off
+# (docs/maintain/release.md). Signed and notarised only when the certificate secrets
+# exist; pull requests never run this.
 name: Release
 
 on:
@@ -19,6 +23,71 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  linux:
+    name: Linux (${{ matrix.runner }})
+    if: vars.LINUX_CHECKS != 'off'
+    strategy:
+      fail-fast: false
+      matrix:
+        runner: ${{ fromJSON(vars.LINUX_CHECKS == 'x64' && '["ubuntu-24.04"]' || vars.LINUX_CHECKS == 'arm' && '["ubuntu-24.04-arm"]' || '["ubuntu-24.04", "ubuntu-24.04-arm"]') }}
+    runs-on: ${{ matrix.runner }}
+    timeout-minutes: 75
+    permissions:
+      contents: read
+    env:
+      CONTAINER: docker
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: docker/setup-buildx-action@f87e5991a6d7451dcb8d9637bfbc97413f497069  # v4.4.1
+
+      # The images as `make dev-image` and `make image` build them, with the layers kept
+      # between releases (the ngspice build is most of it)
+      - name: The dev image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
+        with:
+          context: .
+          target: dev
+          tags: solum-builder:dev
+          load: true
+          cache-from: type=gha,scope=${{ matrix.runner }}
+          cache-to: type=gha,scope=${{ matrix.runner }},mode=max
+
+      - name: make check
+        run: make check
+
+      # its own step, so it can be dropped alone (docs/maintain/release.md)
+      - name: make accept
+        run: make accept
+
+      - name: The runtime image
+        uses: docker/build-push-action@c3c9e263c25d99ce0380d002d59b67737d91b0dc  # v7.4.0
+        with:
+          context: .
+          target: runtime
+          tags: solum-builder:latest
+          load: true
+          cache-from: type=gha,scope=${{ matrix.runner }}
+
+      - name: The image on empty folders, as compose runs it, and a starter through the API
+        run: |
+          mkdir -p "$RUNNER_TEMP/data" "$RUNNER_TEMP/cache"
+          docker run -d --name solum -p 8000:8000 \
+            -v "$RUNNER_TEMP/data:/data" -v "$RUNNER_TEMP/cache:/cache" solum-builder:latest
+          for _ in $(seq 60); do curl -fsS http://127.0.0.1:8000/api/health >health.json 2>/dev/null && break; sleep 1; done
+          cat health.json; echo
+          jq -e '.engine == "native"' health.json >/dev/null || { docker logs solum; exit 1; }
+          curl -fsS http://127.0.0.1:8000/api/starters/ts808 | jq '{circuit: .circuit, nodes: []}' >run.json
+          curl -fsS -H 'Content-Type: application/json' -d @run.json http://127.0.0.1:8000/api/run >ran.json \
+            || { cat ran.json; docker logs solum; exit 1; }
+          echo "TS808 ran: $(jq -c 'keys' ran.json)"
+
+      - name: The server's log
+        if: always()
+        run: docker logs solum 2>&1 | tail -50 || true
+
   mac-app:
     runs-on: macos-latest  # Apple Silicon; make mac-app refuses anything else
     environment: release
@@ -27,6 +96,8 @@ jobs:
       contents: write  # the draft release
       id-token: write  # the attestation's signing certificate
       attestations: write
+    outputs:
+      version: ${{ steps.version.outputs.version }}
     env:
       SIGNED: ${{ secrets.MACOS_CERT_P12 != '' }}
       NOTARISED: ${{ secrets.MACOS_CERT_P12 != '' && secrets.NOTARY_KEY != '' }}
@@ -98,21 +169,8 @@ jobs:
         with:
           subject-path: ${{ steps.dmg.outputs.path }}
 
-      - name: The draft release
-        if: github.ref_type == 'tag'
-        env:
-          GH_TOKEN: ${{ github.token }}
-          VERSION: ${{ steps.version.outputs.version }}
-          DMG: ${{ steps.dmg.outputs.path }}
-        run: |
-          sed -e "s|@VERSION@|$VERSION|g" -e "s|@TAG@|$GITHUB_REF_NAME|g" -e "s|@REPO@|$GITHUB_REPOSITORY|g" \
-            packaging/mac/release-notes.md >"$RUNNER_TEMP/notes.md"
-          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
-            --title "Solum Builder $VERSION" --notes-file "$RUNNER_TEMP/notes.md" \
-            "$DMG" "$DMG.sha256"
-
-      - name: The .dmg as a workflow artifact (a run by hand)
-        if: github.ref_type != 'tag'
+      # the draft job takes it from here; a run by hand leaves it for the maintainer
+      - name: The .dmg as a workflow artifact
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9  # v7.0.2
         with:
           name: Solum-Builder-${{ steps.version.outputs.version }}
@@ -124,3 +182,37 @@ jobs:
         run: |
           [ ! -f "$RUNNER_TEMP/signing.keychain-db" ] || security delete-keychain "$RUNNER_TEMP/signing.keychain-db"
           rm -f "$RUNNER_TEMP/notary.p8"
+
+  # The draft release, only from a tag and only when the Mac app and every Linux row are
+  # green (the Linux rows switched off count as green). Remove `linux` from `needs` and
+  # this `if` to release without them.
+  draft:
+    needs: [linux, mac-app]
+    if: >-
+      github.ref_type == 'tag' && !cancelled() && needs.mac-app.result == 'success'
+      && (needs.linux.result == 'success' || needs.linux.result == 'skipped')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
+        with:
+          persist-credentials: false
+
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131  # v7.0.0
+        with:
+          name: Solum-Builder-${{ needs.mac-app.outputs.version }}
+          path: dist
+
+      - name: The draft release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          VERSION: ${{ needs.mac-app.outputs.version }}
+        run: |
+          dmg="dist/Solum-Builder-$VERSION.dmg"
+          sed -e "s|@VERSION@|$VERSION|g" -e "s|@TAG@|$GITHUB_REF_NAME|g" -e "s|@REPO@|$GITHUB_REPOSITORY|g" \
+            packaging/mac/release-notes.md >"$RUNNER_TEMP/notes.md"
+          gh release create "$GITHUB_REF_NAME" --repo "$GITHUB_REPOSITORY" --draft --verify-tag \
+            --title "Solum Builder $VERSION" --notes-file "$RUNNER_TEMP/notes.md" \
+            "$dmg" "$dmg.sha256"

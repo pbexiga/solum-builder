@@ -123,6 +123,9 @@ export function liveSliders(app) {
         ui,
         /** @param {Record<string, any[]>} [steps] */
         async load(steps = {}) {
+          // the form applied or cancelled before the part's view came: nothing to load, and
+          // its ref may be gone (a rename applied, D-342)
+          if (closed) return;
           try {
             const got = await app.fetchLive([{ ref, field }], steps, base(app.played()));
             if (closed) return;
@@ -208,6 +211,7 @@ export function liveSliders(app) {
 
     /** @param {Record<string, any[]>} [steps] */
     async function load(steps = {}) {
+      if (closed) return; // closed before it loaded (D-342)
       try {
         const got = await app.fetchLive(refs.map((ref) => ({ ref, field: "value" })), steps);
         if (closed) return;

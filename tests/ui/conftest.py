@@ -5,6 +5,7 @@ image). Runs with `make accept`."""
 import itertools
 import json
 import os
+import time
 from collections.abc import Iterator
 from pathlib import Path
 from typing import Any
@@ -46,8 +47,26 @@ def base_url(ui_settings: Settings) -> Iterator[str]:
         yield url
 
 
+IPV6_ADDRESSES = Path("/proc/net/if_inet6")
+TENTATIVE = 0x40  # IFA_F_TENTATIVE: an address Linux hasn't finished checking (DAD)
+
+
+def settle_network(limit: float = 5.0) -> None:
+    """Wait (at most `limit` s) until no IPv6 address is tentative (D-342). A container's
+    link-local address settles a second or two after it starts; Chromium takes that for a
+    network change and fails every request then in flight (net::ERR_NETWORK_CHANGED), so
+    the first page a test worker loads failed about one time in four. No-op off Linux."""
+    end = time.monotonic() + limit
+    while IPV6_ADDRESSES.exists() and time.monotonic() < end:
+        flags = [int(line.split()[4], 16) for line in IPV6_ADDRESSES.read_text().splitlines()]
+        if not any(f & TENTATIVE for f in flags):
+            return
+        time.sleep(0.05)
+
+
 @pytest.fixture(scope="session")
 def browser() -> Iterator[Browser]:
+    settle_network()
     with sync_playwright() as p:
         b = getattr(p, os.environ.get("UI_BROWSER", "chromium")).launch()
         yield b

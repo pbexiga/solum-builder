@@ -504,7 +504,13 @@ def test_the_palette_is_whole_before_a_circuit_loads(page: Page, base_url: str) 
     expect(tiles).to_have_count(5)
     assert [t.get_attribute("data-net") for t in tiles.all()] == [None, None, "V+", "V-", None]
     height = page.locator("#palette").evaluate("(el) => el.scrollHeight")
-    assert len(held) == 1  # the circuit hasn't come yet
+    # the palette can be drawn before the circuit is even asked for (under load): wait
+    # for the request, which is held, so the circuit still hasn't come (D-342)
+    for _ in range(200):
+        if held:
+            break
+        page.wait_for_timeout(50)
+    assert len(held) == 1
     held[0].continue_()
     wait_for_update(page, 0)
     assert page.locator("#palette").evaluate("(el) => el.scrollHeight") == height

@@ -6,6 +6,9 @@
 html, body {
   margin: 0;
   height: 100%;
+  /* the app is one screen: never scrolled or bounced as a page, when a list inside it
+     reaches its end (WebKit, the Mac app's window, rubber-bands the page) (D-343) */
+  overscroll-behavior: none;
   background: var(--surface-0);
   color: var(--text);
   font-family: var(--font-ui);
@@ -823,7 +826,7 @@ button.link { padding: 0; border: 0; background: none; color: var(--accent-hi); 
 
 /* History (D-101): the header button and its pane, newest first */
 .history-wrap { position: relative; }
-.history-pane { white-space: normal; position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; width: 320px; max-height: 320px; overflow: auto; padding: 8px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); font-size: 12px; }
+.history-pane { white-space: normal; position: absolute; top: calc(100% + 6px); right: 0; z-index: 40; width: 320px; max-height: 320px; overflow: auto; overscroll-behavior: contain; padding: 8px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 4px; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); font-size: 12px; }
 .history-pane[hidden] { display: none; }
 .history-hint { margin: 0 0 6px; color: var(--text-3); font-size: 11px; }
 .history-rows { list-style: none; margin: 0; padding: 0; }

@@ -1927,3 +1927,8 @@ Calculators → *Filter* (`filterCalculator` in `web/tools.js`, `GET /api/tools/
 - **A form's sliders don't load once it has closed** (`load` in `web/live-sliders.js`, both kinds): the inspector's sliders load after the part's view arrives; a rename applied before that sent `/api/live` the old ref with the new circuit (a 422, "There's no part R54", seen in `test_renaming_back_lists_the_notes_that_already_use_the_name`).
 - **Why:** both failed `make accept` now and then, on unchanged code.
 *Alternatives:* retrying failed tests (hides real failures); IPv6 turned off in the dev container (`--sysctl`; changes the environment the app is tested in); ignoring the 422 in the test (it's a real stray request).
+
+**D-343 — The page never scrolls or bounces; the History list keeps its scroll** (2026-11-15) `look`
+- `html, body` have `overscroll-behavior: none`, and the History pane (`.history-pane`) `overscroll-behavior: contain`, as the Problems and DC lists already had.
+- **Why:** the user, in the Mac app: scrolling History to its end scrolled the whole app, which kept moving after History closed. The app's layout is exactly the window (nothing to scroll, as Chromium shows), but WebKit, the Mac app's window, rubber-bands the page from a trackpad once an inner list hands its scroll on.
+*Alternatives:* `overflow: hidden` on the page (WebKit still rubber-bands the root); turning off the window's elastic scrolling in the launcher (pywebview has no option for it; the browser on a NAS would still do it in Safari).

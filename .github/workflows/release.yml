@@ -1,11 +1,12 @@
 # A release, built by GitHub from a tagged commit (D-330, D-346). A v* tag builds the
-# Docker image on x86-64 Linux from a clean checkout and smoke-tests it (`linux`), builds
+# Docker image on x86-64 and ARM64 Linux from a clean checkout and smoke-tests it (`linux`), builds
 # the Mac app with the same `make mac-app` as on a Mac and attests where it came from
 # (`mac-app`, after the maintainer's Approve in the `release` environment), and, only when
-# both are green, leaves a draft release with the .dmg for the maintainer to write up and
+# all are green, leaves a draft release with the .dmg for the maintainer to write up and
 # publish (`draft`). Run by hand (Actions → Release → Run workflow) it does the same but
 # the draft: the .dmg stays a workflow artifact, a check before tagging.
-# The repository variable LINUX_CHECKS=off skips the Linux check (docs/maintain/release.md).
+# The repository variable LINUX_CHECKS picks the Linux rows: both (unset), x64, arm or off
+# (docs/maintain/release.md).
 # Signed and notarised only when the certificate secrets exist; pull requests never run this.
 name: Release
 
@@ -23,9 +24,13 @@ concurrency:
 
 jobs:
   linux:
-    name: Linux image (x86-64)
+    name: Linux image (${{ matrix.arch }})
     if: vars.LINUX_CHECKS != 'off'
-    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(vars.LINUX_CHECKS == 'x64' && '[{"runner":"ubuntu-24.04","arch":"x86-64","cache":"x64"}]' || vars.LINUX_CHECKS == 'arm' && '[{"runner":"ubuntu-24.04-arm","arch":"ARM64","cache":"arm64"}]' || '[{"runner":"ubuntu-24.04","arch":"x86-64","cache":"x64"},{"runner":"ubuntu-24.04-arm","arch":"ARM64","cache":"arm64"}]') }}
+    runs-on: ${{ matrix.runner }}
     timeout-minutes: 30
     permissions:
       contents: read
@@ -45,8 +50,8 @@ jobs:
           target: runtime
           tags: solum-builder:latest
           load: true
-          cache-from: type=gha,scope=runtime-x64
-          cache-to: type=gha,scope=runtime-x64,mode=max
+          cache-from: type=gha,scope=runtime-${{ matrix.cache }}
+          cache-to: type=gha,scope=runtime-${{ matrix.cache }},mode=max
 
       - name: The image on empty folders, as compose runs it, smoke-tested
         run: |
@@ -155,8 +160,8 @@ jobs:
           [ ! -f "$RUNNER_TEMP/signing.keychain-db" ] || security delete-keychain "$RUNNER_TEMP/signing.keychain-db"
           rm -f "$RUNNER_TEMP/notary.p8"
 
-  # The draft release, only from a tag and only when the Mac app and the Linux check are
-  # green (the Linux check switched off counts as green). Remove `linux` from `needs` and
+  # The draft release, only from a tag and only when the Mac app and every Linux row are
+  # green (rows switched off count as green). Remove `linux` from `needs` and
   # this `if` to release without it.
   draft:
     needs: [linux, mac-app]

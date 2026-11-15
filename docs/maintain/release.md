@@ -24,9 +24,9 @@ are theirs: merging, tagging, approving and publishing (D-331).
 7. **Build the image:** `make image`, then run it against an empty data folder and open a
    starter, run it, render audio (`python3 scripts/smoke.py http://127.0.0.1:8000` does all
    but the audio). The image is built on x86-64 and ARM64 alike (D-327); the release run
-   builds and smoke-tests it on x86-64 ([The Linux check](#the-linux-check)), and an Apple
-   Silicon Mac with Podman is an ARM64 machine. When anything about ngspice or the
-   Dockerfile changed, run `make check` and `make accept` on an x86-64 machine too.
+   builds and smoke-tests it on both ([The Linux check](#the-linux-check)). When anything
+   about ngspice or the Dockerfile changed, run `make check` and `make accept` on both
+   (an Apple Silicon Mac with Podman is an ARM64 machine).
 8. **Build the Mac app** on an Apple Silicon Mac: `make mac-app` (it runs the tests and a
    smoke test itself; [Building the Mac app](mac-app.md)). Quit any copy of the app first.
    Open `dist/Solum-Builder-<version>.dmg`, drag the app to Applications, open it, run a
@@ -47,8 +47,8 @@ are theirs: merging, tagging, approving and publishing (D-331).
    until you click **Review deployments → Approve** on the run. Then GitHub's macOS runner
    checks the tag is `v` + `__version__`, runs the same `make mac-app` (tests, app, smoke
    test, `.dmg`) and attests where the `.dmg` came from (about 20 minutes). When the Mac build
-   and the Linux check are green, the `draft` job makes a **draft release** with the `.dmg`
-   and its `.sha256`. Either red: no draft.
+   and both Linux rows are green, the `draft` job makes a **draft release** with the `.dmg`
+   and its `.sha256`. Any of them red: no draft.
 12. **Finish the draft.** Download its `.dmg` and open it on your Mac: it must ask for Open
    Anyway (it's the downloaded one now), then run a starter. Paste *What's new* into the
    notes (drafted in step 13; the template, `packaging/mac/release-notes.md`, has the rest: the Open Anyway steps, that
@@ -66,13 +66,15 @@ are theirs: merging, tagging, approving and publishing (D-331).
 
 ## The Linux check
 
-What a local run on the Mac misses is x86-64 (Podman on an Apple Silicon Mac is ARM64) and
-a clean machine. So the release run builds the Docker image on GitHub's x86-64 runner from
-a clean checkout of the tag and smoke-tests it, beside the Mac build (D-346). The test
+What a local run misses is the other architecture (Podman on an Apple Silicon Mac is ARM64;
+a Linux PC is usually x86-64) and a clean machine. So the release run builds the Docker
+image on GitHub's x86-64 and ARM64 runners from a clean checkout of the tag and smoke-tests
+it, beside the Mac build (D-346). The test
 suites aren't run there: the maintainer and the agent run `make check` and `make accept`
 before every pull request.
 
-- **What runs.** The `linux` job, **Linux image (x86-64)** on the run's page: it builds the
+- **What runs.** The `linux` job, two rows on the run's page at the same time, **Linux image
+  (x86-64)** and **Linux image (ARM64)**. Each builds the
   runtime image as `make image` does (its layers kept between releases in GitHub's cache,
   so the ngspice build runs only when the Dockerfile or its recipe changes), starts it on
   empty data and cache folders as compose does, and runs `scripts/smoke.py` against it:
@@ -82,15 +84,16 @@ before every pull request.
   About 5 minutes (8 when the cache is cold), no secrets, read-only. The same script runs
   against any server: `python3 scripts/smoke.py http://127.0.0.1:8000` checks a local
   `docker compose up` (step 7).
-- **Red** means no draft release: the Mac build may finish, but `draft` doesn't run. GitHub
+- **A red row** means no draft release: the Mac build may finish, but `draft` doesn't run. GitHub
   emails whoever started the run (pushed the tag). Open the job and read the failed step
   and *The server's log*. A real failure: fix it on a branch, merge, and release a new patch
-  version. A runner's hiccup: **Re-run failed jobs** on the run; when it passes, `draft`
+  version. A runner's hiccup: **Re-run failed jobs** on the run; when they pass, `draft`
   runs. Don't move a published tag; an unpublished one may be deleted and pushed again
   (`git push origin :vX.Y.Z`, then tag the fixed commit).
-- **The switch:** the repository variable `LINUX_CHECKS` (Settings → Secrets and variables →
-  Actions → Variables) set to `off` skips the job, with no code change; the draft then waits
-  only for the Mac build. Unset (or anything else), it runs.
+- **The switch: repository variable `LINUX_CHECKS`** (Settings → Secrets and variables →
+  Actions → Variables), no code change: unset or `both` runs both rows; `x64` only x86-64;
+  `arm` only ARM64; `off` none (the draft then waits only for the Mac build). Any other
+  value runs both.
 - **Removing it:** delete the `linux` job, and `linux` from the `draft` job's `needs` and
   its `if` (`needs.linux.result …`).
 

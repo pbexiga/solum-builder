@@ -187,7 +187,7 @@ def battery_buffer() -> dict[str, object]:
     d.part("R3", "resistor", (340, 60), 90, value="1M")
     d.part("OUT", "amp", (420, 20))
     d.part("J2", "jack", (490, 20), 180, label="Output")
-    d.part("BAT1", "battery", (-160, -80))
+    d.part("BAT1", "battery", (-20, -100))  # right of J1: its - drops onto R
     d.wire("IN.out", "C1.1")
     d.wire("C1.2", "Q1.G")
     d.wire((140, 0), "R1.1")
@@ -197,9 +197,9 @@ def battery_buffer() -> dict[str, object]:
     d.wire((340, 20), "R3.1")
     d.wire("J2.T", (430, 20))  # J2's T plugs into OUT's end
     d.label("V+", "BAT1.+", "Q1.D")
-    d.wire("BAT1.-", (-160, -20), "J1.R")
+    d.wire("BAT1.-", (-20, -20), "J1.R")
     d.label("GND", "R1.2", "R2.2", "R3.2")
-    d.stub("J1.S", "GND", dy=-20, rot=180)
+    d.stub("J1.S", "GND", dy=-40, rot=180)
     d.stub("J2.S", "GND", dy=20)
     return circuit_to_dict(d.circuit("Battery buffer", probes={"in": "in", "out": "out"}))
 

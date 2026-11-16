@@ -4,9 +4,9 @@
   "name": "9 V power · DC jack and battery",
   "version": {
     "major": 1,
-    "minor": 3
+    "minor": 4
   },
-  "description": "How a pedal takes a 9 V supply or a battery. The DC jack (centre negative) puts the supply on V+, through a reverse-polarity diode and the 9 V input filter to V+F (the filter's values from the ProCo Rat, ElectroSmash; the 1N5817 as on Aion FX's boards). The battery's + goes to the jack's battery lug, which touches the sleeve only with no plug in, so a supply cuts the battery off; its - goes to ground: in a real pedal that wire goes to the input jack's ring, so the battery is on only with a guitar cable plugged in (the simulation always has a cable in). Knobs: Power picks the DC jack or the battery; the battery's form sets how drained it is.",
+  "description": "How a pedal takes a 9 V supply or a battery. The DC jack (centre negative) puts the supply on V+, through a reverse-polarity diode and the 9 V input filter to V+F (the filter's values from the ProCo Rat, ElectroSmash; the 1N5817 as on Aion FX's boards). The battery's + goes to the jack's battery lug, which touches the sleeve only with no plug in, so a supply cuts the battery off; its - goes to ground, so the battery is always on. In a real pedal that wire goes to the input jack's ring, so the battery is on only with a guitar cable plugged in: that's the block *9 V power · DC jack and battery, switched by the input jack*. Knobs: Power picks the DC jack or the battery; the battery's form sets how drained it is.",
   "tags": [
     "power",
     "battery",

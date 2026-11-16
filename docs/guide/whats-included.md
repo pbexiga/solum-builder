@@ -67,6 +67,8 @@ Blocks that bias from a mid-supply voltage have a **vref** port: wire it to the 
 |---|---|
 | 9 V power · DC jack and battery | A DC jack and a battery, with the reverse-polarity diode and the supply filter. Pick which one feeds it in Knobs & switches. |
 | 9 V power · battery only | A battery feeding the supply filter, for a pedal with no DC jack. It swaps with the block above. |
+| 9 V power · battery, switched by the input jack | The battery-only block with its − on a stereo input jack's ring, so it's on only with a mono cable in. Wire the jack's T (the in label) to IN's middle. |
+| 9 V power · DC jack and battery, switched by the input jack | The DC jack and battery block with the battery switched by the input jack the same way. |
 | 9 V power · supply filter | The reverse-polarity diode and the filter between the jack (V+) and the circuit (V+F), from the Rat. |
 | Vref · half-supply divider | Two equal resistors and a capacitor: the mid-supply voltage op-amp and JFET stages bias from. |
 | Charge pump · doubler, chip (TC1044S) | A charge-pump chip doubling the 9 V to about 17.5 V for stages that want more headroom. |

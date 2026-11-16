@@ -1,0 +1,196 @@
+{
+  "schema": 31,
+  "id": "battery-jack-power-v1",
+  "name": "9 V power · battery, switched by the input jack",
+  "version": {
+    "major": 1,
+    "minor": 0
+  },
+  "description": "How a battery-only pedal takes its 9 V and switches it off: the battery's + is V+, its − goes to the stereo input jack's ring (J1), so the battery is on only while a mono guitar cable is in, which is why battery pedals say to unplug them when not in use. Wire J1's T (the in port) to IN's middle; then pulling the cable in Knobs (Input cable) turns the pedal off, and the render is refused until it's back in. Then the 9 V input filter to V+F (its values from the ProCo Rat, ElectroSmash). The battery's form sets how drained it is. The same V+F as the other power blocks.",
+  "tags": [
+    "power",
+    "battery",
+    "jack",
+    "filter"
+  ],
+  "template": true,
+  "power": {
+    "rails": {
+      "V+": 9.0
+    }
+  },
+  "parts": [
+    {
+      "ref": "BAT1",
+      "pos": [
+        -100,
+        40
+      ],
+      "type": "battery"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        40,
+        0
+      ],
+      "type": "resistor",
+      "value": "47"
+    },
+    {
+      "ref": "C1",
+      "pos": [
+        90,
+        40
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "100µ",
+      "kind": "electrolytic",
+      "rating_v": 16.0
+    },
+    {
+      "ref": "C2",
+      "pos": [
+        140,
+        40
+      ],
+      "rot": 90,
+      "type": "capacitor",
+      "value": "100n",
+      "kind": "ceramic"
+    },
+    {
+      "ref": "J1",
+      "pos": [
+        -240,
+        60
+      ],
+      "note": "A stereo input jack switching the battery: its − goes to the ring, and a mono guitar plug's long sleeve joins the ring to ground, so the pedal is on only with a cable in. A stereo cable doesn't switch it on (its ring is its own). Wire T (the in port) to IN's middle, so pulling the cable takes the guitar out too. Knobs: Input cable.",
+      "type": "jack",
+      "stereo": true,
+      "label": "Input"
+    }
+  ],
+  "wires": [
+    {
+      "from": [
+        -100,
+        20
+      ],
+      "to": [
+        -100,
+        0
+      ]
+    },
+    {
+      "from": [
+        -100,
+        0
+      ],
+      "to": [
+        0,
+        0
+      ]
+    },
+    {
+      "from": [
+        0,
+        0
+      ],
+      "to": [
+        20,
+        0
+      ]
+    },
+    {
+      "from": [
+        60,
+        0
+      ],
+      "to": [
+        160,
+        0
+      ]
+    },
+    {
+      "from": [
+        90,
+        0
+      ],
+      "to": [
+        90,
+        20
+      ]
+    },
+    {
+      "from": [
+        140,
+        0
+      ],
+      "to": [
+        140,
+        20
+      ]
+    },
+    {
+      "from": [
+        -100,
+        60
+      ],
+      "to": [
+        -200,
+        60
+      ]
+    }
+  ],
+  "labels": [
+    {
+      "net": "V+",
+      "pos": [
+        0,
+        0
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        90,
+        60
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        140,
+        60
+      ]
+    },
+    {
+      "net": "V+F",
+      "pos": [
+        160,
+        0
+      ]
+    },
+    {
+      "net": "GND",
+      "pos": [
+        -200,
+        40
+      ],
+      "rot": 270
+    },
+    {
+      "net": "in",
+      "pos": [
+        -200,
+        80
+      ]
+    }
+  ],
+  "ports": {
+    "V+F": "V+F",
+    "in": "in"
+  }
+}

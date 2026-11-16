@@ -4,9 +4,9 @@
   "name": "9 V power · battery only",
   "version": {
     "major": 1,
-    "minor": 2
+    "minor": 3
   },
-  "description": "How a battery-only pedal (no DC jack) takes its 9 V. The battery's + is V+; its - goes to ground: in a real pedal that wire goes to the input jack's ring (a stereo jack), so the pedal is on only with a guitar cable plugged in, which is why battery pedals say to unplug them when not in use. The simulation always has a cable in, so it's ground. Then the 9 V input filter to V+F (its values from the ProCo Rat, ElectroSmash). The battery's form sets how drained it is. The same ports as the DC jack and battery block, so either can replace the other.",
+  "description": "How a battery-only pedal (no DC jack) takes its 9 V. The battery's + is V+; its - goes to ground, so the battery is always on. In a real pedal that wire goes to the input jack's ring (a stereo jack), so the pedal is on only with a guitar cable plugged in, which is why battery pedals say to unplug them when not in use: that's the block *9 V power · battery, switched by the input jack*. Then the 9 V input filter to V+F (its values from the ProCo Rat, ElectroSmash). The battery's form sets how drained it is. The same ports as the DC jack and battery block, so either can replace the other.",
   "tags": [
     "power",
     "battery",

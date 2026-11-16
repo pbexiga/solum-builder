@@ -215,6 +215,29 @@ def test_with_the_input_cable_out_the_pedal_is_off(sim: Simulator) -> None:
     assert on["silent"] is None and on["ac"] is not None and on["tran"] is not None
 
 
+@pytest.mark.parametrize(
+    ("block", "dc_plugged", "plug", "volts"),
+    [
+        ("battery-jack-power", None, "mono", 9.0),
+        ("battery-jack-power", None, "none", 0.0),  # no cable: the battery's cut off
+        ("battery-jack-power", None, "stereo", 0.0),  # a TRS plug's ring is its own (D-355)
+        ("battery-dc-jack-power", True, "none", 9.0),  # the adapter, cable or not
+        ("battery-dc-jack-power", False, "mono", 9.0),  # the battery, through D1 as well
+        ("battery-dc-jack-power", False, "none", 0.0),
+    ],
+)  # fmt: skip
+def test_the_jack_power_blocks_switch_the_battery_with_the_cable(
+    sim: Simulator, block: str, dc_plugged: bool | None, plug: str, volts: float
+) -> None:
+    """The battery blocks with an input jack (D-354, D-355): the battery is on only with a
+    mono cable in J1; a DC plug takes over whatever's in it. Unloaded, D1 carries next to
+    nothing, so V+F is the supply's 9 V."""
+    c = jig(core_block(block)).with_part("J1", plug=plug)
+    if dc_plugged is not None:
+        c = c.with_part("DC", plugged=dc_plugged)
+    assert sim.op(c).voltages["V+F"] == pytest.approx(volts, abs=0.01)
+
+
 def test_a_battery_off_the_lug_stays_beside_the_adapter(sim: Simulator) -> None:
     """D-185: wired to V+ instead of the DC jack's battery lug, a 9.6 V battery behind 2 Ω
     pushes (9.6 - 9) / 2 = 0.3 A into the 9 V adapter, which holds V+."""

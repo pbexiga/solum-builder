@@ -934,3 +934,22 @@ def test_drawn_pins_keep_dc_only_on_the_same_net(js: Page) -> None:
         "2": {"net": "c", "dc": None, "number": None},
         "3": {"net": "d", "dc": None, "number": 3},
     }
+
+
+def test_the_power_chip_follows_the_cable_and_dc_switches(js: Page) -> None:
+    """D-357: a battery entry reads "cut off" while a jack's cable switch sits where it cuts
+    the battery off (its opening position `at` when untouched); the DC jack's entry wins."""
+    got = run(
+        js,
+        """
+        const { chipNow } = await m('editor/edit.js');
+        const cut = { text: "Battery · cut off", jacks: { J1: { at: 0, positions: [1, 2] } } };
+        const alone = { text: "Battery · 9 V", battery: true, cut_off: cut };
+        const both = { control: "DC", positions: [{ text: "DC jack", battery: false }, { text: "Battery · 9 V", battery: true }], cut_off: cut };
+        return [chipNow(alone, {}), chipNow(alone, { J1: 2 }), chipNow(both, { DC: 0, J1: 2 }),
+                chipNow(both, { DC: 1, J1: 1 }), chipNow(both, { DC: 1 }), chipNow(null, {})];
+        """,
+    )
+    assert [c and c["text"] for c in got] == [
+        "Battery · 9 V", "Battery · cut off", "DC jack", "Battery · cut off", "Battery · 9 V", None,
+    ]  # fmt: skip

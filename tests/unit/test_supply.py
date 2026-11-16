@@ -271,6 +271,55 @@ def test_a_cut_off_battery_holds_nothing(models: ModelLibrary, circuit: Builder)
     assert supply_volts(on)["V+"] == 9.0 and not powered_off(on)
 
 
+def battery_apart(circuit: Builder, cable: bool = True) -> CircuitBuilder:
+    """A battery on a net of its own (VBAT, not V+), its - switched by a stereo jack."""
+    return (
+        circuit()
+        .rail("V+", 9.0)
+        .part("BAT1", "battery", "VBAT", "bneg")
+        .part("J1", "jack", stereo=True, label="Input", plug="mono" if cable else "none",
+              pins={"T": "tip", "R": "bneg", "S": "0"})
+        .part("R1", "resistor", "VBAT", "0", value="10k")
+    )  # fmt: skip
+
+
+def test_off_is_the_battery_cut_off_with_nothing_else_supplying_it(circuit: Builder) -> None:
+    """D-357: a cut-off battery on a net of its own is off too when nothing is on a rail
+    the Power menu holds and there's no DC source; with a part on V+, or a DC source, the
+    rest of the circuit is still powered, so its bias still counts."""
+    assert powered_off(battery_apart(circuit, cable=False).build())
+    assert not powered_off(battery_apart(circuit).build())
+    on_v_plus = battery_apart(circuit, cable=False).part("R2", "resistor", "V+", "0", value="1k")
+    assert not powered_off(on_v_plus.build())
+    sourced = battery_apart(circuit, cable=False).part("V1", "vsource", "ref", "0", value="4.5")
+    assert not powered_off(sourced.part("R3", "resistor", "ref", "0", value="1k").build())
+
+
+def test_the_power_chip_says_which_cable_positions_cut_the_battery_off(
+    circuit: Builder,
+) -> None:
+    """D-357: the chip follows J1's cable switch as it follows the DC jack's (a knob isn't
+    an edit): a stereo cable (1) or none (2) cuts it off, `at` is where the switch opens."""
+    cut = {"text": "Battery · cut off", "jacks": {"J1": {"at": 2, "positions": [1, 2]}}}
+    assert power_chip(ring_pedal(circuit, cable=False).build()) == {
+        "text": "Battery · 9 V",
+        "battery": True,
+        "cut_off": cut,
+    }
+    on = power_chip(ring_pedal(circuit).build())
+    assert on is not None and on["cut_off"]["jacks"]["J1"]["at"] == 0
+    assert "cut_off" not in (
+        power_chip(
+            circuit()
+            .rail("V+", 9.0)
+            .part("BAT1", "battery", "V+", "0")
+            .part("R1", "resistor", "V+", "0", value="1k")
+            .build()
+        )
+        or {}
+    )
+
+
 def test_any_jack_whose_cable_switches_something_has_a_cable_knob(circuit: Builder) -> None:
     """D-354, D-355: a mono jack on the guitar's or the amp's net, in or out; a stereo jack
     whose ring and sleeve are both wired, whatever the ring does (mono, stereo or no

@@ -21,7 +21,7 @@ A `jack` (J1…) was drawing only (D-174): out of the netlist, its pins just poi
 - Each switching jack gets a switch in Knobs & switches, named by its label (*Input cable*) or ref (*J1 cable*): *Mono cable / Stereo cable / Cable out*, or *Cable in / Cable out*.
 
 ### What a cable out does
-- **Battery**: a battery on a ring with no mono plug is cut off for real: 0 V in the netlist, DC about 0 V. Problems warns **Battery cut off: no mono cable in** (`battery-cable-out`); with nothing else powering the circuit only the drawing is checked (no phantom-supply op-point rules).
+- **Battery**: a battery on a ring with no mono plug is cut off for real: 0 V in the netlist, DC about 0 V, and the chip beside the Power menu reads *Battery · cut off*. When nothing else supplies the circuit (no part on a rail the Power menu holds, no DC source; the battery's + on V+ or on a net of its own), Problems warns **Battery cut off: no mono cable in** (`battery-cable-out`) and checks only the drawing (no op-point rules about a pedal that's simply off) (D-357).
 - **Input or output with no cable**: no curves, scope or live curves; each pane says which jack and what it cuts (*"J1 has no cable in: no guitar reaches the pedal and its battery is cut off."*). A render or render sweep is **refused** with that reason and *"Put its cable in (Knobs) to render."* (the user: "just don't render at all").
 - **A cut-off battery alone** (a stereo cable in the input, or a ring jack that isn't the input) isn't refused: the guitar still reaches the circuit, simulated unpowered, so a true bypass still passes it (the user asked).
 - **No rule for mono jacks** (the user: they don't need one). A loose jack, on neither IN nor OUT, never blocks a render.
@@ -32,8 +32,7 @@ A `jack` (J1…) was drawing only (D-174): out of the netlist, its pins just poi
 
 ## Out of scope
 - Plug insertion clicks, or a mono plug in a stereo jack shorting anything but ring to sleeve.
-- The jack as an electrical part (switch contacts, tip-switch lugs).
-- A battery whose + feeds a net other than V+ is cut off by the ring, but the operating-point rules still run (the circuit isn't seen as battery-powered); noted for later.
+- The rest of a jack as an electrical part. Only its ring-to-sleeve contact is simulated (a switch a mono plug closes, `netlist._jack`); its T and S are junctions like a wire, and a cable out of the input or output is decided from the jack's role, not opened in the netlist (a missing guitar or amp stops the render anyway). Not modelled: switched lugs (a contact the plug pushes away, such as one grounding an unused input), contact resistance.
 
 ## Decisions
-D-353 (plug points), D-354 (a cable out simulated, renders refused), D-355 (mono, stereo or none; a ring is a switch; schema v31), D-356 (the blocks). They narrow D-174 and D-185.
+D-353 (plug points), D-354 (a cable out simulated, renders refused), D-355 (mono, stereo or none; a ring is a switch; schema v31), D-356 (the blocks), D-357 (off with nothing else supplying it; the chip). They narrow D-174 and D-185.

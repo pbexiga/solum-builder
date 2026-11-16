@@ -70,34 +70,37 @@ def test_without_a_simulator_only_the_drawing_is_checked(checker: Checker) -> No
     assert not checked and "resistor-over-power" not in {p.rule for p in problems}
 
 
-def battery_buffer(cable: bool) -> CircuitBuilder:
-    """A TL072 buffer biased at half supply, on a battery its stereo input jack switches."""
+def battery_buffer(cable: bool, plus: str = "V+") -> CircuitBuilder:
+    """A TL072 buffer biased at half supply, on a battery its stereo input jack switches;
+    the battery's + on `plus` (V+, or a net of its own with nothing on V+)."""
     return (
         CircuitBuilder("battery buffer")
         .rail("V+", 9)
-        .part("BAT1", "battery", pins={"+": "V+", "-": "ring"})
+        .part("BAT1", "battery", pins={"+": plus, "-": "ring"})
         .part("J1", "jack", stereo=True, label="Input", plug="mono" if cable else "none",
               pins={"T": "in", "R": "ring", "S": "GND"})
         .part("IN", "guitar", "in")
         .part("C1", "capacitor", "in", "p", value="100n")
-        .part("R1", "resistor", "V+", "vb", value="100k")
+        .part("R1", "resistor", plus, "vb", value="100k")
         .part("R2", "resistor", "vb", "GND", value="100k")
         .part("C2", "capacitor", "vb", "GND", value="10u", kind="electrolytic")
         .part("R3", "resistor", "vb", "p", value="1M")
-        .part("IC1", "opamp", "p", "o", "o", model="TL072", supply=("V+", "GND"))
+        .part("IC1", "opamp", "p", "o", "o", model="TL072", supply=(plus, "GND"))
         .part("C3", "capacitor", "o", "out", value="1u", kind="film")
         .part("R4", "resistor", "out", "GND", value="100k")
         .part("OUT", "amp", "out")
     )  # fmt: skip
 
 
+@pytest.mark.parametrize("plus", ["V+", "VBAT"])
 def test_with_the_battery_cut_off_only_the_cable_is_a_problem(
-    checker: Checker, sim: Simulator
+    checker: Checker, sim: Simulator, plus: str
 ) -> None:
     """D-354: the pedal is off, so its stages' 0 V aren't bias problems (no op-amp warnings
-    about a supply the battery warning already explains)."""
-    on, _ = checker.check(battery_buffer(cable=True).build(), sim)
-    off, checked = checker.check(battery_buffer(cable=False).build(), sim)
+    about a supply the battery warning already explains), whether the battery's + is V+
+    or a net of its own (nothing on V+: the battery was the only supply, D-357)."""
+    on, _ = checker.check(battery_buffer(cable=True, plus=plus).build(), sim)
+    off, checked = checker.check(battery_buffer(cable=False, plus=plus).build(), sim)
     assert checked
     assert {p.rule for p in off} - {p.rule for p in on} == {"battery-cable-out"}
     assert not [p for p in off if checker.book.get(p.rule).layer == "operating_point"]

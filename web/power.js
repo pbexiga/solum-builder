@@ -5,7 +5,7 @@
  * "compare supply voltages" on one rail, D-068).
  */
 
-import { powerChoices, powerText, setPower, setRails, splitValues } from "./editor/edit.js";
+import { chipNow, powerChoices, powerText, setPower, setRails, splitValues } from "./editor/edit.js";
 import { openForm, tryButton } from "./editor/form.js";
 import { h } from "./panels.js";
 import { COMPARE_MAX } from "./series.js";
@@ -62,15 +62,9 @@ export function powerMenu(els, app) {
     showDraw();
   }
 
-  /**
-   * The Power chip (D-145): who powers the pedal, from the view's `power`; with a battery
-   * and a DC jack, the entry for where the jack's Power switch is now (0 plugged in).
-   * @returns {{text: string, battery: boolean} | null}
-   */
+  /** The Power chip as the knobs are now (`chipNow`). */
   function powerChip() {
-    const power = app.view()?.power;
-    if (!power?.control) return power ?? null;
-    return power.positions[app.controls()[power.control] ?? 0] ?? power.positions[0];
+    return chipNow(app.view()?.power, app.controls());
   }
 
   /** The current each supply delivers at the last run, next to the Power menu ("23.4 mA"). */

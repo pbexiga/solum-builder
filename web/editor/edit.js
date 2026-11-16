@@ -90,6 +90,21 @@ export function powerText(rails) {
 }
 
 /**
+ * The Power chip (D-145, D-357) as the knobs are now: the view's `power`; with a battery and
+ * a DC jack, the entry for where the jack's Power switch is (0 plugged in); a battery entry
+ * reads "cut off" while a jack's cable switch is at a position that cuts it off.
+ * @param {any} power the view's `power` @param {Record<string, number>} controls where the knobs are
+ * @returns {{text: string, battery: boolean} | null}
+ */
+export function chipNow(power, controls) {
+  if (!power) return null;
+  const entry = power.control ? (power.positions[controls[power.control] ?? 0] ?? power.positions[0]) : power;
+  const cut = power.cut_off;
+  const off = cut && Object.entries(cut.jacks).some(([ref, j]) => /** @type {any} */ (j).positions.includes(controls[ref] ?? /** @type {any} */ (j).at));
+  return entry?.battery && off ? { text: cut.text, battery: true } : { text: entry.text, battery: entry.battery };
+}
+
+/**
  * The Power menu's choices for this circuit: the presets, and the circuit's own supply
  * when it isn't one of them, each with its rails and a key for the <select>.
  * @param {Circuit} circuit

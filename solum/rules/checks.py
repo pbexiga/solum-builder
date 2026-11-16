@@ -63,7 +63,7 @@ from solum.circuit.schema import (
     Trimmer,
     VSource,
 )
-from solum.circuit.supply import battery_of, live_rails, on_battery, supply_volts
+from solum.circuit.supply import battery_of, live_rails, on_battery, powered_off, supply_volts
 from solum.circuit.switches import CUSTOM
 from solum.models import Model, ModelLibrary
 from solum.netlist import NetlistError, pump_frequency
@@ -726,8 +726,11 @@ def no_amp_output(ctx: Context) -> Iterator[Hit]:
 @check("topology")
 def battery_cable_out(ctx: Context) -> Iterator[Hit]:
     """The battery alone powers the circuit, its - goes to a stereo jack's ring, and that
-    jack's cable is out: the ring is open, so the battery is cut off (D-185)."""
+    jack's cable is out: the ring is open, so the battery is cut off (D-185). Alone: its +
+    on V+, or on a net of its own with nothing else supplied (D-357)."""
     battery = on_battery(ctx.circuit)
+    if battery is None and powered_off(ctx.circuit):
+        battery = next(iter(ctx.parts(Battery)), None)
     if battery is None:
         return
     minus = ctx.net(battery, "-")

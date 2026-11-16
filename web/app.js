@@ -1714,7 +1714,7 @@ function onKnob(ref, value) {
     for (const pole of control.refs ?? [ref]) schematic.redrawPart(pole, value);
     schematic.select(state.selection);
   }
-  if (ref === state.view.power?.control) power.show(); // the DC jack's plug: battery or supply (D-145)
+  if (ref === state.view.power?.control || ref in (state.view.power?.cut_off?.jacks ?? {})) power.show(); // the DC jack's plug (D-145), a cable cutting the battery (D-357)
   audio.changed();
   rerun();
 }

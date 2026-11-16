@@ -47,7 +47,7 @@ Its **−** goes to ground, so it's always on, or to a stereo input jack's ring,
 
 A **Jack** (in Signal & power on the palette) draws a real input or output jack: **mono** (tip and sleeve) or **stereo** (tip, ring and sleeve), picked in its form. It's left out of the simulation as a part, but what's plugged into it is not: a jack can take the guitar out, the amp out or the battery off, as pulling a cable does on a real pedal.
 
-![A JFET buffer on a battery, J1 plugged into IN with its ring switching the battery and J2 plugged into OUT. Knobs & switches has Input cable set to Cable out, and the Frequency pane says why there's no curve.](img/jacks.png)
+![A JFET buffer on a battery, J1 plugged into IN with its ring switching the battery and J2 plugged into OUT. Knobs & switches has Input cable set to Cable out: the Frequency pane says the pedal has no power, the chip beside Power reads Battery · cut off, and Problems warns Battery cut off, marked on the sheet at J1's ring.](img/jacks.png)
 
 ### What a jack switches
 
@@ -88,7 +88,7 @@ A refused render says what to do: *J1 has no cable in: no guitar reaches the ped
 
 **What counts as no power** is read from the drawing, not guessed from the voltages: the battery is cut off (a jack's ring takes its −, with a stereo cable or none in the jack), no part is on a supply the Power menu still holds (V+ or V−; a DC plug in holds V+), and no DC source drives a net. A pedal with only part of it on the battery (the rest on V+, say) is still powered: its curves are drawn and it renders, the dead stages doing what dead stages do.
 
-Problems warns **Battery cut off: no mono cable in** (or *a stereo cable in*) whenever a cable cuts the battery off, saying whether the whole circuit or only what the battery feeds has no supply. With no power at all it checks only the drawing: no bias warnings about a circuit that's simply off.
+Problems warns **Battery cut off: no mono cable in** (or *a stereo cable in*) whenever a cable cuts the battery off, saying whether the whole circuit or only what the battery feeds has no supply. With [Problem marks](problems.md#reading-a-problem) on, it's marked at the jack's ring. With no power at all it checks only the drawing: no bias warnings about a circuit that's simply off.
 
 The *9 V power* blocks come both ways: *battery only* and *DC jack and battery* keep the battery on all the time (simplest, for hearing a circuit), and *… switched by the input jack* put its − on J1's ring. Insert one, then wire J1's T (its **in** label) to IN's middle, so that J1 is the input jack: pulling its cable then takes out the guitar and the battery together.
 

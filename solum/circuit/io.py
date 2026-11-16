@@ -9,6 +9,7 @@ from typing import Any
 
 from pydantic import ValidationError
 
+from solum.circuit.connectivity import plug_problem
 from solum.circuit.migrations import MigrationError, migrate
 from solum.circuit.schema import Circuit
 
@@ -20,11 +21,15 @@ class CircuitError(ValueError):
 def parse_circuit(data: Mapping[str, Any]) -> Circuit:
     """Validate (after migrating to the current schema) a circuit given as a dict."""
     try:
-        return Circuit.model_validate(migrate(data))
+        circuit = Circuit.model_validate(migrate(data))
     except MigrationError as err:
         raise CircuitError(str(err)) from None
     except ValidationError as err:
         raise CircuitError(describe_errors(err, data)) from None
+    problem = plug_problem(circuit)  # needs the pins' places, so not in the schema (D-353)
+    if problem:
+        raise CircuitError(problem)
+    return circuit
 
 
 def describe_errors(err: ValidationError, data: Mapping[str, Any]) -> str:

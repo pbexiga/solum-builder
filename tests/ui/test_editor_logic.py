@@ -9,8 +9,15 @@ import pytest
 from playwright.sync_api import Page
 
 from solum.circuit.connectivity import connect, on_segment
-from solum.circuit.io import parse_circuit
-from solum.circuit.parts import PIN_OFFSETS, ota_pins, pin_positions, rotate, switch_pins
+from solum.circuit.io import CircuitError, parse_circuit
+from solum.circuit.parts import (
+    PIN_OFFSETS,
+    ota_pins,
+    pin_positions,
+    plug_point,
+    rotate,
+    switch_pins,
+)
 from solum.circuit.schema import SCHEMA_VERSION, Ota, Switch
 from solum.circuit.switches import catalogue
 from tests.ui.conftest import REPO, run
@@ -47,6 +54,34 @@ def test_pin_positions_match_parts_table(js: Page, rot: int) -> None:
     # an OTA's table is a single's pins and a dual half's together (D-180): a single here
     expected["ota"] = expected_pins(ota_pins(Ota(type="ota", ref="IC1", model="CA3080")), rot)
     assert got == expected
+
+
+@pytest.mark.parametrize("rot", [0, 90, 180, 270])
+def test_plug_points_match_parts_py(js: Page, rot: int) -> None:
+    """IN's and OUT's plug points (D-353) where the server has them, turned or not; other
+    parts have none."""
+    got = run(
+        js,
+        """
+        const { plugPoint } = await m('schematic/symbols.js');
+        return ['guitar', 'amp', 'resistor'].map((type) => plugPoint({ type, pos: arg.pos, rot: arg.rot }));
+        """,
+        {"pos": list(POS), "rot": rot},
+    )
+    data = {"pos": list(POS), "rot": rot}
+    want = [
+        plug_point(
+            parse_circuit(
+                {"schema": SCHEMA_VERSION, "id": "p", "name": "p", "parts": [{**data, **part}]}
+            ).parts[0]
+        )
+        for part in (
+            {"ref": "IN", "type": "guitar"},
+            {"ref": "OUT", "type": "amp"},
+            {"ref": "R1", "type": "resistor", "value": "1k"},
+        )
+    ]
+    assert got == [{"pin": w[0], "at": list(w[1])} if w else None for w in want]
 
 
 def test_refs_and_new_parts(js: Page) -> None:
@@ -1421,8 +1456,15 @@ def test_moving_or_turning_any_part_keeps_its_connections(js: Page, starter: str
     )
     broken = []
     for ref, how, after in results:
-        if _lands(after, data, ref):
-            continue
+        try:
+            if _lands(after, data, ref):
+                continue
+        except CircuitError as err:
+            # IN's middle or OUT's tip set down on a wire: the server refuses it and the
+            # editor undoes the move (D-353), so no connection changes
+            if ref in ("IN", "OUT") and "Only a jack's T plugs into" in str(err):
+                continue
+            raise
         if _groups(after) != before:
             broken.append(f"{ref} {how}")
     assert not broken, broken

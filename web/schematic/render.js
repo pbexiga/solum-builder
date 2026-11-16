@@ -31,7 +31,7 @@ import { dcText, impedanceText } from "../fixed.js";
 import { GRID, pointOnWire, route, snap, snapPoint, wireEnds } from "../editor/edit.js";
 import { crossings } from "../editor/router.js";
 import { problemMarks } from "../problems.js";
-import { labelText, placeText, rotateOffset, supplySymbol, supplyText, symbol, TEXT_LINE, TEXT_SIZE, textBox, textLines, typeLine, typeSet, valueLine } from "./symbols.js";
+import { labelText, placeText, plugPoint, rotateOffset, supplySymbol, supplyText, symbol, TEXT_LINE, TEXT_SIZE, textBox, textLines, typeLine, typeSet, valueLine } from "./symbols.js";
 import { boundsOf, fitView, panBy, resizeView, revealPoint, viewBoxText, zoomAt } from "./viewport.js";
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -307,6 +307,13 @@ export class Schematic {
       const lead = sym.leads[pin.name];
       if (lead) el("circle", { cx: lead[0], cy: lead[1], r: 4, class: "pin-hit", "data-net": pin.net ?? "", "data-at": pin.pos.join(",") }, g);
     }
+    // where a jack's T plugs in (D-353): the wire tool ends on it like a pin; a press without
+    // the tool still selects and drags the part, since the point sits on its body
+    const plug = plugPoint(p);
+    if (plug) {
+      const net = p.pins.find((/** @type {any} */ pin) => pin.name === plug.pin)?.net ?? "";
+      el("circle", { cx: plug.at[0], cy: plug.at[1], r: 4, class: "pin-hit plug-hit", "data-ref": p.ref, "data-net": net, "data-at": plug.at.join(",") }, parent);
+    }
     const text = el("g", { class: "part-text", "data-ref": p.ref }, parent);
     const ref = placeText(sym, p.rot, 0);
     const value = placeText(sym, p.rot, 1);
@@ -334,7 +341,9 @@ export class Schematic {
     if (!part || !old) return;
     const holder = el("g", {});
     this.drawPart(part, position, holder);
-    const [shape, text] = [...holder.children]; // its symbol and its ref and label
+    // its symbol and its ref and label (a plug point, IN's or OUT's, is never redrawn here)
+    const shape = /** @type {Element} */ (holder.querySelector(":scope > g.part"));
+    const text = holder.querySelector(":scope > g.part-text");
     const oldText = this.svg.querySelector(`g.part-text[data-ref="${CSS.escape(ref)}"]`);
     old.replaceWith(shape);
     if (oldText && text) oldText.replaceWith(text); // round 3b: the label went with the flip
@@ -808,6 +817,7 @@ export class Schematic {
       return { kind: "move", label: Number(label.getAttribute("data-label")) };
     }
     const pin = target?.closest(".pin-hit");
+    if (pin?.classList.contains("plug-hit")) return { kind: "move", ref: /** @type {string} */ (pin.getAttribute("data-ref")) };
     if (pin) return { kind: "wire", from: /** @type {string} */ (pin.getAttribute("data-at")).split(",").map(Number) };
     if (target?.classList.contains("hit")) {
       // a wire drags, selected or not: new wires are drawn with the Wire tool (D-340)
@@ -1065,6 +1075,8 @@ export class Schematic {
     }
     const text = target?.closest("[data-text]")?.getAttribute("data-text");
     if (text != null) return this.handlers.onText?.(Number(text));
+    const plug = target?.closest(".plug-hit")?.getAttribute("data-ref"); // on the part's body (D-353)
+    if (plug) return this.handlers.onPart(plug);
     const netNode = target?.closest("[data-net]");
     const net = netNode?.getAttribute("data-net");
     if (net) {

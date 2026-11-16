@@ -15,7 +15,7 @@
  * @typedef {{parts: string[], wires?: number[], labels?: number[], texts?: number[]}} Items
  */
 
-import { bodyBox, pinPositions, poleStep, rotateOffset, textBoxes } from "../schematic/symbols.js";
+import { bodyBox, pinPositions, plugPoint, poleStep, rotateOffset, textBoxes } from "../schematic/symbols.js";
 import { findPath, key, throughBody, worldOf } from "./router.js";
 
 export const GRID = 10;
@@ -412,11 +412,21 @@ function cutBetween(wires, a, b) {
 }
 
 /**
- * Pins and label points of a circuit, as "x,y" keys.
+ * A part's pins and its plug point (IN's middle, OUT's tip, D-353): every point a wire
+ * joins it at, which moves and turns with it.
+ * @param {any} part @returns {number[][]}
+ */
+export const partPoints = (part) => {
+  const plug = plugPoint(part);
+  return [...Object.values(pinPositions(part)), ...(plug ? [plug.at] : [])];
+};
+
+/**
+ * Pins, plug points and label points of a circuit.
  * @param {Circuit} circuit
  */
 export const anchorPoints = (circuit) => [
-  ...circuit.parts.flatMap((p) => Object.values(pinPositions(p))),
+  ...circuit.parts.flatMap(partPoints),
   ...(circuit.labels ?? []).map((lb) => lb.pos),
 ];
 
@@ -781,7 +791,7 @@ export function moveItems(circuit, items, dx, dy) {
   const shift = (/** @type {number[]} */ p) => moves.set(key(p), [p, [p[0] + dx, p[1] + dy]]);
   const parts = circuit.parts.map((p) => {
     if (!wanted.has(p.ref)) return p;
-    for (const pin of Object.values(pinPositions(p))) shift(pin);
+    for (const pin of partPoints(p)) shift(pin);
     const [x, y] = p.pos ?? [0, 0]; // the file leaves out a part at the origin
     return { ...p, pos: [x + dx, y + dy] };
   });
@@ -820,10 +830,9 @@ export function rotatePart(circuit, ref) {
   const rot = ((old.rot ?? 0) + 90) % 360;
   const turned = { ...old, rot };
   if (!rot) delete turned.rot;
-  const before = pinPositions(old);
-  const after = pinPositions(turned);
+  const [before, after] = [partPoints(old), partPoints(turned)];
   /** @type {Array<[number[], number[]]>} */
-  const moves = Object.keys(before).map((name) => [before[name], after[name]]);
+  const moves = before.map((p, i) => [p, after[i]]);
   const parts = circuit.parts.map((p) => (p.ref === ref ? turned : p));
   return inSeries(relay(circuit, { ...circuit, parts }, moves, { keepBends: false }), [ref], circuit);
 }
@@ -998,7 +1007,9 @@ export function pointOnWire(w, p) {
  */
 export function wireEnds(view) {
   const key = (/** @type {number[]} */ p) => p.join(",");
-  const anchors = new Set([...view.parts.flatMap((p) => p.pins.map((/** @type {any} */ pin) => key(pin.pos))), ...view.labels.map((lb) => key(lb.pos))]);
+  const plugs = view.parts.flatMap((p) => { const plug = plugPoint(p); return plug ? [key(plug.at)] : []; });
+  // a plug point (D-353) is a pin's place too: a wire ending there isn't loose
+  const anchors = new Set([...view.parts.flatMap((p) => p.pins.map((/** @type {any} */ pin) => key(pin.pos))), ...plugs, ...view.labels.map((lb) => key(lb.pos))]);
   /** @type {Map<string, {pos: number[], net: string, count: number}>} */
   const ends = new Map();
   for (const w of view.wires) {

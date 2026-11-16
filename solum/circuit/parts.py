@@ -186,6 +186,21 @@ def _turned(kind: str, rot: int) -> tuple[tuple[str, int, int], ...]:
     return tuple((name, *rotate(offset, rot)) for name, offset in PIN_OFFSETS[kind].items())
 
 
+# Where a jack's T plugs into the guitar input and the amp (D-353): the middle of IN's
+# circle and the tip of OUT's triangle. The same node as the part's pin, named here; not a
+# pin itself (no net member, no card row): only a jack's T may join it (`plug_problem`).
+PLUGS: dict[str, tuple[str, Point]] = {"guitar": ("out", (0, 0)), "amp": ("in", (10, 0))}
+
+
+def plug_point(part: Part) -> tuple[str, Point] | None:
+    """The pin a part's plug point joins and where the point is, or None (no plug)."""
+    if part.type not in PLUGS:
+        return None
+    pin, offset = PLUGS[part.type]
+    dx, dy = rotate(offset, part.rot)
+    return pin, (part.pos[0] + dx, part.pos[1] + dy)
+
+
 def pin_positions(part: Part) -> dict[str, Point]:
     """Pin name → absolute schematic position."""
     px, py = part.pos

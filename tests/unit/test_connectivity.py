@@ -12,10 +12,11 @@ from solum.circuit.connectivity import (
     connect,
     loose_parts,
     on_segment,
+    plug_problem,
     spare_poles,
 )
-from solum.circuit.io import circuit_to_dict, load_circuit, parse_circuit
-from solum.circuit.parts import pin_positions, rotate
+from solum.circuit.io import CircuitError, circuit_to_dict, load_circuit, parse_circuit
+from solum.circuit.parts import pin_positions, plug_point, rotate
 from solum.circuit.schema import Circuit, Resistor, Switch
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "circuits" / "jfet-drive.json"
@@ -283,3 +284,77 @@ def test_a_jack_is_never_loose_and_carries_nothing() -> None:
         "C9", "capacitor", "y", "x", value="1n"
     )
     assert _loose(stage) == {"R9", "C9"}
+
+
+def _jacked(wires: list[dict[str, list[int]]], labels: list[dict[str, object]] | None = None,
+            parts: list[dict[str, object]] | None = None) -> dict[str, object]:  # fmt: skip
+    """IN at (0, 0) (plug (0, 0), pin (20, 0)) through R1 to OUT at (300, 0) (pin (280, 0),
+    plug (310, 0)); J1's T at (-60, -40), J2's at (360, 40)."""
+    return {
+        "schema": 1, "id": "j", "name": "j",
+        "parts": [
+            {"ref": "IN", "type": "guitar", "pos": [0, 0]},
+            {"ref": "R1", "type": "resistor", "value": "1k", "pos": [150, 0]},
+            {"ref": "OUT", "type": "amp", "pos": [300, 0]},
+            {"ref": "J1", "type": "jack", "pos": [-100, -40]},
+            {"ref": "J2", "type": "jack", "pos": [320, 40]},
+            *(parts or []),
+        ],
+        "wires": [{"from": [20, 0], "to": [130, 0]}, {"from": [170, 0], "to": [280, 0]}, *wires],
+        "labels": labels or [],
+    }  # fmt: skip
+
+
+IN_PLUG = [
+    {"from": [-60, -40], "to": [0, -40]},
+    {"from": [0, -40], "to": [0, 0]},
+]  # J1.T, a bend, IN's middle
+OUT_PLUG = [  # J2.T, right, up, left to OUT's tip
+    {"from": [360, 40], "to": [400, 40]},
+    {"from": [400, 40], "to": [400, 0]},
+    {"from": [400, 0], "to": [310, 0]},
+]
+
+
+def test_a_jacks_t_plugs_into_in_and_out_on_their_pins_nets() -> None:
+    """The user (2026-11-16): a jack drawn plugged into IN's middle and OUT's tip. Each
+    plug point is the same node as the part's pin (D-353)."""
+    c = parse_circuit(_jacked([*IN_PLUG, *OUT_PLUG]))
+    nets = connect(c)
+    assert nets.net_of("J1", "T") == nets.net_of("IN", "out") == nets.net_of("R1", "1")
+    assert nets.net_of("J2", "T") == nets.net_of("OUT", "in") == nets.net_of("R1", "2")
+    assert plug_point(c.part("IN")) == ("out", (0, 0))
+    assert plug_point(c.part("OUT")) == ("in", (310, 0))
+    assert plug_point(c.part("R1")) is None
+    # a jack's T pin right on the point is fine too
+    on = _jacked([], parts=[{"ref": "J3", "type": "jack", "pos": [-40, 0]}])  # J3.T at (0, 0)
+    assert plug_problem(parse_circuit(on)) is None
+
+
+@pytest.mark.parametrize(
+    "case",
+    [
+        {"labels": [{"net": "SIG", "pos": [0, 0]}]},  # a label on IN's middle
+        {
+            "wires": [
+                {"from": [130, 0], "to": [130, -40]},
+                {"from": [130, -40], "to": [0, -40]},
+                {"from": [0, -40], "to": [0, 0]},
+            ]
+        },  # R1's pin wired to it
+        {"wires": [*IN_PLUG, {"from": [-30, -40], "to": [-30, -80]}]},  # a branch off the run
+        {
+            "wires": [{"from": [-20, 0], "to": [0, 0]}, {"from": [-20, 0], "to": [-20, 40]}]
+        },  # ends on nothing
+        {
+            "wires": [{"from": [300, -30], "to": [310, -30]}, {"from": [310, -30], "to": [310, 30]}]
+        },  # over OUT's tip
+        {
+            "parts": [{"ref": "R2", "type": "resistor", "value": "1k", "pos": [-20, 0]}]
+        },  # R2's pin on it
+    ],
+)
+def test_only_a_jacks_t_may_join_a_plug_point(case: dict[str, list[dict[str, object]]]) -> None:
+    data = _jacked(case.get("wires", []), case.get("labels"), case.get("parts"))
+    with pytest.raises(CircuitError, match="Only a jack's T plugs into"):
+        parse_circuit(data)

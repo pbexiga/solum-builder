@@ -10,7 +10,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 from functools import lru_cache
 
-from solum.circuit.parts import pin_positions
+from solum.circuit.parts import pin_positions, plug_point
 from solum.circuit.schema import (
     CHIP_UNITS,
     SUPPLY_SIGNS,
@@ -130,7 +130,78 @@ def connect(circuit: Circuit) -> Nets:
     wires = tuple((w.from_, w.to) for w in circuit.wires)
     labels = tuple((lb.net, lb.pos) for lb in circuit.labels)
     active = frozenset(p.ref for p in circuit.parts if isinstance(p, ACTIVE_PARTS))
-    return _nets(pins, wires, labels, active)
+    return _nets(pins, wires, labels, active, plug_joins(circuit))
+
+
+def plug_joins(circuit: Circuit) -> tuple[tuple[Point, Point], ...]:
+    """Each plug point with its part's pin (D-353): joined inside the part, like a wire
+    with no length in between (nothing between the two points joins them)."""
+    joins = []
+    for p in circuit.parts:
+        plug = plug_point(p)
+        if plug:
+            joins.append((plug[1], pin_positions(p)[plug[0]]))
+    return tuple(joins)
+
+
+PLUG_PLACES = {"guitar": "the middle of", "amp": "the tip of"}
+
+
+def plug_problem(circuit: Circuit) -> str | None:
+    """Why the drawing is refused, or None (D-353): only a jack's T may join a plug point,
+    directly (its pin on the point) or by a plain run of wire (bends allowed, nothing joining
+    it on the way). A label, another pin, a branch or a wire passing over it is refused."""
+    plugs = [(part, plug) for part in circuit.parts if (plug := plug_point(part))]
+    spots = {plug[1] for _, plug in plugs}
+    on_wire = any(
+        any(on_segment(spot, w.from_, w.to) for spot in spots) for w in circuit.wires
+    )  # an end on a plug point is on its wire too
+    on_label = any(lb.pos in spots for lb in circuit.labels)
+    on_pin = any(pos in spots for p in circuit.parts for pos in pin_positions(p).values())
+    if not (on_wire or on_label or on_pin):
+        return None  # nothing at any plug point: the usual case, kept cheap (every parse asks)
+    jack_tips = {pin_positions(p)["T"] for p in circuit.parts if isinstance(p, Jack)}
+    pins: dict[Point, list[str]] = defaultdict(list)
+    for p in circuit.parts:
+        for name, pos in pin_positions(p).items():
+            pins[pos].append(f"{p.ref}.{name}")
+    labels = {lb.pos for lb in circuit.labels}
+    wires = [(w.from_, w.to) for w in circuit.wires]
+    ends: dict[Point, list[int]] = defaultdict(list)
+    for i, (a, b) in enumerate(wires):
+        ends[a].append(i)
+        ends[b].append(i)
+
+    def passing(pt: Point) -> bool:  # a wire runs over `pt` without ending there
+        return any(pt not in (a, b) and on_segment(pt, a, b) for a, b in wires)
+
+    for part, plug in plugs:
+        at = plug[1]
+        own = pin_positions(part)[plug[0]]
+        refused = (
+            f"Only a jack's T plugs into {PLUG_PLACES[part.type]} {part.ref}. "
+            f"Wire other parts to {part.ref}'s pin."
+        )
+        if at in labels or passing(at) or (pins.get(at) and at not in jack_tips):
+            return refused
+        for first in ends.get(at, []):
+            here, wire, seen = at, first, {first}
+            while True:
+                a, b = wires[wire]
+                there = b if a == here else a
+                inside = [pt for pt in (*pins, *labels, *ends) if pt not in (a, b) and pt != own
+                          and on_segment(pt, a, b)]  # fmt: skip
+                if inside:
+                    return refused
+                if there in jack_tips:
+                    break
+                others = [i for i in ends.get(there, []) if i not in seen]
+                plain = len(ends[there]) == 2 and not pins.get(there) and there not in labels
+                if not plain or passing(there) or not others:
+                    return refused
+                here, wire = there, others[0]
+                seen.add(wire)
+    return None
 
 
 CLASH_FIX = "Remove the wire, or one of the labels if they're meant to be one net."
@@ -174,14 +245,17 @@ def _nets(
     wires: tuple[tuple[Point, Point], ...],
     labels: tuple[tuple[str, Point], ...],
     active: frozenset[str],
+    joins: tuple[tuple[Point, Point], ...] = (),
 ) -> Nets:
     uf = _UnionFind()
     pins = {(ref, name): pos for ref, name, pos in pin_list}
-    points = set(pins.values()) | {pos for _, pos in labels}
+    points = set(pins.values()) | {pos for _, pos in labels} | {a for a, _ in joins}
     for a, b in wires:
         points |= {a, b}
     for p in points:
         uf.find(p)
+    for a, b in joins:
+        uf.union(a, b)
     for a, b in wires:
         uf.union(a, b)
         for p in points:

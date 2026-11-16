@@ -880,6 +880,23 @@ export function pinPositions(part) {
   return out;
 }
 
+/** Where a jack's T plugs in (D-353), as `parts.py`'s PLUGS: the pin it joins and its offset. */
+const PLUGS = /** @type {Record<string, [string, number[]]>} */ ({ guitar: ["out", [0, 0]], amp: ["in", [10, 0]] });
+
+/**
+ * A part's plug point (D-353): the middle of IN's circle, the tip of OUT's triangle, the
+ * same node as its pin; only a jack's T may join it (the server refuses anything else).
+ * @param {{type: string, pos?: number[], rot?: number}} part
+ * @returns {{pin: string, at: number[]} | null}
+ */
+export function plugPoint(part) {
+  const plug = PLUGS[part.type];
+  if (!plug) return null;
+  const [px, py] = part.pos ?? [0, 0];
+  const [dx, dy] = rotateOffset(plug[1], part.rot ?? 0);
+  return { pin: plug[0], at: [px + dx, py + dy] };
+}
+
 /**
  * A part's body as an absolute box [x0, y0, x1, y1] (its symbol's box, turned and moved),
  * for routing wires around it. Its pins sit on or outside the edge.

@@ -16,6 +16,8 @@ from typing import Any
 import pytest
 from playwright.sync_api import Page, expect
 
+from solum.circuit.connectivity import connect
+from solum.circuit.io import parse_circuit
 from tests.ui.conftest import (
     REPO,
     click_part,
@@ -243,6 +245,55 @@ def test_choosing_net_label_or_blocks_puts_the_wire_tool_down(page: Page, base_u
         assert wires(page) == []
         press(page, "Escape")
         expect(page.locator("form.popup")).to_have_count(0)
+
+
+def test_a_jack_plugs_into_in_and_out(page: Page, base_url: str, browser_errors: list[str]) -> None:
+    """The user (2026-11-16): a jack's T wired to the middle of IN and the tip of OUT, on
+    their pins' nets; a resistor wired there is refused with the reason; dragging IN takes
+    the jack's wire along (D-353)."""
+    cid = new_circuit(page, base_url, "Jacks test")
+    show_area(page, -160, -100, 460, 120)
+    place(page, "i", 0, 0)  # IN: plug (0, 0), pin (20, 0)
+    place(page, "a", 300, 0)  # OUT: pin (280, 0), plug (310, 0)
+    for at in ((-100, -40), (360, 40)):  # J1: T (-60, -40); J2: T (400, 40), S (400, 20)
+        before = views(page)
+        page.locator('[data-place="jack"]').click()
+        click_at(page, *at)
+        wait_for_view(page, before)
+    page.locator('[data-tool="wire"]').click()
+    for path in (
+        [(-60, -40), (0, -40), (0, 0)],  # J1.T across, down into IN's middle
+        [(400, 40), (430, 40), (430, 0), (310, 0)],  # J2.T round to OUT's tip
+        [(20, 0), (280, 0)],  # IN's pin to OUT's pin
+    ):
+        before = views(page)
+        for point in path:
+            click_at(page, *point)
+        wait_for_view(page, before)
+    # a resistor's pin wired into IN's middle is refused, and says why
+    press(page, "Escape")
+    place(page, "r", 150, 60)  # pins (130, 60), (170, 60)
+    drawn = wires(page)
+    page.locator('[data-tool="wire"]').click()
+    for point in [(130, 60), (0, 60), (0, 0)]:
+        click_at(page, *point)
+    expect(page.locator("#refusal")).to_contain_text("Only a jack's T plugs into the middle of IN")
+    assert wires(page) == drawn
+    press(page, "Escape")
+    press(page, "Escape")
+    press(page, "Control+s")
+    expect(page.locator("#dirty")).to_be_hidden()
+    saved = parse_circuit(api(page, base_url, "GET", f"api/circuits/{cid}")["circuit"])
+    nets = connect(saved)
+    assert nets.net_of("J1", "T") == nets.net_of("IN", "out") == nets.net_of("OUT", "in")
+    assert nets.net_of("J2", "T") == nets.net_of("OUT", "in")
+    # IN dragged left by its body: the wire from J1 ends on its middle still
+    before = views(page)
+    drag(page, (0, 0), (-100, 0))  # from the plug point itself: it drags IN, not a new wire
+    wait_for_view(page, before)
+    ends = {(x, y) for x1, y1, x2, y2 in wires(page) for x, y in ((x1, y1), (x2, y2))}
+    assert (-100, 0) in ends and (0, 0) not in ends
+    browser_errors[:] = [e for e in browser_errors if "status of 422" not in e]  # the refusal
 
 
 def test_place_undo_redo(page: Page, base_url: str) -> None:

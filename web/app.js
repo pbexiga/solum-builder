@@ -1525,7 +1525,9 @@ async function runSelected() {
     state.run = run;
     state.part = part;
     state.shownNet = net;
-    showError(null);
+    // no power (D-359): the banner says why; clicked, it selects the jack to blame
+    const blame = run.no_power_refs?.[0];
+    showError(run.no_power ?? null, blame ? () => select({ kind: "part", id: blame }) : null);
     render(net);
     forms.showTargetRotation();
     stagesMeasuring = stages.refresh().catch(() => {});

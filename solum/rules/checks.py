@@ -739,7 +739,11 @@ def battery_cable_out(ctx: Context) -> Iterator[Hit]:
     elif plus in live_rails(ctx.circuit):
         return  # beside a DC plug on its rail: the supply still holds it, nothing goes off
     else:
-        left = f"what it powers ({plus}) has no supply"
+        # part-powered (D-358): its dead chips' models make a supply up (D-359)
+        left = (
+            f"what it powers ({plus}) has no supply, so its voltages and sound here aren't "
+            "real: the chip models don't switch off cleanly"
+        )
     yield Hit(
         jack.ref,
         (ctx.net(battery, "-"),),

@@ -158,10 +158,11 @@ def test_named_positions_show_on_the_knob_and_the_drawing(circuit: Builder) -> N
     assert switch_draw(plain.part("SW1"))["names"] is None  # type: ignore[arg-type]
 
 
-def test_a_battery_makes_the_dc_jack_a_power_switch(circuit: Builder) -> None:
-    """D-143: with a battery, Knobs picks the supply: the DC jack plugged in or not."""
+def test_a_dc_jack_is_a_power_switch(circuit: Builder) -> None:
+    """D-143, D-359: Knobs has the DC jack's plug, in or out; with a battery it picks the
+    supply."""
     jack = circuit().part("DC", "dcjack")
-    assert controls(jack.build()) == []
+    assert [k["positions"] for k in controls(jack.build())] == [["Plugged in", "Unplugged"]]
     c = jack.part("BAT1", "battery").build()
     assert controls(c) == [
         {

@@ -1,0 +1,856 @@
+{
+ "schema": 31,
+ "id": "in-guitar-clean-boost-v1",
+ "name": "Clean boost on a battery switched by J1",
+ "version": {
+  "major": 1,
+  "minor": 9
+ },
+ "power": {
+  "rails": {
+   "V+": 9.0
+  }
+ },
+ "parts": [
+  {
+   "ref": "IN",
+   "pos": [
+    -150,
+    200
+   ],
+   "type": "guitar",
+   "volume": "250k"
+  },
+  {
+   "ref": "OUT",
+   "pos": [
+    310,
+    200
+   ],
+   "type": "amp"
+  },
+  {
+   "ref": "BAT1",
+   "pos": [
+    -440,
+    -230
+   ],
+   "type": "battery"
+  },
+  {
+   "ref": "R2",
+   "pos": [
+    -270,
+    -210
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "R3",
+   "pos": [
+    -270,
+    -140
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "C4",
+   "pos": [
+    -220,
+    -140
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "electrolytic"
+  },
+  {
+   "ref": "IC1",
+   "pos": [
+    100,
+    -60
+   ],
+   "model": "TL061",
+   "type": "opamp"
+  },
+  {
+   "ref": "C3",
+   "pos": [
+    -80,
+    0
+   ],
+   "type": "capacitor",
+   "value": "100n",
+   "kind": "film"
+  },
+  {
+   "ref": "R4",
+   "pos": [
+    -10,
+    20
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "1M"
+  },
+  {
+   "ref": "C5",
+   "pos": [
+    220,
+    -60
+   ],
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "electrolytic"
+  },
+  {
+   "ref": "R5",
+   "pos": [
+    270,
+    -10
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "100k"
+  },
+  {
+   "ref": "C6",
+   "pos": [
+    -90,
+    -130
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "10µ",
+   "kind": "electrolytic"
+  },
+  {
+   "ref": "R6",
+   "pos": [
+    -50,
+    -160
+   ],
+   "type": "resistor",
+   "value": "4k7"
+  },
+  {
+   "ref": "TR1",
+   "pos": [
+    100,
+    -210
+   ],
+   "type": "trimmer",
+   "value": "10k"
+  },
+  {
+   "ref": "SW1A",
+   "pos": [
+    -20,
+    200
+   ],
+   "type": "switch",
+   "kind": "dpdt",
+   "pole": "a"
+  },
+  {
+   "ref": "SW1B",
+   "pos": [
+    160,
+    200
+   ],
+   "rot": 180,
+   "type": "switch",
+   "kind": "dpdt",
+   "pole": "b"
+  },
+  {
+   "ref": "R7",
+   "pos": [
+    -150,
+    20
+   ],
+   "rot": 90,
+   "type": "resistor",
+   "value": "1M"
+  },
+  {
+   "ref": "C2",
+   "pos": [
+    -350,
+    -240
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "47µ",
+   "kind": "electrolytic"
+  },
+  {
+   "ref": "C1",
+   "pos": [
+    40,
+    -130
+   ],
+   "rot": 90,
+   "type": "capacitor",
+   "value": "1µ",
+   "kind": "electrolytic"
+  },
+  {
+   "ref": "J1",
+   "pos": [
+    -410,
+    40
+   ],
+   "type": "jack",
+   "stereo": true,
+   "label": "input"
+  },
+  {
+   "ref": "R8",
+   "pos": [
+    330,
+    -60
+   ],
+   "type": "resistor",
+   "value": "470"
+  }
+ ],
+ "wires": [
+  {
+   "from": [
+    140,
+    -60
+   ],
+   "to": [
+    200,
+    -60
+   ]
+  },
+  {
+   "from": [
+    -10,
+    -160
+   ],
+   "to": [
+    -10,
+    -80
+   ]
+  },
+  {
+   "from": [
+    -10,
+    -80
+   ],
+   "to": [
+    60,
+    -80
+   ]
+  },
+  {
+   "from": [
+    -30,
+    -160
+   ],
+   "to": [
+    -10,
+    -160
+   ]
+  },
+  {
+   "from": [
+    -90,
+    -150
+   ],
+   "to": [
+    -90,
+    -160
+   ]
+  },
+  {
+   "from": [
+    -90,
+    -160
+   ],
+   "to": [
+    -70,
+    -160
+   ]
+  },
+  {
+   "from": [
+    -90,
+    -110
+   ],
+   "to": [
+    -90,
+    -100
+   ]
+  },
+  {
+   "from": [
+    270,
+    -60
+   ],
+   "to": [
+    240,
+    -60
+   ]
+  },
+  {
+   "from": [
+    270,
+    -60
+   ],
+   "to": [
+    270,
+    -30
+   ]
+  },
+  {
+   "from": [
+    -150,
+    0
+   ],
+   "to": [
+    -100,
+    0
+   ]
+  },
+  {
+   "from": [
+    -10,
+    0
+   ],
+   "to": [
+    -60,
+    0
+   ]
+  },
+  {
+   "from": [
+    60,
+    -40
+   ],
+   "to": [
+    -10,
+    -40
+   ]
+  },
+  {
+   "from": [
+    -10,
+    -40
+   ],
+   "to": [
+    -10,
+    0
+   ]
+  },
+  {
+   "from": [
+    80,
+    -210
+   ],
+   "to": [
+    20,
+    -210
+   ]
+  },
+  {
+   "from": [
+    20,
+    -210
+   ],
+   "to": [
+    -10,
+    -210
+   ]
+  },
+  {
+   "from": [
+    -10,
+    -210
+   ],
+   "to": [
+    -10,
+    -160
+   ]
+  },
+  {
+   "from": [
+    170,
+    -210
+   ],
+   "to": [
+    120,
+    -210
+   ]
+  },
+  {
+   "from": [
+    170,
+    -210
+   ],
+   "to": [
+    170,
+    -230
+   ]
+  },
+  {
+   "from": [
+    170,
+    -230
+   ],
+   "to": [
+    100,
+    -230
+   ]
+  },
+  {
+   "from": [
+    170,
+    -60
+   ],
+   "to": [
+    170,
+    -210
+   ]
+  },
+  {
+   "from": [
+    100,
+    -100
+   ],
+   "to": [
+    100,
+    -150
+   ]
+  },
+  {
+   "from": [
+    40,
+    -150
+   ],
+   "to": [
+    100,
+    -150
+   ]
+  },
+  {
+   "from": [
+    270,
+    -60
+   ],
+   "to": [
+    310,
+    -60
+   ]
+  },
+  {
+   "from": [
+    350,
+    -60
+   ],
+   "to": [
+    380,
+    -60
+   ]
+  },
+  {
+   "from": [
+    -150,
+    0
+   ],
+   "to": [
+    -180,
+    0
+   ]
+  },
+  {
+   "from": [
+    -270,
+    -270
+   ],
+   "to": [
+    -270,
+    -230
+   ]
+  },
+  {
+   "from": [
+    -270,
+    -190
+   ],
+   "to": [
+    -270,
+    -160
+   ]
+  },
+  {
+   "from": [
+    -220,
+    -160
+   ],
+   "to": [
+    -190,
+    -160
+   ]
+  },
+  {
+   "from": [
+    -220,
+    -160
+   ],
+   "to": [
+    -260,
+    -160
+   ]
+  },
+  {
+   "from": [
+    -260,
+    -160
+   ],
+   "to": [
+    -270,
+    -160
+   ]
+  },
+  {
+   "from": [
+    -440,
+    -250
+   ],
+   "to": [
+    -440,
+    -270
+   ]
+  },
+  {
+   "from": [
+    -440,
+    -270
+   ],
+   "to": [
+    -270,
+    -270
+   ]
+  },
+  {
+   "from": [
+    -350,
+    -270
+   ],
+   "to": [
+    -350,
+    -260
+   ]
+  },
+  {
+   "from": [
+    -190,
+    -270
+   ],
+   "to": [
+    -270,
+    -270
+   ]
+  },
+  {
+   "from": [
+    -350,
+    20
+   ],
+   "to": [
+    -350,
+    -10
+   ]
+  },
+  {
+   "from": [
+    -370,
+    20
+   ],
+   "to": [
+    -350,
+    20
+   ]
+  },
+  {
+   "from": [
+    -370,
+    40
+   ],
+   "to": [
+    -320,
+    40
+   ]
+  },
+  {
+   "from": [
+    -370,
+    60
+   ],
+   "to": [
+    -290,
+    60
+   ]
+  },
+  {
+   "from": [
+    0,
+    180
+   ],
+   "to": [
+    40,
+    180
+   ]
+  },
+  {
+   "from": [
+    210,
+    200
+   ],
+   "to": [
+    180,
+    200
+   ]
+  },
+  {
+   "from": [
+    140,
+    220
+   ],
+   "to": [
+    100,
+    220
+   ]
+  },
+  {
+   "from": [
+    70,
+    180
+   ],
+   "to": [
+    70,
+    220
+   ]
+  },
+  {
+   "from": [
+    140,
+    180
+   ],
+   "to": [
+    70,
+    180
+   ]
+  },
+  {
+   "from": [
+    0,
+    220
+   ],
+   "to": [
+    70,
+    220
+   ]
+  },
+  {
+   "from": [
+    -40,
+    200
+   ],
+   "to": [
+    -60,
+    200
+   ]
+  }
+ ],
+ "labels": [
+  {
+   "net": "V+",
+   "pos": [
+    -190,
+    -270
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    -270,
+    -120
+   ]
+  },
+  {
+   "net": "VREF",
+   "pos": [
+    -190,
+    -160
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    -220,
+    -120
+   ]
+  },
+  {
+   "net": "V+",
+   "pos": [
+    100,
+    -150
+   ]
+  },
+  {
+   "net": "VREF",
+   "pos": [
+    -10,
+    40
+   ],
+   "rot": 180
+  },
+  {
+   "net": "GND",
+   "pos": [
+    100,
+    -20
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    270,
+    10
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    -90,
+    -100
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    -350,
+    -220
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    -150,
+    40
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    40,
+    -110
+   ]
+  },
+  {
+   "net": "GND",
+   "pos": [
+    -350,
+    -10
+   ],
+   "rot": 180
+  },
+  {
+   "net": "in",
+   "pos": [
+    -290,
+    60
+   ]
+  },
+  {
+   "net": "in",
+   "pos": [
+    -130,
+    200
+   ]
+  },
+  {
+   "net": "bat",
+   "pos": [
+    -320,
+    40
+   ]
+  },
+  {
+   "net": "bat",
+   "pos": [
+    -440,
+    -210
+   ]
+  },
+  {
+   "net": "fx-out",
+   "pos": [
+    380,
+    -60
+   ]
+  },
+  {
+   "net": "out",
+   "pos": [
+    290,
+    200
+   ]
+  },
+  {
+   "net": "fx-out",
+   "pos": [
+    100,
+    220
+   ]
+  },
+  {
+   "net": "fx-in",
+   "pos": [
+    -180,
+    0
+   ]
+  },
+  {
+   "net": "fx-in",
+   "pos": [
+    40,
+    180
+   ]
+  },
+  {
+   "net": "out",
+   "pos": [
+    210,
+    200
+   ]
+  },
+  {
+   "net": "in",
+   "pos": [
+    -60,
+    200
+   ]
+  }
+ ],
+ "notes": [
+  {
+   "title": "From block: 9 V power · battery only",
+   "text": "How a battery-only pedal (no DC jack) takes its 9 V. The battery's + is V+; its - goes to ground: in a real pedal that wire goes to the input jack's ring (a stereo jack), so the pedal is on only with a guitar cable plugged in, which is why battery pedals say to unplug them when not in use. The simulation always has a cable in, so it's ground. Then the 9 V input filter to V+ (its values from the ProCo Rat, ElectroSmash). The battery's form sets how drained it is. The same ports as the DC jack and battery block, so either can replace the other."
+  },
+  {
+   "title": "From block: Vref · half-supply divider",
+   "text": "Half-supply reference for op-amp and JFET bias: two equal resistors with a capacitor to keep it quiet (the values in the ProCo Rat, ElectroSmash's analysis: R11, R12, C13).\n\nPasted with new refs: R1 → R4, R2 → R5, C1 → C3"
+  }
+ ]
+}

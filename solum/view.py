@@ -171,10 +171,13 @@ def controls(circuit: Circuit) -> list[dict[str, Any]]:
                  "contacts": [f"{name}: {contacts_text(kind, i)}"
                               for i, name in enumerate(kind.positions)]}
             )  # fmt: skip
-        elif isinstance(p, DcJack) and any(isinstance(q, Battery) for q in circuit.parts):
-            found.append(  # the jack's plug picks the supply (D-143): a switch, in effect
+        elif isinstance(p, DcJack):
+            # the jack's plug picks the supply (D-143), or is the only one (D-359): a switch
+            battery = any(isinstance(q, Battery) for q in circuit.parts)
+            found.append(
                 {"ref": p.ref, "kind": "switch", "label": "Power", "refs": [p.ref],
-                 "position": 0 if p.plugged else 1, "positions": ["DC jack", "Battery"],
+                 "position": 0 if p.plugged else 1,
+                 "positions": ["DC jack", "Battery"] if battery else ["Plugged in", "Unplugged"],
                  "field": "plugged", "values": [True, False]}
             )  # fmt: skip
         elif isinstance(p, Jack) and p.ref in jacks:

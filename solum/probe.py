@@ -50,7 +50,7 @@ from solum.circuit.schema import (
     Switch,
     Trimmer,
 )
-from solum.circuit.supply import drawable, no_power, supply_volts
+from solum.circuit.supply import drawable, no_power, no_power_refs, supply_volts
 from solum.netlist import Dc, input_part
 from solum.simulate import (
     IMPEDANCE_HZ,
@@ -120,6 +120,10 @@ def op_data(op: OpResult) -> dict[str, Any]:
         "supply": {rail: {"amps": amps, "text": format_quantity(abs(amps), "A")}
                    for rail, amps in op.supply.items()},
     }  # fmt: skip
+
+
+# No power (D-359): the op-amp models make up a supply, so no DC reading is shown at all
+NO_DC: dict[str, Any] = {"voltages": {}, "currents": {}, "bias": {}, "held": [], "supply": {}}
 
 
 def freq_axis(freq: Array) -> dict[str, Any]:
@@ -197,17 +201,21 @@ def _time_ms(tran: TranResult, n: int) -> list[float]:
 
 def run_view(sim: Simulator, circuit: Circuit, nodes: Sequence[str], level: str) -> dict[str, Any]:
     """DC everywhere; AC and scope at `nodes` and the output. AC and scope are None when
-    the circuit has no guitar input, or no power (`no_power` says why, D-358)."""
+    the circuit has no guitar input, or no power (`no_power` says why, D-358); with no
+    power there's no DC either (`NO_DC`), and `no_power_refs` are the jacks to blame
+    (D-359)."""
     nets = connect(circuit)
     probes = probe_nets(circuit, nets)
     wanted = [nets.resolve(n) for n in nodes] + ([probes.output] if probes.output else [])
     wanted = list(dict.fromkeys(wanted))
+    off = no_power(circuit)
     result: dict[str, Any] = {
-        "op": op_data(sim.op(circuit)),
+        "op": op_data(sim.op(circuit)) if off is None else NO_DC,
         "nodes": wanted,
         "ac": None,
         "tran": None,
-        "no_power": no_power(circuit),
+        "no_power": off,
+        "no_power_refs": no_power_refs(circuit),
     }
     if drawable(circuit):
         loose = loose_parts(circuit, nets)  # nothing to show on their nets (D-165)
@@ -483,30 +491,31 @@ def sweep_view(
 ) -> dict[str, Any]:
     """ "Try several values": one run per value of a part's `value` or `model`, with DC,
     the frequency response and the scope at `nodes` and the output, ready to overlay, and
-    the part's own view at each value (`parts`)."""
+    the part's own view at each value (`parts`). No DC with no power (D-359)."""
     circuits = _swept(circuit, ref, field, values)
     nets = connect(circuit)
     out = probe_nets(circuit, nets).output
     wanted = list(dict.fromkeys([*(nets.resolve(n) for n in nodes), *([out] if out else [])]))
-    ops = [sim.op(c) for c in circuits]
+    off = no_power(circuit)
+    ops = [sim.op(c) for c in circuits] if off is None else []
     result: dict[str, Any] = {
         "ref": ref,
         "field": field,
         "values": list(values),
         "nodes": wanted,
-        "dc": {net: [op.voltages[net] for op in ops] for net in wanted},
+        "dc": {net: [op.voltages[net] for op in ops] for net in wanted} if ops else {},
         # every net's DC per run, so the panel can say which bias points moved most
         "dc_all": {
             net: [op.voltages[net] for op in ops]
             for net in nets.members
-            if all(net in op.voltages for op in ops)
+            if ops and all(net in op.voltages for op in ops)
         },
         "ac": None,
         "tran": None,
         # the part's own readings at each value, for the Probe pane's columns (D-318);
         # none for a supply rail, which is no part
         "parts": [] if field == "rail" else [part_view(sim, c, ref, level) for c in circuits],
-        "no_power": no_power(circuit),
+        "no_power": off,
     }
     if drawable(circuit):
         result["ac"] = ac_sweep(sim, circuits, wanted)
@@ -717,19 +726,21 @@ def part_view(
 ) -> dict[str, Any]:
     """The view for one part (SPEC §2): its pins' DC plus what matters for its type
     (`pickups`: the guide's kind → name, for a guitar's text). KeyError if there's no
-    such part."""
+    such part. With no power, no readings: `no_power` says why (D-359)."""
     part = circuit.part(ref)
     nets = connect(circuit)
-    ctx = _Ctx(sim, circuit, nets, sim.op(circuit), level)
+    off = no_power(circuit)
+    ctx = _Ctx(sim, circuit, nets, sim.op(circuit), level) if off is None else None
+    voltages = ctx.op.voltages if ctx else {}
     pins = {
         pin: {
             "net": net,
-            "dc": ctx.op.voltages.get(net),
+            "dc": voltages.get(net),
             "number": pin_number(part, pin, sim.models),  # the datasheet's, for a chip (D-336)
         }
         for pin, (_pos, net) in drawn_pins(circuit, nets, part, sim.models).items()
         # a pump's pin 6 or 7 left open has no voltage to show (v28)
-        if not (isinstance(part, ChargePump) and pin in SPARE_PINS and net not in ctx.op.voltages)
+        if not (isinstance(part, ChargePump) and pin in SPARE_PINS and ctx and net not in voltages)
     }
     numbered = any(p["number"] is not None for p in pins.values())  # only when it has a model
     package = sim.models.get(getattr(part, "model", "")).info.package if numbered else None
@@ -746,7 +757,8 @@ def part_view(
         # a loose part isn't simulated (D-165): its pins have no DC, it has no detail, and
         # the pane says so in place of readings (`loose`, D-318)
         "loose": loose,
-        "detail": view(ctx, part) if view and not loose else {},
+        "detail": view(ctx, part) if view and ctx and not loose else {},
+        "no_power": off,
     }
 
 
@@ -864,6 +876,8 @@ def _signal_path(sim: Simulator, circuit: Circuit, tone: float = TONE_HZ) -> _Pa
     guitar = input_part(circuit)
     if guitar is None:
         return "Add a guitar input to see the stages."
+    if off := no_power(circuit):  # nothing to measure (D-359)
+        return off
     nets = connect(circuit)
     ac = sim.ac(circuit)
     source = nets.net_of(guitar.ref, "out")

@@ -8,10 +8,16 @@ wired, 9c): those rails' sources are off. A battery whose + reaches no rail is j
 supply on its own net, and the Power menu keeps every rail. Negative rails (a charge
 pump's, a ± supply) stay. With a DC plug in, the adapter powers it, and the battery is
 cut off only when its + goes through the DC jack's battery lug, as wired (D-185): wired
-anywhere else it stays connected beside the adapter.
+anywhere else it stays connected beside the adapter. With a DC jack drawn and no plug in,
+the Power menu's supply isn't there: its rails are held at 0 V, as a cut-off battery's
+are (D-359).
+
+No power (D-359): each supply is on or off by the plugs in its path (`power_cuts` names
+what cut each), and the pedal has no power when no supply that's on feeds anything.
 """
 
 from contextlib import suppress
+from dataclasses import dataclass
 from typing import Literal
 
 from solum.circuit.cables import (
@@ -77,30 +83,77 @@ def on_battery(circuit: Circuit) -> Battery | None:
     return _battery(circuit)
 
 
+def adapter_on(circuit: Circuit) -> bool:
+    """Whether the Power menu's supply is there: always with no DC jack drawn, else only
+    with a plug in it (D-359)."""
+    jack = _dc_jack(circuit)
+    return jack is None or jack.plugged
+
+
+@dataclass(frozen=True)
+class Cut:
+    """A supply a plug (or a missing one) cuts off: the jack, why as a message says it,
+    and what to do."""
+
+    ref: str
+    said: str  # "DC has no plug in"
+    fix: str  # "plug DC in"
+
+
+def power_cuts(circuit: Circuit) -> list[Cut]:
+    """Each supply cut off by what's in a jack (D-359): the Power menu's by a DC jack with
+    no plug in, the battery by a jack's ring with no mono plug in (D-354). A battery cut
+    off by a DC plug isn't listed: the adapter is in."""
+    cuts = []
+    jack = _dc_jack(circuit)
+    if jack is not None and not jack.plugged:
+        cuts.append(Cut(jack.ref, f"{jack.ref} has no plug in", f"plug {jack.ref} in"))
+    ring = battery_cutter(circuit)
+    if ring is not None and (jack is None or not jack.plugged or not _lug_wired(circuit)):
+        said = f"{ring.ref} {plug_said(ring)}, so its battery is cut off"
+        cuts.append(Cut(ring.ref, said, f"put a mono cable in {ring.ref}"))
+    return cuts
+
+
+def _lug_wired(circuit: Circuit) -> bool:
+    with suppress(ConnectivityError):
+        return battery_wiring(circuit, connect(circuit)) == "lug"
+    return False
+
+
 def powered_off(circuit: Circuit) -> bool:
-    """A cable out cuts the battery off and nothing else supplies the circuit (D-354,
-    D-357): no part on a rail the Power menu still holds, no DC source. The pedal is off,
-    so its operating point says nothing about its bias. The battery's + may be on V+ or on
-    a net of its own."""
-    if not battery_cut_off(circuit) or any(isinstance(p, VSource) for p in circuit.parts):
+    """A plug cuts a supply off and no supply that's on feeds anything (D-354, D-357,
+    D-359): no DC source, no part but the battery and the DC jack on a rail the Power
+    menu holds while its plug is in, nor on the net a battery that's on holds (its rail,
+    or a net of its own). The pedal is off, so its operating point says nothing about its
+    bias."""
+    if not power_cuts(circuit) or any(isinstance(p, VSource) for p in circuit.parts):
         return False
     try:
         nets = connect(circuit)
     except ConnectivityError:
         return False
+    held = set(live_rails(circuit)) if adapter_on(circuit) else set()
+    battery = battery_of(circuit, nets)
+    if battery is not None and not battery_cut_off(circuit):
+        held |= battery_rails(circuit) or {nets.net_of(battery.ref, "+")}
     power = {p.ref for p in circuit.parts if isinstance(p, (Battery, DcJack))}
-    return not any(
-        ref not in power for rail in live_rails(circuit) for ref, _ in nets.members.get(rail, ())
-    )
+    return not any(ref not in power for net in held for ref, _ in nets.members.get(net, ()))
 
 
 def no_power(circuit: Circuit) -> str | None:
-    """Why the pedal has no power (`powered_off`), naming the jack that cut the battery
-    off, or None (D-358). The curves and the scope say it instead of a result."""
-    jack = battery_cutter(circuit)
-    if jack is None or not powered_off(circuit):
+    """Why the pedal has no power (`powered_off`), naming each plug that cut a supply off,
+    or None (D-358, D-359). The banner, the curves, the scope and every DC reading say it
+    instead of a result."""
+    if not powered_off(circuit):
         return None
-    return f"The pedal has no power: {jack.ref} {plug_said(jack)}, so its battery is cut off."
+    said = " and ".join(c.said for c in power_cuts(circuit))
+    return f"The pedal has no power: {said}."
+
+
+def no_power_refs(circuit: Circuit) -> list[str]:
+    """The jacks that leave the pedal without power, for the banner to select (D-359)."""
+    return [c.ref for c in power_cuts(circuit)] if powered_off(circuit) else []
 
 
 def drawable(circuit: Circuit) -> bool:
@@ -116,9 +169,8 @@ def render_refusal(circuit: Circuit) -> str | None:
     if out := silence(circuit):
         return f"{out} Put its cable in (Knobs) to render."
     if off := no_power(circuit):
-        jack = battery_cutter(circuit)
-        assert jack is not None
-        return f"{off} Put a mono cable in {jack.ref} (Knobs) to render."
+        fix = " or ".join(c.fix for c in power_cuts(circuit))
+        return f"{off} {fix[0].upper()}{fix[1:]} (Knobs) to render."
     return None
 
 
@@ -152,25 +204,26 @@ def battery_of(circuit: Circuit, nets: Nets) -> Battery | None:
 
 
 def live_rails(circuit: Circuit) -> dict[str, float]:
-    """The rails the Power menu's ideal sources hold: all of them, or on a battery all but
-    the ones it takes over (`battery_rails`)."""
-    rails = circuit.power.rails
-    if on_battery(circuit) is None:
-        return dict(rails)
-    taken = battery_rails(circuit)
-    return {name: volts for name, volts in rails.items() if name not in taken}
+    """The rails the Power menu's ideal sources hold, and at what voltage: all of them, or
+    on a battery all but the ones it takes over (`battery_rails`); at 0 V with a DC jack
+    unplugged (`adapter_on`, D-359), so nothing makes up a supply there."""
+    rails = dict(circuit.power.rails)
+    if on_battery(circuit) is not None:
+        taken = battery_rails(circuit)
+        rails = {name: volts for name, volts in rails.items() if name not in taken}
+    return rails if adapter_on(circuit) else dict.fromkeys(rails, 0.0)
 
 
 def supply_volts(circuit: Circuit) -> dict[str, float]:
-    """Each rail's voltage as the circuit sees it: the Power menu's, or on a battery alone
-    its voltage for the positive rails (before any drop in its wiring)."""
+    """Each rail's voltage as the circuit sees it: the Power menu's (0 V unplugged), or on
+    a battery alone its voltage for the positive rails (before any drop in its wiring)."""
+    found = live_rails(circuit)
     battery = on_battery(circuit)
-    if battery is None:
-        return dict(circuit.power.rails)
-    volts, taken = parse_value(battery.volts), battery_rails(circuit)
-    if battery_cut_off(circuit):  # a cable out (D-354): the rails it holds are dead
-        volts = 0.0
-    return {name: (volts if name in taken else v) for name, v in circuit.power.rails.items()}
+    if battery is not None:
+        # a cable out (D-354): the rails it holds are dead
+        volts = 0.0 if battery_cut_off(circuit) else parse_value(battery.volts)
+        found |= dict.fromkeys(battery_rails(circuit), volts)
+    return {name: found[name] for name in circuit.power.rails}
 
 
 def power_chip(circuit: Circuit) -> dict[str, object] | None:
@@ -183,16 +236,16 @@ def power_chip(circuit: Circuit) -> dict[str, object] | None:
     if jack is None and on_battery(circuit) is None:
         return None
     chip = _chip(circuit)
-    if jack is not None and _battery(circuit) is not None:
+    if jack is not None:  # its Power switch is always in Knobs (D-359)
         chip = {
             "control": jack.ref,
             "positions": [_chip(circuit.with_part(jack.ref, plugged=on)) for on in (True, False)],
         }
-    cuts = _cuts(circuit)
+    cuts = _cable_cuts(circuit)
     return {**chip, "cut_off": {"text": "Battery · cut off", "jacks": cuts}} if cuts else chip
 
 
-def _cuts(circuit: Circuit) -> dict[str, dict[str, object]]:
+def _cable_cuts(circuit: Circuit) -> dict[str, dict[str, object]]:
     """Each jack whose cable can cut the battery off (D-357): where its cable switch opens
     (`at`) and the positions that cut it off, so the chip follows the switch."""
     found: dict[str, dict[str, object]] = {}
@@ -210,5 +263,6 @@ def _cuts(circuit: Circuit) -> dict[str, dict[str, object]]:
 def _chip(circuit: Circuit) -> dict[str, object]:
     battery = on_battery(circuit)
     if battery is None:
-        return {"text": "DC jack", "battery": False}
+        text = "DC jack" if adapter_on(circuit) else "DC jack · unplugged"
+        return {"text": text, "battery": False}
     return {"text": f"Battery · {parse_value(battery.volts):g} V", "battery": True}

@@ -13,9 +13,12 @@ from solum.circuit.supply import (
     battery_of,
     battery_wiring,
     live_rails,
+    no_power,
+    no_power_refs,
     on_battery,
     power_chip,
     powered_off,
+    render_refusal,
     supply_volts,
 )
 from solum.models import ModelLibrary, load_models
@@ -170,7 +173,13 @@ def test_the_power_chip_with_one_or_neither(circuit: Builder) -> None:
     jack_only = circuit().rail("V+", 9.0).part("DC", "dcjack", "V+", "0", "x").build()
     battery_only = circuit().part("BAT1", "battery", "V+", "0", volts=9.0, state="fresh").build()
     neither = circuit().rail("V+", 9.0).part("R1", "resistor", "V+", "0", value="10k").build()
-    assert power_chip(jack_only) == {"text": "DC jack", "battery": False}
+    assert power_chip(jack_only) == {  # its Power switch is always in Knobs (D-359)
+        "control": "DC",
+        "positions": [
+            {"text": "DC jack", "battery": False},
+            {"text": "DC jack · unplugged", "battery": False},
+        ],
+    }
     assert power_chip(battery_only) == {"text": "Battery · 9 V", "battery": True}
     assert power_chip(neither) is None
 
@@ -343,3 +352,64 @@ def test_any_jack_whose_cable_switches_something_has_a_cable_knob(circuit: Build
         "Output cable": ["Cable in", "Cable out"],
         "Mute cable": ["Mono cable", "Stereo cable", "Cable out"],
     }
+
+
+def dc_alone(circuit: Builder, plugged: bool) -> Circuit:
+    """A DC jack and no battery (left by deleting it), a load on V+."""
+    return (
+        circuit()
+        .rail("V+", 9.0)
+        .part("DC", "dcjack", "V+", "0", None, plugged=plugged)
+        .part("R1", "resistor", "V+", "0", value="10k")
+        .build()
+    )
+
+
+def test_a_dc_jack_unplugged_holds_its_rails_at_0_v(circuit: Builder, models: ModelLibrary) -> None:
+    """D-359: with no plug in and nothing else, the Power menu's supply isn't there; its
+    rails are held at 0 V (as a cut-off battery's are), so nothing makes a supply up."""
+    off = dc_alone(circuit, plugged=False)
+    assert live_rails(off) == {"V+": 0.0} == supply_volts(off)
+    assert "V_RAIL1 v_ 0 DC 0" in generate_netlist(off, models, Op()).text.splitlines()
+    assert powered_off(off) and no_power_refs(off) == ["DC"]
+    assert no_power(off) == "The pedal has no power: DC has no plug in."
+    on = dc_alone(circuit, plugged=True)
+    assert live_rails(on) == {"V+": 9.0} and not powered_off(on) and no_power(on) is None
+
+
+def test_a_dc_jack_has_its_power_switch_battery_or_not(circuit: Builder) -> None:
+    """D-359: Plugged in / Unplugged with no battery; DC jack / Battery with one (D-143)."""
+    knob = next(k for k in controls(dc_alone(circuit, plugged=False)) if k["ref"] == "DC")
+    assert knob["positions"] == ["Plugged in", "Unplugged"] and knob["position"] == 1
+    assert knob["field"] == "plugged" and knob["values"] == [True, False]
+    both = next(k for k in controls(pedal(circuit).build()) if k["ref"] == "DC")
+    assert both["positions"] == ["DC jack", "Battery"]
+
+
+def test_unplugged_the_battery_still_powers_it(circuit: Builder) -> None:
+    c = pedal(circuit, plugged=False).build()
+    assert not powered_off(c) and no_power(c) is None
+
+
+def test_both_supplies_cut_off_name_both_plugs(circuit: Builder) -> None:
+    """D-359: no DC plug and the battery's ring open: each plug is named, and either
+    fixes it."""
+    c = (
+        circuit()
+        .rail("V+", 9.0)
+        .part("DC", "dcjack", "V+", "0", "bpos", plugged=False)
+        .part("BAT1", "battery", "bpos", "bneg")
+        .part("J1", "jack", stereo=True, label="Input", plug="none",
+              pins={"T": "tip", "R": "bneg", "S": "0"})
+        .part("R1", "resistor", "V+", "0", value="10k")
+        .build()
+    )  # fmt: skip
+    assert no_power(c) == (
+        "The pedal has no power: DC has no plug in and J1 has no cable in, so its battery "
+        "is cut off."
+    )
+    assert no_power_refs(c) == ["DC", "J1"]
+    assert render_refusal(c) == (
+        f"{no_power(c)} Plug DC in or put a mono cable in J1 (Knobs) to render."
+    )
+    assert no_power(c.with_part("DC", plugged=True)) is None  # the adapter's in

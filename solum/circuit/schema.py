@@ -39,7 +39,7 @@ from solum.circuit.switches import (
 )
 from solum.units import format_quantity, format_value, parse_value
 
-SCHEMA_VERSION: Final = 30
+SCHEMA_VERSION: Final = 31
 
 Point = tuple[int, int]
 Rotation = Literal[0, 90, 180, 270]
@@ -519,20 +519,24 @@ class DcJack(_Part):
     plugged: bool = True
 
 
+Plug = Literal["mono", "stereo", "none"]  # what's in a jack (D-355)
+
+
 class Jack(_Part):
     """An input or output jack (v18, D-174), drawn as KiCad draws one: `AudioJack2` (mono,
     TS: pins T and S) or, `stereo`, `AudioJack3` (TRS: T, R and S). Drawing only, for the
     build and its export: the guitar input and the amp are where the simulation's signal
     starts and ends, so a jack carries no signal in it. `label`: what it's for (Input,
-    Output). `plugged` (v21, D-185): its cable is in. A stereo jack's sleeve then joins
-    the ring to S, so a battery wired to the ring is on only with a cable in; on IN's or
-    OUT's net, no cable means no signal through, so no curves and no render (D-354,
-    `solum/circuit/cables.py`)."""
+    Output). `plug` (v31, D-355; `plugged` from v21, D-185): what's in it. A `mono` plug's
+    long sleeve joins a stereo jack's ring to S, so a battery wired to the ring is on; a
+    `stereo` (TRS) plug's ring is its own, so the ring stays open (a mono jack takes it
+    as mono); `none`, no cable: on IN's or OUT's net no signal goes through, so no curves
+    and no render (D-354, `solum/circuit/cables.py`)."""
 
     type: Literal["jack"]
     stereo: bool = False
     label: str | None = None
-    plugged: bool = True
+    plug: Plug = "mono"
 
 
 class Battery(_Part):
@@ -689,7 +693,7 @@ class Enclosure(_Model):
 
 
 class Circuit(_Model):
-    schema_: Literal[30] = Field(alias="schema")
+    schema_: Literal[31] = Field(alias="schema")
     id: str = Field(pattern=ID_PATTERN)
     name: str
     description: str = ""

@@ -732,8 +732,10 @@ def battery_cable_out(ctx: Context) -> Iterator[Hit]:
         return
     minus = ctx.net(battery, "-")
     for j in ctx.parts(Jack):
-        if j.stereo and not j.plugged and ctx.net(j, "R") == minus:
-            yield Hit(j.ref, (minus,), {"battery": battery.ref})
+        if j.stereo and j.plug != "mono" and ctx.net(j, "R") == minus:
+            # a stereo plug's ring is its own, so it doesn't join the ring to S (D-355)
+            why = "has no cable in" if j.plug == "none" else "has a stereo cable in"
+            yield Hit(j.ref, (minus,), {"battery": battery.ref, "cable": why})
 
 
 @check("topology")

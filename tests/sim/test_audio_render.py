@@ -99,12 +99,12 @@ def test_with_the_output_cable_out_a_render_is_refused_saying_why(
         .part("IN", "guitar", "in")
         .part("R1", "resistor", "in", "out", value=10e3)
         .part("OUT", "amp", "out", value="10M")
-        .part("J2", "jack", pins={"T": "out", "S": "0"}, plugged=False)
+        .part("J2", "jack", pins={"T": "out", "S": "0"}, plug="none")
         .build()
     )
     with pytest.raises(RenderError, match=r"^J2 has no cable in: nothing reaches the amp\. Put"):
         render(sim, jacked, Inputs(tone(200)), tmp_path)
-    render(sim, jacked.with_part("J2", plugged=True), Inputs(tone(200)), tmp_path)  # cable in
+    render(sim, jacked.with_part("J2", plug="mono"), Inputs(tone(200)), tmp_path)  # cable in
 
 
 def test_a_cable_out_of_a_jack_off_the_input_and_output_doesnt_stop_a_render(
@@ -118,7 +118,7 @@ def test_a_cable_out_of_a_jack_off_the_input_and_output_doesnt_stop_a_render(
         .part("R1", "resistor", "in", "out", value=10e3)
         .part("OUT", "amp", "out", value="10M")
         .part("R2", "resistor", "x", "0", value="1k")
-        .part("J3", "jack", pins={"T": "x", "S": "0"}, plugged=False)
+        .part("J3", "jack", pins={"T": "x", "S": "0"}, plug="none")
         .build()
     )
     assert level_db(render(sim, c, Inputs(tone(200)), tmp_path).wav) == pytest.approx(0, abs=0.1)

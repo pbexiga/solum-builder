@@ -128,7 +128,7 @@ def test_with_a_cable_out_no_render_starts(client: TestClient) -> None:
         .part("IN", "guitar", "in")
         .part("VR1", "pot", "in", "out", "0", value="100k")
         .part("OUT", "amp", "out")
-        .part("J2", "jack", pins={"T": "out", "S": "0"}, plugged=False)
+        .part("J2", "jack", pins={"T": "out", "S": "0"}, plug="none")
         .build()
     )
     take = {"circuit": unplugged, "clip": {"id": riff["id"], "layer": "user"}}

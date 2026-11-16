@@ -987,6 +987,20 @@ def _v29_to_v30(data: Data) -> Data:
     return out
 
 
+def _v30_to_v31(data: Data) -> Data:
+    """v31 (D-355): a jack's `plugged` becomes `plug`, what's in it: a cable in was a
+    mono plug (`mono`), out is `none`. A stereo plug is new."""
+    parts = []
+    for p in data.get("parts", []):
+        if p.get("type") == "jack":
+            q = {k: v for k, v in p.items() if k != "plugged"}
+            if p.get("plugged") is False:
+                q["plug"] = "none"
+            p = q
+        parts.append(p)
+    return {**data, "parts": parts}
+
+
 MIGRATIONS: dict[int, Migration] = {
     1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5, 5: _v5_to_v6, 6: _v6_to_v7,
     7: _v7_to_v8, 8: _v8_to_v9, 9: _v9_to_v10,
@@ -994,7 +1008,7 @@ MIGRATIONS: dict[int, Migration] = {
     15: _v15_to_v16, 16: _v16_to_v17, 17: _v17_to_v18, 18: _v18_to_v19,
     19: _v19_to_v20, 20: _v20_to_v21, 21: _v21_to_v22, 22: _v22_to_v23,
     23: _v23_to_v24, 24: _v24_to_v25, 25: _v25_to_v26, 26: _v26_to_v27,
-    27: _v27_to_v28, 28: _v28_to_v29, 29: _v29_to_v30,
+    27: _v27_to_v28, 28: _v28_to_v29, 29: _v29_to_v30, 30: _v30_to_v31,
 }  # fmt: skip
 
 

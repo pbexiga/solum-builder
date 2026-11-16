@@ -131,7 +131,7 @@ def bias_edges(circuit: Circuit, nets: Nets) -> list[Edge]:
                 edges += _battery_edges(circuit, nets, p)
             case DcJack() if not p.plugged:
                 edges.append((nets.net_of(p.ref, "sw"), nets.net_of(p.ref, "+")))
-            case Jack() if p.stereo and p.plugged:  # a cable's sleeve joins R and S
+            case Jack() if p.stereo and p.plug == "mono":  # a mono plug's sleeve joins R, S
                 edges.append((nets.net_of(p.ref, "R"), nets.net_of(p.ref, "S")))
     return edges
 

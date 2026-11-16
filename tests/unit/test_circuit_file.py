@@ -229,10 +229,10 @@ def test_schema_v1_file_loads_as_current(repo: Path) -> None:
     (and dropped provenance), v6 text blocks (and dropped the power mode); a v1 file
     loads unchanged and saves as v6 at v1.0."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v1.json")
-    assert c.schema_ == SCHEMA_VERSION == 30
+    assert c.schema_ == SCHEMA_VERSION == 31
     assert c.tags == [] and c.texts == []
     assert [p.ref for p in c.parts] == ["R1", "R2"]
-    assert circuit_to_dict(c)["schema"] == 30
+    assert circuit_to_dict(c)["schema"] == 31
     assert (str(c.version), c.final) == ("v1.0", False)
 
 
@@ -642,3 +642,12 @@ def test_an_enclosure_is_a_standard_size_or_custom_with_its_mm() -> None:
                 {"size": "1590B", "length": 100, "width": 50, "height": 30}):  # fmt: skip
         with pytest.raises(ValidationError):
             Enclosure(**bad)
+
+
+def test_a_v30_jacks_cable_in_or_out_becomes_what_plug_is_in_it(repo: Path) -> None:
+    """v31 (D-355): a cable in was a mono plug, out is none; the DC jack keeps `plugged`."""
+    c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v30.json")
+    assert c.schema_ == SCHEMA_VERSION
+    assert [getattr(p, "plug", None) for p in c.parts] == ["none", "mono", "mono", None]
+    assert c.part("DC").plugged is False  # type: ignore[union-attr]
+    assert "plugged" not in circuit_to_dict(c)["parts"][0]

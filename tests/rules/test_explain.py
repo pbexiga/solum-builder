@@ -76,7 +76,7 @@ def battery_buffer(cable: bool) -> CircuitBuilder:
         CircuitBuilder("battery buffer")
         .rail("V+", 9)
         .part("BAT1", "battery", pins={"+": "V+", "-": "ring"})
-        .part("J1", "jack", stereo=True, label="Input", plugged=cable,
+        .part("J1", "jack", stereo=True, label="Input", plug="mono" if cable else "none",
               pins={"T": "in", "R": "ring", "S": "GND"})
         .part("IN", "guitar", "in")
         .part("C1", "capacitor", "in", "p", value="100n")

@@ -9,17 +9,17 @@
  * object when nothing differs, so it can stand as a cache key. The server validates the
  * result, so this only copies and sets.
  * @template {{parts: Array<{ref: string, [k: string]: any}>}} C
- * @param {C} circuit @param {Array<{ref: string, kind: string, refs?: string[], plug?: boolean}>} controls @param {Record<string, number>} values
+ * @param {C} circuit @param {Array<{ref: string, kind: string, refs?: string[], field?: string, values?: any[]}>} controls @param {Record<string, number>} values
  * @returns {C}
  */
 export function withControls(circuit, controls, values) {
   const set = new Map();
   for (const c of controls) {
     if (!(c.ref in values)) continue;
-    // a switch's knob turns every pole (`refs`, D-143); a `plug` knob (the DC jack's Power,
-    // a jack's cable, D-185, D-354) is its part's `plugged`, in at position 0
+    // a switch's knob turns every pole (`refs`, D-143); one with a `field` (the DC jack's
+    // Power, a jack's cable, D-185, D-355) sets that field to its position's value
     for (const ref of c.refs ?? [c.ref]) {
-      set.set(ref, c.plug ? ["plugged", values[c.ref] === 0] : [c.kind === "switch" ? "position" : "rotation", values[c.ref]]);
+      set.set(ref, c.field ? [c.field, c.values?.[values[c.ref]]] : [c.kind === "switch" ? "position" : "rotation", values[c.ref]]);
     }
   }
   let changed = false;

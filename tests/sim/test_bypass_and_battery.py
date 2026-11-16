@@ -91,7 +91,7 @@ def test_bypassed_with_the_battery_cut_off_the_guitar_still_comes_through(
     switched = (
         CircuitBuilder()
         .part("BAT1", "battery", pins={"+": "V+", "-": "ring"})
-        .part("J9", "jack", stereo=True, plugged=False, pins={"T": "x", "R": "ring", "S": "0"})
+        .part("J9", "jack", stereo=True, plug="none", pins={"T": "x", "R": "ring", "S": "0"})
     )
     c = with_parts(with_effect("true-bypass-3pdt-v1"), switched)
     assert run_view(sim, c, [], "med")["silent"] is None
@@ -175,7 +175,7 @@ def ring_pedal(cable: bool) -> Circuit:
         .rail("V+", 9.0)
         .part("IN", "guitar", "in")
         .part("BAT1", "battery", "V+", "bneg")
-        .part("J1", "jack", stereo=True, label="Input", plugged=cable,
+        .part("J1", "jack", stereo=True, label="Input", plug="mono" if cable else "none",
               pins={"T": "in", "R": "bneg", "S": "0"})
         .part("R1", "resistor", "V+", "0", value="9k")
         .part("OUT", "amp", "in")
@@ -189,6 +189,15 @@ def test_a_cable_in_the_stereo_jack_switches_the_battery_on(sim: Simulator) -> N
     assert on.supply["V+"] == pytest.approx(1e-3, rel=0.02)
     off = sim.op(ring_pedal(cable=False))
     assert off.voltages["V+"] == pytest.approx(0.0, abs=1e-3)  # the ring open: no supply
+
+
+def test_a_stereo_cable_in_the_input_leaves_the_pedal_off_but_playing(sim: Simulator) -> None:
+    """D-355: a TRS plug's ring doesn't touch the sleeve, so the battery stays off (0 V),
+    but the guitar comes in: the run has its curve and scope, unpowered."""
+    c = ring_pedal(cable=True).with_part("J1", plug="stereo")
+    assert sim.op(c).voltages["V+"] == pytest.approx(0.0, abs=1e-6)
+    view = run_view(sim, c, ["in"], "med")
+    assert view["silent"] is None and view["ac"] is not None and view["tran"] is not None
 
 
 def test_with_the_input_cable_out_the_pedal_is_off(sim: Simulator) -> None:

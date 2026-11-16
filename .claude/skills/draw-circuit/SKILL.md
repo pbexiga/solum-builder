@@ -89,7 +89,7 @@ anything, and don't redraw from the old script.
 The least a file needs:
 
 ```json
-{"schema": 30, "id": "my-boost", "name": "My boost", "parts": []}
+{"schema": 31, "id": "my-boost", "name": "My boost", "parts": []}
 ```
 
 `schema` is the version (`SCHEMA_VERSION` in `schema.py`; `Drawing.circuit()` writes the

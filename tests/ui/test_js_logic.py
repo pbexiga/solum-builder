@@ -280,10 +280,12 @@ def test_state_helpers(js: Page) -> None:
         const controls = [{ ref: 'VR1', kind: 'pot', rotation: 0.5 }, { ref: 'P9', kind: 'pot', rotation: 0.5 }];
         const turned = s.withControls(circuit, controls, { VR1: 0.9, P9: 1 });
         const untouched = s.withControls(circuit, controls, { VR1: 0.5 }) === circuit;
-        // a plug knob (the DC jack's Power, a stereo jack's cable, D-185) sets `plugged`, in at 0
+        // a field's knob (the DC jack's Power, a jack's cable, D-185, D-355) sets that field
         const jacks = { parts: [{ ref: 'DC', type: 'dcjack', plugged: true }, { ref: 'J1', type: 'jack', stereo: true }] };
-        const plugs = [{ ref: 'DC', kind: 'switch', refs: ['DC'], plug: true }, { ref: 'J1', kind: 'switch', refs: ['J1'], plug: true }];
-        const unplugged = s.withControls(jacks, plugs, { DC: 1, J1: 1 }).parts.map((p) => p.plugged);
+        const plugs = [{ ref: 'DC', kind: 'switch', refs: ['DC'], field: 'plugged', values: [true, false] },
+                       { ref: 'J1', kind: 'switch', refs: ['J1'], field: 'plug', values: ['mono', 'stereo', 'none'] }];
+        const turnedJacks = s.withControls(jacks, plugs, { DC: 1, J1: 1 }).parts;
+        const unplugged = [turnedJacks[0].plugged, turnedJacks[1].plug];
         // knobs stay turned across edits, unless their opening position changed; new ones open there
         const kept = s.keptControls(
           [{ ref: 'VR1', kind: 'pot', rotation: 0.5 }, { ref: 'VR2', kind: 'pot', rotation: 0.3 }, { ref: 'SW1', kind: 'switch', position: 1 }],
@@ -311,7 +313,7 @@ def test_state_helpers(js: Page) -> None:
         """,
     )
     assert (result["original"], result["turned"], result["same"]) == (0.5, 0.9, True)
-    assert result["unplugged"] == [False, False]
+    assert result["unplugged"] == [False, "stereo"]
     assert result["untouched"] is True  # nothing differs: the same circuit
     assert result["kept"] == {"VR1": 0.9, "VR2": 0.3, "SW1": 1}
     assert result["latest"] == [False, True]

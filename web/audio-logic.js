@@ -95,7 +95,7 @@ export function takeAt(slots, sweep, id) {
 /**
  * The knobs and switches in words: "Drive 75 %, Tone 50 %, Mode: 2", a switch by its
  * position's name (D-143).
- * @param {Array<{ref: string, kind: string, label: string, refs?: string[], positions?: string[], plug?: boolean}>} controls as the view lists them
+ * @param {Array<{ref: string, kind: string, label: string, refs?: string[], positions?: string[], field?: string, values?: any[]}>} controls as the view lists them
  * @param {any} circuit where their positions are
  */
 export function knobsText(controls, circuit) {
@@ -103,7 +103,8 @@ export function knobsText(controls, circuit) {
   return controls.map((c) => {
     const p = parts.get(c.refs?.[0] ?? c.ref);
     if (c.kind !== "switch") return `${c.label} ${Math.round((p?.rotation ?? 0.5) * 100)} %`;
-    const at = c.plug ? Number(p?.plugged === false) : (p?.position ?? 0);
+    // a field's knob: its value's place (a part without the field has the first, its default)
+    const at = c.field ? Math.max(0, c.values?.indexOf(p?.[c.field] ?? c.values[0]) ?? 0) : (p?.position ?? 0);
     return `${c.label}: ${c.positions?.[at] ?? at + 1}`;
   }).join(", ");
 }

@@ -663,12 +663,13 @@ function dcjack(draw) {
 /**
  * An input or output jack (D-174) as KiCad draws one, 2.54 mm to 20: `AudioJack2` (mono:
  * sleeve S over tip T) or `AudioJack3` (stereo: S, ring R, T). Drawing only, but for a
- * stereo jack's cable (D-185): with one in, its sleeve joins the ring's spring to S
- * (drawn dashed), and the body says "cable in" or "cable out".
- * @param {{stereo?: boolean, plugged?: boolean}} draw
+ * stereo jack's plug (D-185, D-355): a mono plug's sleeve joins the ring's spring to S
+ * (drawn dashed), a stereo plug's ring doesn't, and the body says which ("mono cable",
+ * "stereo cable", "cable out").
+ * @param {{stereo?: boolean, plug?: string}} draw
  */
 function jack(draw) {
-  const plugged = draw.plugged ?? true;
+  const plug = draw.plug ?? "mono";
   const pins = (/** @type {[string, number][]} */ names) => names.map(([name, y]) => ({ text: name, at: [33, y - 3], size: 6 }));
   if (!draw.stereo) {
     return {
@@ -692,8 +693,8 @@ function jack(draw) {
       { path: "M0,20 L5,25 L10,20 L40,20" }, // the tip's
       { path: "M40,-20 L-20,-20 L-20,20 L-25,25 L-30,20" }, // the sleeve's
       ...pins([["T", 20], ["R", 0], ["S", -20]]),
-      ...(plugged ? [{ path: "M-20,10 L-17,10 M-14,10 L-11,10 M-8,10 L-5,10" }] : []), // a cable's sleeve, ring to S
-      { text: plugged ? "cable in" : "cable out", at: [-10, 37], size: 6 },
+      ...(plug === "mono" ? [{ path: "M-20,10 L-17,10 M-14,10 L-11,10 M-8,10 L-5,10" }] : []), // a mono plug's sleeve, ring to S
+      { text: plug === "none" ? "cable out" : `${plug} cable`, at: [-10, 37], size: 6 },
     ],
     leads: { T: [40, 20], R: [40, 0], S: [40, -20] },
     box: [-50, -30, 90, 70],
@@ -724,7 +725,7 @@ function battery() {
  * @param {{type: string, polarity?: string | null, draw?: any, pins: Array<{name: string}>}} part
  * @param {number} [position] a switch's current position (knob state); a DC jack's is
  *   the Power knob's (0 plugged in, 1 on the battery) and a stereo jack's its Cable knob's
- *   (0 in, 1 out), none when there's no knob
+ *   (its place in `draw.plugs`: mono, stereo, none), none when there's no knob
  * @returns {Symbol}
  */
 export function symbol(part, position) {
@@ -732,7 +733,7 @@ export function symbol(part, position) {
   switch (part.type) {
     case "resistor": return resistor();
     case "capacitor": return capacitor(draw);
-    case "jack": return jack(position === undefined ? draw : { ...draw, plugged: position === 0 });
+    case "jack": return jack(position === undefined ? draw : { ...draw, plug: draw.plugs?.[position] ?? draw.plug });
     case "inductor": return inductor();
     case "pot": return pot(false);
     case "trimmer": return pot(true);
@@ -847,7 +848,8 @@ export function pinOffsets(part) {
 function fileDraw(part) {
   if (part.type === "switch") return poleDraw(part);
   if (part.type === "dcjack") return { plugged: part.plugged ?? true };
-  if (part.type === "guitar" || part.type === "jack") return { stereo: !!part.stereo, plugged: part.plugged ?? true };
+  if (part.type === "guitar") return { stereo: !!part.stereo, plugged: part.plugged ?? true };
+  if (part.type === "jack") return { stereo: !!part.stereo, plug: part.plug ?? "mono" };
   if (part.type === "opamp") return { half: part.half ?? null, show_pins: !!part.show_pins };
   if (part.type === "ota") return { half: part.half ?? null };
   return {};

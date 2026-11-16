@@ -1,0 +1,13 @@
+{
+ "schema": 30,
+ "id": "v30",
+ "name": "v30",
+ "parts": [
+  {"ref": "J1", "pos": [0, 0], "type": "jack", "stereo": true, "plugged": false},
+  {"ref": "J2", "pos": [200, 0], "type": "jack", "plugged": true},
+  {"ref": "J3", "pos": [400, 0], "type": "jack"},
+  {"ref": "DC", "pos": [600, 0], "type": "dcjack", "plugged": false}
+ ],
+ "wires": [],
+ "labels": []
+}

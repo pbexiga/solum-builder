@@ -450,10 +450,11 @@ def _dcjack(e: _Emitter, p: DcJack) -> None:
 
 
 def _jack(e: _Emitter, p: Jack) -> None:
-    """A stereo jack's ring (D-185): a cable's sleeve joins it to S with a cable in, open
-    with none. The rest of a jack is drawing only (D-174)."""
+    """A stereo jack's ring (D-185): a mono plug's long sleeve joins it to S; with a stereo
+    plug (its ring its own, D-355) or none it's open. The rest of a jack is drawing only
+    (D-174)."""
     if p.stereo and e.connected(p, "R") and e.connected(p, "S"):
-        joined = SWITCH_ON if p.plugged else SWITCH_OFF
+        joined = SWITCH_ON if p.plug == "mono" else SWITCH_OFF
         e.add(element_name("R", p.ref, "ring"), e.pin(p, "R"), e.pin(p, "S"), spice_number(joined))
 
 

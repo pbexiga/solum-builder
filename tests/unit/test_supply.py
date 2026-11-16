@@ -215,7 +215,7 @@ def ring_pedal(circuit: Builder, cable: bool = True) -> CircuitBuilder:
         circuit()
         .rail("V+", 9.0)
         .part("BAT1", "battery", "V+", "bneg")
-        .part("J1", "jack", stereo=True, label="Input", plugged=cable,
+        .part("J1", "jack", stereo=True, label="Input", plug="mono" if cable else "none",
               pins={"T": "tip", "R": "bneg", "S": "0"})
         .part("R1", "resistor", "V+", "0", value="10k")
     )  # fmt: skip
@@ -247,10 +247,15 @@ def test_the_cable_is_a_knob_with_a_battery(circuit: Builder) -> None:
     knob = next(k for k in controls(c) if k["ref"] == "J1")
     assert knob == {
         "ref": "J1", "kind": "switch", "label": "Input cable", "refs": ["J1"],
-        "position": 1, "positions": ["Cable in", "Cable out"], "plug": True,
+        "position": 2, "positions": ["Mono cable", "Stereo cable", "Cable out"],
+        "field": "plug", "values": ["mono", "stereo", "none"],
     }  # fmt: skip
     parts = {p["ref"]: p for p in circuit_view(c)["parts"]}
-    assert parts["J1"]["draw"] == {"stereo": True, "plugged": False}
+    assert parts["J1"]["draw"] == {
+        "stereo": True,
+        "plug": "none",
+        "plugs": ["mono", "stereo", "none"],
+    }
     no_battery = circuit().part("J1", "jack", stereo=True).build()
     assert controls(no_battery) == []
 
@@ -267,8 +272,9 @@ def test_a_cut_off_battery_holds_nothing(models: ModelLibrary, circuit: Builder)
 
 
 def test_any_jack_whose_cable_switches_something_has_a_cable_knob(circuit: Builder) -> None:
-    """D-354: a mono jack on the guitar's or the amp's net too; a stereo one beside a
-    battery that its ring doesn't take, not (its cable switches nothing)."""
+    """D-354, D-355: a mono jack on the guitar's or the amp's net, in or out; a stereo jack
+    whose ring and sleeve are both wired, whatever the ring does (mono, stereo or no
+    cable); one with its ring unwired, none (its cable switches nothing)."""
     c = (
         circuit()
         .part("IN", "guitar", "in")
@@ -276,8 +282,15 @@ def test_any_jack_whose_cable_switches_something_has_a_cable_knob(circuit: Build
         .part("OUT", "amp", "out")
         .part("J1", "jack", label="Input", pins={"T": "in", "S": "0"})
         .part("J2", "jack", label="Output", pins={"T": "out", "S": "0"})
-        .part("J3", "jack", stereo=True, pins={"T": "x", "R": "y", "S": "0"})
+        .part("J3", "jack", stereo=True, label="Mute", pins={"T": "x", "R": "y", "S": "0"})
+        .part("R2", "resistor", "V+", "y", value="10k")
+        .part("J4", "jack", stereo=True, pins={"T": "z", "R": "w", "S": "0"})
         .part("BAT1", "battery", "V+", "0")
         .build()
     )
-    assert [k["label"] for k in controls(c) if k.get("plug")] == ["Input cable", "Output cable"]
+    knobs = {k["label"]: k["positions"] for k in controls(c) if k.get("field") == "plug"}
+    assert knobs == {
+        "Input cable": ["Cable in", "Cable out"],
+        "Output cable": ["Cable in", "Cable out"],
+        "Mute cable": ["Mono cable", "Stereo cable", "Cable out"],
+    }

@@ -171,7 +171,8 @@ def test_a_battery_makes_the_dc_jack_a_power_switch(circuit: Builder) -> None:
             "refs": ["DC"],
             "position": 0,
             "positions": ["DC jack", "Battery"],
-            "plug": True,
+            "field": "plugged",
+            "values": [True, False],
         },
     ]
 

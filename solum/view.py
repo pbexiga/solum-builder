@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from solum.circuit.cables import switching_jacks
+from solum.circuit.cables import plug_names, plugs, switching_jacks
 from solum.circuit.chips import supply_nets, unused_halves
 from solum.circuit.connectivity import GROUND, ConnectivityError, Nets, connect, on_segment
 from solum.circuit.io import circuit_to_dict
@@ -175,13 +175,13 @@ def controls(circuit: Circuit) -> list[dict[str, Any]]:
             found.append(  # the jack's plug picks the supply (D-143): a switch, in effect
                 {"ref": p.ref, "kind": "switch", "label": "Power", "refs": [p.ref],
                  "position": 0 if p.plugged else 1, "positions": ["DC jack", "Battery"],
-                 "plug": True}
+                 "field": "plugged", "values": [True, False]}
             )  # fmt: skip
         elif isinstance(p, Jack) and p.ref in jacks:
-            found.append(  # its cable switches the guitar, the amp or the battery (D-354)
+            found.append(  # what's in it switches the guitar, amp, ring, battery (D-354, D-355)
                 {"ref": p.ref, "kind": "switch", "label": f"{p.label or p.ref} cable",
-                 "refs": [p.ref], "position": 0 if p.plugged else 1,
-                 "positions": ["Cable in", "Cable out"], "plug": True}
+                 "refs": [p.ref], "position": plugs(p).index(p.plug),
+                 "positions": plug_names(p), "field": "plug", "values": list(plugs(p))}
             )  # fmt: skip
     return found
 
@@ -307,8 +307,8 @@ def _draw_fields(part: Part) -> dict[str, Any]:
         return switch_draw(part)
     if isinstance(part, DcJack):
         return {"plugged": part.plugged}
-    if isinstance(part, Jack) and part.stereo:
-        return {"stereo": True, "plugged": part.plugged}
+    if isinstance(part, Jack) and part.stereo:  # the plug drawn, per Knobs position too
+        return {"stereo": True, "plug": part.plug, "plugs": list(plugs(part))}
     if isinstance(part, Guitar | Jack):
         return {"stereo": part.stereo}
     if isinstance(part, Opamp):

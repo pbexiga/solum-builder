@@ -94,10 +94,25 @@ def cables_out(circuit: Circuit) -> list[CableOut]:
     return _with(circuit, lambda plug: plug == "none")
 
 
+def battery_cutter(circuit: Circuit) -> Jack | None:
+    """The jack cutting the battery off: its ring takes the battery's − and there's no
+    mono plug in it (no cable, or a stereo one). None when the battery isn't cut off."""
+    cut = [c for c in _with(circuit, lambda plug: plug != "mono") if "battery" in c.roles]
+    if not cut:
+        return None
+    jack = circuit.part(cut[0].ref)
+    assert isinstance(jack, Jack)
+    return jack
+
+
 def battery_cut_off(circuit: Circuit) -> bool:
-    """The battery's − goes to a jack's ring with no mono plug in it (no cable, or a stereo
-    one), so it's cut off."""
-    return any("battery" in c.roles for c in _with(circuit, lambda plug: plug != "mono"))
+    """The battery's − goes to a jack's ring with no mono plug in it, so it's cut off."""
+    return battery_cutter(circuit) is not None
+
+
+def plug_said(jack: Jack) -> str:
+    """What's in a jack that leaves its ring open, as a message says it."""
+    return "has no cable in" if jack.plug == "none" else "has a stereo cable in"
 
 
 def _why(c: CableOut) -> str:
@@ -114,15 +129,7 @@ def _why(c: CableOut) -> str:
 
 def silence(circuit: Circuit) -> str | None:
     """Why no signal can go through, with the input's or the output's cable out (one
-    sentence per jack, saying too what else it cuts), or None. Curves, the scope and a
-    render say this instead of showing a result. A cut-off battery alone isn't silence:
-    the guitar still reaches the circuit, unpowered, and a true bypass still passes it,
-    so that's simulated (`battery_cut_off`)."""
+    sentence per jack, saying too what else it cuts), or None. A render is refused with
+    it; the curves and the scope still show a powered circuit (D-358)."""
     out = [c for c in cables_out(circuit) if c.roles & {"input", "output"}]
     return " ".join(_why(c) for c in out) if out else None
-
-
-def plays(circuit: Circuit) -> bool:
-    """Whether a signal goes through: a guitar input and no cable out (`silence`). The
-    curves, the scope, live curves and a render need it."""
-    return any(isinstance(p, Guitar) for p in circuit.parts) and silence(circuit) is None

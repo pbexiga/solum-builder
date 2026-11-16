@@ -14,9 +14,16 @@ anywhere else it stays connected beside the adapter.
 from contextlib import suppress
 from typing import Literal
 
-from solum.circuit.cables import battery_cut_off, plugs, switching_jacks
+from solum.circuit.cables import (
+    battery_cut_off,
+    battery_cutter,
+    plug_said,
+    plugs,
+    silence,
+    switching_jacks,
+)
 from solum.circuit.connectivity import ConnectivityError, Nets, connect
-from solum.circuit.schema import SUPPLY_SIGNS, Battery, Circuit, DcJack, Jack, VSource
+from solum.circuit.schema import SUPPLY_SIGNS, Battery, Circuit, DcJack, Guitar, Jack, VSource
 from solum.units import parse_value
 
 
@@ -85,6 +92,34 @@ def powered_off(circuit: Circuit) -> bool:
     return not any(
         ref not in power for rail in live_rails(circuit) for ref, _ in nets.members.get(rail, ())
     )
+
+
+def no_power(circuit: Circuit) -> str | None:
+    """Why the pedal has no power (`powered_off`), naming the jack that cut the battery
+    off, or None (D-358). The curves and the scope say it instead of a result."""
+    jack = battery_cutter(circuit)
+    if jack is None or not powered_off(circuit):
+        return None
+    return f"The pedal has no power: {jack.ref} {plug_said(jack)}, so its battery is cut off."
+
+
+def drawable(circuit: Circuit) -> bool:
+    """Whether the curves, the scope and live curves can be drawn: a guitar input and some
+    power (D-358). A cable out of a powered pedal doesn't stop them: they come from a test
+    signal, and the circuit is there to measure."""
+    return any(isinstance(p, Guitar) for p in circuit.parts) and no_power(circuit) is None
+
+
+def render_refusal(circuit: Circuit) -> str | None:
+    """Why a render can't be made, with what to do, or None (D-354, D-358): the input's or
+    the output's cable out (nothing would reach the amp), or no power."""
+    if out := silence(circuit):
+        return f"{out} Put its cable in (Knobs) to render."
+    if off := no_power(circuit):
+        jack = battery_cutter(circuit)
+        assert jack is not None
+        return f"{off} Put a mono cable in {jack.ref} (Knobs) to render."
+    return None
 
 
 BatteryWiring = Literal["alone", "lug", "beside", "apart"]

@@ -3,14 +3,15 @@ layer: topology
 severity: warning
 check: battery_cable_out
 title: "Battery cut off: no mono cable in"
-message: "{battery}'s − goes to {ref}'s ring, and {ref} {cable}, so the battery is cut off and the circuit has no supply."
+message: "{battery}'s − goes to {ref}'s ring, and {ref} {cable}, so the battery is cut off and {left}."
 why: >
   Pedals switch the battery on through a stereo input jack: the battery's − goes to the
   ring, and a mono guitar plug's sleeve joins the ring to ground. With no cable in, the
   ring touches nothing, so nothing powers the circuit. That's what saves the battery while
   the pedal sits unplugged; it also means the pedal is silent until a cable goes in. A
   stereo (TRS) cable doesn't switch it on either: its ring is a conductor of its own, not
-  joined to the sleeve, so a pedal wired this way stays off with one.
+  joined to the sleeve, so a pedal wired this way stays off with one. A battery feeding
+  only part of the circuit (its + on a net of its own) leaves just that part unpowered.
 fix: "Put a mono cable in: {ref}'s Cable switch in Knobs. Or wire {battery}'s − to ground, so the battery is always on."
 fixtures:
   bad:
@@ -23,6 +24,13 @@ fixtures:
         - {ref: BAT1, type: battery, pins: {"+": V+, "-": r}}
         - {ref: R1, type: resistor, nets: [V+, GND], value: 10k}
         - {ref: J1, type: jack, stereo: true, plug: stereo, label: Input, pins: {T: in, R: r, S: GND}}
+      expect: [J1]
+    - rails: {V+: 9}   # the battery feeds only part of it: that part goes off (D-358)
+      parts:
+        - {ref: BAT1, type: battery, pins: {"+": VB, "-": r}}
+        - {ref: R1, type: resistor, nets: [VB, GND], value: 10k}
+        - {ref: R2, type: resistor, nets: [V+, GND], value: 10k}
+        - {ref: J1, type: jack, stereo: true, plug: none, label: Input, pins: {T: in, R: r, S: GND}}
       expect: [J1]
   good:
     - parts:   # a cable in

@@ -270,7 +270,7 @@ export function inspectorFields(part, ctx) {
       fields.push(
         { ...select("stereo", "Jack", part.stereo ? "stereo" : "mono", [["mono", "mono (TS: tip, sleeve)"], ["stereo", "stereo (TRS: tip, ring, sleeve)"]]),
           hint: "Plug its T into IN's middle or OUT's end: Knobs then has its cable switch.",
-          about: ["A jack whose T plugs into IN is the input jack: with its cable out no guitar reaches the pedal. One plugged into OUT is the output jack: with its cable out nothing reaches the amp. Either way the curves say why, and a render is refused.",
+          about: ["A jack whose T plugs into IN is the input jack: with its cable out no guitar reaches the pedal. One plugged into OUT is the output jack: with its cable out nothing reaches the amp. Either way a render is refused; the curves stay while the pedal has power.",
             "A stereo jack's ring is a switch, joined to the sleeve only by a mono plug: wire the battery's − to R and S to ground, and the battery is on only with a mono cable in (a stereo cable's ring is its own)."] },
         text("label", "Label", part.label, { hint: "What it's for, shown by its ref: Input, Output. It names the cable switch in Knobs." }),
       );

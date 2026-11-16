@@ -532,19 +532,25 @@ def test_a_window_resize_never_shrinks_the_drawing(page: Page, base_url: str) ->
     assert page.evaluate(scale) == pytest.approx(before, rel=1e-3)
 
 
-def test_with_the_input_cable_out_the_curves_say_why(page: Page, base_url: str) -> None:
-    """D-354: a mono jack on IN's net gets a cable switch in Knobs; with it out there's no
-    curve or waveform, only the reason; back in, the curve returns."""
+def test_a_cable_out_keeps_the_curves_and_no_power_says_why(page: Page, base_url: str) -> None:
+    """D-358: a mono jack on IN's net gets a cable switch in Knobs; with its cable out a
+    powered circuit keeps its curve (only a render is refused). With the battery on a
+    stereo jack's ring and that cable out, the pedal has no power: no curve or waveform,
+    only the reason; back in, the curve returns."""
     from solum.circuit.build import CircuitBuilder
     from solum.circuit.io import circuit_to_dict
 
     circuit = circuit_to_dict(
         CircuitBuilder("cable out")
+        .rail("V+", 9)
+        .part("BAT1", "battery", pins={"+": "V+", "-": "ring"})
+        .part("R2", "resistor", "V+", "GND", value="10k")
         .part("IN", "guitar", "in")
         .part("R1", "resistor", "in", "out", value="10k")
         .part("C1", "capacitor", "out", "GND", value="10n")
         .part("OUT", "amp", "out")
         .part("J1", "jack", label="Input", pins={"T": "in", "S": "GND"})
+        .part("J2", "jack", stereo=True, label="Power", pins={"T": "GND", "R": "ring", "S": "GND"})
         .build()
     )
     page.goto(base_url)
@@ -552,15 +558,24 @@ def test_with_the_input_cable_out_the_curves_say_why(page: Page, base_url: str) 
         f"{base_url}api/circuits", data={"circuit": circuit, "name": "cable out"}
     )
     open_circuit(page, base_url, "circuit/" + saved.json()["circuit"]["id"])
+    curve = page.locator("#frequency-plot canvas")
+    expect(curve.first).to_be_visible()
     knob = page.locator('#knobs-body [data-knob="J1"]')
     expect(knob).to_contain_text("Input cable")
     before = updates(page)
-    knob.locator('[data-position="1"]').click()
+    knob.locator('[data-position="1"]').click()  # the input's cable out: still powered
     wait_for_update(page, before)
-    said = "J1 has no cable in: no guitar reaches the pedal."
+    expect(curve.first).to_be_visible()
+    power = page.locator('#knobs-body [data-knob="J2"]')
+    before = updates(page)
+    power.locator('[data-position="2"]').click()  # the battery's jack: cable out
+    wait_for_update(page, before)
+    said = "The pedal has no power: J2 has no cable in, so its battery is cut off."
     expect(page.locator("#frequency-plot")).to_contain_text(f"No frequency response. {said}")
     expect(page.locator("#scope-plot")).to_contain_text(f"No waveform. {said}")
+    expect(page.locator("#power-chip")).to_have_text("Battery · cut off")
     before = updates(page)
-    knob.locator('[data-position="0"]').click()
+    power.locator('[data-position="0"]').click()
     wait_for_update(page, before)
-    expect(page.locator("#frequency-plot")).not_to_contain_text("no cable in")
+    expect(page.locator("#frequency-plot")).not_to_contain_text("no power")
+    expect(page.locator("#power-chip")).to_have_text("Battery · 9 V")

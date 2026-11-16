@@ -1,9 +1,10 @@
 import pytest
 
 from solum.circuit.build import CircuitBuilder
-from solum.circuit.cables import battery_cut_off, cables_out, jack_roles, plays, silence
+from solum.circuit.cables import battery_cut_off, cables_out, jack_roles, silence
 from solum.circuit.connectivity import connect
 from solum.circuit.schema import Circuit
+from solum.circuit.supply import drawable, no_power, render_refusal
 
 
 def _pedal(j1: dict[str, object] | None = None, j2: dict[str, object] | None = None) -> Circuit:
@@ -78,7 +79,7 @@ def test_a_ring_only_jack_cuts_the_battery_off_without_silencing() -> None:
         .build()
     )
     assert battery_cut_off(c)
-    assert silence(c) is None  # unpowered, but a signal could still get through
+    assert silence(c) is None  # no cable of the input or output is out
 
 
 def test_a_battery_straight_to_ground_isnt_switched() -> None:
@@ -95,10 +96,50 @@ def test_a_battery_straight_to_ground_isnt_switched() -> None:
 
 def test_a_stereo_cable_in_the_input_cuts_the_battery_but_not_the_guitar() -> None:
     """D-355: its ring is its own, so the battery on the jack's ring stays off; the guitar
-    still comes in, so it's simulated unpowered, not refused."""
+    still comes in, but with no power there's nothing to draw or render (D-358)."""
     c = _pedal({"plug": "stereo"}, {})
-    assert battery_cut_off(c) and silence(c) is None and plays(c)
-    assert cables_out(c) == []
+    assert battery_cut_off(c) and silence(c) is None and cables_out(c) == []
+    said = "The pedal has no power: J1 has a stereo cable in, so its battery is cut off."
+    assert no_power(c) == said and not drawable(c)
+    assert render_refusal(c) == f"{said} Put a mono cable in J1 (Knobs) to render."
+
+
+@pytest.mark.parametrize(
+    ("j1", "j2", "draws", "refused"),
+    [
+        ({}, {}, True, None),
+        ({"plug": "none"}, {}, False,
+         "J1 has no cable in: no guitar reaches the pedal and its battery is cut off. "
+         "Put its cable in (Knobs) to render."),
+        ({}, {"plug": "none"}, True,  # powered: the curves stay, the render can't be made
+         "J2 has no cable in: nothing reaches the amp. Put its cable in (Knobs) to render."),
+    ],
+)  # fmt: skip
+def test_only_no_power_stops_the_curves_a_cable_out_stops_the_render(
+    j1: dict[str, object], j2: dict[str, object], draws: bool, refused: str | None
+) -> None:
+    """D-358: the curves and the scope need power, a render needs the guitar and the amp
+    plugged in as well."""
+    c = _pedal(j1, j2)
+    assert drawable(c) is draws and render_refusal(c) == refused
+
+
+def test_a_cable_out_of_a_pedal_on_another_supply_keeps_its_curves() -> None:
+    """D-358: the battery on ground (always on): the input cable out leaves it powered."""
+    c = (
+        CircuitBuilder("grounded")
+        .rail("V+", 9)
+        .part("BAT1", "battery", pins={"+": "V+", "-": "GND"})
+        .part("IN", "guitar", "in")
+        .part("R1", "resistor", "in", "out", value="10k")
+        .part("OUT", "amp", "out")
+        .part("J1", "jack", pins={"T": "in", "S": "GND"}, plug="none")
+        .build()
+    )
+    assert drawable(c) and no_power(c) is None
+    assert render_refusal(c) == (
+        "J1 has no cable in: no guitar reaches the pedal. Put its cable in (Knobs) to render."
+    )
 
 
 def test_a_ring_used_for_anything_is_a_switch() -> None:

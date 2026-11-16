@@ -67,19 +67,28 @@ Like any knob, it isn't an edit: the circuit opens with the cables in, unless yo
 
 ### What happens with a cable out
 
-| What's pulled | Power | Frequency and Scope | Audio |
-|---|---|---|---|
-| the input jack's cable (or a stereo cable in it), its ring the battery's − | the battery is cut off: DC voltages read about 0 V | none: each says which jack and what it cuts | refused, saying why |
-| the input jack's cable, the battery's − on ground | unchanged | none, as above | refused |
-| the output jack's cable | unchanged | none, as above | refused |
-| a stereo cable in the input jack, the battery on its ring | the battery is cut off | the guitar still comes in: the circuit is simulated unpowered | renders: you hear the unpowered pedal (a true bypass still passes the guitar) |
-| a cable from a jack whose ring switches the battery but isn't the input | the battery is cut off | simulated unpowered | renders, unpowered |
-| a cable from a jack wired to nothing that matters | unchanged | unchanged | unchanged |
-| any cable, with a DC plug in (Power: **DC jack**) | the supply powers the pedal | as above for the input and output jacks | as above |
+Two rules decide it:
 
-A refused render says what to do: *J1 has no cable in: no guitar reaches the pedal and its battery is cut off. Put its cable in (Knobs) to render.*
+- **No power, nothing to show.** When the battery is cut off and nothing else powers the circuit, Frequency and Scope show no curve and say why (*No frequency response. The pedal has no power: J1 has no cable in, so its battery is cut off.*), and Render is refused. The chip beside the Power menu reads *Battery · cut off*.
+- **A cable out of the input or output jack stops only the render.** Nothing would reach the amp, so there's no take, but a powered pedal keeps its curves and scope: they come from a test signal, not your clip, so they still show what the circuit does.
 
-While the battery is cut off and nothing else powers the circuit (nothing on V+ or V− from the Power menu, no DC source), wherever its + goes, Problems warns **Battery cut off: no mono cable in** (or *a stereo cable in*) and checks only the drawing: no bias warnings about a circuit that's simply off.
+| | Power | Input jack | Output jack | Frequency, Scope | Render |
+|---|---|---|---|---|---|
+| 1 | battery on the input jack's ring | mono cable | cable in | ✔ | ✔ |
+| 2 | battery on the input jack's ring | cable out | – | no power | refused |
+| 3 | battery on the input jack's ring | stereo cable | cable in | no power | refused |
+| 4 | battery on the input jack's ring | mono cable | cable out | ✔ | refused: nothing reaches the amp |
+| 5 | a DC plug in (battery anywhere) | cable out | – | ✔ | refused: no guitar |
+| 6 | a DC plug in | stereo cable | cable in | ✔ | ✔ |
+| 7 | the battery on ground (always on), or the Power menu only | cable out | – | ✔ | refused: no guitar |
+| 8 | battery on the output jack's ring | mono cable | stereo cable | no power | refused |
+| 9 | no jacks drawn, or a jack wired to nothing that matters | – | – | ✔ | ✔ |
+
+A refused render says what to do: *J1 has no cable in: no guitar reaches the pedal and its battery is cut off. Put its cable in (Knobs) to render.*, or with no power, *… Put a mono cable in J1 (Knobs) to render.*
+
+**What counts as no power** is read from the drawing, not guessed from the voltages: the battery is cut off (a jack's ring takes its −, with a stereo cable or none in the jack), no part is on a supply the Power menu still holds (V+ or V−; a DC plug in holds V+), and no DC source drives a net. A pedal with only part of it on the battery (the rest on V+, say) is still powered: its curves are drawn and it renders, the dead stages doing what dead stages do.
+
+Problems warns **Battery cut off: no mono cable in** (or *a stereo cable in*) whenever a cable cuts the battery off, saying whether the whole circuit or only what the battery feeds has no supply. With no power at all it checks only the drawing: no bias warnings about a circuit that's simply off.
 
 The *9 V power* blocks come both ways: *battery only* and *DC jack and battery* keep the battery on all the time (simplest, for hearing a circuit), and *… switched by the input jack* put its − on J1's ring. Insert one, then wire J1's T (its **in** label) to IN's middle, so that J1 is the input jack: pulling its cable then takes out the guitar and the battery together.
 

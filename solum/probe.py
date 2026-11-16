@@ -26,7 +26,6 @@ from solum.analysis.dc import (
 from solum.analysis.measures import corner_3db, features, gain_at, peak, readings, to_db
 from solum.analysis.signal import NodeStats, last_cycles
 from solum.circuit.build import CircuitBuilder, guitar_into
-from solum.circuit.cables import plays, silence
 from solum.circuit.chips import supply_nets, unused
 from solum.circuit.connectivity import Nets, connect, loose_net, loose_parts
 from solum.circuit.pot import pot_resistances
@@ -51,7 +50,7 @@ from solum.circuit.schema import (
     Switch,
     Trimmer,
 )
-from solum.circuit.supply import supply_volts
+from solum.circuit.supply import drawable, no_power, supply_volts
 from solum.netlist import Dc, input_part
 from solum.simulate import (
     IMPEDANCE_HZ,
@@ -198,7 +197,7 @@ def _time_ms(tran: TranResult, n: int) -> list[float]:
 
 def run_view(sim: Simulator, circuit: Circuit, nodes: Sequence[str], level: str) -> dict[str, Any]:
     """DC everywhere; AC and scope at `nodes` and the output. AC and scope are None when
-    the circuit has no guitar input, or with a cable out (`silent` says why, D-354)."""
+    the circuit has no guitar input, or no power (`no_power` says why, D-358)."""
     nets = connect(circuit)
     probes = probe_nets(circuit, nets)
     wanted = [nets.resolve(n) for n in nodes] + ([probes.output] if probes.output else [])
@@ -208,9 +207,9 @@ def run_view(sim: Simulator, circuit: Circuit, nodes: Sequence[str], level: str)
         "nodes": wanted,
         "ac": None,
         "tran": None,
-        "silent": silence(circuit),
+        "no_power": no_power(circuit),
     }
-    if plays(circuit):
+    if drawable(circuit):
         loose = loose_parts(circuit, nets)  # nothing to show on their nets (D-165)
         wired = [net for net in wanted if not loose_net(nets, loose, net)]
         result["ac"] = ac_data(sim.ac(circuit), wanted)
@@ -344,7 +343,7 @@ class _Ctx:
 
     @property
     def driven(self) -> bool:
-        return plays(self.circuit)
+        return drawable(self.circuit)
 
     def tran(self, nets: Sequence[str]) -> TranResult | None:
         return (
@@ -507,9 +506,9 @@ def sweep_view(
         # the part's own readings at each value, for the Probe pane's columns (D-318);
         # none for a supply rail, which is no part
         "parts": [] if field == "rail" else [part_view(sim, c, ref, level) for c in circuits],
-        "silent": silence(circuit),
+        "no_power": no_power(circuit),
     }
-    if plays(circuit):
+    if drawable(circuit):
         result["ac"] = ac_sweep(sim, circuits, wanted)
         trans = [sim.tran(c, wanted, level) for c in circuits]
         windows = {net: [scope_window(t, net) for t in trans] for net in wanted}

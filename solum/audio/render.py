@@ -35,8 +35,8 @@ from solum.audio.resample import resample
 from solum.audio.wav import Audio, WavError, read_wav, write_wav
 from solum.cache import SimCache, content_hash
 from solum.circuit.build import guitar_into
-from solum.circuit.cables import silence
 from solum.circuit.schema import AmpInput, ChargePump, Circuit, Guitar
+from solum.circuit.supply import render_refusal
 from solum.netlist import Ac, NetlistError, input_part
 from solum.sim.engine import SimTimeout
 from solum.simulate import LEVELS, Simulator
@@ -66,11 +66,12 @@ class RenderError(ValueError):
 
 
 def refuse_unplugged(circuit: Circuit | None) -> None:
-    """RenderError with a cable out: nothing would come through, so there's no take, only
-    the reason (D-354). The API asks before queueing a job, so a sweep fails at once."""
-    silent = silence(circuit) if circuit is not None else None
-    if silent:
-        raise RenderError(f"{silent} Put its cable in (Knobs) to render.")
+    """RenderError with the input's or the output's cable out, or no power: there's no
+    take, only the reason (`render_refusal`, D-354, D-358). The API asks before queueing a
+    job, so a sweep fails at once."""
+    refused = render_refusal(circuit) if circuit is not None else None
+    if refused:
+        raise RenderError(refused)
 
 
 @dataclass(frozen=True)

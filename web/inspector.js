@@ -116,7 +116,7 @@ export function inspector(host, app) {
       onSubmit: async (values) => {
         let change;
         try {
-          change = editFrom(part, values, { pickups: lib.pickups, batteries: lib.batteries, inductors: lib.inductors, circuit: app.circuit(), zeners: lib.models.zeners });
+          change = editFrom(part, values, { pickups: lib.pickups, batteries: lib.batteries, inductors: lib.inductors, circuit: app.circuit(), zeners: lib.models.zeners, capRating: app.view()?.cap_rating });
         } catch (err) {
           return /** @type {Error} */ (err).message;
         }

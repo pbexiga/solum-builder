@@ -579,3 +579,29 @@ def test_a_cable_out_keeps_the_curves_and_no_power_says_why(page: Page, base_url
     wait_for_update(page, before)
     expect(page.locator("#frequency-plot")).not_to_contain_text("no power")
     expect(page.locator("#power-chip")).to_have_text("Battery · 9 V")
+
+
+def test_no_power_says_so_in_the_banner_and_shows_no_voltages(page: Page, base_url: str) -> None:
+    """D-359: the user's clean boost (a TL061 on a battery switched by J1) with the cable
+    out: the banner says why and, clicked, selects J1; the DC pane and Probe show the
+    reason, not the op-amp model's made-up volts. The cable back in clears it."""
+    open_fixture(page, base_url, "boost-battery-jack")
+    expect(page.locator("#dc-body")).to_contain_text("V+")
+    cable = page.locator('#knobs-body [data-knob="J1"]')
+    before = updates(page)
+    cable.locator('[data-position="2"]').click()  # Cable out
+    wait_for_update(page, before)
+    said = "The pedal has no power: J1 has no cable in, so its battery is cut off."
+    banner = page.locator("#error")
+    expect(banner).to_have_text(said)
+    expect(page.locator("#dc-body")).to_have_text(f"No voltages. {said}")
+    before = updates(page)
+    banner.click()
+    wait_for_update(page, before)
+    expect(page.locator('[data-testid="probe-name"]')).to_have_text("J1")
+    expect(page.locator("#probe-body")).to_contain_text(f"No readings. {said}")
+    before = updates(page)
+    cable.locator('[data-position="0"]').click()  # a mono cable in
+    wait_for_update(page, before)
+    expect(banner).to_be_hidden()
+    expect(page.locator("#dc-body")).to_contain_text("V+")

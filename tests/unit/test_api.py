@@ -564,6 +564,28 @@ def test_problems_lists_every_problem(monkeypatch: pytest.MonkeyPatch) -> None:
     assert first["nets"] == ["a"]
 
 
+def test_problems_say_which_ratings_to_fill(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-360: an electrolytic with no rating on 9 V gets 16 V, and the rows that offer it."""
+
+    def missing(_s: object) -> None:
+        raise EngineUnavailable("ngspice isn't installed.")
+
+    from solum.circuit.build import CircuitBuilder
+
+    circuit = (
+        CircuitBuilder("caps")
+        .rail("V+", 9.0)
+        .part("R1", "resistor", "V+", "0", value="10k")
+        .part("C1", "capacitor", "V+", "0", value="100u", kind="electrolytic")
+        .data()
+    )
+    body = client(monkeypatch, missing).post("/api/problems", json={"circuit": circuit}).json()
+    assert body["ratings"] == {
+        "set": {"C1": 16.0},
+        "rules": ["cap-no-rating", "cap-over-voltage", "cap-rating-close"],
+    }
+
+
 def test_a_model_that_isnt_there_opens_draws_and_says_which_to_add(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:

@@ -23,7 +23,7 @@ import { powerMenu } from "./power.js";
 import { inspector } from "./inspector.js";
 import { liveSliders, sliderFields } from "./live-sliders.js";
 import {
-  addLabel, addPart, addText, clearSupplyRot, paletteEntry, groupRefs, withChips, addWires, applyDiff, deleteItems, drawnWire, findRef, moveWireEnd, wireDiff, moveItems, isUnwired, renameLabel, setText, addSupply, itemsAfterMove, itemsAt, rotateLabel, rotatePart, sameConnections, wireRun, updatePart,
+  addLabel, addPart, addText, clearSupplyRot, paletteEntry, groupRefs, withChips, addWires, applyDiff, deleteItems, drawnWire, findRef, moveWireEnd, wireDiff, moveItems, isUnwired, renameLabel, setText, addSupply, itemsAfterMove, itemsAt, rotateLabel, rotatePart, sameConnections, wireRun, updatePart, withRatings,
 } from "./editor/edit.js";
 import { ask, closeForm, confirmed, formIsOpen, openForm } from "./editor/form.js";
 import { remember, remembered } from "./storage.js";
@@ -1420,7 +1420,7 @@ function showProblems() {
     $("problem-count").textContent = "";
     return;
   }
-  const count = renderProblems(body, result, (p) => pickOf(p)?.(), state.openProblems, { dismissed: state.circuit?.dismissed, onDismiss: dismissDialog, onRestore: (p) => problemEdit(restoreProblem(state.circuit, p), "Bring back problem") });
+  const count = renderProblems(body, result, (p) => pickOf(p)?.(), state.openProblems, { dismissed: state.circuit?.dismissed, onDismiss: dismissDialog, onRestore: (p) => problemEdit(restoreProblem(state.circuit, p), "Bring back problem"), onRatings: (set) => void tryEdit(withRatings(state.circuit, set), "Use suggested ratings").then((m) => m && showError(m)) });
   $("problem-count").textContent = count ? `\u00b7 ${count}` : "";
   schematic.showMarks(state.marks && result ? result.problems : []);
 }

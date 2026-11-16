@@ -13,6 +13,7 @@ from solum.circuit.connectivity import GROUND, ConnectivityError, Nets, connect,
 from solum.circuit.io import circuit_to_dict
 from solum.circuit.parts import COMP_PINS, pin_positions
 from solum.circuit.pump import pump_wiring
+from solum.circuit.ratings import cap_rating_view
 from solum.circuit.schema import (
     CHIP_UNITS,
     POLARISED,
@@ -398,6 +399,7 @@ def _unconnected_view(
         "probes": {"in": None, "out": None},
         "controls": controls(circuit),
         "power": power_chip(circuit),
+        "cap_rating": cap_rating_view(circuit),  # filled on choosing the type (D-360)
         "battery_wiring": None,
         "problem": str(err),
         "clash": [list(p) for p in err.at],
@@ -471,6 +473,7 @@ def circuit_view(
         "probes": {"in": probes.input, "out": probes.output},
         "controls": controls(circuit),
         "power": power_chip(circuit),
+        "cap_rating": cap_rating_view(circuit),  # filled on choosing the type (D-360)
         "battery_wiring": battery_wiring(circuit, nets),
         "problem": None,
     }

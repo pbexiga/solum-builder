@@ -768,10 +768,10 @@ export function draftFrom(part, values, ctx = {}) {
  * Turn the inspector's form values back into an edit of the part. Throws an Error with a
  * plain message for input that can't be a number; everything else the server checks.
  * @param {any} part @param {Record<string, string>} values from the form, by field name
- * @param {{pickups?: PickupChoice[], batteries?: BatteryState[], inductors?: InductorPreset[], circuit?: any, zeners?: string[]}} [ctx] the measured pickups,
+ * @param {{pickups?: PickupChoice[], batteries?: BatteryState[], inductors?: InductorPreset[], circuit?: any, zeners?: string[], capRating?: {volts: number, kinds: string[]} | null}} [ctx] the measured pickups,
  *   to keep a guitar's `kind`, the battery's states, to keep its `state`, the measured
- *   inductors, to keep an inductor's `kind`, and the circuit and zener models' ids, for a
- *   diode's ref to follow its model (D-229)
+ *   inductors, to keep an inductor's `kind`, the circuit and zener models' ids, for a
+ *   diode's ref to follow its model (D-229), and the view's `cap_rating` (D-360)
  * @returns {Edit}
  */
 export function editFrom(part, values, ctx = {}) {
@@ -784,6 +784,9 @@ export function editFrom(part, values, ctx = {}) {
   for (const [k, what] of [["rating_w", "Rating"], ["rating_v", "Rating"]]) {
     if (k in values) patch[k] = optionalNumber(v(k), what);
   }
+  // choosing an electrolytic or tantalum with no rating fills the supply's (the server's, D-360)
+  const rated = ctx.capRating;
+  if (part.type === "capacitor" && rated && patch.kind !== part.kind && rated.kinds.includes(String(patch.kind)) && patch.rating_v == null) patch.rating_v = rated.volts;
   const targeted = v("bias_node") !== "" && v("bias_volts") !== "";
   if ("rotation" in values && !targeted) { // a target turns it: what the box says doesn't count
     const r = optionalNumber(v("rotation"), "Rotation");

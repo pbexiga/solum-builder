@@ -1169,6 +1169,15 @@ export function updatePart(circuit, ref, patch) {
 }
 
 /**
+ * Every rating in `ratings` (ref → volts) set at once, as *Use suggested ratings* does
+ * (D-360): one edit, so one Undo puts them back.
+ * @param {any} circuit @param {Record<string, number>} ratings @returns {any}
+ */
+export function withRatings(circuit, ratings) {
+  return Object.entries(ratings).reduce((c, [ref, volts]) => updatePart(c, ref, { rating_v: volts }), circuit);
+}
+
+/**
  * Change a part's ref, and everything that names it (its note is on it): bias targets and probes
  * that point at its pins (`Q1.D`), and dismissed problems (its ref, nets named after its
  * pins, D-176).

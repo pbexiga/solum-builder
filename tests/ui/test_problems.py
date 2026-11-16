@@ -362,3 +362,49 @@ def test_a_long_problem_list_scrolls(page: Page, base_url: str, half_drawn: list
     )
     assert box["all"] > box["shown"]  # it scrolls
     assert 5 <= box["seen"] <= 7  # about six rows
+
+
+def rating(page: Page, ref: str) -> str:
+    """What a capacitor's form shows as its rating (the form opened and closed again)."""
+    click_part(page, ref)
+    press(page, "Enter")
+    value = page.locator("#field-rating_v").input_value()
+    press(page, "Escape")
+    expect(page.locator("form.popup")).to_have_count(0)
+    return value
+
+
+def test_a_new_electrolytic_gets_the_supplys_rating(page: Page, base_url: str) -> None:
+    """D-360: choosing electrolytic with no rating fills the suggested one for the 9 V
+    supply (16 V, from the server); a rating typed with it is kept."""
+    open_circuit(page, base_url)
+    click_part(page, "C1")  # a film with no rating
+    inspect(page, {"kind": "electrolytic"})
+    assert rating(page, "C1") == "16"
+    click_part(page, "C2")
+    inspect(page, {"kind": "tantalum", "rating_v": "35"})
+    assert rating(page, "C2") == "35"
+
+
+def test_use_suggested_ratings_fills_them_in_one_edit(page: Page, base_url: str) -> None:
+    """D-360: Before you build's no-rating note offers Use suggested ratings: every empty
+    electrolytic gets the supply's rating at once, and one Undo puts them back."""
+    open_circuit(page, base_url)
+    for ref in ("C9", "C16"):
+        click_part(page, ref)
+        inspect(page, {"rating_v": ""})
+    run(page)
+    build = page.locator("#problems-build")
+    build.locator("> summary").click()
+    row = build.locator("details.problem[data-rule='cap-no-rating']")
+    row.locator("> summary").click()
+    before = views(page)
+    row.locator(".problem-ratings").click()
+    wait_for_view(page, before)
+    assert [rating(page, ref) for ref in ("C9", "C16")] == ["16", "16"]
+    run(page)
+    expect(page.locator("details.problem[data-rule='cap-no-rating']")).to_have_count(0)
+    before = views(page)
+    press(page, "Control+z")
+    wait_for_view(page, before)
+    assert [rating(page, ref) for ref in ("C9", "C16")] == ["", ""]

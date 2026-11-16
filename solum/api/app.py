@@ -44,7 +44,7 @@ from solum.calculators import (
     divider_view,
     filter_view,
 )
-from solum.circuit.connectivity import ConnectivityError
+from solum.circuit.connectivity import ConnectivityError, connect
 from solum.circuit.enclosures import SIZES as ENCLOSURE_SIZES
 from solum.circuit.io import (
     CircuitError,
@@ -53,7 +53,9 @@ from solum.circuit.io import (
     load_circuit,
     parse_circuit,
 )
+from solum.circuit.ratings import RATING_RULES, rating_fill
 from solum.circuit.schema import Circuit, Trimmer, turns
+from solum.circuit.supply import powered_off
 from solum.circuit.switches import catalogue
 from solum.config import Settings, load_settings
 from solum.export import (
@@ -571,6 +573,19 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         checker.require_runnable(circuit)
         return runner
 
+    def ratings_to_fill(circuit: Circuit, checked: bool) -> dict[str, Any]:
+        """What *Use suggested ratings* sets (`rating_fill`, D-360): from the supply, and
+        from the DC when the check ran the operating point (cached) on a powered pedal;
+        `rules`: the problems whose rows offer it."""
+        try:
+            nets = connect(circuit)
+        except ConnectivityError:
+            return {"set": {}, "rules": list(RATING_RULES)}
+        dc = None
+        if checked and sim is not None and not powered_off(circuit):
+            dc = sim.op(circuit).voltages
+        return {"set": rating_fill(circuit, nets, dc), "rules": list(RATING_RULES)}
+
     def runnable(data: dict[str, Any]) -> tuple[Simulator, Circuit]:
         """A posted circuit with the simulator for it (`simulator`)."""
         circuit = parse_circuit(data)
@@ -1023,8 +1038,10 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def problems(req: CircuitRequest) -> dict[str, Any]:
         """Every problem in the circuit (SPEC §4): the drawing, then the operating point
         (`checked_op` says whether it ran) or the failed run explained."""
-        found, checked = checker.check(parse_circuit(req.circuit), sim)
-        return {"problems": [asdict(p) for p in found], "checked_op": checked}
+        circuit = parse_circuit(req.circuit)
+        found, checked = checker.check(circuit, sim)
+        return {"problems": [asdict(p) for p in found], "checked_op": checked,
+                "ratings": ratings_to_fill(circuit, checked)}  # fmt: skip
 
     @app.post("/api/part")
     def part(req: PartRequest) -> dict[str, Any]:

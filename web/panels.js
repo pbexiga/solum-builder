@@ -538,11 +538,12 @@ const BUILD_OPEN = "#build"; // and the Before you build section (D-203)
  * its reason and Bring back (D-176). Returns the heading's count text (not counting the
  * dismissed).
  * @param {HTMLElement} el
- * @param {{problems: import("./problems.js").Problem[], checked_op: boolean} | null} result
+ * @param {{problems: import("./problems.js").Problem[], checked_op: boolean, ratings?: {set: Record<string, number>, rules: string[]}} | null} result
  * @param {(problem: import("./problems.js").Problem) => void} onPick a click on a problem
  * @param {Set<string>} opened keys of the rows left open, and of the Dismissed section (kept up to date here)
  * @param {{dismissed?: import("./problems.js").Dismissal[], onDismiss?: (p: import("./problems.js").Problem) => void,
- *   onRestore?: (p: import("./problems.js").Problem) => void}} [dismissal] the circuit's dismissals, and what the buttons do
+ *   onRestore?: (p: import("./problems.js").Problem) => void, onRatings?: (ratings: Record<string, number>) => void}} [dismissal]
+ *   the circuit's dismissals, and what the buttons do (`onRatings`: Use suggested ratings, D-360)
  * @returns {string}
  */
 export function renderProblems(el, result, onPick, opened, dismissal = {}) {
@@ -582,7 +583,11 @@ export function renderProblems(el, result, onPick, opened, dismissal = {}) {
     b.addEventListener("click", () => run?.());
     return h("p", { class: "problem-actions" }, [b]);
   };
-  const dismissable = (/** @type {import("./problems.js").Problem} */ p) => (dismissal.onDismiss ? [action("Dismiss\u2026", "problem-dismiss", () => dismissal.onDismiss?.(p))] : []);
+  // a missing or wrong capacitor rating: fill every one the server suggests, as one edit (D-360)
+  const fill = result.ratings && Object.keys(result.ratings.set).length ? result.ratings : null;
+  const ratingsFor = (/** @type {import("./problems.js").Problem} */ p) =>
+    fill && dismissal.onRatings && fill.rules.includes(p.rule) ? [action("Use suggested ratings", "problem-ratings", () => dismissal.onRatings?.(fill.set))] : [];
+  const dismissable = (/** @type {import("./problems.js").Problem} */ p) => [...ratingsFor(p), ...(dismissal.onDismiss ? [action("Dismiss\u2026", "problem-dismiss", () => dismissal.onDismiss?.(p))] : [])];
   const rows = active.map((p) => row(p, dismissable(p)));
   const gone = dismissed.map(({ problem: p, reason }) =>
     row(p, [

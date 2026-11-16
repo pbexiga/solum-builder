@@ -33,6 +33,7 @@ from solum.circuit.parts import (
 )
 from solum.circuit.pot import MIN_RESISTANCE
 from solum.circuit.pump import SPARE_PINS, pump_wiring
+from solum.circuit.ratings import CAP_MARGIN, cap_rating, supply_top
 from solum.circuit.refs import ref_key
 from solum.circuit.schema import (
     CHIP_UNITS,
@@ -64,7 +65,7 @@ from solum.circuit.schema import (
     Trimmer,
     VSource,
 )
-from solum.circuit.supply import battery_of, live_rails, on_battery, powered_off, supply_volts
+from solum.circuit.supply import battery_of, live_rails, on_battery, powered_off
 from solum.circuit.switches import CUSTOM
 from solum.models import Model, ModelLibrary
 from solum.netlist import NetlistError, pump_frequency
@@ -86,9 +87,7 @@ SHOWN_NETS = 3  # nets named in a message before "and N more"
 AUDIO_TOP = 20e3  # hertz: a pump below this can be heard as a whine (D-093)
 C0G_TOP = 10e-9  # farads: C0G ceramics are sold up to about this (capacitor guide, D-095)
 # Build checks (9d1, D-203):
-CAP_MARGIN = 0.8  # a capacitor with more than this share of its rating across it is too close
 POWER_MARGIN = 0.5  # a resistor dissipating more than this share of its rating runs hot
-CAP_RATINGS = (6.3, 10.0, 16.0, 25.0, 35.0, 50.0, 63.0, 100.0)  # volts: electrolytics sold
 SUPPLY_PATH_OHMS = 1e3  # a supply filter resistor is under this (10-100 Ω); more biases (D-238)
 SAG_SHARE = 0.5  # a supply-path net under this share of its rail has lost the supply (D-238)
 
@@ -1040,8 +1039,8 @@ def cap_no_kind(ctx: Context) -> Iterator[Hit]:
 
 
 def cap_rating_advice(volts: float) -> str:
-    """The smallest rating sold with `volts` inside `CAP_MARGIN` of it."""
-    rating = next((r for r in CAP_RATINGS if volts <= CAP_MARGIN * r), None)
+    """The smallest rating sold with `volts` inside `CAP_MARGIN` of it (`cap_rating`)."""
+    rating = cap_rating(volts)
     if rating is None:
         return f"one rated well above {format_quantity(volts, 'V')}"
     return f"{format_quantity(rating, 'V')} or more"
@@ -1050,13 +1049,14 @@ def cap_rating_advice(volts: float) -> str:
 @check("topology")
 def cap_no_rating(ctx: Context) -> Iterator[Hit]:
     """Electrolytics and tantalums with no voltage rating (the advice from the highest
-    supply: no capacitor sees more without a charge pump, which its own rule checks)."""
+    supply, `supply_top`, as *Use suggested ratings* fills it, D-360: no capacitor sees
+    more without a charge pump, which its own rule checks)."""
     found = _refs(
         [p for p in ctx.circuit.parts
          if isinstance(p, Capacitor) and p.kind in POLARISED and p.rating_v is None]
     )  # fmt: skip
     if found:
-        top = max((abs(v) for v in supply_volts(ctx.circuit).values()), default=9.0)
+        top = supply_top(ctx.circuit) or 9.0
         which = f"{found[0]} has" if len(found) == 1 else f"{listing(list(found))} have"
         advice = cap_rating_advice(top)
         yield Hit(found[0], refs=found[1:], values={"which": which, "advice": advice})

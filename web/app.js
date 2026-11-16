@@ -353,7 +353,7 @@ const menus = appMenus($("canvas-body"), schematic, {
   deletable: () => deletable(),
   partOf: (ref) => partOf(ref),
   files,
-  blocks,
+  blocks: { ...blocks, blocksDialog: insertBlock },
   leaveTo: (source) => leaveTo(source),
   select: (selection) => select(selection),
   inspect: (ref) => forms.inspect(ref),
@@ -1046,7 +1046,24 @@ function findPart() {
   });
 }
 
+/**
+ * Choosing a tool that asks something first (Net label, Insert block) puts down the one in
+ * hand: the wire tool (and a wire half drawn) or a part being placed, so a click on the sheet
+ * while its dialog is open draws nothing (D-352).
+ */
+function leaveTools() {
+  setWireMode(false);
+  stopPlacing();
+}
+
+/** Insert or manage blocks (B), from the menu or the key: the tool in hand is put down first. */
+function insertBlock() {
+  leaveTools();
+  blocks.blocksDialog();
+}
+
 function askLabel() {
+  leaveTools();
   openForm($("canvas-body"), {
     title: "Net label",
     subtitle: "then click where it goes",
@@ -1834,7 +1851,7 @@ function onKey(e) {
     case "paste": return paste();
     case "selectAll": return selectItems(allItems(state.circuit));
     case "find": return findPart();
-    case "insertBlock": return blocks.blocksDialog();
+    case "insertBlock": return insertBlock();
     case "cancel":
       if (schematic.cancelWire()) return;
       closeForm();

@@ -222,6 +222,29 @@ def test_a_parts_form_opens_on_the_box_after_its_ref(page: Page, base_url: str) 
     expect(page.locator('g.part-text[data-ref="R1"] .value')).to_have_text("4k7")
 
 
+def test_choosing_net_label_or_blocks_puts_the_wire_tool_down(page: Page, base_url: str) -> None:
+    """The user (2026-11-16): with a wire half drawn, Net label opened its form but clicks
+    on the sheet still drew wire. Choosing Net label or Insert block puts the wire tool down
+    and drops the wire in hand (D-352)."""
+    new_circuit(page, base_url, "Tools test")
+    wire = page.locator('[data-tool="wire"]')
+    for key, dialog in (("l", "#field-net"), ("b", ".block-list")):
+        wire.click()
+        click_at(page, 0, 60)
+        click_at(page, 40, 60)
+        expect(page.locator(".overlay .wire-path")).to_have_count(1)
+        press(page, key)
+        expect(page.locator(dialog)).to_be_visible()
+        expect(wire).to_have_attribute("aria-pressed", "false")
+        expect(page.locator(".overlay .wire-path")).to_have_count(0)
+        click_at(page, 100, 100)
+        click_at(page, 100, 140)
+        expect(page.locator(".overlay .wire-path")).to_have_count(0)
+        assert wires(page) == []
+        press(page, "Escape")
+        expect(page.locator("form.popup")).to_have_count(0)
+
+
 def test_place_undo_redo(page: Page, base_url: str) -> None:
     new_circuit(page, base_url, "Undo test")
     place(page, "r", 0, 0)

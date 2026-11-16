@@ -24,7 +24,7 @@ Every pot and switch in the circuit gets a control here, named by its label ("Di
 
 Turning a knob or flipping a switch isn't an edit: there's nothing to save or undo, and the circuit opens next time where it was saved. **Use as opening positions**, under the knobs, makes where they are now the circuit's own, as one edit.
 
-A switch's position names (Vintage, Thick) come from its form. A DC jack and a battery add a **Power** switch (DC jack or Battery), and a stereo input jack with a battery adds a **Cable** switch: see [Power](power.md).
+A switch's position names (Vintage, Thick) come from its form. A DC jack and a battery add a **Power** switch (DC jack or Battery), and a jack plugged into IN or OUT, or one whose ring switches something, adds a cable switch (*Input cable*: Mono cable, Stereo cable or Cable out). With the input or output cable out there's no curve: the pane says which jack and what it cuts. See [Jacks and cables](power.md#jacks-and-cables).
 
 ## The large view
 

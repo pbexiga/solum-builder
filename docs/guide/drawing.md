@@ -19,6 +19,12 @@ Pick the **Wire** tool (W). Click to start, click again to add a bend, and click
 - **Click a wire** to select all of it, through its bends, to its ends. **Drag a wire**, selected or not, to move the stretch you grabbed; what it connects stays connected. New wires come from the Wire tool, or a press on a pin, as below.
 - A press on a pin's end, a label's point or a supply's point starts a new wire from there, whatever tool is picked.
 
+### Jacks
+
+IN and OUT each have a **plug point**: IN's in the middle of its circle, OUT's at the tip of its triangle. A jack's **T** plugs in there, so the drawing reads *the guitar plugs in here*: wire from J1's T to the point (the Wire tool's ring snaps to it, and the wire's end gets a dot), or drop J1 with its T on it. A plain click there still selects IN or OUT. It's the same node as the part's pin; nothing else changes electrically.
+
+Only a jack's T may plug in. Any other wire, pin or label on a plug point is refused, and the sheet says *Only a jack's T plugs into the middle of IN. Wire other parts to IN's pin.* What a jack plugged in does when its cable comes out is in [Power](power.md#jacks-and-cables).
+
 ## Names for nets: labels, ground and supplies
 
 A *net* is everything joined together. Wires join things you can see; a name joins things anywhere on the sheet.
@@ -62,6 +68,7 @@ Some forms have more:
 - **Switch**: its *Type*, from the toggles, push buttons, footswitches, DIP switches and rotary selectors that are sold, or **Custom…** for your own poles, throws and what each position joins. *Position* is where it starts; name the positions (Vintage, Thick) and the names show on its buttons in Knobs.
 - **Op-amps and chips**: the model (one per chip: changing it changes every half), and the pin numbers from the model's datasheet. The power pins are wired with labels like any pin; a single op-amp's offset and NC pins are drawn only when asked.
 - **IN**: the pickup that loads the input (or *Buffered*, when nothing does), the guitar's volume pot, and a mono or stereo jack. **OUT**: the amp's input impedance (1 MΩ to start).
+- **Jack**: mono (tip, sleeve) or stereo (tip, ring, sleeve), and a label (*Input*, *Output*), which also names its cable switch in Knobs. See [Jacks and cables](power.md#jacks-and-cables).
 
 View → **Capacitor types** writes each capacitor's kind under its value on the sheet.
 

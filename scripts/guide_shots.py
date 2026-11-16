@@ -21,8 +21,10 @@ from pathlib import Path
 from playwright.sync_api import Browser, Page, Route, sync_playwright
 
 from solum.api.serving import serving
+from solum.circuit.draw import Drawing
+from solum.circuit.io import circuit_to_dict
 from solum.config import load_settings
-from tests.ui.conftest import click_part, part_pos, updates, wait_for_update
+from tests.ui.conftest import click_part, open_circuit, part_pos, updates, wait_for_update
 from tests.ui.test_audio import plucks, render_and_wait, upload
 from tests.ui.test_editor import click_at, delete_part, menu, save_as, views, wait_for_view
 
@@ -168,6 +170,59 @@ def bias_headroom(page: Page, base: str) -> None:
     page.wait_for_timeout(1000)
     page.locator(".fix-parts-head").scroll_into_view_if_needed()
     shoot(page, "try-changes")
+
+
+def battery_buffer() -> dict[str, object]:
+    """A JFET buffer on a battery: J1 (stereo) plugged into IN, its ring switching the
+    battery, and J2 plugged into OUT (D-353 to D-355). Net-checked when it was drawn."""
+    d = Drawing()
+    d.part("IN", "guitar", (0, 0), volume="250k")
+    d.part("J1", "jack", (-100, -20), stereo=True, label="Input")
+    d.wire("J1.T", (0, 0))  # J1's T plugs into IN's middle
+    d.part("C1", "capacitor", (80, 0), value="100n", kind="film")
+    d.part("R1", "resistor", (140, 40), 90, value="1M")
+    d.part("Q1", "jfet", (200, 0), model="J201")
+    d.part("R2", "resistor", (220, 80), 90, value="10k")
+    d.part("C2", "capacitor", (280, 20), value="1µ", kind="film")
+    d.part("R3", "resistor", (340, 60), 90, value="1M")
+    d.part("OUT", "amp", (420, 20))
+    d.part("J2", "jack", (490, 20), 180, label="Output")
+    d.part("BAT1", "battery", (-160, -80))
+    d.wire("IN.out", "C1.1")
+    d.wire("C1.2", "Q1.G")
+    d.wire((140, 0), "R1.1")
+    d.wire("Q1.S", (220, 40), "R2.1")
+    d.wire((220, 20), "C2.1")
+    d.wire("C2.2", "OUT.in")
+    d.wire((340, 20), "R3.1")
+    d.wire("J2.T", (430, 20))  # J2's T plugs into OUT's end
+    d.label("V+", "BAT1.+", "Q1.D")
+    d.wire("BAT1.-", (-160, -20), "J1.R")
+    d.label("GND", "R1.2", "R2.2", "R3.2")
+    d.stub("J1.S", "GND", dy=-20, rot=180)
+    d.stub("J2.S", "GND", dy=20)
+    return circuit_to_dict(d.circuit("Battery buffer", probes={"in": "in", "out": "out"}))
+
+
+def jacks(page: Page, base: str) -> None:
+    """A battery buffer with its input cable pulled: the jacks plugged into IN and OUT, the
+    Input cable switch in Knobs, and the Frequency pane saying why there's no curve."""
+    page.goto(base)
+    saved = page.request.post(
+        f"{base}api/circuits", data={"circuit": battery_buffer(), "name": "Battery buffer"}
+    )
+    open_circuit(page, base, "circuit/" + saved.json()["circuit"]["id"])
+    page.evaluate(  # Knobs and Frequency at the top, as dragging their title bars would
+        """() => { const a = document.querySelector("aside.panels");
+        for (const id of ["frequency", "knobs"])
+          a.prepend(document.getElementById(`panel-${id}`));
+        a.scrollTop = 0; }"""
+    )
+    before = updates(page)
+    page.locator('#knobs-body [data-knob="J1"] [data-position="2"]').click()  # Cable out
+    wait_for_update(page, before, 120_000)
+    page.mouse.click(5, 990)  # nothing selected
+    shoot(page, "jacks")
 
 
 def problems(page: Page, base: str) -> None:
@@ -333,6 +388,7 @@ SHOTS: dict[str, Callable[[Page, str], None]] = {
     "sweep": sweep,
     "bias-headroom": bias_headroom,
     "problems": problems,
+    "jacks": jacks,
     "blocks-dialog": blocks_dialog,
     "open-dialog": open_dialog,
     "import-dialog": import_dialog,

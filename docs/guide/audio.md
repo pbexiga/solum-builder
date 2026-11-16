@@ -27,6 +27,8 @@ For a fuzz, set the guitar input (in Pedal) to the pickup the clip was recorded 
 
 Click **Dry**, **Pedal** or **Snapshot** to switch between them while it plays: switching keeps your place in the clip. **Loop** plays the clip round. **Download WAV** saves the take playing; **Download all (.zip)** saves every take, with the circuit each was rendered from and a note of its knobs, clip, amp and cab.
 
+A circuit with its input or output jack's cable out isn't rendered: nothing would reach the amp. Render says which jack and to put its cable in (Knobs), and so does Render sweep. See [Jacks and cables](power.md#jacks-and-cables).
+
 A render takes a while: the circuit is simulated sample by sample. While it runs, the button reads **Cancel render**; the takes already finished still play. Renders are kept, so playing one again, or changing only the amp or cab, costs much less.
 
 **Render sweep** renders one knob at several positions, a take for each, played the same way: pick the knob in **Sweep**, type up to five positions in % (*5, 25, 50, 75, 100* to start), press Render sweep, then click a position's button to hear it.

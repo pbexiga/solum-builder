@@ -21,7 +21,7 @@ The dialog has a **Search** box (by name, tag or part model), **Core** and **My 
 
 ## The core blocks
 
-They come in these families: 9 V power (battery, DC jack and battery, supply filter); 12 V supplies; buffers (JFET, op-amp, transistor); bypass (true, buffered, the Klon's); charge pumps (doublers and inverters, with a chip or an op-amp); a diode clipper; gain stages (op-amp, JFET, Big Muff transistor); tone stacks (two Baxandalls, the Big Muff's, the Fender TMB); the Tube Screamer's clipper and tone; the Rat's distortion stage; the Rangemaster treble booster; and a half-supply reference divider. Each one's description says where it comes from and what to set.
+They come in these families: 9 V power (battery, DC jack and battery, each also switched by the input jack; supply filter); 12 V supplies; buffers (JFET, op-amp, transistor); bypass (true, buffered, the Klon's); charge pumps (doublers and inverters, with a chip or an op-amp); a diode clipper; gain stages (op-amp, JFET, Big Muff transistor); tone stacks (two Baxandalls, the Big Muff's, the Fender TMB); the Tube Screamer's clipper and tone; the Rat's distortion stage; the Rangemaster treble booster; and a half-supply reference divider. Each one's description says where it comes from and what to set.
 
 ## Saving your own
 

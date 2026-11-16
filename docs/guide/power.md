@@ -19,13 +19,16 @@ Beside the menu, after a run, is the current the circuit draws from the supply (
 | just power the circuit | nothing: the Power menu does it |
 | draw the power section, for a full drawing and the parts list | a **DC jack** |
 | run it from a battery, or switch between plugged in and battery | a **DC jack** and a **battery** (the *9 V power · DC jack and battery* block) |
+| switch the battery off when the guitar cable comes out, as pedals do | a **battery** with its − on a stereo input **Jack**'s ring (the *… switched by the input jack* blocks): see [Jacks and cables](#jacks-and-cables) |
 | hold another net at a voltage of its own | a **DC source** |
 
 ### DC jack
 
 The DC jack draws the real jack: its sleeve **+** wired to V+, its centre **−** to ground (centre negative, as pedal supplies are), and its battery lug. It makes no voltage of its own: to the simulation it's a V+ label and a ground. It's there for a full drawing, the parts list and export. There's one per circuit, always called DC.
 
-With a battery wired to its lug, Knobs & switches gets a **Power** switch: **DC jack** (a plug in: the Power menu's supply powers the pedal and the battery is cut off) or **Battery** (no plug: the battery lug touches the sleeve and the battery powers it). A chip left of the Power menu says which: *DC jack*, or *Battery · 7.4 V* with the menu greyed.
+With a battery wired to its lug, Knobs & switches gets a **Power** switch, the DC plug in or out: **DC jack** (a plug in: the Power menu's supply powers the pedal and the battery is cut off) or **Battery** (no plug: the battery lug touches the sleeve and the battery powers it). A chip left of the Power menu says which: *DC jack*, or *Battery · 7.4 V* with the menu greyed.
+
+With a DC plug in, the input jack's cable doesn't matter to the power: the supply powers the pedal whether or not the battery is switched on. Pull the DC plug (**Battery**) and the battery is on only while a mono cable is in the input jack, if its − goes to the jack's ring.
 
 ### Battery
 
@@ -38,7 +41,47 @@ Where its **+** goes decides what it powers:
 - **On V+ beside a DC jack**: unplugged, it powers the pedal; plugged in, it stays connected beside the supply. It then needs an internal resistance for the circuit to run, and Problems warns that the jack doesn't switch it.
 - **On any other net**: it powers only what's on that net, and the Power menu keeps V+.
 
-Its **−** goes to ground, or to a stereo input jack's ring, so that plugging a guitar cable in switches it on: the cable's sleeve joins the ring to ground. Set the input jack to stereo (in the IN part's form, or a Jack part) and Knobs gets a **Cable** switch (in: the ring joins the sleeve); with the cable out, Problems says the battery is cut off.
+Its **−** goes to ground, so it's always on, or to a stereo input jack's ring, so that plugging a guitar cable in switches it on: a mono plug's long sleeve joins the ring to ground. That's how pedals save their batteries, and it's the next section.
+
+## Jacks and cables
+
+A **Jack** (in Signal & power on the palette) draws a real input or output jack: **mono** (tip and sleeve) or **stereo** (tip, ring and sleeve), picked in its form. It's left out of the simulation as a part, but what's plugged into it is not: a jack can take the guitar out, the amp out or the battery off, as pulling a cable does on a real pedal.
+
+![A JFET buffer on a battery, J1 plugged into IN with its ring switching the battery and J2 plugged into OUT. Knobs & switches has Input cable set to Cable out, and the Frequency pane says why there's no curve.](img/jacks.png)
+
+### What a jack switches
+
+What a jack's cable does depends on what it's wired to:
+
+- **The input jack**: its T plugs into the middle of IN (the guitar), a wire from T to IN's plug point (see [Drawing](drawing.md#jacks)). With no cable in, no guitar reaches the pedal.
+- **The output jack**: its T plugs into the tip of OUT (the amp). With no cable in, nothing reaches the amp.
+- **A stereo jack with its ring and sleeve both wired**: its ring is a switch, joined to the sleeve only by a mono plug. Wire anything there; most often it's the battery's −.
+- **A jack wired to none of these**: a drawing for the build. Its cable changes nothing.
+
+Each jack that switches something gets a switch in Knobs & switches, named by the jack's label (*Input cable*, *Output cable*) or its ref (*J1 cable*):
+
+- a mono jack: **Cable in** or **Cable out**;
+- a stereo jack: **Mono cable**, **Stereo cable** or **Cable out**. A stereo (TRS) cable's ring is its own, so it doesn't join the jack's ring to the sleeve: a stereo cable in the input leaves the battery off, as on a real pedal.
+
+Like any knob, it isn't an edit: the circuit opens with the cables in, unless you set otherwise with **Use as opening positions**.
+
+### What happens with a cable out
+
+| What's pulled | Power | Frequency and Scope | Audio |
+|---|---|---|---|
+| the input jack's cable (or a stereo cable in it), its ring the battery's − | the battery is cut off: DC voltages read about 0 V | none: each says which jack and what it cuts | refused, saying why |
+| the input jack's cable, the battery's − on ground | unchanged | none, as above | refused |
+| the output jack's cable | unchanged | none, as above | refused |
+| a stereo cable in the input jack, the battery on its ring | the battery is cut off | the guitar still comes in: the circuit is simulated unpowered | renders: you hear the unpowered pedal (a true bypass still passes the guitar) |
+| a cable from a jack whose ring switches the battery but isn't the input | the battery is cut off | simulated unpowered | renders, unpowered |
+| a cable from a jack wired to nothing that matters | unchanged | unchanged | unchanged |
+| any cable, with a DC plug in (Power: **DC jack**) | the supply powers the pedal | as above for the input and output jacks | as above |
+
+A refused render says what to do: *J1 has no cable in: no guitar reaches the pedal and its battery is cut off. Put its cable in (Knobs) to render.*
+
+While the battery is cut off and nothing else powers the circuit, Problems warns **Battery cut off: no mono cable in** (or *a stereo cable in*) and checks only the drawing: no bias warnings about a circuit that's simply off.
+
+The *9 V power* blocks come both ways: *battery only* and *DC jack and battery* keep the battery on all the time (simplest, for hearing a circuit), and *… switched by the input jack* put its − on J1's ring. Insert one, then wire J1's T (its **in** label) to IN's middle, so that J1 is the input jack: pulling its cable then takes out the guitar and the battery together.
 
 ### DC source
 

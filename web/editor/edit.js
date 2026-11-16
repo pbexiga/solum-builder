@@ -555,6 +555,8 @@ export function relay(before, after, moves, { labels = true, joinPins = true, ke
   const shiftedBy = new Map();
   /** @type {Array<[number[], number[]]>} */
   const jobs = [];
+  /** @type {Array<[number[], number[]]>} */
+  const late = [];
   /** @type {Array<{pieces: Array<Wire | [number[], number[]]>, ends: number[][]}>} bent runs kept bent (`stretchRun`) */
   const stretched = [];
   for (const [from, to] of moves) {
@@ -566,7 +568,9 @@ export function relay(before, after, moves, { labels = true, joinPins = true, ke
       if (endTo && endTo[0] - run.end[0] === dx && endTo[1] - run.end[1] === dy) {
         for (const i of run.wires) shiftedBy.set(i, [dx, dy]);
       } else if (keepBends && !endTo && run.wires.length > 1) {
-        stretched.push({ pieces: stretchRun(runPoints(wires, run.wires, from), to), ends: [to, run.end] });
+        const pieces = stretchRun(runPoints(wires, run.wires, from), to);
+        if (pieces) stretched.push({ pieces, ends: [to, run.end] });
+        else late.push([run.end, to]); // folded: routed afresh after the rest, so it goes round them
       } else {
         jobs.push([endTo ?? run.end, to]);
       }
@@ -605,7 +609,7 @@ export function relay(before, after, moves, { labels = true, joinPins = true, ke
       for (const piece of pieces) out = addWires(out, Array.isArray(piece) ? routeWire(out, piece[0], piece[1]) : [piece]);
     } else jobs.push([ends[1], ends[0]]);
   }
-  for (const [a, b] of jobs) out = addWires(out, routeWire(out, a, b));
+  for (const [a, b] of [...jobs, ...late]) out = addWires(out, routeWire(out, a, b));
   return out;
 }
 
@@ -644,10 +648,15 @@ function runPoints(wires, ids, start) {
  * next to the moved point slides with it so that leg stays straight, the next leg only
  * gets longer or shorter; if the far end's leg can't stay straight, that last stretch is
  * routed afresh. Wires, and [a, b] pairs for `routeWire`.
+ * A joint part-way along a straight leg is no bend: it's dropped first, so the leg shortens
+ * past it (D-351: dragging OUT left left its wire running on through it). A leg the slide
+ * would turn back on itself (the bend pushed past the far end) gives null: route it afresh.
  * @param {number[][]} points the run, the moved point first (`runPoints`)
- * @param {number[]} to @returns {Array<Wire | [number[], number[]]>}
+ * @param {number[]} to @returns {Array<Wire | [number[], number[]]> | null}
  */
 export function stretchRun(points, to) {
+  const inLine = (/** @type {number[]} */ a, /** @type {number[]} */ b, /** @type {number[]} */ c) => (a[0] === b[0] && b[0] === c[0]) || (a[1] === b[1] && b[1] === c[1]);
+  points = points.filter((p, i) => i === 0 || i === points.length - 1 || !inLine(points[i - 1], p, points[i + 1]));
   const now = [to, ...points.slice(1)];
   for (let i = 1; i < points.length - 1; i++) {
     const [a, b] = [points[i - 1], points[i]];
@@ -655,6 +664,11 @@ export function stretchRun(points, to) {
     const slid = a[1] === b[1] ? [b[0], now[i - 1][1]] : [now[i - 1][0], b[1]];
     if (same(slid, b)) break;
     now[i] = slid;
+  }
+  const way = (/** @type {number[]} */ a, /** @type {number[]} */ b) => [Math.sign(b[0] - a[0]), Math.sign(b[1] - a[1])];
+  for (let i = 1; i < now.length; i++) {
+    const [was, is] = [way(points[i - 1], points[i]), way(now[i - 1], now[i])];
+    if ((was[0] && is[0] && was[0] !== is[0]) || (was[1] && is[1] && was[1] !== is[1])) return null;
   }
   /** @type {Array<Wire | [number[], number[]]>} */
   const out = [];

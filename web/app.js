@@ -1619,7 +1619,7 @@ function render(net) {
   const [readingNet, readings] = curveReadings(part, run, net);
   tools.shown(run, readingNet, Boolean(sweep));
   if (freq) linePlot(freqEl, freq, { ...FREQUENCY_PLOT, ...tools.plotOpts(freq) });
-  else freqEl.replaceChildren(emptyNote("No frequency response: this circuit has no guitar input."));
+  else freqEl.replaceChildren(emptyNote(run?.silent ? `No frequency response. ${run.silent}` : "No frequency response: this circuit has no guitar input.")); // a cable out (D-354)
   renderReadings($("frequency-readings"), readings && !sweep ? readingRows(readings) : [], readingNet);
 
   const scope = (sweep && valueSweepSeries(sweep, sweepNet, "tran")) || scopeSeries(run, net, state.snapshots.scope);
@@ -1627,7 +1627,7 @@ function render(net) {
   notesAt.scope = sweepNet ?? net;
   notesAt.harmonics = net;
   if (scope) linePlot($("scope-plot"), scope, SCOPE_PLOT);
-  else $("scope-plot").replaceChildren(emptyNote("No waveform: this circuit has no guitar input."));
+  else $("scope-plot").replaceChildren(emptyNote(run?.silent ? `No waveform. ${run.silent}` : "No waveform: this circuit has no guitar input."));
 
   const bars = harmonicBars(run?.tran?.nodes[net]?.stats);
   if (bars) barPlot($("harmonics-plot"), bars);

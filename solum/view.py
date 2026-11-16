@@ -7,6 +7,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
+from solum.circuit.cables import switching_jacks
 from solum.circuit.chips import supply_nets, unused_halves
 from solum.circuit.connectivity import GROUND, ConnectivityError, Nets, connect, on_segment
 from solum.circuit.io import circuit_to_dict
@@ -146,6 +147,7 @@ def controls(circuit: Circuit) -> list[dict[str, Any]]:
     """One knob per pot (a dual pot's gangs share it, D-217) and one selector per switch,
     in file order (SPEC §1); the guitar's volume is a pot like the others (D-096)."""
     found: list[dict[str, Any]] = []
+    jacks = switching_jacks(circuit)
     for p in circuit.parts:
         if isinstance(p, Guitar) and p.has_volume:
             found.append(
@@ -175,10 +177,8 @@ def controls(circuit: Circuit) -> list[dict[str, Any]]:
                  "position": 0 if p.plugged else 1, "positions": ["DC jack", "Battery"],
                  "plug": True}
             )  # fmt: skip
-        elif (
-            isinstance(p, Jack) and p.stereo and any(isinstance(q, Battery) for q in circuit.parts)
-        ):
-            found.append(  # a stereo jack's cable switches a battery on its ring (D-185)
+        elif isinstance(p, Jack) and p.ref in jacks:
+            found.append(  # its cable switches the guitar, the amp or the battery (D-354)
                 {"ref": p.ref, "kind": "switch", "label": f"{p.label or p.ref} cable",
                  "refs": [p.ref], "position": 0 if p.plugged else 1,
                  "positions": ["Cable in", "Cable out"], "plug": True}

@@ -9,6 +9,7 @@ import re
 from collections.abc import Iterable
 from dataclasses import dataclass, field
 
+from solum.circuit.cables import battery_cut_off
 from solum.circuit.chips import left_out, supply_nets
 from solum.circuit.connectivity import GROUND, Nets, connect, loose_net, loose_parts
 from solum.circuit.parts import POWER_PINS, closed_contacts, pin_offsets, switch_contacts
@@ -435,7 +436,9 @@ def _battery(e: _Emitter, p: Battery) -> None:
         inner = f"{p.ref.lower()}_cell"
         e.add(element_name("R", p.ref), inner, plus, spice_number(parse_value(p.resistance)))
         plus = inner
-    e.add(element_name("V", p.ref), plus, e.pin(p, "-"), "DC", spice_number(parse_value(p.volts)))
+    # a cable out cutting the battery off (D-354): no supply at all, so DC reads 0 V
+    volts = 0.0 if battery_cut_off(e.circuit) else parse_value(p.volts)
+    e.add(element_name("V", p.ref), plus, e.pin(p, "-"), "DC", spice_number(volts))
 
 
 def _dcjack(e: _Emitter, p: DcJack) -> None:

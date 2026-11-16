@@ -14,6 +14,7 @@ anywhere else it stays connected beside the adapter.
 from contextlib import suppress
 from typing import Literal
 
+from solum.circuit.cables import battery_cut_off
 from solum.circuit.connectivity import ConnectivityError, Nets, connect
 from solum.circuit.schema import SUPPLY_SIGNS, Battery, Circuit, DcJack
 from solum.units import parse_value
@@ -69,6 +70,12 @@ def on_battery(circuit: Circuit) -> Battery | None:
     return _battery(circuit)
 
 
+def powered_off(circuit: Circuit) -> bool:
+    """The battery alone powers the circuit and a cable out cuts it off (D-354): the pedal
+    is off, so its operating point says nothing about its bias."""
+    return battery_cut_off(circuit) and on_battery(circuit) is not None
+
+
 BatteryWiring = Literal["alone", "lug", "beside", "apart"]
 
 
@@ -115,6 +122,8 @@ def supply_volts(circuit: Circuit) -> dict[str, float]:
     if battery is None:
         return dict(circuit.power.rails)
     volts, taken = parse_value(battery.volts), battery_rails(circuit)
+    if battery_cut_off(circuit):  # a cable out (D-354): the rails it holds are dead
+        volts = 0.0
     return {name: (volts if name in taken else v) for name, v in circuit.power.rails.items()}
 
 

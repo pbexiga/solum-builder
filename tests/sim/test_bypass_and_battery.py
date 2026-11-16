@@ -12,6 +12,7 @@ from solum.circuit.connectivity import connect
 from solum.circuit.io import circuit_to_dict, parse_circuit
 from solum.circuit.schema import Circuit
 from solum.models import load_models
+from solum.probe import run_view
 from solum.sim.native import NativeNgspice
 from solum.simulate import OpResult, Simulator
 from tests.jig import FAR, core_block, jig
@@ -79,6 +80,23 @@ def test_the_status_led_lights_only_when_on(sim: Simulator) -> None:
     assert 1.5 < drop < 2.5  # a red LED, lit
     assert lit.supply["V+"] == pytest.approx((9.0 - drop) / 4700, rel=0.02)
     assert sim.op(c.with_part("SW1", position=1)).supply["V+"] == pytest.approx(0.0, abs=1e-6)
+
+
+def test_bypassed_with_the_battery_cut_off_the_guitar_still_comes_through(
+    sim: Simulator,
+) -> None:
+    """D-354: a jack that cuts the battery off but isn't the input leaves the guitar on IN,
+    so nothing is refused: the pedal is unpowered (the LED's V+ at 0 V), and true bypass
+    still passes the guitar untouched."""
+    switched = (
+        CircuitBuilder()
+        .part("BAT1", "battery", pins={"+": "V+", "-": "ring"})
+        .part("J9", "jack", stereo=True, plugged=False, pins={"T": "x", "R": "ring", "S": "0"})
+    )
+    c = with_parts(with_effect("true-bypass-3pdt-v1"), switched)
+    assert run_view(sim, c, [], "med")["silent"] is None
+    assert sim.op(c).voltages["V+"] == pytest.approx(0.0, abs=1e-6)
+    assert gain_db(sim, c.with_part("SW1", position=1)) == pytest.approx(0.0, abs=0.01)
 
 
 def powered(
@@ -171,6 +189,21 @@ def test_a_cable_in_the_stereo_jack_switches_the_battery_on(sim: Simulator) -> N
     assert on.supply["V+"] == pytest.approx(1e-3, rel=0.02)
     off = sim.op(ring_pedal(cable=False))
     assert off.voltages["V+"] == pytest.approx(0.0, abs=1e-3)  # the ring open: no supply
+
+
+def test_with_the_input_cable_out_the_pedal_is_off(sim: Simulator) -> None:
+    """D-354: the battery cut off reads 0 V everywhere, and the run has no curve or scope,
+    saying why instead."""
+    off = ring_pedal(cable=False)
+    assert all(v == pytest.approx(0.0, abs=1e-6) for v in sim.op(off).voltages.values())
+    view = run_view(sim, off, ["in"], "med")
+    assert view["ac"] is None and view["tran"] is None
+    assert view["silent"] == (
+        "J1 has no cable in: no guitar reaches the pedal, nothing reaches the amp and its "
+        "battery is cut off."  # IN and OUT share J1's net here
+    )
+    on = run_view(sim, ring_pedal(cable=True), ["in"], "med")
+    assert on["silent"] is None and on["ac"] is not None and on["tran"] is not None
 
 
 def test_a_battery_off_the_lug_stays_beside_the_adapter(sim: Simulator) -> None:

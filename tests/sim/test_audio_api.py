@@ -12,7 +12,8 @@ from fastapi.testclient import TestClient
 
 from solum.api.app import create_app
 from solum.audio.wav import Audio, read_wav, write_wav
-from solum.circuit.io import load_circuit
+from solum.circuit.build import CircuitBuilder
+from solum.circuit.io import circuit_to_dict, load_circuit
 from solum.config import load_settings
 
 REPO = Path(__file__).parents[2]
@@ -117,6 +118,26 @@ def test_render_sweep_runs_one_job_per_position(client: TestClient) -> None:
         "/api/render/zip", json={"name": "x", "takes": [{"key": "ab12", "file": "Old.wav"}]}
     )
     assert gone.status_code == 404 and "Old.wav isn't in the cache" in gone.json()["message"]
+
+
+def test_with_a_cable_out_no_render_starts(client: TestClient) -> None:
+    """D-354: refused at once, the reason given, for a take and for a sweep."""
+    riff = upload(client, "clips", "riff.wav", clip(0.1))
+    unplugged = circuit_to_dict(
+        CircuitBuilder("volume, cable out")
+        .part("IN", "guitar", "in")
+        .part("VR1", "pot", "in", "out", "0", value="100k")
+        .part("OUT", "amp", "out")
+        .part("J2", "jack", pins={"T": "out", "S": "0"}, plugged=False)
+        .build()
+    )
+    take = {"circuit": unplugged, "clip": {"id": riff["id"], "layer": "user"}}
+    said = "J2 has no cable in: nothing reaches the amp. Put its cable in (Knobs) to render."
+    r = client.post("/api/render", json=take)
+    assert r.status_code == 422 and r.json()["message"] == said
+    r = client.post("/api/render/sweep", json={**take, "ref": "VR1", "rotations": [0.0, 1.0]})
+    assert r.status_code == 422 and r.json()["message"] == said
+    assert client.post("/api/render", json={**take, "cached_only": True}).json() is None
 
 
 def tone_bender(target: bool = True) -> dict[str, Any]:

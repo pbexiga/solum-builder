@@ -35,6 +35,7 @@ from solum.audio.resample import resample
 from solum.audio.wav import Audio, WavError, read_wav, write_wav
 from solum.cache import SimCache, content_hash
 from solum.circuit.build import guitar_into
+from solum.circuit.cables import silence
 from solum.circuit.schema import AmpInput, ChargePump, Circuit, Guitar
 from solum.netlist import Ac, NetlistError, input_part
 from solum.sim.engine import SimTimeout
@@ -62,6 +63,14 @@ UNDO_FADE_S = 0.005  # the undone clip fades in over this (see `undo_pickup`)
 
 class RenderError(ValueError):
     """A render can't be done (plain-English message)."""
+
+
+def refuse_unplugged(circuit: Circuit | None) -> None:
+    """RenderError with a cable out: nothing would come through, so there's no take, only
+    the reason (D-354). The API asks before queueing a job, so a sweep fails at once."""
+    silent = silence(circuit) if circuit is not None else None
+    if silent:
+        raise RenderError(f"{silent} Put its cable in (Knobs) to render.")
 
 
 @dataclass(frozen=True)
@@ -211,6 +220,7 @@ def render(
     circuit's output is kept, so a render that differs only after the pedal (capture, IR,
     Input) doesn't simulate again."""
     report = progress or (lambda _f: None)
+    refuse_unplugged(circuit)
     input_db = _input_db(inputs)
     clip = read_clip(inputs.clip)
     gain = clip_gain(clip, inputs.level)

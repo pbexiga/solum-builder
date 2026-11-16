@@ -7,7 +7,14 @@ from pathlib import Path
 import numpy as np
 import pytest
 
-from solum.audio.render import DEFAULT_INPUT_DBU, Inputs, full_scale_volts, render, render_key
+from solum.audio.render import (
+    DEFAULT_INPUT_DBU,
+    Inputs,
+    RenderError,
+    full_scale_volts,
+    render,
+    render_key,
+)
 from solum.audio.wav import Audio, read_wav, write_wav
 from solum.cache import SimCache
 from solum.circuit.build import CircuitBuilder
@@ -81,6 +88,40 @@ def test_no_amp_output_is_a_plain_error(sim: Simulator, circuit: Builder, tmp_pa
     )
     with pytest.raises(NetlistError, match="amp output"):
         render(sim, c, Inputs(tone(200)), tmp_path)
+
+
+def test_with_the_output_cable_out_a_render_is_refused_saying_why(
+    sim: Simulator, circuit: Builder, tmp_path: Path
+) -> None:
+    """D-354: nothing would reach the amp, so there's no take, only the reason."""
+    jacked = (
+        circuit("rc, cable out")
+        .part("IN", "guitar", "in")
+        .part("R1", "resistor", "in", "out", value=10e3)
+        .part("OUT", "amp", "out", value="10M")
+        .part("J2", "jack", pins={"T": "out", "S": "0"}, plugged=False)
+        .build()
+    )
+    with pytest.raises(RenderError, match=r"^J2 has no cable in: nothing reaches the amp\. Put"):
+        render(sim, jacked, Inputs(tone(200)), tmp_path)
+    render(sim, jacked.with_part("J2", plugged=True), Inputs(tone(200)), tmp_path)  # cable in
+
+
+def test_a_cable_out_of_a_jack_off_the_input_and_output_doesnt_stop_a_render(
+    sim: Simulator, circuit: Builder, tmp_path: Path
+) -> None:
+    """D-354: only a jack on IN's or OUT's net carries the signal; one elsewhere is a
+    drawing, its cable changes nothing."""
+    c = (
+        circuit("rc, a loose jack")
+        .part("IN", "guitar", "in")
+        .part("R1", "resistor", "in", "out", value=10e3)
+        .part("OUT", "amp", "out", value="10M")
+        .part("R2", "resistor", "x", "0", value="1k")
+        .part("J3", "jack", pins={"T": "x", "S": "0"}, plugged=False)
+        .build()
+    )
+    assert level_db(render(sim, c, Inputs(tone(200)), tmp_path).wav) == pytest.approx(0, abs=0.1)
 
 
 STRAT = {"r": "6k38", "l": "2.55", "c": "151p", "kind": "strat"}

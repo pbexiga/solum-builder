@@ -15,6 +15,7 @@ from solum.circuit.supply import (
     live_rails,
     on_battery,
     power_chip,
+    powered_off,
     supply_volts,
 )
 from solum.models import ModelLibrary, load_models
@@ -252,3 +253,31 @@ def test_the_cable_is_a_knob_with_a_battery(circuit: Builder) -> None:
     assert parts["J1"]["draw"] == {"stereo": True, "plugged": False}
     no_battery = circuit().part("J1", "jack", stereo=True).build()
     assert controls(no_battery) == []
+
+
+def test_a_cut_off_battery_holds_nothing(models: ModelLibrary, circuit: Builder) -> None:
+    """D-354: the cable out, the battery's source is 0 V (the ring stays open), so no
+    supply leaks through; its rail reads 0 V and the pedal counts as off."""
+    off = ring_pedal(circuit, cable=False).build()
+    assert "V_BAT1 v_ bneg DC 0" in generate_netlist(off, models, Op()).text.splitlines()
+    assert supply_volts(off)["V+"] == 0.0 and powered_off(off)
+    on = ring_pedal(circuit).build()
+    assert "V_BAT1 v_ bneg DC 9" in generate_netlist(on, models, Op()).text.splitlines()
+    assert supply_volts(on)["V+"] == 9.0 and not powered_off(on)
+
+
+def test_any_jack_whose_cable_switches_something_has_a_cable_knob(circuit: Builder) -> None:
+    """D-354: a mono jack on the guitar's or the amp's net too; a stereo one beside a
+    battery that its ring doesn't take, not (its cable switches nothing)."""
+    c = (
+        circuit()
+        .part("IN", "guitar", "in")
+        .part("R1", "resistor", "in", "out", value="10k")
+        .part("OUT", "amp", "out")
+        .part("J1", "jack", label="Input", pins={"T": "in", "S": "0"})
+        .part("J2", "jack", label="Output", pins={"T": "out", "S": "0"})
+        .part("J3", "jack", stereo=True, pins={"T": "x", "R": "y", "S": "0"})
+        .part("BAT1", "battery", "V+", "0")
+        .build()
+    )
+    assert [k["label"] for k in controls(c) if k.get("plug")] == ["Input cable", "Output cable"]

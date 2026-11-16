@@ -17,7 +17,7 @@ export function withControls(circuit, controls, values) {
   for (const c of controls) {
     if (!(c.ref in values)) continue;
     // a switch's knob turns every pole (`refs`, D-143); a `plug` knob (the DC jack's Power,
-    // a stereo jack's cable, D-185) is its part's `plugged`, in at position 0
+    // a jack's cable, D-185, D-354) is its part's `plugged`, in at position 0
     for (const ref of c.refs ?? [c.ref]) {
       set.set(ref, c.plug ? ["plugged", values[c.ref] === 0] : [c.kind === "switch" ? "position" : "rotation", values[c.ref]]);
     }

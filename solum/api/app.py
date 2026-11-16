@@ -29,7 +29,7 @@ from solum.audio.assets import KINDS, AssetError, AssetLayer, AudioLibrary, Kind
 from solum.audio.bundle import safe_file_name, zip_takes
 from solum.audio.jobs import RenderJobs, spectra_key
 from solum.audio.nam import NamError
-from solum.audio.render import Inputs, RenderError, render_key
+from solum.audio.render import Inputs, RenderError, refuse_unplugged, render_key
 from solum.audio.wav import WavError
 from solum.bias import BiasError
 from solum.bias_sheet import bias_page, bias_sheet
@@ -1061,6 +1061,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def start_render(
         circuit: Circuit | None, inputs: Inputs, label: str, cached_only: bool = False
     ) -> dict[str, Any] | None:
+        refuse_unplugged(circuit)
         runner = simulator(circuit) if circuit is not None else require_sim()
         key = render_key(runner, circuit, inputs, settings.cache_dir)
         data = circuit_to_dict(circuit) if circuit else None
@@ -1104,6 +1105,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             knob = circuit.part(ref)
         except KeyError:
             raise HTTPException(404, f"There's no part {ref} in this circuit.") from None
+        refuse_unplugged(circuit)
         if not turns(knob):
             raise HTTPException(422, f"{ref} isn't a pot; only pots can be swept.")
         if isinstance(knob, Trimmer) and knob.bias_target is not None:

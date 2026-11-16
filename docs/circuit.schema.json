@@ -1006,7 +1006,7 @@
     },
     "Jack": {
       "additionalProperties": false,
-      "description": "An input or output jack (v18, D-174), drawn as KiCad draws one: `AudioJack2` (mono,\nTS: pins T and S) or, `stereo`, `AudioJack3` (TRS: T, R and S). Drawing only, for the\nbuild and its export: the guitar input and the amp are where the simulation's signal\nstarts and ends, so a jack carries no signal in it. `label`: what it's for (Input,\nOutput). `plugged` (v21, D-185): a stereo jack's cable is in, so its sleeve joins the\nring to S, the one contact the simulation keeps: a battery wired to the ring is on\nonly with a cable in.",
+      "description": "An input or output jack (v18, D-174), drawn as KiCad draws one: `AudioJack2` (mono,\nTS: pins T and S) or, `stereo`, `AudioJack3` (TRS: T, R and S). Drawing only, for the\nbuild and its export: the guitar input and the amp are where the simulation's signal\nstarts and ends, so a jack carries no signal in it. `label`: what it's for (Input,\nOutput). `plugged` (v21, D-185): its cable is in. A stereo jack's sleeve then joins\nthe ring to S, so a battery wired to the ring is on only with a cable in; on IN's or\nOUT's net, no cable means no signal through, so no curves and no render (D-354,\n`solum/circuit/cables.py`).",
       "properties": {
         "ref": {
           "pattern": "^[A-Za-z][A-Za-z0-9]*$",

@@ -524,9 +524,10 @@ class Jack(_Part):
     TS: pins T and S) or, `stereo`, `AudioJack3` (TRS: T, R and S). Drawing only, for the
     build and its export: the guitar input and the amp are where the simulation's signal
     starts and ends, so a jack carries no signal in it. `label`: what it's for (Input,
-    Output). `plugged` (v21, D-185): a stereo jack's cable is in, so its sleeve joins the
-    ring to S, the one contact the simulation keeps: a battery wired to the ring is on
-    only with a cable in."""
+    Output). `plugged` (v21, D-185): its cable is in. A stereo jack's sleeve then joins
+    the ring to S, so a battery wired to the ring is on only with a cable in; on IN's or
+    OUT's net, no cable means no signal through, so no curves and no render (D-354,
+    `solum/circuit/cables.py`)."""
 
     type: Literal["jack"]
     stereo: bool = False

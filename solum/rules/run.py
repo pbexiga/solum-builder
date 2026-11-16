@@ -8,6 +8,7 @@ from pathlib import Path
 from solum.bias import BiasError
 from solum.circuit.connectivity import ConnectivityError, connect
 from solum.circuit.schema import SCHEMA_VERSION, Circuit
+from solum.circuit.supply import powered_off
 from solum.models import ModelError, ModelLibrary
 from solum.netlist import NetlistError
 from solum.rules.checks import CHECKS, Context, Hit
@@ -157,4 +158,6 @@ class Checker:
             ctx.op = sim.op(circuit)
         except RUN_ERRORS as err:
             return _order(found + self.explain(err)), False
+        if powered_off(circuit):  # a cable out: every stage reads 0 V, as it should (D-354)
+            return _order(found), True
         return _order(found + self._run("operating_point", ctx)), True

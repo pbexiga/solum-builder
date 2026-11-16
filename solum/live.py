@@ -12,6 +12,7 @@ from typing import Any, Literal
 
 import numpy as np
 
+from solum.circuit.cables import plays
 from solum.circuit.connectivity import connect
 from solum.circuit.schema import (
     AmpInput,
@@ -27,7 +28,7 @@ from solum.circuit.schema import (
 )
 from solum.linear import GROUND, ac_magnitude, branches, element_values, system_data
 from solum.models import ModelLibrary
-from solum.netlist import Ac, Element, input_part, part_elements
+from solum.netlist import Ac, Element, part_elements
 from solum.probe import floats
 from solum.sim.engine import SimError
 from solum.simulate import Simulator
@@ -211,7 +212,7 @@ def live_view(
     where: dict[str, int] = {}
     valid = True
     nudged: list[dict[str, Any]] = []
-    if input_part(circuit) is not None:
+    if plays(circuit):  # a cable out: no curve to redraw either (D-354)
         try:
             lin = sim.linearise(circuit)
         except SimError:  # half drawn, say: no curve, but the sliders still work (D-164)

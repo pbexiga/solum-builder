@@ -203,7 +203,7 @@ def test_rail_nets_include_opamp_supplies(circuit: Builder) -> None:
         ({"type": "switch", "kind": "spst"}, "SPST"),
         ({"type": "switch", "kind": "rotary-1p4t"}, "1P4T"),
         ({"type": "battery", "volts": 7.4, "state": "half"}, "7.4 V half"),
-        ({"type": "dcjack", "plugged": False}, "unplugged"),
+        ({"type": "dcjack", "plugged": False}, ""),  # in its symbol, following the switch
         ({"type": "guitar"}, "Buffered"),
         ({"type": "amp"}, "amp 1M"),
         ({"type": "vsource", "value": 9}, "9 V"),

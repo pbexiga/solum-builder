@@ -24,6 +24,7 @@ from solum.api.serving import serving
 from solum.circuit.draw import Drawing
 from solum.circuit.io import circuit_to_dict
 from solum.config import load_settings
+from solum.settings_file import SETTINGS_FILE
 from tests.ui.conftest import click_part, open_circuit, part_pos, updates, wait_for_update
 from tests.ui.test_audio import plucks, render_and_wait, upload
 from tests.ui.test_editor import click_at, delete_part, menu, save_as, views, wait_for_view
@@ -34,7 +35,8 @@ SIZE = {"width": 1600, "height": 1000}
 
 
 @contextmanager
-def server() -> Iterator[str]:
+def server() -> Iterator[tuple[str, Path]]:
+    """The app's address, and its data folder."""
     tmp = Path(tempfile.mkdtemp(prefix="guide-shots-"))
     settings = load_settings(
         {
@@ -45,7 +47,7 @@ def server() -> Iterator[str]:
         }
     )
     with serving(settings) as base:
-        yield base
+        yield base, settings.data_dir
 
 
 def shoot(page: Page, name: str, selector: str | None = None) -> None:
@@ -172,22 +174,26 @@ def bias_headroom(page: Page, base: str) -> None:
     shoot(page, "try-changes")
 
 
-def battery_buffer() -> dict[str, object]:
+def battery_buffer(dc: bool = False, electrolytic: bool = False) -> dict[str, object]:
     """A JFET buffer on a battery: J1 (stereo) plugged into IN, its ring switching the
-    battery, and J2 plugged into OUT (D-353 to D-355). Net-checked when it was drawn."""
+    battery, and J2 plugged into OUT (D-353 to D-355). Net-checked when it was drawn.
+    `dc`: a DC jack in the battery's place and J1 mono; `electrolytic`: C2 a 10µ
+    electrolytic with no rating."""
     d = Drawing()
     d.part("IN", "guitar", (0, 0), volume="250k")
-    d.part("J1", "jack", (-100, -20), stereo=True, label="Input")
+    d.part("J1", "jack", (-100, 0) if dc else (-100, -20), stereo=not dc, label="Input")
     d.wire("J1.T", (0, 0))  # J1's T plugs into IN's middle
     d.part("C1", "capacitor", (80, 0), value="100n", kind="film")
     d.part("R1", "resistor", (140, 40), 90, value="1M")
     d.part("Q1", "jfet", (200, 0), model="J201")
     d.part("R2", "resistor", (220, 80), 90, value="10k")
-    d.part("C2", "capacitor", (280, 20), value="1µ", kind="film")
+    if electrolytic:
+        d.part("C2", "capacitor", (280, 20), value="10µ", kind="electrolytic")
+    else:
+        d.part("C2", "capacitor", (280, 20), value="1µ", kind="film")
     d.part("R3", "resistor", (340, 60), 90, value="1M")
     d.part("OUT", "amp", (420, 20))
     d.part("J2", "jack", (490, 20), 180, label="Output")
-    d.part("BAT1", "battery", (-20, -100))  # right of J1: its - drops onto R
     d.wire("IN.out", "C1.1")
     d.wire("C1.2", "Q1.G")
     d.wire((140, 0), "R1.1")
@@ -196,33 +202,92 @@ def battery_buffer() -> dict[str, object]:
     d.wire("C2.2", "OUT.in")
     d.wire((340, 20), "R3.1")
     d.wire("J2.T", (430, 20))  # J2's T plugs into OUT's end
-    d.label("V+", "BAT1.+", "Q1.D")
-    d.wire("BAT1.-", (-20, -20), "J1.R")
+    if dc:
+        d.part("DC", "dcjack", (-80, -160))  # clear of J1's ground
+        d.stub("DC.+", "V+", dx=40)
+        d.label("V+", "Q1.D")
+        d.stub("DC.-", "GND", dx=80)
+    else:
+        d.part("BAT1", "battery", (-20, -100))  # right of J1: its - drops onto R
+        d.label("V+", "BAT1.+", "Q1.D")
+        d.wire("BAT1.-", (-20, -20), "J1.R")
     d.label("GND", "R1.2", "R2.2", "R3.2")
     d.stub("J1.S", "GND", dy=-40, rot=180)
     d.stub("J2.S", "GND", dy=20)
-    return circuit_to_dict(d.circuit("Battery buffer", probes={"in": "in", "out": "out"}))
+    power = {"power": {"rails": {"V+": 9.0}}} if dc else {}
+    return circuit_to_dict(d.circuit("Battery buffer", probes={"in": "in", "out": "out"}, **power))
+
+
+def opened_drawn(page: Page, base: str, circuit: dict[str, object], name: str) -> None:
+    """A circuit drawn here, saved as `name` and open."""
+    page.goto(base)
+    saved = page.request.post(f"{base}api/circuits", data={"circuit": circuit, "name": name})
+    open_circuit(page, base, "circuit/" + saved.json()["circuit"]["id"])
+
+
+def panes_on_top(page: Page, *panes: str) -> None:
+    """These panes at the top of the Results column, the first on top, as dragging their
+    title bars would."""
+    page.evaluate(
+        """(ids) => { const a = document.querySelector("aside.panels");
+        for (const id of ids) {
+          const el = document.getElementById(`panel-${id}`);
+          el.open = true; a.prepend(el); }
+        a.prepend(document.getElementById("error"));
+        a.scrollTop = 0; }""",
+        list(reversed(panes)),
+    )
 
 
 def jacks(page: Page, base: str) -> None:
     """A battery buffer with its input cable pulled: the jacks plugged into IN and OUT, the
     Input cable switch in Knobs, and the Frequency pane saying why there's no curve."""
-    page.goto(base)
-    saved = page.request.post(
-        f"{base}api/circuits", data={"circuit": battery_buffer(), "name": "Battery buffer"}
-    )
-    open_circuit(page, base, "circuit/" + saved.json()["circuit"]["id"])
-    page.evaluate(  # Knobs and Frequency at the top, as dragging their title bars would
-        """() => { const a = document.querySelector("aside.panels");
-        for (const id of ["frequency", "knobs"])
-          a.prepend(document.getElementById(`panel-${id}`));
-        a.scrollTop = 0; }"""
-    )
+    opened_drawn(page, base, battery_buffer(), "Battery buffer")
+    panes_on_top(page, "knobs", "frequency")
     before = updates(page)
     page.locator('#knobs-body [data-knob="J1"] [data-position="2"]').click()  # Cable out
     wait_for_update(page, before, 120_000)
     page.mouse.click(5, 990)  # nothing selected
     shoot(page, "jacks")
+
+
+def dc_jack_power(page: Page, base: str) -> None:
+    """The buffer on a DC jack alone, unplugged (D-359): its Power switch in Knobs, the
+    chip *DC jack · unplugged* and the no-power banner."""
+    opened_drawn(page, base, battery_buffer(dc=True), "DC buffer")
+    panes_on_top(page, "knobs", "dc")
+    before = updates(page)
+    page.locator('#knobs-body [data-knob="DC"] [data-position="1"]').click()  # Unplugged
+    wait_for_update(page, before, 120_000)
+    page.mouse.click(5, 990)  # nothing selected
+    shoot(page, "dc-jack-power")
+
+
+def no_power(page: Page, base: str) -> None:
+    """A clean boost (a TL061 on a battery switched by J1) with the cable out (D-359): the
+    banner, and DC voltages and Probe saying why there are no readings."""
+    page.goto(base)
+    fixture = REPO / "tests" / "fixtures" / "circuits" / "boost-battery-jack.json"
+    opened_drawn(page, base, json.loads(fixture.read_text()), "Clean boost")
+    panes_on_top(page, "knobs", "dc", "probe")
+    before = updates(page)
+    page.locator('#knobs-body [data-knob="J1"] [data-position="2"]').click()  # Cable out
+    wait_for_update(page, before, 120_000)
+    before = updates(page)
+    page.locator("#error").click()  # selects J1
+    wait_for_update(page, before, 120_000)
+    shoot(page, "no-power", "aside.panels")
+
+
+def ratings(page: Page, base: str) -> None:
+    """Before you build's *Electrolytic with no voltage rating*, opened on its *Use
+    suggested ratings* button (D-360)."""
+    opened_drawn(page, base, battery_buffer(electrolytic=True), "Buffer to build")
+    build = page.locator("#problems-build")
+    build.locator("> summary").click()
+    build.locator("details.problem[data-rule='cap-no-rating'] > summary").click()
+    page.mouse.click(5, 990)
+    shoot(page, "ratings", "#panel-problems")
 
 
 def problems(page: Page, base: str) -> None:
@@ -245,6 +310,9 @@ def blocks_dialog(page: Page, base: str) -> None:
 
 
 def open_dialog(page: Page, base: str) -> None:
+    """Four circuits of the user's own: the ones the pictures before saved are deleted."""
+    for entry in page.request.get(f"{base}api/circuits").json():
+        page.request.delete(f"{base}api/circuits/{entry['id']}")
     for name, circuit in (
         ("My Screamer", "ts808"),
         ("Rat with LEDs", "proco-rat"),
@@ -389,6 +457,9 @@ SHOTS: dict[str, Callable[[Page, str], None]] = {
     "bias-headroom": bias_headroom,
     "problems": problems,
     "jacks": jacks,
+    "dc-jack-power": dc_jack_power,
+    "no-power": no_power,
+    "ratings": ratings,
     "blocks-dialog": blocks_dialog,
     "open-dialog": open_dialog,
     "import-dialog": import_dialog,
@@ -407,10 +478,13 @@ def main(names: list[str]) -> None:
     if unknown:
         sys.exit(f"No such picture: {', '.join(sorted(unknown))}. Pictures: {', '.join(SHOTS)}")
     OUT.mkdir(parents=True, exist_ok=True)
-    with server() as base, sync_playwright() as p:
+    with server() as (base, data), sync_playwright() as p:
         browser: Browser = p.chromium.launch()
         for name in names or SHOTS:
-            page = browser.new_page(viewport=SIZE)  # each picture starts from a fresh page
+            # each picture starts as a first visit: a fresh page, and no preferences kept
+            # by the server (D-311) from the one before (a pane left expanded)
+            (data / SETTINGS_FILE).unlink(missing_ok=True)
+            page = browser.new_page(viewport=SIZE)
             page.on("pageerror", lambda e: print("page error:", e))
             SHOTS[name](page, base)
             page.close()

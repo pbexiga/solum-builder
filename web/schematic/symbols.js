@@ -637,7 +637,8 @@ function rotaryInside(ys, at) {
  * size): the barrel along the top of a box, its three lugs out to the right: − (the
  * centre pin, centre negative) at the top, the battery lug in the middle and + (the
  * sleeve) at the bottom. The battery lug's spring rests on the sleeve with no plug in and
- * is lifted off by one (the part's text says which).
+ * is lifted off by one, and the text under it says which, so it follows the Power switch
+ * as a jack's cable text does.
  * @param {{plugged?: boolean}} draw
  */
 function dcjack(draw) {
@@ -651,9 +652,10 @@ function dcjack(draw) {
       line(10, 0, 60, 0), line(10, 0, 10, tip), line(10, tip, 5, tip - 5), line(10, tip, 15, tip - 5), // the battery lug's spring
       line(-30, 20, -20, 20), line(-20, 20, -10, 10), line(-10, 10, 0, 20), line(0, 20, 60, 20), // the sleeve
       { text: "−", at: [50, -23], size: 7 }, { text: "bat", at: [50, -3], size: 6 }, { text: "+", at: [50, 17], size: 7 },
+      { text: plugged ? "plugged in" : "unplugged", at: [0, 42], size: 6 },
     ],
     leads: { "-": [60, -20], sw: [60, 0], "+": [60, 20] },
-    box: [-40, -32, 100, 64],
+    box: [-40, -32, 100, 78], // down to its plugged-in text
     ref: [0, -36],
     value: [0, 42],
     anchor: "middle",

@@ -15,6 +15,8 @@ from typing import Any
 import pytest
 from playwright.sync_api import Page, expect
 
+from solum.circuit.draw import Drawing
+from solum.circuit.io import circuit_to_dict
 from tests.ui.conftest import (
     REPO,
     click_part,
@@ -491,6 +493,34 @@ def test_a_battery_with_no_dc_jack_says_to_draw_one(page: Page, base_url: str) -
     menu = page.locator("#power")
     expect(menu).to_be_disabled()
     expect(menu).to_have_attribute("title", re.compile(r"Draw a DC jack to use it\.$"))
+
+
+def test_the_dc_jacks_text_follows_its_power_switch(page: Page, base_url: str) -> None:
+    """D-359: the DC jack's *plugged in* / *unplugged* on the sheet is drawn with its
+    symbol, so flipping Power in Knobs changes it, as a jack's cable text does (it was the
+    part's value line, written from the file, so it kept the opening position)."""
+    d = Drawing()
+    d.part("IN", "guitar", (0, 0))
+    d.part("R1", "resistor", (80, 0), value="10k")
+    d.part("R2", "resistor", (140, 40), 90, value="1M")
+    d.part("OUT", "amp", (220, 0))
+    d.wire("IN.out", "R1.1")
+    d.wire("R1.2", "OUT.in")
+    d.wire((140, 0), "R2.1")
+    d.label("GND", "R2.2")
+    d.part("DC", "dcjack", (0, -160))
+    d.stub("DC.+", "V+", dx=40)
+    d.stub("DC.-", "GND", dx=80)
+    circuit = circuit_to_dict(d.circuit("DC text", power={"rails": {"V+": 9.0}}))
+    saved = page.request.post(
+        f"{base_url}api/circuits", data={"circuit": circuit, "name": "DC text"}
+    )
+    page.goto(base_url)
+    open_circuit(page, base_url, "circuit/" + saved.json()["circuit"]["id"])
+    text = page.locator('g.part[data-ref="DC"] text.sym-text', has_text="plugged")
+    expect(text).to_have_text("plugged in")
+    page.locator('#knobs-body [data-knob="DC"] [data-position="1"]').click()
+    expect(text).to_have_text("unplugged")
 
 
 def test_the_palette_is_whole_before_a_circuit_loads(page: Page, base_url: str) -> None:

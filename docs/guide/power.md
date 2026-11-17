@@ -24,9 +24,16 @@ Beside the menu, after a run, is the current the circuit draws from the supply (
 
 ### DC jack
 
-The DC jack draws the real jack: its sleeve **+** wired to V+, its centre **−** to ground (centre negative, as pedal supplies are), and its battery lug. It makes no voltage of its own: to the simulation it's a V+ label and a ground. It's there for a full drawing, the parts list and export. There's one per circuit, always called DC.
+The DC jack draws the real jack: its sleeve **+** wired to V+, its centre **−** to ground (centre negative, as pedal supplies are), and its battery lug. It makes no voltage of its own: the Power menu's supply comes in through it. It's there for a full drawing, the parts list and export. There's one per circuit, always called DC.
 
-With a battery wired to its lug, Knobs & switches gets a **Power** switch, the DC plug in or out: **DC jack** (a plug in: the Power menu's supply powers the pedal and the battery is cut off) or **Battery** (no plug: the battery lug touches the sleeve and the battery powers it). A chip left of the Power menu says which: *DC jack*, or *Battery · 7.4 V* with the menu greyed (*Battery · cut off* while a cable out switches it off).
+Once it's drawn, the adapter's plug counts, as on a real pedal: Knobs & switches always has its **Power** switch.
+
+- **With no battery**: **Plugged in** or **Unplugged**. Unplugged, the Power menu's rails (V+, and V− too) carry nothing and the pedal has no power (*The pedal has no power: DC has no plug in.*, see [No power](#no-power)).
+- **With a battery on its lug**: **DC jack** (a plug in: the Power menu's supply powers the pedal and the battery is cut off) or **Battery** (no plug: the battery lug touches the sleeve and the battery powers it).
+
+A chip left of the Power menu says which: *DC jack*, *DC jack · unplugged*, or *Battery · 7.4 V* with the menu greyed (*Battery · cut off* while a cable out switches it off).
+
+![A JFET buffer powered through a DC jack, no battery. Knobs & switches has its Power switch set to Unplugged: the jack on the sheet reads unplugged, the chip beside Power reads DC jack · unplugged, and the banner says The pedal has no power: DC has no plug in.](img/dc-jack-power.png)
 
 With a DC plug in, the input jack's cable doesn't matter to the power: the supply powers the pedal whether or not the battery is switched on. Pull the DC plug (**Battery**) and the battery is on only while a mono cable is in the input jack, if its − goes to the jack's ring.
 
@@ -42,6 +49,10 @@ Where its **+** goes decides what it powers:
 - **On any other net**: it powers only what's on that net, and the Power menu keeps V+.
 
 Its **−** goes to ground, so it's always on, or to a stereo input jack's ring, so that plugging a guitar cable in switches it on: a mono plug's long sleeve joins the ring to ground. That's how pedals save their batteries, and it's the next section.
+
+### DC source
+
+An ideal voltage of its own, on a net other than V+ and V−: a steady 4.5 V reference to rule out a divider, a second separate supply, a test voltage on a node. Label the parts it powers with its net's name. It can't go on V+ or V−, which the Power menu supplies: Problems says so and the circuit doesn't run until it's moved.
 
 ## Jacks and cables
 
@@ -69,7 +80,7 @@ Like any knob, it isn't an edit: the circuit opens with the cables in, unless yo
 
 Two rules decide it:
 
-- **No power, nothing to show.** When the battery is cut off and nothing else powers the circuit, Frequency and Scope show no curve and say why (*No frequency response. The pedal has no power: J1 has no cable in, so its battery is cut off.*), and Render is refused. The chip beside the Power menu reads *Battery · cut off*.
+- **No power, nothing to show.** When the battery is cut off and nothing else powers the circuit, the banner says so, Frequency and Scope show no curve and say why (*No frequency response. The pedal has no power: J1 has no cable in, so its battery is cut off.*), no voltages are shown, and Render is refused. The chip beside the Power menu reads *Battery · cut off*. See [No power](#no-power).
 - **A cable out of the input or output jack stops only the render.** Nothing would reach the amp, so there's no take, but a powered pedal keeps its curves and scope: they come from a test signal, not your clip, so they still show what the circuit does.
 
 | | Power | Input jack | Output jack | Frequency, Scope | Render |
@@ -86,15 +97,25 @@ Two rules decide it:
 
 A refused render says what to do: *J1 has no cable in: no guitar reaches the pedal and its battery is cut off. Put its cable in (Knobs) to render.*, or with no power, *… Put a mono cable in J1 (Knobs) to render.*
 
-**What counts as no power** is read from the drawing, not guessed from the voltages: the battery is cut off (a jack's ring takes its −, with a stereo cable or none in the jack), no part is on a supply the Power menu still holds (V+ or V−; a DC plug in holds V+), and no DC source drives a net. A pedal with only part of it on the battery (the rest on V+, say) is still powered: its curves are drawn and it renders, the dead stages doing what dead stages do.
+**What counts as no power** is read from the drawing, not guessed from the voltages: the battery is cut off (a jack's ring takes its −, with a stereo cable or none in the jack), no part is on a supply that's still on (the Power menu's V+ and V− are on with no DC jack drawn, or with a plug in it), and no DC source drives a net. A pedal with only part of it on the battery (the rest on V+, say) is still powered: its curves are drawn and it renders, the dead stages doing what dead stages do.
 
 Problems warns **Battery cut off: no mono cable in** (or *a stereo cable in*) whenever a cable cuts the battery off, saying whether the whole circuit or only what the battery feeds has no supply. With [Problem marks](problems.md#reading-a-problem) on, it's marked at the jack's ring. With no power at all it checks only the drawing: no bias warnings about a circuit that's simply off.
 
 The *9 V power* blocks come both ways: *battery only* and *DC jack and battery* keep the battery on all the time (simplest, for hearing a circuit), and *… switched by the input jack* put its − on J1's ring. Insert one, then wire J1's T (its **in** label) to IN's middle, so that J1 is the input jack: pulling its cable then takes out the guitar and the battery together.
 
-### DC source
+## No power
 
-An ideal voltage of its own, on a net other than V+ and V−: a steady 4.5 V reference to rule out a divider, a second separate supply, a test voltage on a node. Label the parts it powers with its net's name. It can't go on V+ or V−, which the Power menu supplies: Problems says so and the circuit doesn't run until it's moved.
+When every supply is cut off by a plug (the battery by its jack, the Power menu's supply by an unplugged DC jack) and nothing else holds a rail, the pedal has no power. The Results column's banner says so and names the plug: *The pedal has no power: J1 has no cable in, so its battery is cut off.*, or with both cut off *… DC has no plug in and J1 has no cable in, …*. Click it to select the jack. It clears with the next run that has power.
+
+![The banner at the top of the Results column: The pedal has no power: J1 has no cable in, so its battery is cut off. Frequency and DC voltages show no readings.](img/no-power.png)
+
+With no power the app shows no numbers: chip models make up a few volts of supply when they have none (a TL061 boost with its battery cut off read 3.08 V on V+), so any voltage would be made up. Instead:
+
+- **Frequency** and **Scope** show no curve, **DC voltages** and **Probe** say *No voltages.* or *No readings.* and why, and the sheet's DC voltages (View menu) show nothing;
+- **Bias & headroom** says why it has nothing to measure;
+- **Render** is refused, saying what fixes it: *… Put a mono cable in J1 or plug DC in (Knobs) to render.*
+
+When only part of the pedal loses its supply (the battery feeds one stage, the rest is on V+), it's still powered and simulated. Problems warns **Battery cut off**, and says that what it powers has no supply, so its voltages and sound there aren't real: chip models don't switch off cleanly. That's almost always a wiring mistake.
 
 ## Charge pumps and regulators
 

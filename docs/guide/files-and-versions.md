@@ -35,6 +35,8 @@ File → **Import…** takes a Solum Builder file from somewhere else: a circuit
 
 File → **Open…** lists your circuits in two sections: **Recent** (the last three saved) and **All circuits**. Type in **Search** to find one by name, tag or part model: only the matches show. **Current only** hides older versions (switch it off to see them); **A–Z** and **Z–A** sort All circuits. Click a circuit to open it; Enter (**Open first**) opens the first one listed.
 
+In the Mac app, the pop-out button beside the dialog's title (*Show the folder in Finder*) opens your circuits folder in the Finder, to back up, copy or send a file. A browser can't open a folder on the server's machine, so it has no such button; File → **Settings…** shows where the folder is.
+
 ## Versions
 
 Every file has a version, shown after its name: *v1.0*, *v1.12*.

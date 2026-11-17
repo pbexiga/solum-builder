@@ -5,15 +5,15 @@
 Drag a tile from the parts palette onto the sheet, or click a tile and then click where the part goes. Each tile's tooltip gives its key: press the key and click to place one (R resistor, C capacitor, P pot, T trimmer, S switch, D diode, E LED, Q transistor, J JFET, U dual op-amp, O single op-amp, I guitar in, A amp out, V DC source, H DC jack, Y battery, K charge pump, X text, W wire, G ground, L net label). Esc puts a part down without placing it.
 
 - **Space** turns the selected part a quarter turn.
-- **Drag** a part to move it; its wires follow and keep their bends.
-- A part **dropped on a wire** sits on it in series: the wire is cut and joined to its two pins.
+- **Drag** a part to move it; its wires follow and keep their bends. A straight wire grows or shrinks along its line, even where it was drawn in pieces; a bend pushed past the wire's far end is routed again, round the other wires.
+- A part **dropped on a wire** sits on it in series: the wire is cut and joined to its two pins, even when the wire's ends meet the pins exactly. A wire you drew across a part's pins on purpose (a jumper) stays when you move or turn the part.
 - **Del** deletes what's selected. IN and OUT can't be deleted: every circuit has one guitar input and one amp.
 
 Every part gets a ref (designator) of its kind with the next free number: R1, C3, VR2 (pot), TR1 (trimmer), SW1, D1, LED1, Q1 (any transistor), IC1, BAT1, J1 (jack). The DC jack is always DC. A dual op-amp is placed as both halves and its power unit (IC1A, IC1B, IC1C), and a switch with several poles as one part per pole (SW1A, SW1B…), all turned by one control.
 
 ## Wires
 
-Pick the **Wire** tool (W). Click to start, click again to add a bend, and click a pin, a label or another wire to finish. Wires make square bends, go around parts, and hop over wires they cross without joining them. A dot marks each junction, where wires join.
+Pick the **Wire** tool (W). Picking a part, ground, a supply, text, **Net label** or **Insert block** puts it down again. Click to start, click again to add a bend, and click a pin, a label or another wire to finish. Wires make square bends, go around parts, and hop over wires they cross without joining them. A dot marks each junction, where wires join.
 
 - **Drag a ball** on a wire's end to move that end.
 - **Click a wire** to select all of it, through its bends, to its ends. **Drag a wire**, selected or not, to move the stretch you grabbed; what it connects stays connected. New wires come from the Wire tool, or a press on a pin, as below.
@@ -33,13 +33,14 @@ A *net* is everything joined together. Wires join things you can see; a name joi
 - **Ground** (G): every ground symbol is the net GND.
 - **V+** and **V-**: every V+ bar is the same net, driven by the Power menu (see [Power](power.md)). Placing a V- bar adds a negative supply.
 
-Labels, grounds and supplies drag by their symbol or their name.
+Labels, grounds and supplies drag by their symbol or their name. A V+, V− or ground dropped on a wire, or at its end, turns to point away from it, unless you turned it with Space first.
 
 ## Selecting, copying and undoing
 
 - **Shift+drag** on empty space draws a box around what to select; Ctrl+Shift+drag adds to the selection. **Ctrl+click** (or Shift+click) adds or removes one thing. **Ctrl+A** selects everything.
 - Dragging any selected part moves the whole selection.
 - **Ctrl+C** copies, **Ctrl+V** pastes: the copy follows the pointer until you click where it goes. Pasting works across circuits; pasted parts are renumbered so no ref is used twice.
+- An edit the app can't take (a wire on IN's plug point, say) is undone at once, and a bar over the foot of the sheet says why. It goes after a few seconds (not while the pointer is on it) or with its **×**.
 - **Ctrl+Z** undoes, **Ctrl+Shift+Z** (or Ctrl+Y) redoes. Undo puts back the selection too, so an undone move leaves the moved things selected.
 - **History** (in the header, or Edit → History…) lists every step since the circuit opened, newest first. Click one to go back, or forward, to it.
 - **Ctrl+F** (Edit → Find part…) selects a part by its ref and brings it into view.
@@ -52,7 +53,7 @@ Scroll to zoom, drag empty space to pan. The **+**, **−** and **Fit** buttons 
 
 ## Editing a part
 
-Double-click a part, or select it and press **Enter**, to open its form. **Apply** (or Enter) keeps the changes; **Cancel** (or Esc) leaves it as it was. Every Apply is one step to undo.
+Double-click a part, or select it and press **Enter**, to open its form. It opens on the first box after Ref (a resistor's value, a chip's model), its text selected, so you can type the new value straight away and press Enter. **Apply** (or Enter) keeps the changes; **Cancel** (or Esc) leaves it as it was. Every Apply is one step to undo.
 
 - **Value**: type it the way it's written on a schematic: `4k7`, `22n`, `2M2`, `100p`, `4.7k` and `4700` all work, and `u` stands for `µ`. A value the part can't have (`4k7F` on a resistor, `10F` on a capacitor) is refused with the reason. The value is kept in its standard form: `100uf` becomes `100µ`.
 - **Slide**: a slider over the standard values pedals use, the same range whatever the part's value: 10 Ω to 10 MΩ for a resistor, 10p to 470µ for a capacitor, 1k to 1M for a pot or trimmer (an inductor's runs from a tenth to ten times its value). The Frequency curve follows as you drag; letting go applies the value and runs again. It works on a sheet that can't be simulated yet, without the live curve.
@@ -62,7 +63,7 @@ Double-click a part, or select it and press **Enter**, to open its form. **Apply
 
 Some forms have more:
 
-- **Capacitor**: its *Kind* (film, ceramic, C0G, electrolytic, tantalum) and *Rating* in volts. The kind doesn't change the simulation; it's for the build, the voltage check and the advice in Problems. Help → **Choosing capacitors…** says which kind goes where.
+- **Capacitor**: its *Kind* (film, ceramic, C0G, electrolytic, tantalum) and *Rating* in volts. The kind doesn't change the simulation; it's for the build, the voltage check and the advice in Problems. Apply **electrolytic** or **tantalum** with Rating empty and it's filled for the circuit's supply: the smallest rating sold with 20 % to spare (16 V on 9 V, 25 V on 18 V). A rating you type is kept; with no supply nothing is filled. To fill every capacitor at once, see [Use suggested ratings](problems.md#capacitor-ratings). Help → **Choosing capacitors…** says which kind goes where.
 - **Pot and trimmer**: value, taper (A log, B linear, C reverse log, W centre-tap), *Rotation* (where its knob starts when the circuit opens) and a label, which names its knob ("VR1 Volume"). A pot can be *Dual*: two gangs on one shaft, drawn as VR1A and VR1B. A trimmer can hold a voltage instead of a rotation: see [Bias & headroom](bias-and-headroom.md#a-trimmer-with-a-target).
 - **Transistor and JFET**: the model's typical gain, or your own unit's measured figures. See [Germanium transistors](germanium.md) for why that matters.
 - **Switch**: its *Type*, from the toggles, push buttons, footswitches, DIP switches and rotary selectors that are sold, or **Custom…** for your own poles, throws and what each position joins. *Position* is where it starts; name the positions (Vintage, Thick) and the names show on its buttons in Knobs.

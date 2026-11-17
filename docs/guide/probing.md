@@ -46,7 +46,9 @@ Click a part's body. Probe shows what matters for that kind of part:
 - **JFET and MOSFET**: Vgs, Vds and Id, judged at the drain (or the source for a follower), its room up and down, and a curve of drain current against Vgs.
 - **Op-amp**: its output's DC, its supply, its inputs (and whether they stay inside the datasheet's input range), and its room up and down.
 
-Every part's view ends with its pins: which net each is on and its DC. Click a pin's row to probe that net.
+Every part's view ends with its pins: which net each is on and its DC. Click a pin's row to probe that net. A chip's pins are listed by their number on the chip, as you count them on the one in your hand (*3 (+)*, under *Pin, 8-pin DIP*). The list follows the drawing as soon as you change it (a pin drawn or a wire moved), and a pin's DC comes back with the next run.
+
+With [no power](power.md#no-power), Probe says *No readings.* and why, and its pins have no DC.
 
 ## Scope
 

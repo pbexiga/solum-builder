@@ -12,6 +12,10 @@ The browser mixed new scripts with old ones from its cache. Reload once with **C
 
 Something in the drawing stops the simulation: a net with no DC path to ground (two capacitors in series with nothing else on the net between them), a chip with no power, a DC source on V+, a model that isn't in the library. The banner says which; click it to select the part or net it names. Problems lists it with the fix. A half-drawn circuit says this until it's wired.
 
+## "The pedal has no power: …"
+
+Every supply is cut off by a plug: the battery by a jack with no cable in (or a stereo one), or the Power menu's supply by the DC jack with no plug in (*The pedal has no power: DC has no plug in.*). Chip models make up a few volts when they have no supply, so the app shows no voltages, curves or render rather than numbers that aren't real. Click the message to select the jack, then set its switch in **Knobs & switches**: *Cable in* (or *Mono cable*) for a jack, *Plugged in* or *DC jack* for the DC jack. See [Power](power.md#no-power).
+
 ## "Can't simulate: … It got stuck at …"
 
 ngspice couldn't find the circuit's DC voltages, or its time step became too small, and it names where it gave up. Click the message to select that part. It's where to look first, not always the cause: check its value and model, and the parts wired to it (a transistor with a model card that's way off, positive feedback, an extreme value). Undo the last change to see if it caused this.

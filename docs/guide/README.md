@@ -17,7 +17,7 @@ This guide opens in the app from **Help → Documentation**. Type in the search 
 - [Bias & headroom](bias-and-headroom.md): the stage chain, what clips first, and Try changes.
 - [Problems](problems.md): the rules, reading a problem, and dismissing one.
 - [Blocks](blocks.md): dropping in ready-made stages, and saving your own.
-- [Power](power.md): the Power menu, the DC jack, the battery, jacks and their cables, the DC source and charge pumps.
+- [Power](power.md): the Power menu, the DC jack, the battery, jacks and their cables, no power, the DC source and charge pumps.
 - [Models](models.md): where each part's model comes from, your own units' figures, and adding a model.
 
 ## Hearing it

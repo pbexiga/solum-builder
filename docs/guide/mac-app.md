@@ -49,7 +49,7 @@ Links to other websites, and the guide's pop-out icon, open in your default brow
 
 ## Where your files are
 
-Circuits, blocks, models and audio are in `~/Library/Application Support/Solum Builder/`, and the cache in `~/Library/Caches/Solum Builder/`. To see `~/Library` in the Finder, hold Option and open the **Go** menu, or use **Show in Finder** in Settings.
+Circuits, blocks, models and audio are in `~/Library/Application Support/Solum Builder/`, and the cache in `~/Library/Caches/Solum Builder/`. To see `~/Library` in the Finder, hold Option and open the **Go** menu, or use **Show in Finder** in Settings. File → **Open…** has the same pop-out button beside its title (*Show the folder in Finder*), which opens your circuits folder.
 
 ![Settings in the Mac app, with Change… and Show in Finder for each folder](img/settings-mac.png)
 

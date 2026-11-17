@@ -24,6 +24,18 @@ Notes about the build (a capacitor with no kind, no enclosure chosen) gather und
 
 Some problems stop the run: ngspice would make up a voltage on a net with no DC path, so nothing is simulated and the banner says *Can't simulate yet:* and why. A part joined by only one pin is left out instead, and the rest runs; click it and Probe says it isn't wired in, with no readings. When a run is refused or fails, Probe names what you have selected and says why there is nothing to show. When the error in the Results column names a part or a net (a model not in the library, a net with no DC path, where ngspice got stuck, a trimmer that can't reach its bias target), click it to select that part or net on the sheet, as clicking its row in Problems does.
 
+## Capacitor ratings
+
+An electrolytic or tantalum needs a voltage rating to buy: *Electrolytic with no voltage rating* (under **Before you build**) says when one is empty, *Capacitor over its voltage rating* and *Capacitor close to its voltage rating* when the DC across it is over, or within 80 % of, the rating. Their rows have **Use suggested ratings**, which sets them all in one edit:
+
+- an empty rating gets the supply's (16 V on 9 V, 25 V on 18 V: the smallest sold with 20 % to spare);
+- a rating that's too low gets the smallest one with room for the DC across it, from the last run;
+- a rating that's fine is left alone, and film, ceramic and C0G stay unset (they're bought without one).
+
+One **Undo** puts them all back. Problems update on the next run, like after any edit. A new electrolytic gets its rating when you choose its kind: see [Drawing](drawing.md#editing-a-part).
+
+![Problems with Electrolytic with no voltage rating under Before you build, and its Use suggested ratings button](img/ratings.png)
+
 ## Dismissing a problem
 
 Sometimes a rule is wrong for your circuit: a starved fuzz runs its transistor nearly cut off on purpose. Open the row and press **Dismiss…**, give a reason if you like (*a starved fuzz, on purpose*), and press **Dismiss**. The problem moves to **Dismissed** at the bottom of the pane, loses its mark on the drawing, and the reason is saved with the circuit. **Bring back** returns it. Dismissing is an edit: Undo takes it back.

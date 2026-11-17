@@ -107,8 +107,8 @@ def part_text(part: Part, pickups: Mapping[str, str] | None = None) -> str:
         case Battery():
             state = f" {part.state}" if part.state else ""
             return f"{parse_value(part.volts):g} V{state}"
-        case DcJack():
-            return "plugged in" if part.plugged else "unplugged"
+        case DcJack():  # its symbol says plugged in or not, following the Power switch
+            return ""
         case Jack():
             return part.label or ("stereo" if part.stereo else "mono")
         case Guitar():

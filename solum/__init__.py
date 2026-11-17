@@ -1,3 +1,3 @@
 """Solum Builder: a self-hosted circuit simulator for guitar-pedal builders."""
 
-__version__ = "1.2.0"
+__version__ = "1.2.1"

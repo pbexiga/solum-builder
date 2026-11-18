@@ -672,7 +672,7 @@ table.readout tr.rail th { color: var(--text-2); }
 .sheet-body td:first-child { color: var(--text); }
 .sheet-body .values { font-family: var(--font-mono); font-size: 12px; white-space: nowrap; }
 .sheet-body code { font-family: var(--font-mono); font-size: 12px; color: var(--text); }
-.sheet .form-row { grid-template-columns: 130px 1fr 10px; }
+.sheet .form-row { grid-template-columns: 130px minmax(0, 1fr) 10px; } /* a long option can't widen the row (D-361) */
 .sheet .form-row input, .sheet .form-row select { min-width: 0; }
 /* Tools → Parts and datasheets (9c) */
 .sheet .form-row.parts-find { grid-template-columns: 130px 1fr auto; }
@@ -703,6 +703,11 @@ table.readout tr.rail th { color: var(--text-2); }
 .tool-result { margin-top: 6px; }
 .tool-result table { width: auto; min-width: 220px; }
 .tool-result td.values { text-align: right; color: var(--text); }
+/* As tall as the calculator picked, its top held where the largest one's would sit centred
+   (the filter worked from its corner with Compare with filled in, 770 px), growing downwards;
+   a scroll only when the window is too short for the largest (D-361). */
+#calculators.sheet { align-self: flex-start; margin-top: max(0px, calc((100vh - 802px) / 2)); max-height: min(770px, calc(100vh - 32px)); }
+#calculators .sheet-body { overflow-x: hidden; }
 .calculator > p:first-child { margin-top: 0; }
 #calculators .tool-result h3 { margin: 10px 0 2px; font-size: inherit; color: var(--text); }
 #calculators .tool-result th { font-weight: normal; text-align: left; padding-right: 14px; }

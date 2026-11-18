@@ -608,3 +608,64 @@ def test_calculators(page: Page, base_url: str, browser_errors: list[str]) -> No
     page.keyboard.press("Escape")
     menu(page, "tools-menu", "menu-calculators")
     expect(pick).to_have_value("db")
+
+
+FILL_THE_LARGEST = (
+    ("#filter-c", "22n"),
+    ("#filter-freq", "720"),
+    ("#filter-r2", "10k"),
+    ("#filter-c2", "1u"),
+)
+MEASURE_CALCULATORS = """() => { const b = document.querySelector('#calculators .sheet-body');
+  const r = document.querySelector('#calculators').getBoundingClientRect();
+  return {top: r.top, bottom: r.bottom, height: r.height,
+          wider: b.scrollWidth - b.clientWidth, taller: b.scrollHeight - b.clientHeight}; }"""
+
+
+def test_the_calculators_window_grows_downwards(page: Page, base_url: str) -> None:
+    """Tools → Calculators… (D-361): the window is as tall as the calculator picked, its top
+    staying put as it grows; the largest, the filter worked from its corner with Compare
+    with filled in, fits without a scroll on a tall enough screen, and nothing scrolls
+    sideways."""
+    page.set_viewport_size({"width": 1280, "height": 1000})
+    open_circuit(page, base_url)
+    menu(page, "tools-menu", "menu-calculators")
+    for field, value in FILL_THE_LARGEST:
+        page.locator(field).fill(value)
+    expect(page.locator("#filter-change")).to_be_visible()
+    seen = {}
+    for name in ("filter", "divider", "combine", "db"):
+        page.locator("#calc-pick").select_option(name)
+        seen[name] = page.evaluate(MEASURE_CALCULATORS)
+        assert (seen[name]["wider"], seen[name]["taller"]) == (0, 0), name
+    assert len({round(m["top"]) for m in seen.values()}) == 1  # anchored at the top
+    assert seen["db"]["height"] < seen["divider"]["height"] < seen["filter"]["height"]
+
+
+def test_the_calculators_window_scrolls_only_on_a_short_screen(page: Page, base_url: str) -> None:
+    """D-361: on a screen too short for the largest calculator the window fills it, and
+    only then scrolls."""
+    page.set_viewport_size({"width": 1280, "height": 700})
+    open_circuit(page, base_url)
+    menu(page, "tools-menu", "menu-calculators")
+    for field, value in FILL_THE_LARGEST:
+        page.locator(field).fill(value)
+    expect(page.locator("#filter-change")).to_be_attached()
+    m = page.evaluate(MEASURE_CALCULATORS)
+    assert m["taller"] > 0 and m["wider"] == 0
+    assert m["top"] == pytest.approx(16, abs=1) and m["bottom"] == pytest.approx(700 - 16, abs=1)
+
+
+def test_a_calculator_taller_than_the_largest_scrolls(page: Page, base_url: str) -> None:
+    """D-361: a calculator taller than today's largest stops at its height and scrolls,
+    even on a screen with room for more."""
+    page.set_viewport_size({"width": 1280, "height": 1200})
+    open_circuit(page, base_url)
+    menu(page, "tools-menu", "menu-calculators")
+    expect(page.locator("#calc-filter")).to_be_visible()
+    page.evaluate(
+        "document.querySelector('#calc-filter').append(Object.assign(document.createElement('div'), {style: 'height: 900px'}))"
+    )
+    m = page.evaluate(MEASURE_CALCULATORS)
+    assert m["height"] == pytest.approx(770, abs=1)
+    assert m["taller"] > 0 and m["wider"] == 0

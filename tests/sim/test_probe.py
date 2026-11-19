@@ -71,6 +71,17 @@ def test_run_view_probes_node_and_output(sim: Simulator, circuit: Builder) -> No
     assert z["out"]["text"].endswith("\u03a9") and z["out"]["saturated"] is None
 
 
+def test_run_view_curves_are_ac_only(sim: Simulator, circuit: Builder) -> None:
+    """D-366: the pinned net gets a curve, readings and features, but no scope or
+    impedance; a net that's gone is left out rather than refused."""
+    view = run_view(sim, clipper(circuit).build(), ["out"], "med", curves=["in", "gone"])
+    assert view["nodes"] == ["out"]
+    ac = view["ac"]
+    assert set(ac["nodes"]) == set(ac["readings"]) == set(ac["features"]) == {"in", "out"}
+    assert ac["nodes"]["in"][0] == pytest.approx(0.0, abs=0.1)  # the guitar's own net
+    assert set(view["tran"]["nodes"]) == set(view["impedance"]) == {"out"}
+
+
 def test_the_impedance_overlay(sim: Simulator, circuit: Builder) -> None:
     """D-127: the guitar sees 1k then the amp (1M) beside the diodes, which at 0 V are
     near open; the amp sees the 1k (the ideal guitar is 0 Ω). D-241: a buffered guitar

@@ -112,6 +112,7 @@
   --plot-sweep-11: #D4D6D5;
   --plot-sweep-12: var(--bone);
   --plot-output: var(--silver);
+  --plot-pinned: var(--picked);                 /* copper: the Frequency pane's pinned net (D-366), its own hue in every theme */
   --plot-harm-even: #C9B98F;
   --plot-harm-odd: var(--cloud);
   --plot-marker: var(--bone);

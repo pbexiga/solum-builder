@@ -11,6 +11,7 @@
 import { postJson } from "./api.js";
 import { changeLinks, curveChanges, curveMarks, partnerText, dragTarget, grabbed, lostReason, measuredSlope, rowParts, AUDIBLE, EXPANDED_KEY, handleAt, handleMarks, handleParts, influenceRows, knobRows, LAYERS, levelAxis, levelKey, levelMove, levelText, loadLayers, PLOT_BAND, noMarks, nudgedCurves, saveLayers, seekLevel, seekStep, startDots } from "./layers.js";
 import { db as dbText } from "./fixed.js";
+import { frequencyView } from "./frequency-view.js";
 import { menu } from "./menus.js";
 import { h, largeView, largeViewChip, paneInfo } from "./panels.js";
 import { setMarks } from "./plots.js";
@@ -56,11 +57,14 @@ const SHADE_MS = 1500; // a turned knob's band stays shaded this long after the 
  *   editSession: (owner: {pending: () => boolean, end: (how: "keep" | "discard") => unknown}) => Promise<{keep: (label: string) => void, discard: () => Promise<void>, steps: () => Array<{label: string, source: string, before: any, after: any}>} | null>,
  *   putBack: PutBack,
  *   openHistory: () => void,
- * }} Deps
+ *   selectedNet: () => string | null,
+ *   rerun: () => void,
+ * }} Deps `selectedNet`: the net the selection's curve shows (what Pin pins); `rerun`: a
+ *   new run, for a pinned net's curve (D-366)
  */
 
 /**
- * @param {{panel: HTMLElement, tools: HTMLElement, plot: HTMLElement, body: HTMLElement}} els
+ * @param {{panel: HTMLElement, tools: HTMLElement, plot: HTMLElement, body: HTMLElement, pinNote: HTMLElement}} els
  * @param {Deps} deps
  */
 export function frequencyTools(els, deps) {
@@ -124,6 +128,15 @@ export function frequencyTools(els, deps) {
   });
   const expanded = () => view.expanded();
   const setExpanded = view.set;
+  // the pin, the lines hidden and the zoom (D-366)
+  const lines = frequencyView({ panel: /** @type {HTMLDetailsElement} */ (els.panel), tools: els.tools, note: els.pinNote }, {
+    selectedNet: deps.selectedNet,
+    expanded,
+    editing: () => editing,
+    redraw: deps.redraw,
+    rerun: deps.rerun,
+  });
+  /** @type {[number, number] | null} the zoom the level axis was last fitted to */ let fittedZoom = null;
   // Edit curve (large view only) sits apart at the right of the tools (Collapse is on the title bar); while editing it becomes Discard / Keep
   const editButton = h("button", { type: "button", id: "frequency-edit", title: "Drag the knees and peaks to change the parts that set them" }, ["Edit curve"]);
   const discardButton = h("button", { type: "button", id: "frequency-discard", hidden: "", title: "Put back every value changed since Edit curve (Undo brings them back)" }, ["Discard changes"]);
@@ -855,16 +868,22 @@ export function frequencyTools(els, deps) {
 
   return {
     editPart, // the large view, in Edit curve by part, on one part's slider (D-102; from the gain box, D-125)
+    /** The pin, the lines hidden and the zoom (`frequency-view.js`, D-366). */
+    view: lines,
     /**
      * What the Frequency plot needs from the tools: its marks, a click, its height, and
-     * its axes: 10 Hz - 30 kHz, shaded outside 20 Hz - 20 kHz, the level axis fitted to the
-     * audible band, held still while `live` (a slider moving) or editing (D-102).
-     * @param {{x: number[], series: Array<{values: Array<number | null>}>}} data @param {boolean} [live]
+     * its axes: 10 Hz - 30 kHz (or the zoom's range), shaded outside 20 Hz - 20 kHz, the
+     * level axis fitted to the lines shown in the audible band (or the zoom's), held still
+     * while `live` (a slider moving) or editing (D-102) unless the zoom changed (D-366).
+     * @param {import("./series.js").PlotData} data @param {boolean} [live]
      */
     plotOpts(data, live = false) {
       const height = view.plotHeight(220);
-      levelRange = levelAxis(levelRange, data, live || editing);
-      return { marks: marks(), height, xRange: PLOT_BAND, shade: AUDIBLE, yRange: levelRange ?? undefined, onPick: (/** @type {number} */ x) => !editing && layers.has("influence") && !sweeping && pickAt(x), onDrag };
+      const { zoom, fit, ...more } = lines.plotOpts(data);
+      const rezoomed = String(zoom) !== String(fittedZoom);
+      fittedZoom = zoom;
+      levelRange = levelAxis(levelRange, fit, (live || editing) && !rezoomed, zoom ?? undefined);
+      return { ...more, marks: marks(), height, xRange: zoom ?? PLOT_BAND, shade: AUDIBLE, yRange: levelRange ?? undefined, onPick: (/** @type {number} */ x) => !editing && layers.has("influence") && !sweeping && pickAt(x), onDrag };
     },
     /**
      * The panel shows a run's curve at `net` (the readings' net), or a sweep.

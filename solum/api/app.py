@@ -163,6 +163,7 @@ class PickupRequest(BaseModel):
 class RunRequest(BaseModel):
     circuit: dict[str, Any]
     nodes: list[str] = []
+    curves: list[str] = []  # AC only: the Frequency pane's pinned net (D-366)
     level: Level = "med"
 
 
@@ -1044,7 +1045,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/run")
     def run(req: RunRequest) -> dict[str, Any]:
-        return run_view(*runnable(req.circuit), req.nodes, req.level)
+        return run_view(*runnable(req.circuit), req.nodes, req.level, req.curves)
 
     @app.post("/api/impedance")
     def impedance(req: CircuitRequest) -> dict[str, Any]:

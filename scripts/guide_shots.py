@@ -135,6 +135,31 @@ def frequency_large(page: Page, base: str) -> None:
     shoot(page, "readme-frequency", "#panel-frequency")  # the large view alone, for the top README
 
 
+def frequency_pin(page: Page, base: str) -> None:
+    """The Frequency pane with q1e (the clipping stage's input) pinned, C3 selected, and
+    zoomed to 100 Hz - 5 kHz (D-366)."""
+    opened(page, base, probe=None)
+    panes_on_top(page, "frequency")
+    box = page.locator('#schematic .net-label[data-net="q1e"]').first.bounding_box()
+    assert box is not None
+    page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2, button="right")
+    before = updates(page)
+    page.locator("#ctx-pin").click()
+    wait_for_update(page, before, 120_000)
+    click_part(page, "C3")
+    plot = "document.getElementById('frequency-plot')._plot"
+    over = page.locator("#frequency-plot .u-over").bounding_box()
+    assert over is not None
+    x0, x1 = page.evaluate(f"[{plot}.valToPos(100, 'x'), {plot}.valToPos(5000, 'x')]")
+    y = over["y"] + over["height"] / 2
+    page.mouse.move(over["x"] + x0, y)
+    page.mouse.down()
+    page.mouse.move(over["x"] + x1, y, steps=8)
+    page.mouse.up()
+    page.mouse.move(5, 990)  # off the plot: no hover box over the lines
+    shoot(page, "frequency-pin", "#panel-frequency")
+
+
 def edit_curve(page: Page, base: str) -> None:
     opened(page, base)
     expand(page, "frequency")
@@ -483,6 +508,7 @@ SHOTS: dict[str, Callable[[Page, str], None]] = {
     "probe-net": probe_net,
     "view-overlays": view_overlays,
     "frequency-large": frequency_large,
+    "frequency-pin": frequency_pin,
     "edit-curve": edit_curve,
     "sweep": sweep,
     "bias-headroom": bias_headroom,

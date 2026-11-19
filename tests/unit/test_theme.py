@@ -113,6 +113,15 @@ def test_schematic_readings_each_have_their_own_hue(theme: str) -> None:
             assert min(apart, 360 - apart) >= 30, f"--{a} too close to --{b}"
 
 
+@pytest.mark.parametrize("theme", THEMES)
+def test_the_pinned_curve_reads_apart_from_the_selections(theme: str) -> None:
+    """D-366: the Frequency pane's pinned net is copper, at least 15 degrees of hue from
+    the selection's curve, in every theme."""
+    t = tokens(theme)
+    apart = abs(hue(t["plot-pinned"]) - hue(t["plot-current"]))
+    assert min(apart, 360 - apart) >= 15
+
+
 @pytest.mark.parametrize("text", ["text", "text-2", "text-3", "sch-line", "sch-supply", "sch-type"])
 def test_print_colours_read_on_paper(text: str) -> None:
     """D-205: a printed schematic's text and lines on white (brass, for capacitor types,

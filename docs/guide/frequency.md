@@ -15,6 +15,26 @@ Probe a capacitor and the curve is drawn on each side of it, so you can see what
 
 **Freeze** keeps a copy of the curve to compare against the next change; **Clear snapshot** removes it.
 
+## Pinning a curve
+
+**Pin**, on the pane's title, keeps the curve you care about on the plot while you click through other parts. It pins the net the selection's curve shows (the output with nothing selected); or right-click a wire or net label and choose **Pin frequency here**. The pinned net is drawn in copper as well as the rest: the output and the selection's curve stay as they are, and selecting parts, changing values, turning knobs and running again don't move it. The title says what's pinned (*pinned: q1e ×*).
+
+![The TS808's clipping-stage input pinned, C3 selected, zoomed to 100 Hz – 5 kHz](img/frequency-pin.png)
+
+One net is pinned at a time; pinning another moves the pin. The **×** or **Pin** again unpins. Deleting the net (a wire or part removed, its label renamed) unpins it, and a line under the tools says so; Undo brings the wire back but not the pin. Opening another circuit unpins too. Pinning isn't an edit: there's nothing to save or undo.
+
+## Hiding a line
+
+Click a line's name in the key under the plot (the selection's, the output's, the pinned net's or a Freeze snapshot) to hide it; click again to show it. A hidden line stays hidden as you select other parts, and every line comes back when you open another circuit. The level axis fits the lines you can see, and the box that follows the pointer lists them.
+
+The readings under the plot are for the selection's curve; with it hidden, for the pinned net's; with neither showing, for the output's. They start with the net they're for.
+
+## Zooming
+
+Drag across the plot to zoom to that range of frequencies; the level axis fits what's in view. A plain click is still a click (Part influence ranks the parts there). **Reset zoom**, which shows the range (*Reset zoom 100 Hz – 5.01 kHz*), or a double-click on the plot goes back.
+
+The zoom stays while you turn knobs, change values, run again, pin or freeze. It's only the view: the readings are still over 20 Hz – 20 kHz. It's off while Edit curve is on, and the pane and its large view each keep their own.
+
 ## Knobs & switches
 
 Every pot and switch in the circuit gets a control here, named by its label ("Distortion", "Bypass mode"). The guitar's volume, from the IN part, is a knob too.
@@ -71,6 +91,6 @@ Every part form with a value or a model has a box at the bottom: *Compare resist
 
 ![Three values of C3 compared on the TS808](img/sweep.png)
 
-Each value is a full simulation, bias and all, so this is the way to see what a part that sets a bias really does. The Frequency and Scope panes draw one line per value; the pane's title says what is compared (*C3: 3 values*), **at** picks which net to show, and a table gives each value's DC, gain at 1 kHz and peaks. The Probe pane shows the part itself at each value, a column per value: a resistor's current and power, a transistor's voltages. Layers and Edit curve are off while a comparison is shown. **Clear sweep** ends it. The part's own value doesn't change.
+Each value is a full simulation, bias and all, so this is the way to see what a part that sets a bias really does. The Frequency and Scope panes draw one line per value; the pane's title says what is compared (*C3: 3 values*), **at** picks which net to show (the pinned net, if there is one), and a table gives each value's DC, gain at 1 kHz and peaks. The Probe pane shows the part itself at each value, a column per value: a resistor's current and power, a transistor's voltages. Layers and Edit curve are off while a comparison is shown. **Clear sweep** ends it. The part's own value doesn't change.
 
 Power → Custom… does the same for the supply voltage: *Compare supply voltages, overlaid on the plots (up to 5)*.

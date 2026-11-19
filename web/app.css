@@ -404,7 +404,9 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 }
 .panels details[open] > summary { background: var(--surface-2); }
 .panels summary { position: relative; }
-.panels .grip { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); padding: 2px 4px; color: var(--text-3); letter-spacing: -0.05em; font-size: 14px; cursor: grab; touch-action: none; user-select: none; }
+/* the grip: two columns of three dots drawn here, not a glyph, so it's the same size on
+   every pane whatever the font (a heading font without ⋮ widened it under Expand) */
+.panels .grip { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); box-sizing: content-box; width: 8px; height: 14px; padding: 2px 4px; color: var(--text-3); background: radial-gradient(circle, currentColor 1.2px, transparent 1.5px) content-box 0 0 / 4px 4.67px; cursor: grab; touch-action: none; user-select: none; }
 .panels .grip:hover, .panels .grip:focus-visible { color: var(--accent-hi); outline: none; }
 .panels details.moving { opacity: 0.5; }
 .panels .pane-drop { height: 2px; background: var(--accent-hi); }
@@ -790,6 +792,9 @@ button.link { padding: 0; border: 0; background: none; color: var(--accent-hi); 
 .plot.grabbable .u-over { cursor: ew-resize; } /* a plain drag moves a dot sideways, Shift+drag up or down */
 .plot.grabbable.shift .u-over { cursor: ns-resize; }
 .plot.dragging .u-over { cursor: grabbing; }
+/* the Frequency plot's zoom (D-366): the range being dragged across */
+.plot-zoom-band { position: absolute; top: 0; bottom: 0; z-index: 1; pointer-events: none; background: var(--plot-band); border-inline: 1px solid var(--plot-marker); }
+.plot.zooming .u-over { cursor: col-resize; }
 #handle-rows li { cursor: pointer; }
 #handle-rows li.active { background: var(--surface-2); cursor: default; }
 #handle-rows .handle-way { display: block; margin: 2px 0 0 12px; color: var(--text-2); font-size: 11px; }
@@ -1054,7 +1059,7 @@ body[data-frequency-editing="true"] #schematic { outline: 2px solid var(--accent
 .large-view:not([open]) > summary .info-button { display: none; } /* a large view shrunk to its bar */
 
 /* Expand on a pane's title bar (`largeView`, D-110): left of the grip; large, it's Collapse at the far right */
-.panels summary > .large-toggle { position: absolute; right: 34px; top: 50%; transform: translateY(-50%); padding: 1px 8px; font: 11px var(--font-ui); letter-spacing: 0; text-transform: none; }
+.panels summary > .large-toggle { position: absolute; right: 30px; top: 50%; transform: translateY(-50%); padding: 1px 8px; font: 11px var(--font-ui); letter-spacing: 0; text-transform: none; }
 /* large: Collapse at the title bar's far right, where a shrunk bar's is (round 3); shrunk, that one shows instead */
 .panels .large-view > summary > .large-toggle { right: 10px; padding: 2px 10px; font-size: 12px; }
 .panels .large-view:not([open]) > summary > .large-toggle { display: none; }
@@ -1152,3 +1157,11 @@ button.flip.cancel > [data-label="go"], button.flip:not(.cancel) > [data-label="
   .refusal.pulse { animation: refusal-fade 0.3s ease-out; }
   @keyframes refusal-fade { from { opacity: 0; } to { opacity: 1; } }
 }
+/* the Frequency pane's pin (D-366): Pin and its chip on the title bar, after the ⓘ */
+.panels summary > .pin-tools { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; vertical-align: middle; font: 11px var(--font-ui); letter-spacing: 0; text-transform: none; }
+.panels summary > .pin-tools .pin-button { padding: 1px 8px; font: 11px var(--font-ui); }
+.panels summary > .pin-tools .pin-button[aria-pressed="true"] { background: none; border-color: var(--plot-pinned); color: var(--text); }
+.pin-chip { color: var(--text-2); }
+.pin-chip #frequency-pin-net { color: var(--text); font-family: var(--font-mono); }
+.pin-chip .link { padding: 0 2px; }
+.large-view:not([open]) > summary > .pin-tools { display: none; }

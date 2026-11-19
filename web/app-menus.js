@@ -57,6 +57,7 @@ import { addModelSheet, converterSheet, partsSheet, calculatorsSheet, resistorSh
  * @property {() => void} toggleMarks
  * @property {() => void} resetPanes
  * @property {() => void} openSettings File → Settings… (D-310)
+ * @property {(net: string) => void} pinFrequency the Frequency pane's pin on this net (D-366)
  */
 
 /**
@@ -202,6 +203,8 @@ export function appMenus(host, schematic, app) {
       const has = noteOn.kind === "part" ? Boolean(app.partOf(noteOn.id)?.note) : Boolean(noteOn.named && app.circuit().net_notes?.[noteOn.id]);
       here.push({ label: has ? "Edit note\u2026" : "Add note\u2026", id: "ctx-note", run: () => (has ? app.showNote(noteOn.kind === "part" ? { kind: "part", ref: noteOn.id } : { kind: "net", net: noteOn.id }) : askNote(noteOn, schematic.toSchematic(x, y))) });
     }
+    const net = netOf(item);
+    if (net) here.push({ label: "Pin frequency here", id: "ctx-pin", run: () => app.pinFrequency(net) });
     if (item) {
       here.push({ label: "Delete", id: "ctx-delete", hint: "Del", disabled: !app.deletable(), run: app.deleteSelection });
     }
@@ -215,6 +218,18 @@ export function appMenus(host, schematic, app) {
   }
 
   /**
+   * The net of the wire or label right-clicked (not a part's), or null for a loose wire.
+   * @param {import("./schematic/render.js").Items | null | undefined} item
+   */
+  function netOf(item) {
+    if (!item || item.parts?.length) return null;
+    const label = app.circuit().labels?.[item.labels?.[0] ?? -1];
+    if (label) return /** @type {string} */ (label.net);
+    const wire = item.wires?.[0];
+    return wire === undefined ? null : app.view()?.wires?.[wire]?.net ?? null;
+  }
+
+  /**
    * What a right-click's note goes on (9d4): the part, else the net of the label or wire.
    * `named`: whether a label or supply names that net (an unnamed one is named first).
    * @param {import("./schematic/render.js").Items | null | undefined} item
@@ -225,10 +240,9 @@ export function appMenus(host, schematic, app) {
     if (item.parts?.[0]) return { kind: "part", id: item.parts[0] };
     const label = app.circuit().labels?.[item.labels?.[0] ?? -1];
     if (label) return { kind: "net", id: label.net, named: true };
-    const wire = item.wires?.[0];
-    const net = wire === undefined ? null : app.view()?.wires?.[wire]?.net;
+    const net = netOf(item);
     if (!net) return null; // a loose wire: no net to note
-    return { kind: "net", id: net, named: isNamedNet(app.circuit(), net), wire };
+    return { kind: "net", id: net, named: isNamedNet(app.circuit(), net), wire: item.wires?.[0] };
   }
 
   /**

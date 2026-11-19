@@ -10,6 +10,7 @@
 import { getJson, postJson } from "./api.js";
 import { audioPanel } from "./audio.js";
 import { frequencyTools } from "./frequency.js";
+import { readingsNet } from "./frequency-view-logic.js";
 import { stagesPane } from "./stages.js";
 import { notesPane, renameNotice } from "./notes.js";
 import { atFreqs } from "./audio-logic.js";
@@ -181,7 +182,7 @@ const stages = stagesPane(/** @type {HTMLDetailsElement} */ ($("panel-stages")),
   editCurve: (ref) => void tools.editPart(ref), // a capacitor in the gain box (D-125)
 });
 const tools = frequencyTools(
-  { panel: $("panel-frequency"), tools: $("frequency-tools"), plot: $("frequency-plot"), body: $("frequency-layers") },
+  { panel: $("panel-frequency"), tools: $("frequency-tools"), plot: $("frequency-plot"), body: $("frequency-layers"), pinNote: $("frequency-pin-note") },
   {
     circuit: () => state.circuit,
     played: () => played(),
@@ -191,7 +192,9 @@ const tools = frequencyTools(
     levelSliders: (refs) => sliders.slideTogether(refs, "level-"),
     highlight: (refs) => schematic.highlight(refs),
     showReadings: (readings, net) => renderReadings($("frequency-readings"), readingRows(readings), net),
-    redraw: () => state.view && render(currentNet()),
+    redraw: () => state.run && render(currentNet()),
+    selectedNet: () => curveNet(),
+    rerun: () => void refresh(),
     editSession: (owner) => editSession("Frequency curve", "curve", owner), // its name in History and the prompts (D-127); the button stays Edit curve
     openHistory: () => historyView.open(),
     async putBack(ref, value) {
@@ -339,6 +342,7 @@ const schematic = new Schematic(/** @type {SVGSVGElement} */ (/** @type {unknown
   onEmpty: () => select(outputSelection()),
 });
 const menus = appMenus($("canvas-body"), schematic, {
+  pinFrequency: (net) => tools.view.pin(net),
   source: () => state.source,
   file: () => state.file,
   circuit: () => state.circuit,
@@ -601,6 +605,7 @@ async function open(source, reload = false) {
   state.problems = null; // and its own problems: the last one's marks go
   schematic.showMarks([]);
   tools.clear();
+  tools.view.opened(); // its pin, hidden lines and zoom go too (D-366)
   stages.clear(); // the last circuit's chain, card and lit parts go
   state.snapshots = { frequency: null, scope: null };
   audio.opened(); // the last circuit's take stops playing
@@ -621,6 +626,7 @@ function show(view, { fit }) {
   state.controls = keptControls(view.controls, state.view?.controls ?? [], state.controls);
   state.view = view;
   state.circuit = view.circuit;
+  tools.view.netsChanged(view.nets); // a pinned net deleted or renamed: unpinned, saying so (D-366)
   showTitle();
   schematic.capTypes = state.capTypes;
   schematic.draw(view, switchPositions(), { fit });
@@ -1132,7 +1138,18 @@ function capacitorSides() {
 
 /** The nets the Frequency panel shows for the selection: a capacitor's two sides, else the net; and the output. */
 function frequencyNets() {
-  return [...new Set([...(capacitorSides() ?? [currentNet()]), state.view.probes.out].filter(Boolean))];
+  return [...new Set([...(capacitorSides() ?? [currentNet()]), state.view.probes.out, tools.view.pinned()].filter(Boolean))];
+}
+
+/**
+ * The net the selection's curve shows, what Pin pins (D-366): the output with nothing
+ * selected, or a supply or ground selected (no signal there).
+ * @returns {string | null}
+ */
+function curveNet() {
+  const out = state.view?.probes.out ?? null;
+  const net = currentNet() || out;
+  return net === "GND" || state.view?.nets[net]?.rail ? out : net;
 }
 
 /**
@@ -1159,8 +1176,9 @@ function drawLive(live, values) {
   const data = sides
     ? capacitorSeries({ ...ac, nodes: Object.fromEntries(sides.map((n) => [n, ac.nodes[n]])) }, { ac }, out)
     : frequencySeries({ ac }, currentNet(), out, state.snapshots.frequency);
-  if (!data) return;
-  liveLinePlot($("frequency-plot"), data, { ...FREQUENCY_PLOT, ...tools.plotOpts(data, true) });
+  const drawn = tools.view.withPinned(data, ac);
+  if (!drawn) return;
+  liveLinePlot($("frequency-plot"), drawn, { ...FREQUENCY_PLOT, ...tools.plotOpts(drawn, true) });
   $("frequency-readings").classList.add("stale");
   const read = ac.nodes[tools.net()];
   if (read) tools.live(ac.freq, read); // knees, peaks and readings follow, measured on the server (D-097)
@@ -1206,13 +1224,15 @@ async function grabKnob(ref) {
 async function runSweep(ref, field, values) {
   document.body.dataset.busy = "true";
   try {
-    state.sweep = await postJson("api/sweep", { circuit: played(), ref, field, values, nodes: [currentNet()], level: state.level });
+    const pinned = tools.view.pinned();
+    state.sweep = await postJson("api/sweep", { circuit: played(), ref, field, values, nodes: [currentNet(), ...(pinned ? [pinned] : [])], level: state.level });
     const netSelect = /** @type {HTMLSelectElement} */ ($("sweep-net"));
-    netSelect.replaceChildren(...state.sweep.nodes.map((/** @type {string} */ n, /** @type {number} */ i) => new Option(i === state.sweep.nodes.length - 1 && n === state.view.probes.out ? `${n} (output)` : n, n)));
+    netSelect.replaceChildren(...state.sweep.nodes.map((/** @type {string} */ n, /** @type {number} */ i) => new Option(i === state.sweep.nodes.length - 1 && n === state.view.probes.out ? `${n} (output)` : n === pinned ? `${n} (pinned)` : n, n)));
     // probed on a supply or ground there's no signal to compare: show the output instead
     const probed = state.sweep.nodes[0];
     const out = state.view.probes.out;
     if (out && state.sweep.nodes.includes(out) && (probed === "GND" || state.view.nets[probed]?.rail)) netSelect.value = out;
+    if (pinned && state.sweep.nodes.includes(pinned)) netSelect.value = pinned; // at the pinned net (D-366)
     // with auto-run off there may be no run yet: make one, so the overlay has panels to go in
     if (!state.run || state.stale) await refresh();
     else render(currentNet());
@@ -1521,7 +1541,8 @@ async function runSelected() {
       if (!requests.isCurrent(token)) return;
       net = focusNet(part);
     }
-    const run = await postJson("api/run", { circuit, nodes: [net], level: state.level });
+    const pinned = tools.view.pinned();
+    const run = await postJson("api/run", { circuit, nodes: [net], level: state.level, curves: pinned ? [pinned] : [] });
     if (!requests.isCurrent(token)) return;
     state.run = run;
     state.part = part;
@@ -1610,6 +1631,7 @@ function render(net) {
   if (sweep) freq = valueSweepSeries(sweep, sweepNet, "ac");
   else if (SIDED.has(part?.type)) freq = capacitorSeries(part.detail?.curves, run, out);
   freq ??= frequencySeries(run, net, out, state.snapshots.frequency);
+  if (!sweep) freq = tools.view.withPinned(freq, run?.ac); // over the rest (D-366)
   state.plotted.frequency = freq;
   const freqEl = $("frequency-plot");
   const invalid = run?.ac && !run.ac.valid;
@@ -1653,13 +1675,24 @@ function curveReadings(part, run, net) {
   const out = state.view.probes.out;
   const curves = SIDED.has(part?.type) ? part.detail?.curves : null;
   if (curves) {
-    if (out && run?.ac?.readings?.[out]) return [out, run.ac.readings[out]];
+    if (out && run?.ac?.readings?.[out]) return readingsAt(run, out);
     const first = Object.keys(curves.nodes)[0];
-    return [first, curves.readings?.[first] ?? null];
+    return readingsAt(run, first, curves.readings?.[first] ?? null);
   }
   const flat = net === "GND" || state.view.nets[net]?.rail;
   const shown = flat && out ? out : net;
-  return [shown, run?.ac?.readings?.[shown] ?? null];
+  return readingsAt(run, shown);
+}
+
+/**
+ * The readings at `shown`, unless the selection's line is hidden: then the pinned net's,
+ * else the output's (D-366).
+ * @param {any} run @param {string} shown @param {any[] | null} [own] the selection's own readings, when not the run's (a capacitor's)
+ * @returns {[string, any[] | null]}
+ */
+function readingsAt(run, shown, own) {
+  const at = readingsNet({ shown, pinned: tools.view.pinned(), out: state.view.probes.out, hidden: tools.view.hidden(), readings: run?.ac?.readings });
+  return [at, at === shown && own !== undefined ? own : run?.ac?.readings?.[at] ?? null];
 }
 
 /** A fresh sheet: say what to do instead of plotting a signal that has no path. */

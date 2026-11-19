@@ -3,7 +3,7 @@
  * that plots.js maps to the DESIGN.md plot colours: current, output, input, snapshot,
  * sweep-1..12. A series may carry a short `tag` written at the end of its line. `xText`,
  * when the server sends it, is each x value as text ("1.23 kHz") for the hover readout.
- * @typedef {{label: string, values: Array<number|null>, style: string, tag?: string, bold?: boolean, dash?: boolean, dots?: boolean, faint?: boolean}} Series `bold`: drawn heavier (the take playing); `dash`: thin and dashed, in its style's colour; `dots`: a dot at each value, no line; `faint`: as it was before an edit, in `--plot-before`, one legend entry for them all (D-123)
+ * @typedef {{label: string, values: Array<number|null>, style: string, tag?: string, bold?: boolean, dash?: boolean, dots?: boolean, faint?: boolean, role?: string}} Series `bold`: drawn heavier (the take playing); `dash`: thin and dashed, in its style's colour; `dots`: a dot at each value, no line; `faint`: as it was before an edit, in `--plot-before`, one legend entry for them all (D-123); `role`: which line it is on the Frequency plot (selection, output, pinned, snapshot), for hiding it from the key (D-366)
  * @typedef {{x: number[], xText?: string[], series: Series[]}} PlotData
  */
 
@@ -23,7 +23,7 @@ function withSnapshot(data, snapshot) {
   const sameGrid =
     snapshot.x.length === data.x.length && snapshot.x.every((v, i) => Math.abs(v - data.x[i]) < 1e-9);
   if (!sameGrid) return data;
-  return { ...data, series: [...data.series, { label: snapshot.label, values: snapshot.values, style: "snapshot" }] };
+  return { ...data, series: [...data.series, { label: snapshot.label, values: snapshot.values, style: "snapshot", role: "snapshot" }] };
 }
 
 /**
@@ -35,9 +35,9 @@ function withSnapshot(data, snapshot) {
 export function frequencySeries(run, net, out, snapshot = null) {
   if (!run?.ac || !run.ac.nodes[net]) return null;
   /** @type {Series[]} */
-  const series = [{ label: net, values: run.ac.nodes[net], style: "current" }];
+  const series = [{ label: net, values: run.ac.nodes[net], style: "current", role: "selection" }];
   if (out && out !== net && run.ac.nodes[out]) {
-    series.push({ label: `${out} (output)`, values: run.ac.nodes[out], style: "output" });
+    series.push({ label: `${out} (output)`, values: run.ac.nodes[out], style: "output", role: "output" });
   }
   return withSnapshot({ x: run.ac.freq, xText: run.ac.freq_text, series }, snapshot);
 }
@@ -128,9 +128,9 @@ export function capacitorSeries(curves, run, out) {
   if (!curves) return null;
   const nets = Object.keys(curves.nodes);
   /** @type {Series[]} */
-  const series = nets.map((net, i) => ({ label: net, values: curves.nodes[net], style: i ? "input" : "current" }));
+  const series = nets.map((net, i) => ({ label: net, values: curves.nodes[net], style: i ? "input" : "current", role: "selection" }));
   const output = out && !nets.includes(out) ? run?.ac?.nodes[out] : null;
-  if (output?.length === curves.freq.length) series.push({ label: `${out} (output)`, values: output, style: "output" });
+  if (output?.length === curves.freq.length) series.push({ label: `${out} (output)`, values: output, style: "output", role: "output" });
   return { x: curves.freq, xText: curves.freq_text, series };
 }
 

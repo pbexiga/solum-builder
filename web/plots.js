@@ -16,6 +16,7 @@ const AMP_DECADES = new Map([
 ]);
 const AXIS_FONT = "11px ui-monospace, monospace";
 const SWEEP_COLOURS = 12; // --plot-sweep-1..12 in theme.css
+const ZOOM_MIN_PX = 6; // a press on a zoomable plot that moves less than this is a click (D-366)
 
 /** @type {Record<string, string> | null} */
 let palette = null;
@@ -32,6 +33,7 @@ function colours() {
   palette = {
     current: read("--plot-current"),
     output: read("--plot-output"),
+    pinned: read("--plot-pinned"),
     snapshot: read("--plot-snapshot"),
     input: read("--plot-input"),
     grid: read("--plot-grid"),
@@ -58,6 +60,7 @@ function seriesStyle(style) {
   const base = { stroke: c[style] ?? c.current, width: 1.25 };
   if (style === "current") return { ...base, width: 2 };
   if (style === "snapshot") return { ...base, dash: [6, 4] };
+  if (style === "pinned") return { ...base, width: 1.75 };
   if (style === "input") return { ...base, dash: [3, 3], width: 1 };
   if (style === "expected") return { ...base, stroke: c.marker, dash: [8, 4], width: 1.5 };
   // what's playing: a faint filled area under the fixed lines, down to the plot's floor
@@ -151,11 +154,15 @@ function replace(el, /** @type {uPlot.Options} */ opts, /** @type {uPlot.Aligned
  * `onDrag(id, point, phase)`: a handle in `marks.handles` grabbed ("start"), dragged
  * ("move") and let go ("end"), at `point`: x and y values, the pixels from where it
  * was grabbed (dx, dy; up is negative), and whether Shift was held when it was grabbed.
+ * `onZoom(lo, hi)`: a drag across the plot, from x value to x value (sideways only; a
+ * press that moves less than `ZOOM_MIN_PX` stays a click, `onPick`'s); `onUnzoom()`: a
+ * double-click (the Frequency plot's zoom, D-366).
  * @typedef {{log?: boolean, xLabel: string, yLabel: string, xRange?: [number, number], yRange?: [number, number], shade?: [number, number], hatch?: {from: number, label: string} | null,
  *   xNames?: string[], hover?: {x: (x: number) => string, y: (y: number) => string}, legend?: boolean,
  *   marks?: import("./layers.js").Marks, onPick?: (x: number) => void, height?: number,
  *   hidden?: Set<string>, onToggle?: (label: string, shown: boolean) => void,
- *   onDrag?: (id: string, point: DragPoint, phase: "start" | "move" | "end") => void}} LineOpts
+ *   onDrag?: (id: string, point: DragPoint, phase: "start" | "move" | "end") => void,
+ *   onZoom?: (lo: number, hi: number) => void, onUnzoom?: () => void}} LineOpts
  * @typedef {{x: number, y: number, dx: number, dy: number, shift: boolean}} DragPoint
  */
 
@@ -266,6 +273,11 @@ export function linePlot(el, data, opts) {
   // @ts-ignore: read by the container's pointer handlers (`dragHandles`)
   plot.onDrag = opts.onDrag ?? null;
   if (opts.onDrag) dragHandles(el);
+  // @ts-ignore: read by the container's pointer handlers (`zoomDrag`)
+  plot.onZoom = opts.onZoom ?? null;
+  // @ts-ignore
+  plot.onUnzoom = opts.onUnzoom ?? null;
+  if (opts.onZoom || opts.onUnzoom) zoomDrag(el);
   return plot; // uPlot draws on its next commit, with the marks already set
 
 }
@@ -347,6 +359,73 @@ function dragHandles(el) {
   };
   el.addEventListener("pointerup", end);
   el.addEventListener("pointercancel", end);
+}
+
+/**
+ * A drag across the plot in `el` zooms to that x range (`onZoom`); a double-click calls
+ * `onUnzoom`. A press that moves less than `ZOOM_MIN_PX` stays a click (no capture, so the
+ * plot's own click still fires); a drag swallows the click that ends it. Handles on the
+ * plot (`dragHandles`) are pressed first. Bound once per element, reading the plot there
+ * now, as `dragHandles` does.
+ * @param {HTMLElement} el
+ */
+function zoomDrag(el) {
+  // @ts-ignore
+  if (el._zoomDrag) return;
+  // @ts-ignore
+  el._zoomDrag = true;
+  const plotNow = () => /** @type {any} */ (el)._plot;
+  /** @type {{x: number, id: number, moved: boolean} | null} */
+  let press = null;
+  let swallow = false; // the click that ends a drag isn't a pick
+  const band = document.createElement("div");
+  band.className = "plot-zoom-band";
+  const left = (/** @type {MouseEvent} */ e) => e.clientX - plotNow().over.getBoundingClientRect().left;
+  el.addEventListener("pointerdown", (e) => {
+    const plot = plotNow();
+    if (e.button !== 0 || !plot?.onZoom || !plot.over.contains(e.target) || el.classList.contains("dragging")) return;
+    press = { x: left(e), id: e.pointerId, moved: false };
+  });
+  el.addEventListener("pointermove", (e) => {
+    if (!press || e.pointerId !== press.id) return;
+    const plot = plotNow();
+    const x = Math.min(Math.max(left(e), 0), plot.over.clientWidth);
+    if (!press.moved && Math.abs(x - press.x) < ZOOM_MIN_PX) return;
+    if (!press.moved) {
+      press.moved = true;
+      el.setPointerCapture(e.pointerId);
+      el.classList.add("zooming");
+    }
+    if (band.parentElement !== plot.over) plot.over.appendChild(band); // a live frame drew a new plot
+    band.style.left = `${Math.min(x, press.x)}px`;
+    band.style.width = `${Math.abs(x - press.x)}px`;
+  });
+  const end = (/** @type {PointerEvent} */ e) => {
+    if (!press || e.pointerId !== press.id) return;
+    const p = press;
+    press = null;
+    band.remove();
+    el.classList.remove("zooming");
+    if (!p.moved) return;
+    if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+    swallow = true;
+    setTimeout(() => (swallow = false)); // a click comes straight after pointerup, or not at all
+    if (e.type === "pointercancel") return;
+    const plot = plotNow();
+    const x = Math.min(Math.max(left(e), 0), plot.over.clientWidth);
+    plot.onZoom?.(plot.posToVal(p.x, "x"), plot.posToVal(x, "x"));
+  };
+  el.addEventListener("pointerup", end);
+  el.addEventListener("pointercancel", end);
+  el.addEventListener("click", (e) => {
+    if (!swallow) return;
+    swallow = false;
+    e.stopPropagation();
+  }, true);
+  el.addEventListener("dblclick", (e) => {
+    const plot = plotNow();
+    if (plot?.onUnzoom && plot.over.contains(e.target)) plot.onUnzoom();
+  });
 }
 
 /**

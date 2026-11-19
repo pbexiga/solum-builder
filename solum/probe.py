@@ -199,8 +199,11 @@ def _time_ms(tran: TranResult, n: int) -> list[float]:
     return floats(np.arange(n) * 1e3 * SCOPE_CYCLES / (tran.freq * n))
 
 
-def run_view(sim: Simulator, circuit: Circuit, nodes: Sequence[str], level: str) -> dict[str, Any]:
-    """DC everywhere; AC and scope at `nodes` and the output. AC and scope are None when
+def run_view(
+    sim: Simulator, circuit: Circuit, nodes: Sequence[str], level: str, curves: Sequence[str] = ()
+) -> dict[str, Any]:
+    """DC everywhere; AC and scope at `nodes` and the output, AC alone at `curves` too (the
+    Frequency pane's pinned net, D-366: no scope or impedance for it). AC and scope are None when
     the circuit has no guitar input, or no power (`no_power` says why, D-358); with no
     power there's no DC either (`NO_DC`), and `no_power_refs` are the jacks to blame
     (D-359)."""
@@ -220,7 +223,8 @@ def run_view(sim: Simulator, circuit: Circuit, nodes: Sequence[str], level: str)
     if drawable(circuit):
         loose = loose_parts(circuit, nets)  # nothing to show on their nets (D-165)
         wired = [net for net in wanted if not loose_net(nets, loose, net)]
-        result["ac"] = ac_data(sim.ac(circuit), wanted)
+        extra = [n for n in curves if n in nets.members]  # a net just gone: left out
+        result["ac"] = ac_data(sim.ac(circuit), list(dict.fromkeys([*wanted, *extra])))
         result["tran"] = tran_data(sim.tran(circuit, wired, level), wired)
         result["impedance"] = {net: _ohms(*sim.impedance(circuit, net)) for net in wired}
     return result

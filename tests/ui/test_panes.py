@@ -233,3 +233,17 @@ def test_dc_starts_shut_and_scrolls(page: Page, base_url: str) -> None:
     nets = page.locator("#dc-body tr").evaluate_all("(rs) => rs.map((r) => r.dataset.net)")
     assert nets[:4] == ["GND", "V+", "in", "out"]
     expect(page.locator('#dc-body tr[data-net="out"] th')).to_have_text("out to amp")
+
+
+def test_every_grip_is_the_same_size_and_clear_of_expand(page: Page, base_url: str) -> None:
+    """The grip is drawn, not a glyph, so the heading's font can't widen it under Expand."""
+    open_circuit(page, base_url, "ts808")
+    bars = page.evaluate(
+        """[...document.querySelectorAll('aside.panels > details > summary')].map((s) => {
+          const g = s.querySelector('.grip').getBoundingClientRect();
+          const e = s.querySelector('.large-toggle')?.getBoundingClientRect();
+          return [g.width, g.height, e ? g.left - e.right : null]; })"""
+    )
+    assert len({(w, h) for w, h, _ in bars}) == 1, bars
+    gaps = [gap for _, _, gap in bars if gap is not None]  # Frequency, Bias & headroom, Audio
+    assert len(gaps) == 3 and all(gap >= 2 for gap in gaps), bars

@@ -85,7 +85,7 @@ export function reorderable(container) {
     const grip = h("span", {
       class: "grip", role: "button", tabindex: "0", "data-grip": pane.id,
       title: "Drag to move this pane (or use the arrow keys)", "aria-label": `Move the ${name} pane`,
-    }, ["⋮⋮"]);
+    }); // its dots are drawn by app.css
     // the grip moves the pane; it never opens or closes it
     grip.addEventListener("click", (e) => e.preventDefault());
     grip.addEventListener("keydown", (e) => {

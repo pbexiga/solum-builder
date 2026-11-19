@@ -330,16 +330,16 @@ export const PLOT_BAND = /** @type {[number, number]} */ ([10, 30000]);
 export const AUDIBLE = /** @type {[number, number]} */ ([20, 20000]);
 
 /**
- * The lowest and highest level over every series, inside the audible band only; null
- * when there's nothing to fit.
- * @param {{x: number[], series: Array<{values: Array<number | null>}>}} data
+ * The lowest and highest level over every series, inside the audible band only (or
+ * `band`: a zoom's range, D-366); null when there's nothing to fit.
+ * @param {{x: number[], series: Array<{values: Array<number | null>}>}} data @param {[number, number]} [band]
  * @returns {[number, number] | null}
  */
-export function audibleLevels(data) {
+export function audibleLevels(data, band = AUDIBLE) {
   let lo = Infinity;
   let hi = -Infinity;
   data.x.forEach((f, i) => {
-    if (f < AUDIBLE[0] || f > AUDIBLE[1]) return;
+    if (f < band[0] || f > band[1]) return;
     for (const s of data.series) {
       const v = s.values[i];
       if (v === null || v === undefined || !Number.isFinite(v)) continue;
@@ -354,11 +354,13 @@ export function audibleLevels(data) {
  * The Frequency plot's level axis, the same in and out of Edit curve so switching doesn't
  * look like a zoom (D-102): `heldRange` of the audible levels. A fresh plot fits afresh; a
  * live one (a slider moving) and Edit curve only widen what's there, so the axis holds still.
+ * Zoomed (D-366), it fits the levels inside `band` instead.
  * @param {[number, number] | null} range what's drawn now @param {{x: number[], series: Array<{values: Array<number | null>}>}} data @param {boolean} hold
+ * @param {[number, number]} [band]
  * @returns {[number, number] | null}
  */
-export function levelAxis(range, data, hold) {
-  const levels = audibleLevels(data);
+export function levelAxis(range, data, hold, band) {
+  const levels = audibleLevels(data, band);
   if (!levels) return range;
   return heldRange(hold ? range : null, levels[0], levels[1]);
 }

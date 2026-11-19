@@ -611,6 +611,44 @@ def test_a_cable_out_keeps_the_curves_and_no_power_says_why(page: Page, base_url
     expect(page.locator("#power-chip")).to_have_text("Battery · 9 V")
 
 
+def test_the_guitar_inputs_own_ring_cuts_the_battery_from_knobs(page: Page, base_url: str) -> None:
+    """D-364: no J drawn, the battery's − on a stereo IN's ring: IN's cable switch in Knobs
+    cuts it off with a stereo cable or none, as J1's does; a mono cable puts it back."""
+    from solum.circuit.build import CircuitBuilder
+
+    circuit = circuit_to_dict(
+        CircuitBuilder("IN's ring")
+        .rail("V+", 9)
+        .part("BAT1", "battery", pins={"+": "V+", "-": "ring"})
+        .part("R2", "resistor", "V+", "GND", value="10k")
+        .part("IN", "guitar", stereo=True, pins={"out": "in", "ring": "ring"})
+        .part("R1", "resistor", "in", "out", value="10k")
+        .part("C1", "capacitor", "out", "GND", value="10n")
+        .part("OUT", "amp", "out")
+        .build()
+    )
+    page.goto(base_url)
+    saved = page.request.post(f"{base_url}api/circuits", data={"circuit": circuit, "name": "ring"})
+    open_circuit(page, base_url, "circuit/" + saved.json()["circuit"]["id"])
+    chip = page.locator("#power-chip")
+    expect(chip).to_have_text("Battery · 9 V")
+    cable = page.locator('#knobs-body [data-knob="IN.plug"]')
+    expect(cable).to_contain_text("Guitar cable")
+    for at, said in ((1, "has a stereo cable in"), (2, "has no cable in")):
+        before = updates(page)
+        cable.locator(f'[data-position="{at}"]').click()
+        wait_for_update(page, before)
+        expect(chip).to_have_text("Battery · cut off")
+        expect(page.locator("#frequency-plot")).to_contain_text(
+            f"The pedal has no power: IN {said}, so its battery is cut off."
+        )
+    before = updates(page)
+    cable.locator('[data-position="0"]').click()
+    wait_for_update(page, before)
+    expect(chip).to_have_text("Battery · 9 V")
+    expect(page.locator("#frequency-plot canvas").first).to_be_visible()
+
+
 def test_no_power_says_so_in_the_banner_and_shows_no_voltages(page: Page, base_url: str) -> None:
     """D-359: the user's clean boost (a TL061 on a battery switched by J1) with the cable
     out: the banner says why and, clicked, selects J1; the DC pane and Probe show the

@@ -721,7 +721,7 @@
     },
     "Guitar": {
       "additionalProperties": false,
-      "description": "The signal input. One pin, `out`; the other side is ground. `ideal` is a stiff\nsource (a buffer or an active pickup in front); with a `pickup`, the guitar's volume\npot (`volume`, its `taper` and `rotation`; None: no pot) and `cable` metres of lead\nsit between the coil and the circuit (D-096). Ideal (\"buffered\") ignores the cable;\nits volume pot sits before the buffer, so it turns only the level (D-134).",
+      "description": "The signal input. One pin, `out`; the other side is ground. `ideal` is a stiff\nsource (a buffer or an active pickup in front); with a `pickup`, the guitar's volume\npot (`volume`, its `taper` and `rotation`; None: no pot) and `cable` metres of lead\nsit between the coil and the circuit (D-096). Ideal (\"buffered\") ignores the cable;\nits volume pot sits before the buffer, so it turns only the level (D-134). Its input\njack is a jack (D-364): `plug` as a `Jack`'s, so a mono plug's sleeve joins a stereo\ninput's ring to ground and a stereo plug or none leaves it open; with no cable no\nguitar reaches the pedal. A J drawn into it takes over (`solum/circuit/cables.py`).",
       "properties": {
         "ref": {
           "pattern": "^[A-Za-z][A-Za-z0-9]*$",
@@ -832,6 +832,16 @@
           "default": false,
           "title": "Stereo",
           "type": "boolean"
+        },
+        "plug": {
+          "default": "mono",
+          "enum": [
+            "mono",
+            "stereo",
+            "none"
+          ],
+          "title": "Plug",
+          "type": "string"
         }
       },
       "required": [
@@ -2437,7 +2447,7 @@
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "const": 32,
+      "const": 33,
       "title": "Schema",
       "type": "integer"
     },
@@ -2663,7 +2673,7 @@
     "name",
     "parts"
   ],
-  "title": "Solum Builder circuit, schema v32",
+  "title": "Solum Builder circuit, schema v33",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

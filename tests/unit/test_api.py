@@ -210,7 +210,7 @@ def test_starters_are_listed_and_open(monkeypatch: pytest.MonkeyPatch) -> None:
     view = c.get("/api/starters/ts808").json()
     assert view["circuit"]["name"] == "Ibanez TS808 Tube Screamer"
     labels = [k["label"] for k in view["controls"]]
-    assert labels == ["Guitar volume", "Distortion", "Tone", "Level"]
+    assert labels == ["Guitar volume", "Distortion", "Tone", "Level", "Guitar cable"]
 
 
 def test_unknown_starter_is_a_plain_404(monkeypatch: pytest.MonkeyPatch) -> None:

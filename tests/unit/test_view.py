@@ -113,10 +113,17 @@ def test_the_guitar_volume_is_listed_with_the_knobs(circuit: Builder) -> None:
     assert controls(c.build()) == [
         {"ref": "IN", "kind": "pot", "label": "Guitar volume", "value": "500k", "taper": "A",
          "rotation": 1.0},
+        IN_CABLE,
     ]  # fmt: skip
     buffered = circuit().part("IN", "guitar", "in", volume="500k").build()
-    assert [k["label"] for k in controls(buffered)] == ["Guitar volume"]
-    assert controls(circuit().part("IN", "guitar", "in").build()) == []
+    assert [k["label"] for k in controls(buffered)] == ["Guitar volume", "Guitar cable"]
+    assert controls(circuit().part("IN", "guitar", "in").build()) == [IN_CABLE]
+
+
+# the guitar input's cable switch (D-364), after the knobs and switches
+IN_CABLE = {"ref": "IN.plug", "kind": "switch", "label": "Guitar cable", "refs": ["IN"],
+            "position": 0, "positions": ["Cable in", "Cable out"], "field": "plug",
+            "values": ["mono", "none"]}  # fmt: skip
 
 
 def test_controls_for_pots_and_switches(circuit: Builder) -> None:
@@ -125,6 +132,7 @@ def test_controls_for_pots_and_switches(circuit: Builder) -> None:
          "rotation": 0.3},
         {"ref": "SW1", "kind": "switch", "label": "Clip", "refs": ["SW1"], "position": 0,
          "positions": ["1", "2", "3"], "contacts": ["1: C\u20131", "2: C\u20132", "3: C\u20133"]},
+        IN_CABLE,
     ]  # fmt: skip
 
 

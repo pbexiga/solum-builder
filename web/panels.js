@@ -432,7 +432,7 @@ export function knobControl(c, value, onChange, onGrab = () => {}, onHover = () 
     });
     return b;
   });
-  return inUse(h("div", { class: "knob", "data-knob": c.ref }, [h("span", { class: "name" }, [c.label]), h("span", { class: "meta" }, [c.ref]), h("span", { class: "segmented", role: "radiogroup", "aria-label": c.label }, buttons)]), c.ref, onHover);
+  return inUse(h("div", { class: "knob", "data-knob": c.ref }, [h("span", { class: "name" }, [c.label]), h("span", { class: "meta" }, [c.refs?.length === 1 ? c.refs[0] : c.ref]), h("span", { class: "segmented", role: "radiogroup", "aria-label": c.label }, buttons)]), c.ref, onHover);
 }
 
 /**

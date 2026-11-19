@@ -663,8 +663,9 @@ def _guitar(e: _Emitter, p: Guitar, analysis: Analysis) -> None:
         stimulus = f"DC 0 SIN(0 {spice_number(analysis.amplitude)} {spice_number(analysis.freq)})"
     else:
         stimulus = "DC 0"
-    if p.stereo and e.connected(p, "ring"):  # the cable's sleeve joins the jack's ring (D-143)
-        e.add(element_name("R", p.ref, "ring"), e.pin(p, "ring"), "0", spice_number(SWITCH_ON))
+    if p.stereo and e.connected(p, "ring"):  # a mono plug's sleeve joins the ring (D-364)
+        joined = SWITCH_ON if p.plug == "mono" else SWITCH_OFF
+        e.add(element_name("R", p.ref, "ring"), e.pin(p, "ring"), "0", spice_number(joined))
     out = e.pin(p, "out")
     recording = analysis.source_file if isinstance(analysis, Tran) else None
     if p.source == "ideal":

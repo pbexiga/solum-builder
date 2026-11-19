@@ -24,7 +24,7 @@ Every pot and switch in the circuit gets a control here, named by its label ("Di
 
 Turning a knob or flipping a switch isn't an edit: there's nothing to save or undo, and the circuit opens next time where it was saved. **Use as opening positions**, under the knobs, makes where they are now the circuit's own, as one edit.
 
-A switch's position names (Vintage, Thick) come from its form. A DC jack adds a **Power** switch (*Plugged in* or *Unplugged*, or *DC jack* or *Battery* with a battery on its lug), and a jack plugged into IN or OUT, or one whose ring switches something, adds a cable switch (*Input cable*: Mono cable, Stereo cable or Cable out). A cable out doesn't stop the curve; only a pedal with no power has none, and the pane says why. See [Jacks and cables](power.md#jacks-and-cables) and [No power](power.md#no-power).
+A switch's position names (Vintage, Thick) come from its form. A DC jack adds a **Power** switch (*Plugged in* or *Unplugged*, or *DC jack* or *Battery* with a battery on its lug), and a jack plugged into IN or OUT, or one whose ring switches something, adds a cable switch (*Input cable*: Mono cable, Stereo cable or Cable out); with no jack drawn into it, IN has its own (*Guitar cable*). Cable switches come after the pedal's own knobs and switches. A cable out doesn't stop the curve; only a pedal with no power has none, and the pane says why. See [Jacks and cables](power.md#jacks-and-cables) and [No power](power.md#no-power).
 
 ## The large view
 

@@ -21,15 +21,17 @@ from dataclasses import dataclass
 from typing import Literal
 
 from solum.circuit.cables import (
+    Socket,
     battery_cut_off,
     battery_cutter,
+    cable_key,
     plug_said,
     plugs,
     silence,
     switching_jacks,
 )
 from solum.circuit.connectivity import ConnectivityError, Nets, connect
-from solum.circuit.schema import SUPPLY_SIGNS, Battery, Circuit, DcJack, Guitar, Jack, VSource
+from solum.circuit.schema import SUPPLY_SIGNS, Battery, Circuit, DcJack, Guitar, VSource
 from solum.units import parse_value
 
 
@@ -251,12 +253,12 @@ def _cable_cuts(circuit: Circuit) -> dict[str, dict[str, object]]:
     found: dict[str, dict[str, object]] = {}
     for ref in switching_jacks(circuit):
         jack = circuit.part(ref)
-        assert isinstance(jack, Jack)
+        assert isinstance(jack, Socket)
         options = plugs(jack)
         cut = [i for i, plug in enumerate(options)
                if battery_cut_off(circuit.with_part(ref, plug=plug))]  # fmt: skip
-        if cut:
-            found[ref] = {"at": options.index(jack.plug), "positions": cut}
+        if cut:  # by its cable switch's key in Knobs
+            found[cable_key(jack)] = {"at": options.index(jack.plug), "positions": cut}
     return found
 
 

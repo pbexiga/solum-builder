@@ -229,10 +229,10 @@ def test_schema_v1_file_loads_as_current(repo: Path) -> None:
     (and dropped provenance), v6 text blocks (and dropped the power mode); a v1 file
     loads unchanged and saves as v6 at v1.0."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v1.json")
-    assert c.schema_ == SCHEMA_VERSION == 32
+    assert c.schema_ == SCHEMA_VERSION == 33
     assert c.tags == [] and c.texts == []
     assert [p.ref for p in c.parts] == ["R1", "R2"]
-    assert circuit_to_dict(c)["schema"] == 32
+    assert circuit_to_dict(c)["schema"] == 33
     assert (str(c.version), c.final) == ("v1.0", False)
 
 
@@ -660,6 +660,15 @@ def test_a_v31_pickup_has_no_set(repo: Path) -> None:
     guitar = c.part("IN")
     assert guitar.pickup is not None and guitar.pickup.set is None  # type: ignore[union-attr]
     assert "set" not in circuit_to_dict(c)["parts"][0]["pickup"]
+
+
+def test_a_v32_guitar_input_has_a_mono_plug_in(repo: Path) -> None:
+    """v33 (D-364): an older guitar input has no `plug`, read as a mono plug in (its ring
+    on ground, as it was simulated), and isn't written while it stays so."""
+    c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v32.json")
+    assert c.schema_ == SCHEMA_VERSION
+    assert c.part("IN").plug == "mono"  # type: ignore[union-attr]
+    assert "plug" not in circuit_to_dict(c)["parts"][0]
 
 
 def test_a_pickup_keeps_the_three_typed_as_typed(repo: Path) -> None:

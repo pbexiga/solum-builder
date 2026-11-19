@@ -13,21 +13,24 @@
  * @returns {C}
  */
 export function withControls(circuit, controls, values) {
+  /** @type {Map<string, Record<string, any>>} */
   const set = new Map();
   for (const c of controls) {
     if (!(c.ref in values)) continue;
     // a switch's knob turns every pole (`refs`, D-143); one with a `field` (the DC jack's
-    // Power, a jack's cable, D-185, D-355) sets that field to its position's value
+    // Power, a jack's cable, D-185, D-355) sets that field to its position's value; one
+    // part can have two (the guitar's volume and its cable, D-364)
     for (const ref of c.refs ?? [c.ref]) {
-      set.set(ref, c.field ? [c.field, c.values?.[values[c.ref]]] : [c.kind === "switch" ? "position" : "rotation", values[c.ref]]);
+      const [field, value] = c.field ? [c.field, c.values?.[values[c.ref]]] : [c.kind === "switch" ? "position" : "rotation", values[c.ref]];
+      set.set(ref, { ...set.get(ref), [field]: value });
     }
   }
   let changed = false;
   const parts = circuit.parts.map((p) => {
-    const [field, value] = set.get(p.ref) ?? [];
-    if (field === undefined || p[field] === value) return p;
+    const fields = Object.entries(set.get(p.ref) ?? {}).filter(([field, value]) => p[field] !== value);
+    if (!fields.length) return p;
     changed = true;
-    return { ...p, [field]: value };
+    return { ...p, ...Object.fromEntries(fields) };
   });
   return changed ? { ...circuit, parts } : circuit;
 }

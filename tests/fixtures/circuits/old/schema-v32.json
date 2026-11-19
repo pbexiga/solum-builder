@@ -1,0 +1,11 @@
+{
+ "schema": 32,
+ "id": "v32",
+ "name": "v32",
+ "parts": [
+  {"ref": "IN", "pos": [0, 0], "type": "guitar", "stereo": true},
+  {"ref": "OUT", "pos": [200, 0], "type": "amp"}
+ ],
+ "wires": [],
+ "labels": []
+}

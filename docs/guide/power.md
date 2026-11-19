@@ -19,7 +19,7 @@ Beside the menu, after a run, is the current the circuit draws from the supply (
 | just power the circuit | nothing: the Power menu does it |
 | draw the power section, for a full drawing and the parts list | a **DC jack** |
 | run it from a battery, or switch between plugged in and battery | a **DC jack** and a **battery** (the *9 V power · DC jack and battery* block) |
-| switch the battery off when the guitar cable comes out, as pedals do | a **battery** with its − on a stereo input **Jack**'s ring (the *… switched by the input jack* blocks): see [Jacks and cables](#jacks-and-cables) |
+| switch the battery off when the guitar cable comes out, as pedals do | a **battery** with its − on a stereo input **Jack**'s ring (the *… switched by the input jack* blocks), or on a stereo **IN**'s own ring: see [Jacks and cables](#jacks-and-cables) |
 | hold another net at a voltage of its own | a **DC source** |
 
 ### DC jack
@@ -69,7 +69,11 @@ What a jack's cable does depends on what it's wired to:
 - **A stereo jack with its ring and sleeve both wired**: its ring is a switch, joined to the sleeve only by a mono plug. Wire anything there; most often it's the battery's −.
 - **A jack wired to none of these**: a drawing for the build. Its cable changes nothing.
 
-Each jack that switches something gets a switch in Knobs & switches, named by the jack's label (*Input cable*, *Output cable*) or its ref (*J1 cable*):
+**IN is an input jack too.** With no jack drawn into it, IN's own jack is the one the guitar plugs into: its **Guitar cable** switch in Knobs takes the guitar out as J1's would. Set IN's **Input jack** to *stereo* and its ring lug (R) is drawn below it, a switch to ground (IN's sleeve) like a stereo jack's ring: wire the battery's − there and a mono cable switches it on, a stereo cable or none cuts it off, with no J1 drawn at all. IN says what's in it under its circle (*mono cable*, *stereo cable*, *cable out*), following the switch.
+
+Draw a jack into IN (its T on IN's middle or IN's pin) and that jack is the input jack: Knobs has only its switch, and IN's form says *Input jack: Drawn as J1*. Delete J1 or unwire its T and IN's own jack is back. A stereo IN with its ring wired can't take a jack: one jack can't have two rings, so it's refused with *IN's ring is wired: move those wires to J1's R first, or unplug J1.*
+
+Each jack that switches something gets a switch in Knobs & switches, after the pedal's own knobs, named by the jack's label (*Input cable*, *Output cable*) or its ref (*J1 cable*), and IN's *Guitar cable*:
 
 - a mono jack: **Cable in** or **Cable out**;
 - a stereo jack: **Mono cable**, **Stereo cable** or **Cable out**. A stereo (TRS) cable's ring is its own, so it doesn't join the jack's ring to the sleeve: a stereo cable in the input leaves the battery off, as on a real pedal.

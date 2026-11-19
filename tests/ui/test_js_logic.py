@@ -286,6 +286,12 @@ def test_state_helpers(js: Page) -> None:
                        { ref: 'J1', kind: 'switch', refs: ['J1'], field: 'plug', values: ['mono', 'stereo', 'none'] }];
         const turnedJacks = s.withControls(jacks, plugs, { DC: 1, J1: 1 }).parts;
         const unplugged = [turnedJacks[0].plugged, turnedJacks[1].plug];
+        // the guitar's volume and its cable (keyed IN.plug) both set on IN (D-364)
+        const guitar = { parts: [{ ref: 'IN', type: 'guitar', rotation: 1, plug: 'mono' }] };
+        const both = [{ ref: 'IN', kind: 'pot', rotation: 1 },
+                      { ref: 'IN.plug', kind: 'switch', refs: ['IN'], field: 'plug', values: ['mono', 'none'] }];
+        const played = s.withControls(guitar, both, { IN: 0.4, 'IN.plug': 1 }).parts[0];
+        const guitarBoth = [played.rotation, played.plug];
         // knobs stay turned across edits, unless their opening position changed; new ones open there
         const kept = s.keptControls(
           [{ ref: 'VR1', kind: 'pot', rotation: 0.5 }, { ref: 'VR2', kind: 'pot', rotation: 0.3 }, { ref: 'SW1', kind: 'switch', position: 1 }],
@@ -304,7 +310,7 @@ def test_state_helpers(js: Page) -> None:
         const pv = (type, detail, pins) => s.focusNet({ type, detail, pins });
         return {
           original: circuit.parts[0].rotation, turned: turned.parts[0].rotation,
-          same: turned.parts[1] === circuit.parts[1], untouched, kept, unplugged,
+          same: turned.parts[1] === circuit.parts[1], untouched, kept, unplugged, guitarBoth,
           latest: [l.isCurrent(a), l.isCurrent(b)], calls,
           follower: pv('bjt', { stage: { terminal: 'E' } }, { C: { net: 'vp' }, E: { net: 'e' } }),
           diode: pv('diode', {}, { A: { net: 'a' }, K: { net: 'k' } }),
@@ -314,6 +320,7 @@ def test_state_helpers(js: Page) -> None:
     )
     assert (result["original"], result["turned"], result["same"]) == (0.5, 0.9, True)
     assert result["unplugged"] == [False, "stereo"]
+    assert result["guitarBoth"] == [0.4, "none"]
     assert result["untouched"] is True  # nothing differs: the same circuit
     assert result["kept"] == {"VR1": 0.9, "VR2": 0.3, "SW1": 1}
     assert result["latest"] == [False, True]

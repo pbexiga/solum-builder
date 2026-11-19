@@ -40,7 +40,7 @@ from solum.circuit.switches import (
 )
 from solum.units import format_quantity, format_value, parse_value
 
-SCHEMA_VERSION: Final = 32
+SCHEMA_VERSION: Final = 33
 
 Point = tuple[int, int]
 Rotation = Literal[0, 90, 180, 270]
@@ -489,12 +489,18 @@ class Pickup(_Model):
         return self
 
 
+Plug = Literal["mono", "stereo", "none"]  # what's in a jack (D-355)
+
+
 class Guitar(_Part):
     """The signal input. One pin, `out`; the other side is ground. `ideal` is a stiff
     source (a buffer or an active pickup in front); with a `pickup`, the guitar's volume
     pot (`volume`, its `taper` and `rotation`; None: no pot) and `cable` metres of lead
     sit between the coil and the circuit (D-096). Ideal ("buffered") ignores the cable;
-    its volume pot sits before the buffer, so it turns only the level (D-134)."""
+    its volume pot sits before the buffer, so it turns only the level (D-134). Its input
+    jack is a jack (D-364): `plug` as a `Jack`'s, so a mono plug's sleeve joins a stereo
+    input's ring to ground and a stereo plug or none leaves it open; with no cable no
+    guitar reaches the pedal. A J drawn into it takes over (`solum/circuit/cables.py`)."""
 
     type: Literal["guitar"]
     source: Literal["ideal", "pickup"] = "ideal"
@@ -503,7 +509,8 @@ class Guitar(_Part):
     volume: PositiveValue | None = None
     taper: Taper = "A"
     rotation: Fraction = 1.0
-    stereo: bool = False  # a stereo input jack: its ring is pin `ring`, on GND with a plug in (v14)
+    stereo: bool = False  # a stereo input jack: its ring is pin `ring` (v14)
+    plug: Plug = "mono"  # what's in its jack, as a jack's (v33, D-364)
 
     @property
     def has_volume(self) -> bool:
@@ -531,9 +538,6 @@ class DcJack(_Part):
 
     type: Literal["dcjack"]
     plugged: bool = True
-
-
-Plug = Literal["mono", "stereo", "none"]  # what's in a jack (D-355)
 
 
 class Jack(_Part):
@@ -707,7 +711,7 @@ class Enclosure(_Model):
 
 
 class Circuit(_Model):
-    schema_: Literal[32] = Field(alias="schema")
+    schema_: Literal[33] = Field(alias="schema")
     id: str = Field(pattern=ID_PATTERN)
     name: str
     description: str = ""

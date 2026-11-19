@@ -220,6 +220,26 @@ def test_with_the_input_cable_out_the_pedal_is_off(sim: Simulator) -> None:
     assert on["no_power"] is None and on["ac"] is not None and on["tran"] is not None
 
 
+@pytest.mark.parametrize(("plug", "volts"), [("mono", 9.0), ("stereo", 0.0), ("none", 0.0)])
+def test_the_guitar_inputs_own_ring_switches_the_battery(
+    sim: Simulator, plug: str, volts: float
+) -> None:
+    """D-364: no J drawn, the battery's - on a stereo IN's ring: a mono cable switches it
+    on, a stereo cable or none leaves the ring open and the pedal off, as J1's would."""
+    c = (
+        CircuitBuilder()
+        .rail("V+", 9.0)
+        .part("IN", "guitar", "in", stereo=True, plug=plug, pins={"ring": "bneg"})
+        .part("BAT1", "battery", "V+", "bneg")
+        .part("R1", "resistor", "V+", "0", value="9k")
+        .part("OUT", "amp", "in")
+        .build()
+    )
+    assert sim.op(c).voltages["V+"] == pytest.approx(volts, abs=0.01)
+    view = run_view(sim, c, ["in"], "med")
+    assert (view["no_power"] is None) is (plug == "mono")
+
+
 def test_with_a_dc_plug_in_a_cable_out_keeps_the_curves(sim: Simulator) -> None:
     """D-358: the DC jack and battery block, its input cable out but the adapter in: the
     pedal is powered, so the run has its curve and scope; only a render is refused."""

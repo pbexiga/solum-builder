@@ -316,7 +316,7 @@ export function inspectorFields(part, ctx) {
       fields.push({ ...model(), about: "Holds its output at the model's voltage while its input stays above that plus its dropout (a 78L12: 12 V from 13.7 V or more). Feed it from a charge pump's 18 V for a 12 V supply; its bias current (4.2 mA for a 78L12) flows to ground whatever the load. The datasheet's caps: 0.33 µF on the input, 0.1 µF on the output." });
       break;
     case "guitar":
-      fields.push(...guitarFields(part, ctx.pickups ?? []));
+      fields.push(...guitarFields(part, ctx.pickups ?? [], ctx.view?.parts?.find((/** @type {any} */ p) => p.ref === part.ref)?.draw?.taken));
       break;
     case "amp":
       fields.push(text("value", "Input impedance", part.value ?? "1M", { unit: "Ω" }));
@@ -662,10 +662,11 @@ function jfetSpecFields(part, model) {
  * The guitar input's fields (D-096): the pickup (a measured one, your own values, or
  * buffered: a buffer in front), its coil, the cable and the volume pot. Picking a measured
  * pickup fills the coil and the pot; the coil and cable hide while buffered, the volume
- * pot stays (D-134).
- * @param {any} part @param {PickupChoice[]} pickups @returns {Field[]}
+ * pot stays (D-134). `taken`: the J drawn into it, which is its jack (D-364): the Input
+ * jack box says so instead.
+ * @param {any} part @param {PickupChoice[]} pickups @param {string | undefined} taken @returns {Field[]}
  */
-function guitarFields(part, pickups) {
+function guitarFields(part, pickups, taken) {
   const has = part.source === "pickup";
   const chosen = has ? (part.pickup?.kind ?? "custom") : "ideal";
   const start = pickups[0] ?? { r: "6k", l: "2.5", c: "150p", volume: "250k" };
@@ -686,9 +687,11 @@ function guitarFields(part, pickups) {
     text("pickup_q", "Q", set.q, { ...only, about: "How sharp the peak is: 2π·peak·L / R. A real pickup's measured Q is lower than its R, L and C alone give (losses in its magnets and covers)." }),
     num("cable", "Cable", has ? (part.cable ?? 0) : 3, { unit: "m", ...only, divider: true, hint: "About 100 pF a metre." }),
     text("volume", "Volume pot", part.volume ?? "", { unit: "Ω", hint: "The guitar's volume pot. Empty: none. Turn it in Knobs." }),
-    { ...select("stereo", "Input jack", part.stereo ? "stereo" : "mono", [["mono", "mono"], ["stereo", "stereo (battery switch)"]]),
-      hint: "Stereo: its ring lug (R) is drawn.",
-      about: "The guitar cable's sleeve joins the ring to ground, so a battery's − wired there is on only with a cable in." },
+    taken
+      ? readonly("input_jack", "Input jack", `Drawn as ${taken}`, `${taken}, drawn into ${part.ref}, is the input jack: its cable switch is in Knobs.`)
+      : { ...select("stereo", "Input jack", part.stereo ? "stereo" : "mono", [["mono", "mono"], ["stereo", "stereo (battery switch)"]]),
+        hint: "Stereo: its ring lug (R) is drawn. Its cable switch is in Knobs.",
+        about: "A mono cable's sleeve joins the ring to ground, so a battery's − wired there is on only with a mono cable in; a stereo cable or none leaves it off." },
   ];
 }
 

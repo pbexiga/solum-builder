@@ -296,6 +296,69 @@ def test_a_jack_plugs_into_in_and_out(page: Page, base_url: str, browser_errors:
     browser_errors[:] = [e for e in browser_errors if "status of 422" not in e]  # the refusal
 
 
+def test_in_is_a_jack_too(page: Page, base_url: str, browser_errors: list[str]) -> None:
+    """D-364: IN's own cable switch in Knobs (mono: in or out; stereo: mono, stereo, out),
+    drawn on IN; a J plugged into a stereo IN whose ring is wired is refused; with the ring
+    free J1 takes over: one switch (J1's) and IN's Input jack box blanked."""
+    new_circuit(page, base_url, "IN jack test")
+    show_area(page, -160, -100, 460, 160)
+    place(page, "i", 0, 0)  # IN: plug (0, 0), pin (20, 0), a stereo one's ring (0, 20)
+    place(page, "a", 300, 0)
+    cable = page.locator('#knobs-body [data-knob="IN.plug"]')
+    expect(cable.locator("button")).to_have_text(["Cable in", "Cable out"])
+    expect(cable.locator(".meta")).to_have_text("IN")
+    click_at(page, 0, 0)
+    inspect(page, {"stereo": "stereo"})
+    expect(cable.locator("button")).to_have_text(["Mono cable", "Stereo cable", "Cable out"])
+    in_part = page.locator('g.part[data-ref="IN"]')
+    expect(in_part).to_contain_text("mono cable")
+    cable.locator('[data-position="1"]').click()
+    expect(in_part).to_contain_text("stereo cable")
+    cable.locator('[data-position="0"]').click()
+    place(page, "r", 60, 60)  # R1: pins (40, 60), (80, 60)
+    page.locator('[data-tool="wire"]').click()
+    before = views(page)
+    for point in [(0, 20), (0, 60), (40, 60)]:  # IN's ring to R1
+        click_at(page, *point)
+    wait_for_view(page, before)
+    press(page, "Escape")
+    before = views(page)
+    page.locator('[data-place="jack"]').click()
+    click_at(page, -100, -40)  # J1: T (-60, -40)
+    wait_for_view(page, before)
+    drawn = wires(page)
+    page.locator('[data-tool="wire"]').click()
+    for point in [(-60, -40), (0, -40), (0, 0)]:  # J1's T into IN's middle
+        click_at(page, *point)
+    expect(page.locator("#refusal")).to_contain_text(
+        "IN's ring is wired: move those wires to J1's R first, or unplug J1."
+    )
+    assert wires(page) == drawn
+    press(page, "Escape")
+    press(page, "Escape")
+    delete_part(page, "R1")  # IN's ring free again
+    page.locator('[data-tool="wire"]').click()
+    before = views(page)
+    for point in [(-60, -40), (0, -40), (0, 0)]:
+        click_at(page, *point)
+    wait_for_view(page, before)
+    press(page, "Escape")
+    press(page, "Escape")
+    expect(cable).to_have_count(0)
+    expect(page.locator('#knobs-body [data-knob="J1"] button')).to_have_text(
+        ["Cable in", "Cable out"]
+    )
+    before = updates(page)
+    click_at(page, -5, 5)  # IN's circle, off its middle (J1's wire ends there now)
+    wait_for_update(page, before)
+    expect(page.locator('[data-testid="probe-name"]')).to_have_text("IN")
+    press(page, "Enter")
+    expect(page.locator("#field-input_jack")).to_have_value("Drawn as J1")
+    expect(page.locator("#field-stereo")).to_have_count(0)
+    press(page, "Escape")
+    browser_errors[:] = [e for e in browser_errors if "status of 422" not in e]  # the refusal
+
+
 def test_place_undo_redo(page: Page, base_url: str) -> None:
     new_circuit(page, base_url, "Undo test")
     place(page, "r", 0, 0)

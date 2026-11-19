@@ -408,15 +408,18 @@ function regulator(pins) {
 }
 
 /**
- * The guitar input: a jack. A stereo one (D-143) has its ring lug below, and the plugged
- * cable's sleeve joining the ring to ground is drawn beside it ("cable in").
- * @param {{stereo?: boolean}} draw
+ * The guitar input: a jack (D-364). A stereo one (D-143) has its ring lug below and, as a
+ * stereo jack's (D-355), a mono plug's sleeve joining the ring to ground drawn dashed
+ * beside it, and what's in it said ("mono cable", "stereo cable", "cable out").
+ * @param {{stereo?: boolean, plug?: string}} draw
  */
 function guitar(draw = {}) {
+  const plug = draw.plug ?? "mono";
   const ring = draw.stereo
-    ? [line(0, 8, 0, 20), line(0, 14, -12, 14), line(-12, 14, -12, 18), line(-16, 18, -8, 18),
+    ? [line(0, 8, 0, 20), { path: plug === "mono" ? "M0,14 L-3,14 M-6,14 L-9,14 M-12,14 L-12,15" : "M-12,14 L-12,15" },
+      line(-12, 15, -12, 18), line(-16, 18, -8, 18),
       line(-14, 20.5, -10, 20.5), { text: "R", at: [5, 18], size: 6, anchor: "start" },
-      { text: "cable in", at: [-19, 20], size: 6, anchor: "end" }]
+      { text: plug === "none" ? "cable out" : `${plug} cable`, at: [-19, 20], size: 6, anchor: "end" }]
     : [];
   return {
     shapes: [{ circle: [0, 0, 8] }, { circle: [0, 0, 2.5], fill: true }, line(8, 0, 20, 0), ...ring],
@@ -726,8 +729,9 @@ function battery() {
  * The symbol for a part from the circuit view.
  * @param {{type: string, polarity?: string | null, draw?: any, pins: Array<{name: string}>}} part
  * @param {number} [position] a switch's current position (knob state); a DC jack's is
- *   the Power knob's (0 plugged in, 1 on the battery) and a stereo jack's its Cable knob's
- *   (its place in `draw.plugs`: mono, stereo, none), none when there's no knob
+ *   the Power knob's (0 plugged in, 1 on the battery) and a stereo jack's (the guitar
+ *   input's too) its Cable knob's (its place in `draw.plugs`: mono, stereo, none), none
+ *   when there's no knob
  * @returns {Symbol}
  */
 export function symbol(part, position) {
@@ -751,7 +755,7 @@ export function symbol(part, position) {
     case "vsource": return vsource();
     case "chargepump": return chargepump();
     case "regulator": return regulator(part.pins ?? []);
-    case "guitar": return guitar(draw);
+    case "guitar": return guitar(position === undefined ? draw : { ...draw, plug: draw.plugs?.[position] ?? draw.plug });
     case "dcjack": return dcjack(position === undefined ? draw : { plugged: position === 0 });
     case "battery": return battery();
     case "amp": return amp();
@@ -850,7 +854,7 @@ export function pinOffsets(part) {
 function fileDraw(part) {
   if (part.type === "switch") return poleDraw(part);
   if (part.type === "dcjack") return { plugged: part.plugged ?? true };
-  if (part.type === "guitar") return { stereo: !!part.stereo, plugged: part.plugged ?? true };
+  if (part.type === "guitar") return { stereo: !!part.stereo, plug: part.plug ?? "mono" };
   if (part.type === "jack") return { stereo: !!part.stereo, plug: part.plug ?? "mono" };
   if (part.type === "opamp") return { half: part.half ?? null, show_pins: !!part.show_pins };
   if (part.type === "ota") return { half: part.half ?? null };

@@ -117,7 +117,7 @@ def bias_edges(circuit: Circuit, nets: Nets) -> list[Edge]:
             case Switch():
                 edges += [_chain(nets, p, pair)[0] for pair in closed_contacts(p)]
             case Guitar():
-                edges += _guitar_edges(nets, p)
+                edges += _guitar_edges(nets, p, closed=True)
             case AmpInput():
                 edges.append((nets.net_of(p.ref, "in"), GROUND))
             case VSource():
@@ -136,11 +136,11 @@ def bias_edges(circuit: Circuit, nets: Nets) -> list[Edge]:
     return edges
 
 
-def _guitar_edges(nets: Nets, part: Guitar) -> list[Edge]:
-    """The guitar's signal to ground and, on a stereo jack, its ring (the cable's sleeve
-    joins it, D-143)."""
+def _guitar_edges(nets: Nets, part: Guitar, closed: bool = False) -> list[Edge]:
+    """The guitar's signal to ground and, on a stereo jack, its ring's contact to ground,
+    open or closed; `closed`: only while a mono plug's sleeve joins them (D-143, D-364)."""
     edges = [(nets.net_of(part.ref, "out"), GROUND)]
-    if part.stereo:
+    if part.stereo and (part.plug == "mono" or not closed):
         edges.append((nets.net_of(part.ref, "ring"), GROUND))
     return edges
 

@@ -7,7 +7,7 @@ from collections.abc import Mapping
 from dataclasses import dataclass
 from typing import Any
 
-from solum.circuit.cables import plug_names, plugs, switching_jacks
+from solum.circuit.cables import Socket, cable_key, jacks_into, plug_names, plugs, switching_jacks
 from solum.circuit.chips import supply_nets, unused_halves
 from solum.circuit.connectivity import GROUND, ConnectivityError, Nets, connect, on_segment
 from solum.circuit.io import circuit_to_dict
@@ -148,13 +148,17 @@ def controls(circuit: Circuit) -> list[dict[str, Any]]:
     """One knob per pot (a dual pot's gangs share it, D-217) and one selector per switch,
     in file order (SPEC §1); the guitar's volume is a pot like the others (D-096)."""
     found: list[dict[str, Any]] = []
+    cables: list[dict[str, Any]] = []
     jacks = switching_jacks(circuit)
     for p in circuit.parts:
-        if isinstance(p, Guitar) and p.has_volume:
-            found.append(
-                {"ref": p.ref, "kind": "pot", "label": "Guitar volume", "value": p.volume,
-                 "taper": p.taper, "rotation": p.rotation}
-            )  # fmt: skip
+        if isinstance(p, Guitar):
+            if p.has_volume:
+                found.append(
+                    {"ref": p.ref, "kind": "pot", "label": "Guitar volume", "value": p.volume,
+                     "taper": p.taper, "rotation": p.rotation}
+                )  # fmt: skip
+            if p.ref in jacks:  # its input jack's cable, unless a J drawn into it has it (D-364)
+                cables.append(_cable_switch(p, "Guitar cable"))
         elif isinstance(p, Pot) and p.gang in (None, "a"):  # one per dual pot (D-217)
             knob: dict[str, Any] = {
                 "ref": p.knob, "kind": "pot", "label": p.label or p.knob, "value": p.value,
@@ -182,12 +186,16 @@ def controls(circuit: Circuit) -> list[dict[str, Any]]:
                  "field": "plugged", "values": [True, False]}
             )  # fmt: skip
         elif isinstance(p, Jack) and p.ref in jacks:
-            found.append(  # what's in it switches the guitar, amp, ring, battery (D-354, D-355)
-                {"ref": p.ref, "kind": "switch", "label": f"{p.label or p.ref} cable",
-                 "refs": [p.ref], "position": plugs(p).index(p.plug),
-                 "positions": plug_names(p), "field": "plug", "values": list(plugs(p))}
-            )  # fmt: skip
-    return found
+            # what's in it switches the guitar, amp, ring, battery (D-354, D-355)
+            cables.append(_cable_switch(p, f"{p.label or p.ref} cable"))
+    return found + cables  # the cables after the pedal's own knobs and switches (D-364)
+
+
+def _cable_switch(p: Socket, label: str) -> dict[str, Any]:
+    """A jack's cable switch in Knobs: what's in it, each position setting `plug`."""
+    return {"ref": cable_key(p), "kind": "switch", "label": label, "refs": [p.ref],
+            "position": plugs(p).index(p.plug), "positions": plug_names(p), "field": "plug",
+            "values": list(plugs(p))}  # fmt: skip
 
 
 def _sign(x: int) -> int:
@@ -311,7 +319,7 @@ def _draw_fields(part: Part) -> dict[str, Any]:
         return switch_draw(part)
     if isinstance(part, DcJack):
         return {"plugged": part.plugged}
-    if isinstance(part, Jack) and part.stereo:  # the plug drawn, per Knobs position too
+    if isinstance(part, Socket) and part.stereo:  # the plug drawn, per Knobs position too
         return {"stereo": True, "plug": part.plug, "plugs": list(plugs(part))}
     if isinstance(part, Guitar | Jack):
         return {"stereo": part.stereo}
@@ -434,9 +442,12 @@ def circuit_view(
         for p in circuit.parts
     ]  # fmt: skip
     spare = unused_halves(circuit, nets)
-    for entry in parts:
+    for entry, p in zip(parts, circuit.parts, strict=True):
         if entry["ref"] in spare:
             entry["draw"]["unused"] = True
+        if isinstance(p, Guitar) and (into := jacks_into(circuit, nets, p)):
+            entry["draw"] = {"stereo": False, "taken": into[0].ref}  # its jack is J (D-364)
+            entry["pins"] = [pin for pin in entry["pins"] if pin["name"] != "ring"]
 
     anchors: dict[str, list[Point]] = {name: [] for name in nets.members}
     for lb in circuit.labels:

@@ -143,7 +143,8 @@ def test_internal_resistance_is_in_series(models: ModelLibrary, circuit: Builder
 def test_the_jacks_are_drawn_in_their_state(circuit: Builder) -> None:
     parts = {p["ref"]: p for p in circuit_view(pedal(circuit, plugged=False).build())["parts"]}
     assert parts["DC"]["draw"] == {"plugged": False}
-    assert parts["IN"]["draw"] == {"stereo": True}
+    plugs = ["mono", "stereo", "none"]
+    assert parts["IN"]["draw"] == {"stereo": True, "plug": "mono", "plugs": plugs}
     assert {pin["name"] for pin in parts["IN"]["pins"]} == {"out", "ring"}
 
 
@@ -166,6 +167,11 @@ def test_the_power_chip_follows_the_dc_jacks_switch(circuit: Builder) -> None:
                 {"text": "DC jack", "battery": False},
                 {"text": "Battery · 7.4 V", "battery": True},
             ],
+            # its battery's − is on IN's ring: IN's cable cuts it off (D-357, D-364)
+            "cut_off": {
+                "text": "Battery · cut off",
+                "jacks": {"IN.plug": {"at": 0, "positions": [1, 2]}},
+            },
         }
 
 
@@ -413,3 +419,44 @@ def test_both_supplies_cut_off_name_both_plugs(circuit: Builder) -> None:
         f"{no_power(c)} Plug DC in or put a mono cable in J1 (Knobs) to render."
     )
     assert no_power(c.with_part("DC", plugged=True)) is None  # the adapter's in
+
+
+@pytest.mark.parametrize(
+    ("plug", "ohms"), [("mono", "0.01"), ("stereo", "1e+12"), ("none", "1e+12")]
+)
+def test_the_guitar_inputs_ring_is_a_jacks(
+    models: ModelLibrary, circuit: Builder, plug: str, ohms: str
+) -> None:
+    """D-364: a stereo IN's ring is joined to ground only by a mono plug's sleeve, as a
+    stereo jack's; a stereo plug or none leaves it open and the battery cut off (0 V)."""
+    c = (
+        circuit()
+        .rail("V+", 9.0)
+        .part("IN", "guitar", "in", stereo=True, plug=plug, pins={"ring": "bneg"})
+        .part("BAT1", "battery", "V+", "bneg", volts=9.0)
+        .part("R1", "resistor", "V+", "0", value="10k")
+        .build()
+    )
+    lines = generate_netlist(c, models, Op()).text.splitlines()
+    assert f"R_IN_ring bneg 0 {ohms}" in lines
+    assert f"V_BAT1 v_ bneg DC {9 if plug == 'mono' else 0}" in lines
+    assert (("bneg", "GND") in graph.bias_edges(c, connect(c))) is (plug == "mono")
+    knob = next(k for k in controls(c) if k["ref"] == "IN.plug")
+    assert knob["positions"] == ["Mono cable", "Stereo cable", "Cable out"]
+    assert knob["position"] == ["mono", "stereo", "none"].index(plug)
+
+
+def test_a_jack_drawn_into_the_guitar_input_has_its_switch(circuit: Builder) -> None:
+    """D-364: J1 on IN's net is the input jack: one cable switch (J1's), and IN is drawn
+    as taken (its Input jack box blanked, no ring lug)."""
+    c = (
+        circuit()
+        .part("IN", "guitar", "in", stereo=True)
+        .part("J1", "jack", pins={"T": "in", "S": "0"}, label="Input")
+        .part("R1", "resistor", "in", "0", value="1M")
+        .build()
+    )
+    assert [k["label"] for k in controls(c)] == ["Input cable"]
+    parts = {p["ref"]: p for p in circuit_view(c)["parts"]}
+    assert parts["IN"]["draw"] == {"stereo": False, "taken": "J1"}
+    assert [pin["name"] for pin in parts["IN"]["pins"]] == ["out"]

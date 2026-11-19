@@ -1,0 +1,25 @@
+# A hand-made stripboard layout of the Dallas Rangemaster starter (D-367): P6a's check
+# must pass it, and refuse each broken copy in tests/unit/test_stripboard.py.
+#   strip 1 V-, 2 GND, 3 Q1's emitter, 4 its base, 5 its collector, 6 the input,
+#   7 C2 to VR1's wiper, 8 V- (left of the cut at G8) and GND (right), 9 the output.
+size: [12, 9]
+parts:
+  Q1: {E: E3, B: E4, C: E5}
+  R1: {1: C8, 2: C4}
+  R2: {1: J4, 2: J8}
+  R3: {1: G3, 2: G2}
+  C1: {1: F6, 2: F4}
+  C2: {1: F7, 2: F9}
+  C3: {1: H2, 2: H3}
+  C4: {1: I2, 2: I1}
+standing: [R3]
+cuts: [G8]
+links: [[B1, B8], [K2, K8]]
+pads:
+  A1: [V-]
+  D1: [VR1.1]
+  A2: [GND]
+  A5: [VR1.3]
+  A6: [IN.out]
+  A7: [VR1.2]
+  A9: [OUT.in]

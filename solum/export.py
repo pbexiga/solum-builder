@@ -41,6 +41,7 @@ from solum.circuit.schema import (
     Mosfet,
     Part,
     Pot,
+    PowerUnit,
     Regulator,
     Resistor,
     Switch,
@@ -61,6 +62,25 @@ SECTIONS: tuple[tuple[Where, str], ...] = (
     ("hardware", "Hardware"),
 )
 STATUS_LED = "status"  # an LED with this label (any case) is the bypass LED: off-board
+OFF_BOARD = (Pot, Jack, DcJack, Battery)
+ON_BOARD = (Resistor, Capacitor, Inductor, Trimmer, Diode, Bjt, Jfet, Mosfet, ChargePump,
+            Regulator, PowerUnit, *CHIP_UNITS)  # fmt: skip
+
+
+def built_where(part: Part) -> Where | None:
+    """Where `part` is built (D-203): on the board or off it; None for what isn't bought
+    (the guitar, the amp, a test source; a chip's power unit is its chip, on the board).
+    Off: pots, switches but DIP ones (D-238), jacks, the DC jack, the battery and the
+    status LED. The parts list and the stripboard layout (D-367) both ask here."""
+    if isinstance(part, OFF_BOARD):
+        return "off-board"
+    if isinstance(part, Switch):
+        return "board" if part.switch_kind.group == "DIP" else "off-board"
+    if isinstance(part, Led):
+        return "off-board" if (part.label or "").strip().lower() == STATUS_LED else "board"
+    if isinstance(part, ON_BOARD):
+        return "board"
+    return None
 
 
 @dataclass(frozen=True)
@@ -171,64 +191,63 @@ def _item(part: Part, models: ModelLibrary) -> _Item | None:
     """What buying `part` takes, or None for what isn't bought (the guitar, the amp, a test
     source, a chip's power unit: the chip's first unit stands for it)."""
     ref = part.ref
+    where = built_where(part)
+    if where is None or isinstance(part, PowerUnit):
+        return None
 
-    def make(where: Where, value: str, details: str, name: str | None = None) -> _Item:
+    def make(value: str, details: str, name: str | None = None) -> _Item:
         amount = parse_value(part.value) if isinstance(part, VALUED) else 0.0
         return _Item(part.type, where, value, details, _named(ref, name), ref, amount)
 
     if isinstance(part, Resistor):
         rating = watts_text(part.rating_w or DEFAULT_RATING_W)
-        return make("board", format_value(parse_value(part.value)), rating)
+        return make(format_value(parse_value(part.value)), rating)
     if isinstance(part, Capacitor):
         kind = _CAP_KINDS[part.kind] if part.kind else "type not set"
         if part.rating_v is not None:
             kind += f", {format_quantity(part.rating_v, 'V')}"
         elif part.kind in POLARISED:
             kind += ", voltage rating not set"
-        return make("board", format_value(parse_value(part.value)), kind)
+        return make(format_value(parse_value(part.value)), kind)
     if isinstance(part, Inductor):
         wire = f"{format_quantity(part.resistance, 'Ω')} wire" if part.resistance else ""
         details = ", ".join(x for x in (part.kind, wire) if x)
-        return make("board", format_quantity(parse_value(part.value), "H"), details)
+        return make(format_quantity(parse_value(part.value), "H"), details)
     if isinstance(part, Pot) and part.gang:
         if part.gang != "a":
             return None  # one pot, however many gangs (D-217)
         value = f"{part.taper}{format_value(parse_value(part.value))}"
         name = _named(part.knob, part.label)
         details = f"{TAPERS[part.taper]}, dual gang"
-        return _Item(part.type, "off-board", value, details, name, part.knob,
+        return _Item(part.type, where, value, details, name, part.knob,
                      parse_value(part.value))  # fmt: skip
     if isinstance(part, Pot | Trimmer):
         value = f"{part.taper}{format_value(parse_value(part.value))}"
-        where: Where = "off-board" if isinstance(part, Pot) else "board"
-        return make(where, value, TAPERS[part.taper], part.label)
+        return make(value, TAPERS[part.taper], part.label)
     if isinstance(part, Switch):
         if part.pole not in (None, "a"):
             return None  # one switch, however many poles
         name = _named(part.switch, part.label)
-        where = "board" if part.switch_kind.group == "DIP" else "off-board"  # D-238
         return _Item("switch", where, part.switch_kind.name, "", name, part.switch)
     if isinstance(part, Led):
-        status = (part.label or "").strip().lower() == STATUS_LED
-        return make("off-board" if status else "board", part.model,
-                    _semi_details(part, models), part.label)  # fmt: skip
+        return make(part.model, _semi_details(part, models), part.label)
     if isinstance(part, Diode | Bjt | Jfet | Mosfet):
-        return make("board", part.model, _semi_details(part, models))
+        return make(part.model, _semi_details(part, models))
     if isinstance(part, CHIP_UNITS):
         unit: ChipUnit = part
         if unit.half not in (None, "a"):
             return None  # one chip, however many units
-        return _Item(part.type, "board", unit.model, _package(models, unit.model, pinout=False),
+        return _Item(part.type, where, unit.model, _package(models, unit.model, pinout=False),
                      unit.chip, unit.chip)  # fmt: skip
     if isinstance(part, ChargePump | Regulator):
-        return make("board", part.model, _package(models, part.model, pinout=False))
+        return make(part.model, _package(models, part.model, pinout=False))
     if isinstance(part, Jack):
         what = "TRS" if part.trs else "TS"
-        return make("off-board", '¼" jack', what, part.label)
+        return make('¼" jack', what, part.label)
     if isinstance(part, DcJack):
-        return make("off-board", "2.1 mm", "centre negative, with a battery lug")
+        return make("2.1 mm", "centre negative, with a battery lug")
     if isinstance(part, Battery):
-        return make("off-board", f"{part.volts:g} V", "")
+        return make(f"{part.volts:g} V", "")
     return None
 
 

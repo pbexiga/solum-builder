@@ -20,6 +20,10 @@ OPAMP_PIN_ROLES = {
     "comp2": "compensation", "null1": "offset null", "null2": "offset null",
     "nc": "no internal connection",
 }  # fmt: skip
+# A transistor's pins in words, for the bias sheet and the stripboard check
+PIN_WORDS = {
+    "C": "collector", "B": "base", "E": "emitter", "D": "drain", "G": "gate", "S": "source"
+}  # fmt: skip
 
 TWO_PIN: dict[str, Point] = {"1": (-20, 0), "2": (20, 0)}
 

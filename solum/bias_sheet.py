@@ -9,7 +9,7 @@ from collections import defaultdict
 from dataclasses import dataclass
 
 from solum.circuit.connectivity import Nets, connect
-from solum.circuit.parts import pin_offsets
+from solum.circuit.parts import PIN_WORDS, pin_offsets
 from solum.circuit.refs import ref_key
 from solum.circuit.schema import (
     CHIP_UNITS,
@@ -30,14 +30,6 @@ from solum.simulate import OpResult, Simulator
 from solum.units import format_quantity
 
 POT_MOVES = 0.1  # volts: a pot whose turn moves any pin's DC this much moves the bias
-PIN_WORDS = {
-    "C": "collector",
-    "B": "base",
-    "E": "emitter",
-    "D": "drain",
-    "G": "gate",
-    "S": "source",
-}
 # the parts whose pins are read
 MEASURED = (Bjt, Jfet, Mosfet, *CHIP_UNITS, PowerUnit, ChargePump, Regulator)
 # a macromodel's compensation pins are its own inner nodes: a real chip's read otherwise

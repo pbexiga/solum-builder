@@ -137,3 +137,73 @@ class BatteryGuide(BaseModel):
 def battery_guide(library_dir: Path) -> BatteryGuide:
     """`library/guides/batteries.yaml`, checked (D-143)."""
     return _load(library_dir, "batteries", BatteryGuide)
+
+
+class AxialSize(BaseModel):
+    """A two-leg part lying flat (legs at least `flat` holes apart) or standing (`stand`
+    holes apart): a resistor by rating, a diode by package (D-367)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    max_watts: float | None = None
+    package: str | None = None
+    length: float  # mm
+    diameter: float
+    flat: int = Field(ge=1)
+    stand: int = Field(ge=1)
+    source: str
+
+
+class RadialSize(BaseModel):
+    """A two-leg part standing, its legs `holes` apart; body round or a box (mm)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    max_value: str | None = None
+    package: str | None = None
+    diameter: float = 0.0
+    length: float = 0.0
+    width: float = 0.0
+    pitch: float  # the maker's lead spacing, mm
+    holes: list[int] = Field(min_length=1)
+    source: str
+
+
+class InlineSize(BaseModel):
+    """Three legs in a line, each `holes` from the next; body round or a box (mm), or none
+    (flying leads)."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    package: str = ""
+    diameter: float = 0.0
+    length: float = 0.0
+    width: float = 0.0
+    holes: list[int] = Field(min_length=1)
+    source: str
+
+
+class DipSize(BaseModel):
+    model_config = ConfigDict(extra="forbid")
+
+    row_holes: int = 0  # a SIL has one row
+    width: float
+    source: str
+
+
+class FootprintTable(BaseModel):
+    """`library/guides/footprints.yaml` (D-367): stripboard sizes by part type."""
+
+    model_config = ConfigDict(extra="forbid")
+
+    axial: dict[str, list[AxialSize]]
+    radial: dict[str, list[RadialSize]]
+    inline: list[InlineSize]
+    trimmer: InlineSize
+    dip: DipSize
+    sil: DipSize
+
+
+def footprint_table(library_dir: Path) -> FootprintTable:
+    """`library/guides/footprints.yaml`, checked (D-367)."""
+    return _load(library_dir, "footprints", FootprintTable)

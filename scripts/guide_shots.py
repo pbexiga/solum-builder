@@ -177,15 +177,15 @@ def bias_headroom(page: Page, base: str) -> None:
 def battery_buffer(
     dc: bool = False, electrolytic: bool = False, own_jack: bool = False
 ) -> dict[str, object]:
-    """A JFET buffer on a battery: J1 (stereo) plugged into IN, its ring switching the
+    """A JFET buffer on a battery: J1 (TRS) plugged into IN, its ring switching the
     battery, and J2 plugged into OUT (D-353 to D-355). Net-checked when it was drawn.
-    `dc`: a DC jack in the battery's place and J1 mono; `electrolytic`: C2 a 10µ
-    electrolytic with no rating; `own_jack`: no J1, IN's own jack stereo with the
+    `dc`: a DC jack in the battery's place and J1 TS; `electrolytic`: C2 a 10µ
+    electrolytic with no rating; `own_jack`: no J1, IN's own jack TRS with the
     battery's − on its ring (D-364)."""
     d = Drawing()
-    d.part("IN", "guitar", (0, 0), volume="250k", stereo=own_jack)
+    d.part("IN", "guitar", (0, 0), volume="250k", trs=own_jack)
     if not own_jack:
-        d.part("J1", "jack", (-100, 0) if dc else (-100, -20), stereo=not dc, label="Input")
+        d.part("J1", "jack", (-100, 0) if dc else (-100, -20), trs=not dc, label="Input")
         d.wire("J1.T", (0, 0))  # J1's T plugs into IN's middle
     d.part("C1", "capacitor", (80, 0), value="100n", kind="film")
     d.part("R1", "resistor", (140, 40), 90, value="1M")
@@ -261,12 +261,12 @@ def jacks(page: Page, base: str) -> None:
 
 
 def in_jack(page: Page, base: str) -> None:
-    """The battery buffer with no J1: IN's own stereo jack switches the battery (D-364),
-    its Guitar cable switch in Knobs at Stereo cable, so the battery is cut off."""
+    """The battery buffer with no J1: IN's own TRS jack switches the battery (D-364),
+    its Guitar cable switch in Knobs at TRS cable, so the battery is cut off."""
     opened_drawn(page, base, battery_buffer(own_jack=True), "Buffer on IN's jack")
     panes_on_top(page, "knobs", "frequency")
     before = updates(page)
-    page.locator('#knobs-body [data-knob="IN.plug"] [data-position="1"]').click()  # Stereo
+    page.locator('#knobs-body [data-knob="IN.plug"] [data-position="1"]').click()  # TRS cable
     wait_for_update(page, before, 120_000)
     page.mouse.click(5, 990)  # nothing selected
     shoot(page, "in-jack")

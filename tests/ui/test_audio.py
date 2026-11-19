@@ -471,10 +471,10 @@ def test_each_take_says_what_it_was_made_from_in_the_zip(js: Page) -> None:
         js,
         """
       const circuit = {parts: [{ref: 'VR1', rotation: 0.75}, {ref: 'SW1', position: 1}, {ref: 'R1'},
-                               {ref: 'J1', type: 'jack', stereo: true, plug: 'stereo'}, {ref: 'J2', type: 'jack'}]};
+                               {ref: 'J1', type: 'jack', trs: true, plug: 'trs'}, {ref: 'J2', type: 'jack'}]};
       const controls = [{ref: 'VR1', kind: 'pot', label: 'Drive'}, {ref: 'SW1', kind: 'switch', label: 'Mode'},
-                        {ref: 'J1', kind: 'switch', label: 'Input cable', positions: ['Mono cable', 'Stereo cable', 'Cable out'], field: 'plug', values: ['mono', 'stereo', 'none']},
-                        {ref: 'J2', kind: 'switch', label: 'Output cable', positions: ['Cable in', 'Cable out'], field: 'plug', values: ['mono', 'none']}];
+                        {ref: 'J1', kind: 'switch', label: 'Input cable', positions: ['TS cable', 'TRS cable', 'Cable out'], field: 'plug', values: ['ts', 'trs', 'none']},
+                        {ref: 'J2', kind: 'switch', label: 'Output cable', positions: ['Cable in', 'Cable out'], field: 'plug', values: ['ts', 'none']}];
       const knobs = a.knobsText(controls, circuit);
       const base = {name: 'TS808', clip: 'riff', level: 'med', amp: 'Lonestar', input_db: -6, cab: 'V30', when: 'today'};
       const pedal = {key: 'p', label: 'TS808 · 14:48', notes: a.takeNotes({...base, knobs}), circuit};
@@ -488,7 +488,7 @@ def test_each_take_says_what_it_was_made_from_in_the_zip(js: Page) -> None:
     """,
     )
     # J2 has no `plug` in the file: its default, the first value (D-355)
-    knobs = "Drive 75 %, Mode: 2, Input cable: Stereo cable, Output cable: Cable in"
+    knobs = "Drive 75 %, Mode: 2, Input cable: TRS cable, Output cable: Cable in"
     assert out["knobs"] == knobs
     assert out["pedal"] == (
         f"Pedal: TS808\nKnobs: {knobs}\nClip: riff, medium pick\n"

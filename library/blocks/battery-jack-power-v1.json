@@ -1,12 +1,12 @@
 {
-  "schema": 31,
+  "schema": 34,
   "id": "battery-jack-power-v1",
   "name": "9 V power · battery, switched by the input jack",
   "version": {
     "major": 1,
     "minor": 0
   },
-  "description": "How a battery-only pedal takes its 9 V and switches it off: the battery's + is V+, its − goes to the stereo input jack's ring (J1), so the battery is on only while a mono guitar cable is in, which is why battery pedals say to unplug them when not in use. Wire J1's T (the in port) to IN's middle; then pulling the cable in Knobs (Input cable) turns the pedal off, and the render is refused until it's back in. Then the 9 V input filter to V+F (its values from the ProCo Rat, ElectroSmash). The battery's form sets how drained it is. The same V+F as the other power blocks.",
+  "description": "How a battery-only pedal takes its 9 V and switches it off: the battery's + is V+, its − goes to the TRS input jack's ring (J1), so the battery is on only while a TS guitar cable is in, which is why battery pedals say to unplug them when not in use. Wire J1's T (the in port) to IN's middle; then pulling the cable in Knobs (Input cable) turns the pedal off, and the render is refused until it's back in. Then the 9 V input filter to V+F (its values from the ProCo Rat, ElectroSmash). The battery's form sets how drained it is. The same V+F as the other power blocks.",
   "tags": [
     "power",
     "battery",
@@ -66,9 +66,9 @@
         -240,
         60
       ],
-      "note": "A stereo input jack switching the battery: its − goes to the ring, and a mono guitar plug's long sleeve joins the ring to ground, so the pedal is on only with a cable in. A stereo cable doesn't switch it on (its ring is its own). Wire T (the in port) to IN's middle, so pulling the cable takes the guitar out too. Knobs: Input cable.",
+      "note": "A TRS input jack switching the battery: its − goes to the ring, and a TS guitar plug's long sleeve joins the ring to ground, so the pedal is on only with a cable in. A TRS cable doesn't switch it on (its ring is its own). Wire T (the in port) to IN's middle, so pulling the cable takes the guitar out too. Knobs: Input cable.",
       "type": "jack",
-      "stereo": true,
+      "trs": true,
       "label": "Input"
     }
   ],

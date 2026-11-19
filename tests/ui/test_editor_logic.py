@@ -1076,7 +1076,7 @@ def test_guitar_pickup_fields(js: Page) -> None:
         ["pickup_l", "2.55", "ideal"], ["pickup_c", "151p", "ideal"], ["pickup_peak", "", "ideal"],
         ["pickup_q", "", "ideal"], ["cable", "3", "ideal"],
         ["volume", "", None],  # buffered with no pot: empty, so applying adds none (D-134)
-        ["stereo", "mono", None],  # a stereo jack's ring switches a battery (D-143)
+        ["trs", "ts", None],  # a TRS jack's ring switches a battery (D-143)
     ]  # fmt: skip
     assert r["options"] == [
         ["ideal", "Buffered"], ["strat", "Strat single coil"],

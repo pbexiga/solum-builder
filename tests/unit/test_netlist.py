@@ -187,7 +187,7 @@ def test_a_jack_is_left_out(models: ModelLibrary, circuit: Builder) -> None:
     """D-174: drawing only; its nets are the guitar's and ground's, nothing added."""
     plain = circuit().part("IN", "guitar", "in").part("R1", "resistor", "in", "0", value="1M")
     jacked = circuit().part("IN", "guitar", "in").part("R1", "resistor", "in", "0", value="1M")
-    jacked.part("J1", "jack", "in", "0", stereo=True, label="Input")
+    jacked.part("J1", "jack", "in", "0", trs=True, label="Input")
     assert (
         generate_netlist(jacked.build(), models, Op()).text
         == generate_netlist(plain.build(), models, Op()).text

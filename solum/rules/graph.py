@@ -81,7 +81,7 @@ def spice_edges(circuit: Circuit, nets: Nets) -> list[Edge]:
         if p.ref in skipped:
             continue
         match p:
-            case Jack() if p.stereo:  # only its ring's contact to S, open or closed (D-185)
+            case Jack() if p.trs:  # only its ring's contact to S, open or closed (D-185)
                 edges.append((nets.net_of(p.ref, "R"), nets.net_of(p.ref, "S")))
             case Capacitor() | Jack() | PowerUnit():  # drawing only (D-174, D-179)
                 pass
@@ -131,16 +131,16 @@ def bias_edges(circuit: Circuit, nets: Nets) -> list[Edge]:
                 edges += _battery_edges(circuit, nets, p)
             case DcJack() if not p.plugged:
                 edges.append((nets.net_of(p.ref, "sw"), nets.net_of(p.ref, "+")))
-            case Jack() if p.stereo and p.plug == "mono":  # a mono plug's sleeve joins R, S
+            case Jack() if p.trs and p.plug == "ts":  # a TS plug's sleeve joins R, S
                 edges.append((nets.net_of(p.ref, "R"), nets.net_of(p.ref, "S")))
     return edges
 
 
 def _guitar_edges(nets: Nets, part: Guitar, closed: bool = False) -> list[Edge]:
-    """The guitar's signal to ground and, on a stereo jack, its ring's contact to ground,
-    open or closed; `closed`: only while a mono plug's sleeve joins them (D-143, D-364)."""
+    """The guitar's signal to ground and, on a TRS jack, its ring's contact to ground,
+    open or closed; `closed`: only while a TS plug's sleeve joins them (D-143, D-364)."""
     edges = [(nets.net_of(part.ref, "out"), GROUND)]
-    if part.stereo and (part.plug == "mono" or not closed):
+    if part.trs and (part.plug == "ts" or not closed):
         edges.append((nets.net_of(part.ref, "ring"), GROUND))
     return edges
 

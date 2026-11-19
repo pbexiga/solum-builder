@@ -80,7 +80,7 @@ def test_a_stereo_jacks_leads_match_parts_table(js: Page) -> None:
         js,
         """
         const { symbol } = await m('schematic/symbols.js');
-        return symbol({ type: 'jack', pins: [], draw: { stereo: true } }).leads;
+        return symbol({ type: 'jack', pins: [], draw: { trs: true } }).leads;
         """,
     )
     assert leads == {k: list(v) for k, v in STEREO_JACK.items()}
@@ -281,15 +281,15 @@ def test_state_helpers(js: Page) -> None:
         const turned = s.withControls(circuit, controls, { VR1: 0.9, P9: 1 });
         const untouched = s.withControls(circuit, controls, { VR1: 0.5 }) === circuit;
         // a field's knob (the DC jack's Power, a jack's cable, D-185, D-355) sets that field
-        const jacks = { parts: [{ ref: 'DC', type: 'dcjack', plugged: true }, { ref: 'J1', type: 'jack', stereo: true }] };
+        const jacks = { parts: [{ ref: 'DC', type: 'dcjack', plugged: true }, { ref: 'J1', type: 'jack', trs: true }] };
         const plugs = [{ ref: 'DC', kind: 'switch', refs: ['DC'], field: 'plugged', values: [true, false] },
-                       { ref: 'J1', kind: 'switch', refs: ['J1'], field: 'plug', values: ['mono', 'stereo', 'none'] }];
+                       { ref: 'J1', kind: 'switch', refs: ['J1'], field: 'plug', values: ['ts', 'trs', 'none'] }];
         const turnedJacks = s.withControls(jacks, plugs, { DC: 1, J1: 1 }).parts;
         const unplugged = [turnedJacks[0].plugged, turnedJacks[1].plug];
         // the guitar's volume and its cable (keyed IN.plug) both set on IN (D-364)
-        const guitar = { parts: [{ ref: 'IN', type: 'guitar', rotation: 1, plug: 'mono' }] };
+        const guitar = { parts: [{ ref: 'IN', type: 'guitar', rotation: 1, plug: 'ts' }] };
         const both = [{ ref: 'IN', kind: 'pot', rotation: 1 },
-                      { ref: 'IN.plug', kind: 'switch', refs: ['IN'], field: 'plug', values: ['mono', 'none'] }];
+                      { ref: 'IN.plug', kind: 'switch', refs: ['IN'], field: 'plug', values: ['ts', 'none'] }];
         const played = s.withControls(guitar, both, { IN: 0.4, 'IN.plug': 1 }).parts[0];
         const guitarBoth = [played.rotation, played.plug];
         // knobs stay turned across edits, unless their opening position changed; new ones open there
@@ -319,7 +319,7 @@ def test_state_helpers(js: Page) -> None:
         """,
     )
     assert (result["original"], result["turned"], result["same"]) == (0.5, 0.9, True)
-    assert result["unplugged"] == [False, "stereo"]
+    assert result["unplugged"] == [False, "trs"]
     assert result["guitarBoth"] == [0.4, "none"]
     assert result["untouched"] is True  # nothing differs: the same circuit
     assert result["kept"] == {"VR1": 0.9, "VR2": 0.3, "SW1": 1}

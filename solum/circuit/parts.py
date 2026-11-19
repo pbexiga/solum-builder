@@ -88,7 +88,7 @@ PIN_OFFSETS: dict[str, dict[str, Point]] = {
     "dcjack": {"+": (60, 20), "-": (60, -20), "sw": (60, 0)},  # pin order kept: +, -, sw
     "amp": {"in": (-20, 0)},
     # input and output jacks as KiCad's AudioJack2 (S over T) and AudioJack3 (S, R, T) draw
-    # them, 2.54 mm to 20 (D-174); the mono's, the stereo's in `jack_pins`
+    # them, 2.54 mm to 20 (D-174); the TS one's, the TRS one's in `jack_pins`
     "jack": {"T": (40, 0), "S": (40, -20)},
 }
 STEREO_JACK: dict[str, Point] = {"T": (40, 20), "R": (40, 0), "S": (40, -20)}
@@ -149,7 +149,7 @@ def ota_pins(part: Ota) -> dict[str, Point]:
     return {k: v for k, v in PIN_OFFSETS["ota"].items() if k not in drop}
 
 
-RING_PIN: Point = (0, 20)  # a stereo input jack's ring lug, under the guitar (D-143)
+RING_PIN: Point = (0, 20)  # a TRS input jack's ring lug, under the guitar (D-143)
 
 
 VARYING = frozenset({"switch", "opamp", "ota", "guitar", "jack"})  # pins depend on the part
@@ -165,9 +165,9 @@ def pin_offsets(part: Part) -> dict[str, Point]:
         return opamp_pins(part)
     if isinstance(part, Ota):
         return ota_pins(part)
-    if isinstance(part, Guitar) and part.stereo:
+    if isinstance(part, Guitar) and part.trs:
         return {**PIN_OFFSETS["guitar"], "ring": RING_PIN}
-    if isinstance(part, Jack) and part.stereo:
+    if isinstance(part, Jack) and part.trs:
         return STEREO_JACK
     return PIN_OFFSETS[part.type]
 

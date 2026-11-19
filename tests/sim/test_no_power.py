@@ -55,7 +55,7 @@ def test_the_users_boost_with_the_cable_out_reads_no_voltages(sim: Simulator) ->
 
 
 def test_the_users_boost_with_the_cable_in_reads_its_voltages(sim: Simulator) -> None:
-    view = run_view(sim, boost("mono"), ["V+"], "med")
+    view = run_view(sim, boost("ts"), ["V+"], "med")
     assert view["no_power"] is None
     assert view["op"]["voltages"]["V+"] == pytest.approx(9.0, abs=0.01)
 
@@ -65,7 +65,7 @@ def test_a_part_with_no_power_has_no_readings(sim: Simulator) -> None:
     assert part["no_power"] == CUT
     assert all(pin["dc"] is None for pin in part["pins"].values())
     assert part["detail"] == {}
-    assert part_view(sim, boost("mono"), "IC1", "med")["no_power"] is None
+    assert part_view(sim, boost("ts"), "IC1", "med")["no_power"] is None
 
 
 def test_a_sweep_with_no_power_has_no_dc(sim: Simulator) -> None:

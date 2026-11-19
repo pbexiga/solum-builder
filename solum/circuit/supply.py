@@ -104,7 +104,7 @@ class Cut:
 
 def power_cuts(circuit: Circuit) -> list[Cut]:
     """Each supply cut off by what's in a jack (D-359): the Power menu's by a DC jack with
-    no plug in, the battery by a jack's ring with no mono plug in (D-354). A battery cut
+    no plug in, the battery by a jack's ring with no TS plug in (D-354). A battery cut
     off by a DC plug isn't listed: the adapter is in."""
     cuts = []
     jack = _dc_jack(circuit)
@@ -113,7 +113,7 @@ def power_cuts(circuit: Circuit) -> list[Cut]:
     ring = battery_cutter(circuit)
     if ring is not None and (jack is None or not jack.plugged or not _lug_wired(circuit)):
         said = f"{ring.ref} {plug_said(ring)}, so its battery is cut off"
-        cuts.append(Cut(ring.ref, said, f"put a mono cable in {ring.ref}"))
+        cuts.append(Cut(ring.ref, said, f"put a TS cable in {ring.ref}"))
     return cuts
 
 

@@ -1,5 +1,5 @@
 {
- "schema": 31,
+ "schema": 34,
  "id": "in-guitar-clean-boost-v1",
  "name": "Clean boost on a battery switched by J1",
  "version": {
@@ -206,7 +206,7 @@
     40
    ],
    "type": "jack",
-   "stereo": true,
+   "trs": true,
    "label": "input"
   },
   {
@@ -846,7 +846,7 @@
  "notes": [
   {
    "title": "From block: 9 V power · battery only",
-   "text": "How a battery-only pedal (no DC jack) takes its 9 V. The battery's + is V+; its - goes to ground: in a real pedal that wire goes to the input jack's ring (a stereo jack), so the pedal is on only with a guitar cable plugged in, which is why battery pedals say to unplug them when not in use. The simulation always has a cable in, so it's ground. Then the 9 V input filter to V+ (its values from the ProCo Rat, ElectroSmash). The battery's form sets how drained it is. The same ports as the DC jack and battery block, so either can replace the other."
+   "text": "How a battery-only pedal (no DC jack) takes its 9 V. The battery's + is V+; its - goes to ground: in a real pedal that wire goes to the input jack's ring (a TRS jack), so the pedal is on only with a guitar cable plugged in, which is why battery pedals say to unplug them when not in use. The simulation always has a cable in, so it's ground. Then the 9 V input filter to V+ (its values from the ProCo Rat, ElectroSmash). The battery's form sets how drained it is. The same ports as the DC jack and battery block, so either can replace the other."
   },
   {
    "title": "From block: Vref · half-supply divider",

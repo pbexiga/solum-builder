@@ -297,23 +297,23 @@ def test_a_jack_plugs_into_in_and_out(page: Page, base_url: str, browser_errors:
 
 
 def test_in_is_a_jack_too(page: Page, base_url: str, browser_errors: list[str]) -> None:
-    """D-364: IN's own cable switch in Knobs (mono: in or out; stereo: mono, stereo, out),
-    drawn on IN; a J plugged into a stereo IN whose ring is wired is refused; with the ring
+    """D-364: IN's own cable switch in Knobs (TS: in or out; TRS: TS, TRS, out),
+    drawn on IN; a J plugged into a TRS IN whose ring is wired is refused; with the ring
     free J1 takes over: one switch (J1's) and IN's Input jack box blanked."""
     new_circuit(page, base_url, "IN jack test")
     show_area(page, -160, -100, 460, 160)
-    place(page, "i", 0, 0)  # IN: plug (0, 0), pin (20, 0), a stereo one's ring (0, 20)
+    place(page, "i", 0, 0)  # IN: plug (0, 0), pin (20, 0), a TRS one's ring (0, 20)
     place(page, "a", 300, 0)
     cable = page.locator('#knobs-body [data-knob="IN.plug"]')
     expect(cable.locator("button")).to_have_text(["Cable in", "Cable out"])
     expect(cable.locator(".meta")).to_have_text("IN")
     click_at(page, 0, 0)
-    inspect(page, {"stereo": "stereo"})
-    expect(cable.locator("button")).to_have_text(["Mono cable", "Stereo cable", "Cable out"])
+    inspect(page, {"trs": "trs"})
+    expect(cable.locator("button")).to_have_text(["TS cable", "TRS cable", "Cable out"])
     in_part = page.locator('g.part[data-ref="IN"]')
-    expect(in_part).to_contain_text("mono cable")
+    expect(in_part).to_contain_text("TS cable")
     cable.locator('[data-position="1"]').click()
-    expect(in_part).to_contain_text("stereo cable")
+    expect(in_part).to_contain_text("TRS cable")
     cable.locator('[data-position="0"]').click()
     place(page, "r", 60, 60)  # R1: pins (40, 60), (80, 60)
     page.locator('[data-tool="wire"]').click()
@@ -354,7 +354,7 @@ def test_in_is_a_jack_too(page: Page, base_url: str, browser_errors: list[str]) 
     expect(page.locator('[data-testid="probe-name"]')).to_have_text("IN")
     press(page, "Enter")
     expect(page.locator("#field-input_jack")).to_have_value("Drawn as J1")
-    expect(page.locator("#field-stereo")).to_have_count(0)
+    expect(page.locator("#field-trs")).to_have_count(0)
     press(page, "Escape")
     browser_errors[:] = [e for e in browser_errors if "status of 422" not in e]  # the refusal
 

@@ -11,8 +11,8 @@ files:
       - https://www.stewmac.com/video-and-ideas/online-resources/learn-about-guitar-pickups-and-electronics-and-wiring/3pdt-stomp-switch-instructions/
   - file: jacks.svg
     follows: >-
-      Tip to the signal, sleeve to ground; on a stereo input jack the battery's − on the
-      ring, so a mono plug joins it to the sleeve and switches the battery on (D-185).
+      Tip to the signal, sleeve to ground; on a TRS input jack the battery's − on the
+      ring, so a TS plug joins it to the sleeve and switches the battery on (D-185).
     sources:
       - https://diystompboxes.com/smfforum/index.php?msg=729090
   - file: dc-jack.svg

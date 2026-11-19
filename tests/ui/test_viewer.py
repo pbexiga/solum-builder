@@ -563,9 +563,9 @@ def test_a_window_resize_never_shrinks_the_drawing(page: Page, base_url: str) ->
 
 
 def test_a_cable_out_keeps_the_curves_and_no_power_says_why(page: Page, base_url: str) -> None:
-    """D-358: a mono jack on IN's net gets a cable switch in Knobs; with its cable out a
+    """D-358: a TS jack on IN's net gets a cable switch in Knobs; with its cable out a
     powered circuit keeps its curve (only a render is refused). With the battery on a
-    stereo jack's ring and that cable out, the pedal has no power: no curve or waveform,
+    TRS jack's ring and that cable out, the pedal has no power: no curve or waveform,
     only the reason; back in, the curve returns."""
     from solum.circuit.build import CircuitBuilder
     from solum.circuit.io import circuit_to_dict
@@ -580,7 +580,7 @@ def test_a_cable_out_keeps_the_curves_and_no_power_says_why(page: Page, base_url
         .part("C1", "capacitor", "out", "GND", value="10n")
         .part("OUT", "amp", "out")
         .part("J1", "jack", label="Input", pins={"T": "in", "S": "GND"})
-        .part("J2", "jack", stereo=True, label="Power", pins={"T": "GND", "R": "ring", "S": "GND"})
+        .part("J2", "jack", trs=True, label="Power", pins={"T": "GND", "R": "ring", "S": "GND"})
         .build()
     )
     page.goto(base_url)
@@ -612,8 +612,8 @@ def test_a_cable_out_keeps_the_curves_and_no_power_says_why(page: Page, base_url
 
 
 def test_the_guitar_inputs_own_ring_cuts_the_battery_from_knobs(page: Page, base_url: str) -> None:
-    """D-364: no J drawn, the battery's − on a stereo IN's ring: IN's cable switch in Knobs
-    cuts it off with a stereo cable or none, as J1's does; a mono cable puts it back."""
+    """D-364: no J drawn, the battery's − on a TRS IN's ring: IN's cable switch in Knobs
+    cuts it off with a TRS cable or none, as J1's does; a TS cable puts it back."""
     from solum.circuit.build import CircuitBuilder
 
     circuit = circuit_to_dict(
@@ -621,7 +621,7 @@ def test_the_guitar_inputs_own_ring_cuts_the_battery_from_knobs(page: Page, base
         .rail("V+", 9)
         .part("BAT1", "battery", pins={"+": "V+", "-": "ring"})
         .part("R2", "resistor", "V+", "GND", value="10k")
-        .part("IN", "guitar", stereo=True, pins={"out": "in", "ring": "ring"})
+        .part("IN", "guitar", trs=True, pins={"out": "in", "ring": "ring"})
         .part("R1", "resistor", "in", "out", value="10k")
         .part("C1", "capacitor", "out", "GND", value="10n")
         .part("OUT", "amp", "out")
@@ -634,7 +634,7 @@ def test_the_guitar_inputs_own_ring_cuts_the_battery_from_knobs(page: Page, base
     expect(chip).to_have_text("Battery · 9 V")
     cable = page.locator('#knobs-body [data-knob="IN.plug"]')
     expect(cable).to_contain_text("Guitar cable")
-    for at, said in ((1, "has a stereo cable in"), (2, "has no cable in")):
+    for at, said in ((1, "has a TRS cable in"), (2, "has no cable in")):
         before = updates(page)
         cable.locator(f'[data-position="{at}"]').click()
         wait_for_update(page, before)
@@ -669,7 +669,7 @@ def test_no_power_says_so_in_the_banner_and_shows_no_voltages(page: Page, base_u
     expect(page.locator('[data-testid="probe-name"]')).to_have_text("J1")
     expect(page.locator("#probe-body")).to_contain_text(f"No readings. {said}")
     before = updates(page)
-    cable.locator('[data-position="0"]').click()  # a mono cable in
+    cable.locator('[data-position="0"]').click()  # a TS cable in
     wait_for_update(page, before)
     expect(banner).to_be_hidden()
     expect(page.locator("#dc-body")).to_contain_text("V+")

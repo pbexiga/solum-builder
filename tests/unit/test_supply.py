@@ -1,5 +1,5 @@
 """Which supply powers the circuit (D-143, D-185): the Power menu's through the DC jack, a
-battery wired through the DC jack's battery lug and a stereo jack's ring, or both."""
+battery wired through the DC jack's battery lug and a TRS jack's ring, or both."""
 
 from collections.abc import Callable
 from pathlib import Path
@@ -40,7 +40,7 @@ def pedal(circuit: Builder, plugged: bool = True) -> CircuitBuilder:
     return (
         circuit()
         .rail("V+", 9.0)
-        .part("IN", "guitar", "in", stereo=True, pins={"ring": "bneg"})
+        .part("IN", "guitar", "in", trs=True, pins={"ring": "bneg"})
         .part("DC", "dcjack", "V+", "0", "bpos", plugged=plugged)
         .part("BAT1", "battery", "bpos", "bneg", volts=7.4, state="half")
         .part("R1", "resistor", "V+", "0", value="10k")
@@ -143,8 +143,8 @@ def test_internal_resistance_is_in_series(models: ModelLibrary, circuit: Builder
 def test_the_jacks_are_drawn_in_their_state(circuit: Builder) -> None:
     parts = {p["ref"]: p for p in circuit_view(pedal(circuit, plugged=False).build())["parts"]}
     assert parts["DC"]["draw"] == {"plugged": False}
-    plugs = ["mono", "stereo", "none"]
-    assert parts["IN"]["draw"] == {"stereo": True, "plug": "mono", "plugs": plugs}
+    plugs = ["ts", "trs", "none"]
+    assert parts["IN"]["draw"] == {"trs": True, "plug": "ts", "plugs": plugs}
     assert {pin["name"] for pin in parts["IN"]["pins"]} == {"out", "ring"}
 
 
@@ -225,12 +225,12 @@ def test_two_ideal_supplies_on_one_net_say_what_to_do(
 
 
 def ring_pedal(circuit: Builder, cable: bool = True) -> CircuitBuilder:
-    """A battery-only pedal switched by a stereo input jack: - on the ring, S on ground."""
+    """A battery-only pedal switched by a TRS input jack: - on the ring, S on ground."""
     return (
         circuit()
         .rail("V+", 9.0)
         .part("BAT1", "battery", "V+", "bneg")
-        .part("J1", "jack", stereo=True, label="Input", plug="mono" if cable else "none",
+        .part("J1", "jack", trs=True, label="Input", plug="ts" if cable else "none",
               pins={"T": "tip", "R": "bneg", "S": "0"})
         .part("R1", "resistor", "V+", "0", value="10k")
     )  # fmt: skip
@@ -250,7 +250,7 @@ def test_an_unwired_ring_adds_nothing(models: ModelLibrary, circuit: Builder) ->
     c = (
         circuit()
         .part("BAT1", "battery", "V+", "0")
-        .part("J1", "jack", stereo=True, pins={"T": "tip", "S": "0"})
+        .part("J1", "jack", trs=True, pins={"T": "tip", "S": "0"})
         .part("R1", "resistor", "V+", "0", value="10k")
         .build()
     )
@@ -262,16 +262,16 @@ def test_the_cable_is_a_knob_with_a_battery(circuit: Builder) -> None:
     knob = next(k for k in controls(c) if k["ref"] == "J1")
     assert knob == {
         "ref": "J1", "kind": "switch", "label": "Input cable", "refs": ["J1"],
-        "position": 2, "positions": ["Mono cable", "Stereo cable", "Cable out"],
-        "field": "plug", "values": ["mono", "stereo", "none"],
+        "position": 2, "positions": ["TS cable", "TRS cable", "Cable out"],
+        "field": "plug", "values": ["ts", "trs", "none"],
     }  # fmt: skip
     parts = {p["ref"]: p for p in circuit_view(c)["parts"]}
     assert parts["J1"]["draw"] == {
-        "stereo": True,
+        "trs": True,
         "plug": "none",
-        "plugs": ["mono", "stereo", "none"],
+        "plugs": ["ts", "trs", "none"],
     }
-    no_battery = circuit().part("J1", "jack", stereo=True).build()
+    no_battery = circuit().part("J1", "jack", trs=True).build()
     assert controls(no_battery) == []
 
 
@@ -287,12 +287,12 @@ def test_a_cut_off_battery_holds_nothing(models: ModelLibrary, circuit: Builder)
 
 
 def battery_apart(circuit: Builder, cable: bool = True) -> CircuitBuilder:
-    """A battery on a net of its own (VBAT, not V+), its - switched by a stereo jack."""
+    """A battery on a net of its own (VBAT, not V+), its - switched by a TRS jack."""
     return (
         circuit()
         .rail("V+", 9.0)
         .part("BAT1", "battery", "VBAT", "bneg")
-        .part("J1", "jack", stereo=True, label="Input", plug="mono" if cable else "none",
+        .part("J1", "jack", trs=True, label="Input", plug="ts" if cable else "none",
               pins={"T": "tip", "R": "bneg", "S": "0"})
         .part("R1", "resistor", "VBAT", "0", value="10k")
     )  # fmt: skip
@@ -314,7 +314,7 @@ def test_the_power_chip_says_which_cable_positions_cut_the_battery_off(
     circuit: Builder,
 ) -> None:
     """D-357: the chip follows J1's cable switch as it follows the DC jack's (a knob isn't
-    an edit): a stereo cable (1) or none (2) cuts it off, `at` is where the switch opens."""
+    an edit): a TRS cable (1) or none (2) cuts it off, `at` is where the switch opens."""
     cut = {"text": "Battery · cut off", "jacks": {"J1": {"at": 2, "positions": [1, 2]}}}
     assert power_chip(ring_pedal(circuit, cable=False).build()) == {
         "text": "Battery · 9 V",
@@ -336,8 +336,8 @@ def test_the_power_chip_says_which_cable_positions_cut_the_battery_off(
 
 
 def test_any_jack_whose_cable_switches_something_has_a_cable_knob(circuit: Builder) -> None:
-    """D-354, D-355: a mono jack on the guitar's or the amp's net, in or out; a stereo jack
-    whose ring and sleeve are both wired, whatever the ring does (mono, stereo or no
+    """D-354, D-355: a TS jack on the guitar's or the amp's net, in or out; a TRS jack
+    whose ring and sleeve are both wired, whatever the ring does (TS, TRS or no
     cable); one with its ring unwired, none (its cable switches nothing)."""
     c = (
         circuit()
@@ -346,9 +346,9 @@ def test_any_jack_whose_cable_switches_something_has_a_cable_knob(circuit: Build
         .part("OUT", "amp", "out")
         .part("J1", "jack", label="Input", pins={"T": "in", "S": "0"})
         .part("J2", "jack", label="Output", pins={"T": "out", "S": "0"})
-        .part("J3", "jack", stereo=True, label="Mute", pins={"T": "x", "R": "y", "S": "0"})
+        .part("J3", "jack", trs=True, label="Mute", pins={"T": "x", "R": "y", "S": "0"})
         .part("R2", "resistor", "V+", "y", value="10k")
-        .part("J4", "jack", stereo=True, pins={"T": "z", "R": "w", "S": "0"})
+        .part("J4", "jack", trs=True, pins={"T": "z", "R": "w", "S": "0"})
         .part("BAT1", "battery", "V+", "0")
         .build()
     )
@@ -356,7 +356,7 @@ def test_any_jack_whose_cable_switches_something_has_a_cable_knob(circuit: Build
     assert knobs == {
         "Input cable": ["Cable in", "Cable out"],
         "Output cable": ["Cable in", "Cable out"],
-        "Mute cable": ["Mono cable", "Stereo cable", "Cable out"],
+        "Mute cable": ["TS cable", "TRS cable", "Cable out"],
     }
 
 
@@ -405,7 +405,7 @@ def test_both_supplies_cut_off_name_both_plugs(circuit: Builder) -> None:
         .rail("V+", 9.0)
         .part("DC", "dcjack", "V+", "0", "bpos", plugged=False)
         .part("BAT1", "battery", "bpos", "bneg")
-        .part("J1", "jack", stereo=True, label="Input", plug="none",
+        .part("J1", "jack", trs=True, label="Input", plug="none",
               pins={"T": "tip", "R": "bneg", "S": "0"})
         .part("R1", "resistor", "V+", "0", value="10k")
         .build()
@@ -416,34 +416,32 @@ def test_both_supplies_cut_off_name_both_plugs(circuit: Builder) -> None:
     )
     assert no_power_refs(c) == ["DC", "J1"]
     assert render_refusal(c) == (
-        f"{no_power(c)} Plug DC in or put a mono cable in J1 (Knobs) to render."
+        f"{no_power(c)} Plug DC in or put a TS cable in J1 (Knobs) to render."
     )
     assert no_power(c.with_part("DC", plugged=True)) is None  # the adapter's in
 
 
-@pytest.mark.parametrize(
-    ("plug", "ohms"), [("mono", "0.01"), ("stereo", "1e+12"), ("none", "1e+12")]
-)
+@pytest.mark.parametrize(("plug", "ohms"), [("ts", "0.01"), ("trs", "1e+12"), ("none", "1e+12")])
 def test_the_guitar_inputs_ring_is_a_jacks(
     models: ModelLibrary, circuit: Builder, plug: str, ohms: str
 ) -> None:
-    """D-364: a stereo IN's ring is joined to ground only by a mono plug's sleeve, as a
-    stereo jack's; a stereo plug or none leaves it open and the battery cut off (0 V)."""
+    """D-364: a TRS IN's ring is joined to ground only by a TS plug's sleeve, as a
+    TRS jack's; a TRS plug or none leaves it open and the battery cut off (0 V)."""
     c = (
         circuit()
         .rail("V+", 9.0)
-        .part("IN", "guitar", "in", stereo=True, plug=plug, pins={"ring": "bneg"})
+        .part("IN", "guitar", "in", trs=True, plug=plug, pins={"ring": "bneg"})
         .part("BAT1", "battery", "V+", "bneg", volts=9.0)
         .part("R1", "resistor", "V+", "0", value="10k")
         .build()
     )
     lines = generate_netlist(c, models, Op()).text.splitlines()
     assert f"R_IN_ring bneg 0 {ohms}" in lines
-    assert f"V_BAT1 v_ bneg DC {9 if plug == 'mono' else 0}" in lines
-    assert (("bneg", "GND") in graph.bias_edges(c, connect(c))) is (plug == "mono")
+    assert f"V_BAT1 v_ bneg DC {9 if plug == 'ts' else 0}" in lines
+    assert (("bneg", "GND") in graph.bias_edges(c, connect(c))) is (plug == "ts")
     knob = next(k for k in controls(c) if k["ref"] == "IN.plug")
-    assert knob["positions"] == ["Mono cable", "Stereo cable", "Cable out"]
-    assert knob["position"] == ["mono", "stereo", "none"].index(plug)
+    assert knob["positions"] == ["TS cable", "TRS cable", "Cable out"]
+    assert knob["position"] == ["ts", "trs", "none"].index(plug)
 
 
 def test_a_jack_drawn_into_the_guitar_input_has_its_switch(circuit: Builder) -> None:
@@ -451,12 +449,12 @@ def test_a_jack_drawn_into_the_guitar_input_has_its_switch(circuit: Builder) -> 
     as taken (its Input jack box blanked, no ring lug)."""
     c = (
         circuit()
-        .part("IN", "guitar", "in", stereo=True)
+        .part("IN", "guitar", "in", trs=True)
         .part("J1", "jack", pins={"T": "in", "S": "0"}, label="Input")
         .part("R1", "resistor", "in", "0", value="1M")
         .build()
     )
     assert [k["label"] for k in controls(c)] == ["Input cable"]
     parts = {p["ref"]: p for p in circuit_view(c)["parts"]}
-    assert parts["IN"]["draw"] == {"stereo": False, "taken": "J1"}
+    assert parts["IN"]["draw"] == {"trs": False, "taken": "J1"}
     assert [pin["name"] for pin in parts["IN"]["pins"]] == ["out"]

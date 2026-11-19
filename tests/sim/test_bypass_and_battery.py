@@ -91,13 +91,13 @@ def test_bypassed_with_the_battery_cut_off_the_pedal_has_no_power(sim: Simulator
     switched = (
         CircuitBuilder()
         .part("BAT1", "battery", pins={"+": "V+", "-": "ring"})
-        .part("J9", "jack", stereo=True, plug="none", pins={"T": "x", "R": "ring", "S": "0"})
+        .part("J9", "jack", trs=True, plug="none", pins={"T": "x", "R": "ring", "S": "0"})
     )
     c = with_parts(with_effect("true-bypass-3pdt-v1"), switched)
     said = "The pedal has no power: J9 has no cable in, so its battery is cut off."
     view = run_view(sim, c, [], "med")
     assert view["no_power"] == said and view["ac"] is None and view["tran"] is None
-    assert render_refusal(c) == f"{said} Put a mono cable in J9 (Knobs) to render."
+    assert render_refusal(c) == f"{said} Put a TS cable in J9 (Knobs) to render."
     assert sim.op(c).voltages["V+"] == pytest.approx(0.0, abs=1e-6)
     assert gain_db(sim, c.with_part("SW1", position=1)) == pytest.approx(0.0, abs=0.01)
 
@@ -105,7 +105,7 @@ def test_bypassed_with_the_battery_cut_off_the_pedal_has_no_power(sim: Simulator
 def powered(
     state: dict[str, object], plugged: bool | None, block_id: str = "battery-dc-power-v1"
 ) -> Circuit:
-    """A power block with a plain (mono) guitar input, and 1 mA drawn from V+F; the
+    """A power block with a plain (TS) guitar input, and 1 mA drawn from V+F; the
     battery's - is on its battery ground (D-164). `plugged`: the DC jack's plug (None:
     the block has no DC jack)."""
     block = core_block(block_id).with_part("BAT1", **state)
@@ -163,7 +163,7 @@ def test_a_battery_only_pedal_runs_on_its_battery(sim: Simulator, volts: float, 
 
 
 def test_the_battery_block_alone_is_grounded(sim: Simulator) -> None:
-    """The user's bug (2026-11-02): with no stereo input to ground it, v15's IN_ring left
+    """The user's bug (2026-11-02): with no TRS input to ground it, v15's IN_ring left
     the battery floating (V+ 0 V, IN_ring -9 V). Its battery ground is ground (D-164)."""
     v = sim.op(core_block("battery-power-v1")).voltages
     assert v["V+"] == pytest.approx(9.0, abs=1e-3)
@@ -171,14 +171,14 @@ def test_the_battery_block_alone_is_grounded(sim: Simulator) -> None:
 
 
 def ring_pedal(cable: bool) -> Circuit:
-    """A battery-only pedal switched by its stereo input jack (D-185): the battery's - on
+    """A battery-only pedal switched by its TRS input jack (D-185): the battery's - on
     the ring, the sleeve on ground, 1 mA drawn from V+."""
     return (
         CircuitBuilder()
         .rail("V+", 9.0)
         .part("IN", "guitar", "in")
         .part("BAT1", "battery", "V+", "bneg")
-        .part("J1", "jack", stereo=True, label="Input", plug="mono" if cable else "none",
+        .part("J1", "jack", trs=True, label="Input", plug="ts" if cable else "none",
               pins={"T": "in", "R": "bneg", "S": "0"})
         .part("R1", "resistor", "V+", "0", value="9k")
         .part("OUT", "amp", "in")
@@ -197,12 +197,12 @@ def test_a_cable_in_the_stereo_jack_switches_the_battery_on(sim: Simulator) -> N
 def test_a_stereo_cable_in_the_input_leaves_the_pedal_off(sim: Simulator) -> None:
     """D-355: a TRS plug's ring doesn't touch the sleeve, so the battery stays off (0 V);
     the guitar comes in, but with no power the run has no curve or scope (D-358)."""
-    c = ring_pedal(cable=True).with_part("J1", plug="stereo")
+    c = ring_pedal(cable=True).with_part("J1", plug="trs")
     assert sim.op(c).voltages["V+"] == pytest.approx(0.0, abs=1e-6)
     view = run_view(sim, c, ["in"], "med")
     assert view["ac"] is None and view["tran"] is None
     assert view["no_power"] == (
-        "The pedal has no power: J1 has a stereo cable in, so its battery is cut off."
+        "The pedal has no power: J1 has a TRS cable in, so its battery is cut off."
     )
 
 
@@ -220,16 +220,16 @@ def test_with_the_input_cable_out_the_pedal_is_off(sim: Simulator) -> None:
     assert on["no_power"] is None and on["ac"] is not None and on["tran"] is not None
 
 
-@pytest.mark.parametrize(("plug", "volts"), [("mono", 9.0), ("stereo", 0.0), ("none", 0.0)])
+@pytest.mark.parametrize(("plug", "volts"), [("ts", 9.0), ("trs", 0.0), ("none", 0.0)])
 def test_the_guitar_inputs_own_ring_switches_the_battery(
     sim: Simulator, plug: str, volts: float
 ) -> None:
-    """D-364: no J drawn, the battery's - on a stereo IN's ring: a mono cable switches it
-    on, a stereo cable or none leaves the ring open and the pedal off, as J1's would."""
+    """D-364: no J drawn, the battery's - on a TRS IN's ring: a TS cable switches it
+    on, a TRS cable or none leaves the ring open and the pedal off, as J1's would."""
     c = (
         CircuitBuilder()
         .rail("V+", 9.0)
-        .part("IN", "guitar", "in", stereo=True, plug=plug, pins={"ring": "bneg"})
+        .part("IN", "guitar", "in", trs=True, plug=plug, pins={"ring": "bneg"})
         .part("BAT1", "battery", "V+", "bneg")
         .part("R1", "resistor", "V+", "0", value="9k")
         .part("OUT", "amp", "in")
@@ -237,7 +237,7 @@ def test_the_guitar_inputs_own_ring_switches_the_battery(
     )
     assert sim.op(c).voltages["V+"] == pytest.approx(volts, abs=0.01)
     view = run_view(sim, c, ["in"], "med")
-    assert (view["no_power"] is None) is (plug == "mono")
+    assert (view["no_power"] is None) is (plug == "ts")
 
 
 def test_with_a_dc_plug_in_a_cable_out_keeps_the_curves(sim: Simulator) -> None:
@@ -261,11 +261,11 @@ def test_with_a_dc_plug_in_a_cable_out_keeps_the_curves(sim: Simulator) -> None:
 @pytest.mark.parametrize(
     ("block", "dc_plugged", "plug", "volts"),
     [
-        ("battery-jack-power", None, "mono", 9.0),
+        ("battery-jack-power", None, "ts", 9.0),
         ("battery-jack-power", None, "none", 0.0),  # no cable: the battery's cut off
-        ("battery-jack-power", None, "stereo", 0.0),  # a TRS plug's ring is its own (D-355)
+        ("battery-jack-power", None, "trs", 0.0),  # a TRS plug's ring is its own (D-355)
         ("battery-dc-jack-power", True, "none", 9.0),  # the adapter, cable or not
-        ("battery-dc-jack-power", False, "mono", 9.0),  # the battery, through D1 as well
+        ("battery-dc-jack-power", False, "ts", 9.0),  # the battery, through D1 as well
         ("battery-dc-jack-power", False, "none", 0.0),
     ],
 )  # fmt: skip
@@ -273,7 +273,7 @@ def test_the_jack_power_blocks_switch_the_battery_with_the_cable(
     sim: Simulator, block: str, dc_plugged: bool | None, plug: str, volts: float
 ) -> None:
     """The battery blocks with an input jack (D-354, D-355): the battery is on only with a
-    mono cable in J1; a DC plug takes over whatever's in it. Unloaded, D1 carries next to
+    TS cable in J1; a DC plug takes over whatever's in it. Unloaded, D1 carries next to
     nothing, so V+F is the supply's 9 V."""
     c = jig(core_block(block)).with_part("J1", plug=plug)
     if dc_plugged is not None:

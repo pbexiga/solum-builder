@@ -44,9 +44,9 @@ DIAGRAMS = (
         "Jacks",
         (
             "Tip to the signal (the footswitch's commons), sleeve to ground.",
-            "With a battery, use a stereo jack for the input and wire the battery's "
+            "With a battery, use a TRS jack for the input and wire the battery's "
             "\u2212 (black) to "
-            "its ring: a guitar's mono plug joins ring and sleeve, so the battery is on only "
+            "its ring: a guitar's TS plug joins ring and sleeve, so the battery is on only "
             "while a cable is in. Unplug the input when you're done.",
             "Find tip, ring and sleeve with a meter: the lugs sit differently on each jack.",
         ),

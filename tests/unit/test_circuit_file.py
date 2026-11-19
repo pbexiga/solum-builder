@@ -229,10 +229,10 @@ def test_schema_v1_file_loads_as_current(repo: Path) -> None:
     (and dropped provenance), v6 text blocks (and dropped the power mode); a v1 file
     loads unchanged and saves as v6 at v1.0."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v1.json")
-    assert c.schema_ == SCHEMA_VERSION == 33
+    assert c.schema_ == SCHEMA_VERSION == 34
     assert c.tags == [] and c.texts == []
     assert [p.ref for p in c.parts] == ["R1", "R2"]
-    assert circuit_to_dict(c)["schema"] == 33
+    assert circuit_to_dict(c)["schema"] == 34
     assert (str(c.version), c.final) == ("v1.0", False)
 
 
@@ -645,10 +645,10 @@ def test_an_enclosure_is_a_standard_size_or_custom_with_its_mm() -> None:
 
 
 def test_a_v30_jacks_cable_in_or_out_becomes_what_plug_is_in_it(repo: Path) -> None:
-    """v31 (D-355): a cable in was a mono plug, out is none; the DC jack keeps `plugged`."""
+    """v31 (D-355): a cable in was a TS plug, out is none; the DC jack keeps `plugged`."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v30.json")
     assert c.schema_ == SCHEMA_VERSION
-    assert [getattr(p, "plug", None) for p in c.parts] == ["none", "mono", "mono", None]
+    assert [getattr(p, "plug", None) for p in c.parts] == ["none", "ts", "ts", None]
     assert c.part("DC").plugged is False  # type: ignore[union-attr]
     assert "plugged" not in circuit_to_dict(c)["parts"][0]
 
@@ -663,12 +663,37 @@ def test_a_v31_pickup_has_no_set(repo: Path) -> None:
 
 
 def test_a_v32_guitar_input_has_a_mono_plug_in(repo: Path) -> None:
-    """v33 (D-364): an older guitar input has no `plug`, read as a mono plug in (its ring
+    """v33 (D-364): an older guitar input has no `plug`, read as a TS plug in (its ring
     on ground, as it was simulated), and isn't written while it stays so."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v32.json")
     assert c.schema_ == SCHEMA_VERSION
-    assert c.part("IN").plug == "mono"  # type: ignore[union-attr]
+    assert c.part("IN").plug == "ts"  # type: ignore[union-attr]
     assert "plug" not in circuit_to_dict(c)["parts"][0]
+
+
+def test_a_v33_jack_says_ts_and_trs(repo: Path) -> None:
+    """v34 (D-365): `stereo` becomes `trs`, and a plug's `mono` and `stereo` become `ts`
+    and `trs`, on jacks and the guitar input; saved in the new names only."""
+    c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v33.json")
+    assert c.schema_ == SCHEMA_VERSION
+    found = [(p.ref, getattr(p, "trs", None), getattr(p, "plug", None)) for p in c.parts]
+    assert found == [("IN", True, "ts"), ("J1", True, "trs"), ("J2", False, "ts"),
+                     ("OUT", None, None)]  # fmt: skip
+    saved = circuit_to_dict(c)["parts"]
+    assert saved[0]["trs"] is True and "stereo" not in saved[0] and "plug" not in saved[0]
+    assert saved[1]["plug"] == "trs"
+
+
+@pytest.mark.parametrize("old", [{"stereo": True}, {"plug": "mono"}, {"plug": "stereo"}])
+def test_the_old_jack_names_are_refused_in_a_current_file(
+    repo: Path, old: dict[str, object]
+) -> None:
+    """D-365: one spelling only; a current file saying mono or stereo is refused."""
+    data = json.loads((repo / "tests/fixtures/circuits/old/schema-v33.json").read_text())
+    data["schema"] = SCHEMA_VERSION
+    data["parts"] = [{"ref": "J1", "pos": [0, 0], "type": "jack", **old}]
+    with pytest.raises(CircuitError):
+        parse_circuit(data)
 
 
 def test_a_pickup_keeps_the_three_typed_as_typed(repo: Path) -> None:

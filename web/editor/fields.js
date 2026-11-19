@@ -270,10 +270,10 @@ export function inspectorFields(part, ctx) {
       break;
     case "jack":
       fields.push(
-        { ...select("stereo", "Jack", part.stereo ? "stereo" : "mono", [["mono", "mono (TS: tip, sleeve)"], ["stereo", "stereo (TRS: tip, ring, sleeve)"]]),
+        { ...select("trs", "Jack", part.trs ? "trs" : "ts", [["ts", "TS (tip, sleeve)"], ["trs", "TRS (tip, ring, sleeve)"]]),
           hint: "Plug its T into IN's middle or OUT's end: Knobs then has its cable switch.",
           about: ["A jack whose T plugs into IN is the input jack: with its cable out no guitar reaches the pedal. One plugged into OUT is the output jack: with its cable out nothing reaches the amp. Either way a render is refused; the curves stay while the pedal has power.",
-            "A stereo jack's ring is a switch, joined to the sleeve only by a mono plug: wire the battery's − to R and S to ground, and the battery is on only with a mono cable in (a stereo cable's ring is its own)."] },
+            "A TRS jack's ring is a switch, joined to the sleeve only by a TS plug: wire the battery's − to R and S to ground, and the battery is on only with a TS cable in (a TRS cable's ring is its own)."] },
         text("label", "Label", part.label, { hint: "What it's for, shown by its ref: Input, Output. It names the cable switch in Knobs." }),
       );
       break;
@@ -381,7 +381,7 @@ export const BATTERY_WAYS = [
   "• On the DC jack's battery lug (the jack's + on V+): it powers the pedal while no plug is in; plug one in (Knobs → Power) and the Power menu's supply takes over, the battery cut off.",
   "• On V+ beside a DC jack: unplugged, it powers the pedal; plugged in, it stays connected beside the supply, so it needs an internal resistance to run, and Problems warns.",
   "• On any other net: it powers only what's on that net, and the Power menu keeps V+.",
-  "Its − goes to ground, or to a stereo input jack's ring so plugging a cable in switches it on (the jack's cable switch in Knobs).",
+  "Its − goes to ground, or to a TRS input jack's ring so plugging a cable in switches it on (the jack's cable switch in Knobs).",
 ];
 
 /**
@@ -689,9 +689,9 @@ function guitarFields(part, pickups, taken) {
     text("volume", "Volume pot", part.volume ?? "", { unit: "Ω", hint: "The guitar's volume pot. Empty: none. Turn it in Knobs." }),
     taken
       ? readonly("input_jack", "Input jack", `Drawn as ${taken}`, `${taken}, drawn into ${part.ref}, is the input jack: its cable switch is in Knobs.`)
-      : { ...select("stereo", "Input jack", part.stereo ? "stereo" : "mono", [["mono", "mono"], ["stereo", "stereo (battery switch)"]]),
+      : { ...select("trs", "Input jack", part.trs ? "trs" : "ts", [["ts", "TS"], ["trs", "TRS (battery switch)"]]),
         hint: "Stereo: its ring lug (R) is drawn. Its cable switch is in Knobs.",
-        about: "A mono cable's sleeve joins the ring to ground, so a battery's − wired there is on only with a mono cable in; a stereo cable or none leaves it off." },
+        about: "A TS cable's sleeve joins the ring to ground, so a battery's − wired there is on only with a TS cable in; a TRS cable or none leaves it off." },
   ];
 }
 
@@ -844,7 +844,7 @@ export function editFrom(part, values, ctx = {}) {
     const preset = (ctx.inductors ?? []).find((p) => p.kind === v("kind"));
     patch.kind = preset && preset.l === v("value") && Number(preset.r) === patch.resistance ? preset.kind : null;
   }
-  if ("stereo" in values) patch.stereo = v("stereo") === "stereo" ? true : null;
+  if ("trs" in values) patch.trs = v("trs") === "trs" ? true : null;
   if ("jfet_spec" in values) {
     const own = v("jfet_spec") === "measured";
     const idss = own ? optionalNumber(v("idss"), "Measured Idss") : null;

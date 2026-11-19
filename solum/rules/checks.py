@@ -240,7 +240,7 @@ def labels_joined(ctx: Context) -> Iterator[Hit]:
 def _pins_left_open(part: Part) -> set[str]:
     """Pins that may sensibly connect to nothing: a pot's ends (wired as a variable
     resistor), a switch's throws (a spare position), unused compensation pins, a
-    stereo jack's ring and a charge pump's pins 1, 6 and 7."""
+    TRS jack's ring and a charge pump's pins 1, 6 and 7."""
     if isinstance(part, Pot | Trimmer):
         return {"1", "3"}
     if isinstance(part, Switch):
@@ -248,9 +248,9 @@ def _pins_left_open(part: Part) -> set[str]:
     if isinstance(part, DcJack):
         return {"sw"}  # the battery lug: only a battery uses it (D-143)
     if isinstance(part, Guitar):
-        return {"ring"}  # a stereo jack's ring: only a battery uses it
+        return {"ring"}  # a TRS jack's ring: only a battery uses it
     if isinstance(part, Jack):
-        return {"R"}  # a stereo jack's ring: a battery's switch, or nothing (D-174)
+        return {"R"}  # a TRS jack's ring: a battery's switch, or nothing (D-174)
     if isinstance(part, Ota):  # an LM13700's diodes and buffer are used or not (D-180)
         return {"dbias", "bufin", "bufout"}
     if isinstance(part, ChargePump):  # boost or FB, LV or VREF, OSC (v28)
@@ -725,7 +725,7 @@ def no_amp_output(ctx: Context) -> Iterator[Hit]:
 
 @check("topology")
 def battery_cable_out(ctx: Context) -> Iterator[Hit]:
-    """The battery's - goes to a stereo jack's ring and there's no mono plug in it: the
+    """The battery's - goes to a TRS jack's ring and there's no TS plug in it: the
     ring is open, so the battery is cut off (D-185). Said whenever the battery is in use
     (not cut off by a DC plug anyway), worded by what it leaves without power: the whole
     circuit (`powered_off`) or only what the battery feeds (D-358)."""

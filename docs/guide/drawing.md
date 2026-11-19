@@ -68,8 +68,8 @@ Some forms have more:
 - **Transistor and JFET**: the model's typical gain, or your own unit's measured figures. See [Germanium transistors](germanium.md) for why that matters.
 - **Switch**: its *Type*, from the toggles, push buttons, footswitches, DIP switches and rotary selectors that are sold, or **Custom…** for your own poles, throws and what each position joins. *Position* is where it starts; name the positions (Vintage, Thick) and the names show on its buttons in Knobs.
 - **Op-amps and chips**: the model (one per chip: changing it changes every half), and the pin numbers from the model's datasheet. The power pins are wired with labels like any pin; a single op-amp's offset and NC pins are drawn only when asked.
-- **IN**: the pickup that loads the input (or *Buffered*, when nothing does), the guitar's volume pot, and a mono or stereo jack: IN's own, with its cable switch in Knobs, until a jack is drawn into it (then the box says *Drawn as J1*; see [Jacks and cables](power.md#jacks-and-cables)). **OUT**: the amp's input impedance (1 MΩ to start).
-- **Jack**: mono (tip, sleeve) or stereo (tip, ring, sleeve), and a label (*Input*, *Output*), which also names its cable switch in Knobs. See [Jacks and cables](power.md#jacks-and-cables).
+- **IN**: the pickup that loads the input (or *Buffered*, when nothing does), the guitar's volume pot, and a TS or TRS jack: IN's own, with its cable switch in Knobs, until a jack is drawn into it (then the box says *Drawn as J1*; see [Jacks and cables](power.md#jacks-and-cables)). **OUT**: the amp's input impedance (1 MΩ to start).
+- **Jack**: TS (tip, sleeve) or TRS (tip, ring, sleeve), and a label (*Input*, *Output*), which also names its cable switch in Knobs. See [Jacks and cables](power.md#jacks-and-cables).
 
 View → **Capacitor types** writes each capacitor's kind under its value on the sheet.
 

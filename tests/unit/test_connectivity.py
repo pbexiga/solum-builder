@@ -279,7 +279,7 @@ def test_a_jack_is_never_loose_and_carries_nothing() -> None:
     has no path in the simulation, so it's loose; the jack itself never is."""
     base = CircuitBuilder().part("IN", "guitar", "in").part("R1", "resistor", "in", "0", value="1M")
     assert _loose(base.part("J1", "jack", None, None)) == set()
-    stage = base.part("J2", "jack", "x", "0", stereo=True, pins={"R": None})
+    stage = base.part("J2", "jack", "x", "0", trs=True, pins={"R": None})
     stage = stage.part("R9", "resistor", "x", "y", value="1k").part(
         "C9", "capacitor", "y", "x", value="1n"
     )

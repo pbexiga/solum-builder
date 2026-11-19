@@ -1,12 +1,12 @@
 {
-  "schema": 31,
+  "schema": 34,
   "id": "battery-dc-jack-power-v1",
   "name": "9 V power · DC jack and battery, switched by the input jack",
   "version": {
     "major": 1,
     "minor": 0
   },
-  "description": "How a pedal takes a 9 V supply or a battery, the battery switched off by the input jack. The DC jack (centre negative) puts the supply on V+, through a reverse-polarity diode and the 9 V input filter to V+F (the filter's values from the ProCo Rat, ElectroSmash; the 1N5817 as on Aion FX's boards). The battery's + goes to the DC jack's battery lug, which touches the sleeve only with no plug in, so a supply cuts the battery off; its − goes to the stereo input jack's ring (J1), so the battery is on only while a mono guitar cable is in. Wire J1's T (the in port) to IN's middle. Knobs: Power picks the DC jack or the battery, Input cable pulls the cable.",
+  "description": "How a pedal takes a 9 V supply or a battery, the battery switched off by the input jack. The DC jack (centre negative) puts the supply on V+, through a reverse-polarity diode and the 9 V input filter to V+F (the filter's values from the ProCo Rat, ElectroSmash; the 1N5817 as on Aion FX's boards). The battery's + goes to the DC jack's battery lug, which touches the sleeve only with no plug in, so a supply cuts the battery off; its − goes to the TRS input jack's ring (J1), so the battery is on only while a TS guitar cable is in. Wire J1's T (the in port) to IN's middle. Knobs: Power picks the DC jack or the battery, Input cable pulls the cable.",
   "tags": [
     "power",
     "battery",
@@ -86,9 +86,9 @@
         -200,
         -140
       ],
-      "note": "A stereo input jack switching the battery: its − goes to the ring, and a mono guitar plug's long sleeve joins the ring to ground, so the pedal is on only with a cable in. A stereo cable doesn't switch it on (its ring is its own). Wire T (the in port) to IN's middle, so pulling the cable takes the guitar out too. Knobs: Input cable.",
+      "note": "A TRS input jack switching the battery: its − goes to the ring, and a TS guitar plug's long sleeve joins the ring to ground, so the pedal is on only with a cable in. A TRS cable doesn't switch it on (its ring is its own). Wire T (the in port) to IN's middle, so pulling the cable takes the guitar out too. Knobs: Input cable.",
       "type": "jack",
-      "stereo": true,
+      "trs": true,
       "label": "Input"
     }
   ],

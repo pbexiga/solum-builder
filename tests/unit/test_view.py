@@ -123,7 +123,7 @@ def test_the_guitar_volume_is_listed_with_the_knobs(circuit: Builder) -> None:
 # the guitar input's cable switch (D-364), after the knobs and switches
 IN_CABLE = {"ref": "IN.plug", "kind": "switch", "label": "Guitar cable", "refs": ["IN"],
             "position": 0, "positions": ["Cable in", "Cable out"], "field": "plug",
-            "values": ["mono", "none"]}  # fmt: skip
+            "values": ["ts", "none"]}  # fmt: skip
 
 
 def test_controls_for_pots_and_switches(circuit: Builder) -> None:

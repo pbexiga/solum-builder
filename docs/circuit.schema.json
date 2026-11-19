@@ -721,7 +721,7 @@
     },
     "Guitar": {
       "additionalProperties": false,
-      "description": "The signal input. One pin, `out`; the other side is ground. `ideal` is a stiff\nsource (a buffer or an active pickup in front); with a `pickup`, the guitar's volume\npot (`volume`, its `taper` and `rotation`; None: no pot) and `cable` metres of lead\nsit between the coil and the circuit (D-096). Ideal (\"buffered\") ignores the cable;\nits volume pot sits before the buffer, so it turns only the level (D-134). Its input\njack is a jack (D-364): `plug` as a `Jack`'s, so a mono plug's sleeve joins a stereo\ninput's ring to ground and a stereo plug or none leaves it open; with no cable no\nguitar reaches the pedal. A J drawn into it takes over (`solum/circuit/cables.py`).",
+      "description": "The signal input. One pin, `out`; the other side is ground. `ideal` is a stiff\nsource (a buffer or an active pickup in front); with a `pickup`, the guitar's volume\npot (`volume`, its `taper` and `rotation`; None: no pot) and `cable` metres of lead\nsit between the coil and the circuit (D-096). Ideal (\"buffered\") ignores the cable;\nits volume pot sits before the buffer, so it turns only the level (D-134). Its input\njack is a jack (D-364): `plug` as a `Jack`'s, so a TS plug's sleeve joins a TRS\ninput's ring to ground and a TRS plug or none leaves it open; with no cable no\nguitar reaches the pedal. A J drawn into it takes over (`solum/circuit/cables.py`).",
       "properties": {
         "ref": {
           "pattern": "^[A-Za-z][A-Za-z0-9]*$",
@@ -828,16 +828,16 @@
           "title": "Rotation",
           "type": "number"
         },
-        "stereo": {
+        "trs": {
           "default": false,
-          "title": "Stereo",
+          "title": "Trs",
           "type": "boolean"
         },
         "plug": {
-          "default": "mono",
+          "default": "ts",
           "enum": [
-            "mono",
-            "stereo",
+            "ts",
+            "trs",
             "none"
           ],
           "title": "Plug",
@@ -1016,7 +1016,7 @@
     },
     "Jack": {
       "additionalProperties": false,
-      "description": "An input or output jack (v18, D-174), drawn as KiCad draws one: `AudioJack2` (mono,\nTS: pins T and S) or, `stereo`, `AudioJack3` (TRS: T, R and S). Drawing only, for the\nbuild and its export: the guitar input and the amp are where the simulation's signal\nstarts and ends, so a jack carries no signal in it. `label`: what it's for (Input,\nOutput). `plug` (v31, D-355; `plugged` from v21, D-185): what's in it. A `mono` plug's\nlong sleeve joins a stereo jack's ring to S, so a battery wired to the ring is on; a\n`stereo` (TRS) plug's ring is its own, so the ring stays open (a mono jack takes it\nas mono); `none`, no cable: on IN's or OUT's net no signal goes through, so no curves\nand no render (D-354, `solum/circuit/cables.py`).",
+      "description": "An input or output jack (v18, D-174), drawn as KiCad draws one: `AudioJack2` (TS:\npins T and S) or, `trs`, `AudioJack3` (TRS: T, R and S; `stereo` until v34, D-365).\nDrawing only, for the build and its export: the guitar input and the amp are where\nthe simulation's signal starts and ends, so a jack carries no signal in it. `label`:\nwhat it's for (Input, Output). `plug` (v31, D-355; `plugged` from v21, D-185): what's\nin it. A `ts` plug's long sleeve joins a TRS jack's ring to S, so a battery wired to\nthe ring is on; a `trs` plug's ring is its own, so the ring stays open (a TS jack\ntakes it as TS); `none`, no cable: on IN's or OUT's net no signal goes through, so no\ncurves and no render (D-354, `solum/circuit/cables.py`).",
       "properties": {
         "ref": {
           "pattern": "^[A-Za-z][A-Za-z0-9]*$",
@@ -1063,9 +1063,9 @@
           "title": "Type",
           "type": "string"
         },
-        "stereo": {
+        "trs": {
           "default": false,
-          "title": "Stereo",
+          "title": "Trs",
           "type": "boolean"
         },
         "label": {
@@ -1081,10 +1081,10 @@
           "title": "Label"
         },
         "plug": {
-          "default": "mono",
+          "default": "ts",
           "enum": [
-            "mono",
-            "stereo",
+            "ts",
+            "trs",
             "none"
           ],
           "title": "Plug",
@@ -2447,7 +2447,7 @@
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "const": 33,
+      "const": 34,
       "title": "Schema",
       "type": "integer"
     },
@@ -2673,7 +2673,7 @@
     "name",
     "parts"
   ],
-  "title": "Solum Builder circuit, schema v33",
+  "title": "Solum Builder circuit, schema v34",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

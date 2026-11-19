@@ -110,7 +110,7 @@ def part_text(part: Part, pickups: Mapping[str, str] | None = None) -> str:
         case DcJack():  # its symbol says plugged in or not, following the Power switch
             return ""
         case Jack():
-            return part.label or ("stereo" if part.stereo else "mono")
+            return part.label or ("TRS" if part.trs else "TS")
         case Guitar():
             if part.source != "pickup" or part.pickup is None:
                 return "Buffered"
@@ -319,10 +319,10 @@ def _draw_fields(part: Part) -> dict[str, Any]:
         return switch_draw(part)
     if isinstance(part, DcJack):
         return {"plugged": part.plugged}
-    if isinstance(part, Socket) and part.stereo:  # the plug drawn, per Knobs position too
-        return {"stereo": True, "plug": part.plug, "plugs": list(plugs(part))}
+    if isinstance(part, Socket) and part.trs:  # the plug drawn, per Knobs position too
+        return {"trs": True, "plug": part.plug, "plugs": list(plugs(part))}
     if isinstance(part, Guitar | Jack):
-        return {"stereo": part.stereo}
+        return {"trs": part.trs}
     if isinstance(part, Opamp):
         return {"chip": part.chip, "half": part.half, "show_pins": part.show_pins}
     if isinstance(part, Inverter | Ota):
@@ -446,7 +446,7 @@ def circuit_view(
         if entry["ref"] in spare:
             entry["draw"]["unused"] = True
         if isinstance(p, Guitar) and (into := jacks_into(circuit, nets, p)):
-            entry["draw"] = {"stereo": False, "taken": into[0].ref}  # its jack is J (D-364)
+            entry["draw"] = {"trs": False, "taken": into[0].ref}  # its jack is J (D-364)
             entry["pins"] = [pin for pin in entry["pins"] if pin["name"] != "ring"]
 
     anchors: dict[str, list[Point]] = {name: [] for name in nets.members}

@@ -1,0 +1,13 @@
+{
+ "schema": 33,
+ "id": "v33",
+ "name": "v33",
+ "parts": [
+  {"ref": "IN", "pos": [0, 0], "type": "guitar", "stereo": true, "plug": "mono"},
+  {"ref": "J1", "pos": [-200, 100], "type": "jack", "stereo": true, "plug": "stereo"},
+  {"ref": "J2", "pos": [300, 100], "type": "jack"},
+  {"ref": "OUT", "pos": [200, 0], "type": "amp"}
+ ],
+ "wires": [],
+ "labels": []
+}

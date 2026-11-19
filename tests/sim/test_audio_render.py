@@ -104,7 +104,7 @@ def test_with_the_output_cable_out_a_render_is_refused_saying_why(
     )
     with pytest.raises(RenderError, match=r"^J2 has no cable in: nothing reaches the amp\. Put"):
         render(sim, jacked, Inputs(tone(200)), tmp_path)
-    render(sim, jacked.with_part("J2", plug="mono"), Inputs(tone(200)), tmp_path)  # cable in
+    render(sim, jacked.with_part("J2", plug="ts"), Inputs(tone(200)), tmp_path)  # cable in
 
 
 def test_a_cable_out_of_a_jack_off_the_input_and_output_doesnt_stop_a_render(

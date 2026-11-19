@@ -71,13 +71,13 @@ def test_without_a_simulator_only_the_drawing_is_checked(checker: Checker) -> No
 
 
 def battery_buffer(cable: bool, plus: str = "V+") -> CircuitBuilder:
-    """A TL072 buffer biased at half supply, on a battery its stereo input jack switches;
+    """A TL072 buffer biased at half supply, on a battery its TRS input jack switches;
     the battery's + on `plus` (V+, or a net of its own with nothing on V+)."""
     return (
         CircuitBuilder("battery buffer")
         .rail("V+", 9)
         .part("BAT1", "battery", pins={"+": plus, "-": "ring"})
-        .part("J1", "jack", stereo=True, label="Input", plug="mono" if cable else "none",
+        .part("J1", "jack", trs=True, label="Input", plug="ts" if cable else "none",
               pins={"T": "in", "R": "ring", "S": "GND"})
         .part("IN", "guitar", "in")
         .part("C1", "capacitor", "in", "p", value="100n")

@@ -450,11 +450,11 @@ def _dcjack(e: _Emitter, p: DcJack) -> None:
 
 
 def _jack(e: _Emitter, p: Jack) -> None:
-    """A stereo jack's ring (D-185): a mono plug's long sleeve joins it to S; with a stereo
+    """A TRS jack's ring (D-185): a TS plug's long sleeve joins it to S; with a TRS
     plug (its ring its own, D-355) or none it's open. The rest of a jack is drawing only
     (D-174)."""
-    if p.stereo and e.connected(p, "R") and e.connected(p, "S"):
-        joined = SWITCH_ON if p.plug == "mono" else SWITCH_OFF
+    if p.trs and e.connected(p, "R") and e.connected(p, "S"):
+        joined = SWITCH_ON if p.plug == "ts" else SWITCH_OFF
         e.add(element_name("R", p.ref, "ring"), e.pin(p, "R"), e.pin(p, "S"), spice_number(joined))
 
 
@@ -663,8 +663,8 @@ def _guitar(e: _Emitter, p: Guitar, analysis: Analysis) -> None:
         stimulus = f"DC 0 SIN(0 {spice_number(analysis.amplitude)} {spice_number(analysis.freq)})"
     else:
         stimulus = "DC 0"
-    if p.stereo and e.connected(p, "ring"):  # a mono plug's sleeve joins the ring (D-364)
-        joined = SWITCH_ON if p.plug == "mono" else SWITCH_OFF
+    if p.trs and e.connected(p, "ring"):  # a TS plug's sleeve joins the ring (D-364)
+        joined = SWITCH_ON if p.plug == "ts" else SWITCH_OFF
         e.add(element_name("R", p.ref, "ring"), e.pin(p, "ring"), "0", spice_number(joined))
     out = e.pin(p, "out")
     recording = analysis.source_file if isinstance(analysis, Tran) else None

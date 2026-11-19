@@ -16,7 +16,7 @@ from solum.circuit.supply import drawable, no_power, render_refusal
 
 
 def _pedal(j1: dict[str, object] | None = None, j2: dict[str, object] | None = None) -> Circuit:
-    """A battery-powered buffer: J1 (stereo, its ring the battery's −) into IN's net, J2
+    """A battery-powered buffer: J1 (TRS, its ring the battery's −) into IN's net, J2
     on the amp's net."""
     b = (
         CircuitBuilder("jacks")
@@ -28,7 +28,7 @@ def _pedal(j1: dict[str, object] | None = None, j2: dict[str, object] | None = N
         .part("OUT", "amp", "out")
     )
     if j1 is not None:
-        b.part("J1", "jack", pins={"T": "in", "R": "ring", "S": "GND"}, stereo=True, **j1)
+        b.part("J1", "jack", pins={"T": "in", "R": "ring", "S": "GND"}, trs=True, **j1)
     if j2 is not None:
         b.part("J2", "jack", pins={"T": "out", "S": "GND"}, **j2)
     return b.build()
@@ -83,7 +83,7 @@ def test_a_ring_only_jack_cuts_the_battery_off_without_silencing() -> None:
         .rail("V+", 9)
         .part("BAT1", "battery", pins={"+": "V+", "-": "ring"})
         .part("R1", "resistor", "V+", "GND", value="10k")
-        .part("J1", "jack", pins={"T": "x", "R": "ring", "S": "GND"}, stereo=True, plug="none")
+        .part("J1", "jack", pins={"T": "x", "R": "ring", "S": "GND"}, trs=True, plug="none")
         .build()
     )
     assert battery_cut_off(c)
@@ -96,7 +96,7 @@ def test_a_battery_straight_to_ground_isnt_switched() -> None:
         .rail("V+", 9)
         .part("BAT1", "battery", pins={"+": "V+", "-": "GND"})
         .part("R1", "resistor", "V+", "GND", value="10k")
-        .part("J1", "jack", pins={"T": "x", "R": "GND", "S": "GND"}, stereo=True, plug="none")
+        .part("J1", "jack", pins={"T": "x", "R": "GND", "S": "GND"}, trs=True, plug="none")
         .build()
     )
     assert not battery_cut_off(c) and silence(c) is None
@@ -105,11 +105,11 @@ def test_a_battery_straight_to_ground_isnt_switched() -> None:
 def test_a_stereo_cable_in_the_input_cuts_the_battery_but_not_the_guitar() -> None:
     """D-355: its ring is its own, so the battery on the jack's ring stays off; the guitar
     still comes in, but with no power there's nothing to draw or render (D-358)."""
-    c = _pedal({"plug": "stereo"}, {})
+    c = _pedal({"plug": "trs"}, {})
     assert battery_cut_off(c) and silence(c) is None and cables_out(c) == []
-    said = "The pedal has no power: J1 has a stereo cable in, so its battery is cut off."
+    said = "The pedal has no power: J1 has a TRS cable in, so its battery is cut off."
     assert no_power(c) == said and not drawable(c)
-    assert render_refusal(c) == f"{said} Put a mono cable in J1 (Knobs) to render."
+    assert render_refusal(c) == f"{said} Put a TS cable in J1 (Knobs) to render."
 
 
 @pytest.mark.parametrize(
@@ -151,28 +151,28 @@ def test_a_cable_out_of_a_pedal_on_another_supply_keeps_its_curves() -> None:
 
 
 def test_a_ring_used_for_anything_is_a_switch() -> None:
-    """D-355: a stereo jack with its ring and sleeve both wired switches them, whatever
+    """D-355: a TRS jack with its ring and sleeve both wired switches them, whatever
     the ring does; with its ring unwired it switches nothing."""
     c = (
         CircuitBuilder("ring")
         .rail("V+", 9)
         .part("R1", "resistor", "V+", "y", value="10k")
-        .part("J1", "jack", stereo=True, pins={"T": "x", "R": "y", "S": "GND"})
-        .part("J2", "jack", stereo=True, pins={"T": "z", "R": "w", "S": "GND"})
+        .part("J1", "jack", trs=True, pins={"T": "x", "R": "y", "S": "GND"})
+        .part("J2", "jack", trs=True, pins={"T": "z", "R": "w", "S": "GND"})
         .build()
     )
     assert jack_roles(c, connect(c)) == {"J1": frozenset({"ring"})}
 
 
-def _guitar_pedal(stereo: bool, ring: str | None = "ring", **guitar: object) -> CircuitBuilder:
-    """A battery-powered buffer with no J drawn: IN's own jack, stereo with its ring on
-    `ring` (the battery's −) or mono."""
-    pins = {"out": "in", "ring": ring} if stereo and ring else {"out": "in"}
+def _guitar_pedal(trs: bool, ring: str | None = "ring", **guitar: object) -> CircuitBuilder:
+    """A battery-powered buffer with no J drawn: IN's own jack, TRS with its ring on
+    `ring` (the battery's −) or TS."""
+    pins = {"out": "in", "ring": ring} if trs and ring else {"out": "in"}
     return (
         CircuitBuilder("IN's jack")
         .rail("V+", 9)
         .part("BAT1", "battery", pins={"+": "V+", "-": "ring"})
-        .part("IN", "guitar", pins=pins, stereo=stereo, **guitar)
+        .part("IN", "guitar", pins=pins, trs=trs, **guitar)
         .part("R1", "resistor", "in", "out", value="10k")
         .part("R2", "resistor", "V+", "GND", value="10k")
         .part("OUT", "amp", "out")
@@ -180,18 +180,18 @@ def _guitar_pedal(stereo: bool, ring: str | None = "ring", **guitar: object) -> 
 
 
 def test_the_guitar_input_is_an_input_jack() -> None:
-    """D-364: with no J drawn into it, IN's own cable switches the guitar; a stereo IN
+    """D-364: with no J drawn into it, IN's own cable switches the guitar; a TRS IN
     with the battery's − on its ring switches the battery as J1 does."""
-    mono = _guitar_pedal(False).build()
-    assert jack_roles(mono, connect(mono)) == {"IN": frozenset({"input"})}
-    stereo = _guitar_pedal(True).build()
-    assert jack_roles(stereo, connect(stereo)) == {"IN": frozenset({"input", "ring", "battery"})}
+    ts = _guitar_pedal(False).build()
+    assert jack_roles(ts, connect(ts)) == {"IN": frozenset({"input"})}
+    trs = _guitar_pedal(True).build()
+    assert jack_roles(trs, connect(trs)) == {"IN": frozenset({"input", "ring", "battery"})}
     unwired = _guitar_pedal(True, ring=None).build()
     assert jack_roles(unwired, connect(unwired)) == {"IN": frozenset({"input"})}
 
 
 def test_the_guitar_inputs_cable_out_refuses_a_render_and_keeps_the_curves() -> None:
-    """D-354, D-358 for IN's own cable: a mono IN cuts no battery, so the pedal stays
+    """D-354, D-358 for IN's own cable: a TS IN cuts no battery, so the pedal stays
     powered and is drawn."""
     c = _guitar_pedal(False, plug="none").build()
     said = "IN has no cable in: no guitar reaches the pedal."
@@ -201,8 +201,8 @@ def test_the_guitar_inputs_cable_out_refuses_a_render_and_keeps_the_curves() -> 
 
 @pytest.mark.parametrize(
     ("plug", "cut", "silent"),
-    [("mono", False, None),
-     ("stereo", True, None),
+    [("ts", False, None),
+     ("trs", True, None),
      ("none", True, "IN has no cable in: no guitar reaches the pedal and its battery is cut off.")],
 )  # fmt: skip
 def test_a_stereo_guitar_inputs_ring_cuts_the_battery_as_a_jacks(
@@ -210,9 +210,9 @@ def test_a_stereo_guitar_inputs_ring_cuts_the_battery_as_a_jacks(
 ) -> None:
     c = _guitar_pedal(True, plug=plug).build()
     assert battery_cut_off(c) is cut and silence(c) == silent
-    if plug == "stereo":
+    if plug == "trs":
         assert no_power(c) == (
-            "The pedal has no power: IN has a stereo cable in, so its battery is cut off."
+            "The pedal has no power: IN has a TRS cable in, so its battery is cut off."
         )
 
 

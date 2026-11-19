@@ -407,27 +407,30 @@ function regulator(pins) {
   return { shapes, leads, numbers, box: [-40, -17, 80, 59], ref: [0, -29], value: [0, -20], anchor: "middle" };
 }
 
+/** What a TRS jack (the guitar input's too) says is in it, by `plug` (D-355, D-365). */
+const CABLE_TEXT = /** @type {Record<string, string>} */ ({ ts: "TS cable", trs: "TRS cable", none: "cable out" });
+
 /**
- * The guitar input: a jack (D-364). A stereo one (D-143) has its ring lug below and, as a
- * stereo jack's (D-355), a mono plug's sleeve joining the ring to ground drawn dashed
- * beside it, and what's in it said ("mono cable", "stereo cable", "cable out").
- * @param {{stereo?: boolean, plug?: string}} draw
+ * The guitar input: a jack (D-364). A TRS one (D-143) has its ring lug below and, as a
+ * TRS jack's (D-355), a TS plug's sleeve joining the ring to ground drawn dashed
+ * beside it, and what's in it said ("TS cable", "TRS cable", "cable out").
+ * @param {{trs?: boolean, plug?: string}} draw
  */
 function guitar(draw = {}) {
-  const plug = draw.plug ?? "mono";
-  const ring = draw.stereo
-    ? [line(0, 8, 0, 20), { path: plug === "mono" ? "M0,14 L-3,14 M-6,14 L-9,14 M-12,14 L-12,15" : "M-12,14 L-12,15" },
+  const plug = draw.plug ?? "ts";
+  const ring = draw.trs
+    ? [line(0, 8, 0, 20), { path: plug === "ts" ? "M0,14 L-3,14 M-6,14 L-9,14 M-12,14 L-12,15" : "M-12,14 L-12,15" },
       line(-12, 15, -12, 18), line(-16, 18, -8, 18),
       line(-14, 20.5, -10, 20.5), { text: "R", at: [5, 18], size: 6, anchor: "start" },
-      { text: plug === "none" ? "cable out" : `${plug} cable`, at: [-19, 20], size: 6, anchor: "end" }]
+      { text: CABLE_TEXT[plug] ?? "TS cable", at: [-19, 20], size: 6, anchor: "end" }]
     : [];
   return {
     shapes: [{ circle: [0, 0, 8] }, { circle: [0, 0, 2.5], fill: true }, line(8, 0, 20, 0), ...ring],
-    leads: draw.stereo ? { out: [20, 0], ring: [0, 20] } : { out: [20, 0] },
+    leads: draw.trs ? { out: [20, 0], ring: [0, 20] } : { out: [20, 0] },
     box: [-10, -10, 30, 20],
-    // A stereo jack's ring lead is below, so its text goes above, under the ref.
-    ref: draw.stereo ? [0, -22] : [0, -13],
-    value: draw.stereo ? [0, -12] : [0, 22],
+    // A TRS jack's ring lead is below, so its text goes above, under the ref.
+    ref: draw.trs ? [0, -22] : [0, -13],
+    value: draw.trs ? [0, -12] : [0, 22],
     anchor: "middle",
   };
 }
@@ -666,17 +669,17 @@ function dcjack(draw) {
 }
 
 /**
- * An input or output jack (D-174) as KiCad draws one, 2.54 mm to 20: `AudioJack2` (mono:
- * sleeve S over tip T) or `AudioJack3` (stereo: S, ring R, T). Drawing only, but for a
- * stereo jack's plug (D-185, D-355): a mono plug's sleeve joins the ring's spring to S
- * (drawn dashed), a stereo plug's ring doesn't, and the body says which ("mono cable",
- * "stereo cable", "cable out").
- * @param {{stereo?: boolean, plug?: string}} draw
+ * An input or output jack (D-174) as KiCad draws one, 2.54 mm to 20: `AudioJack2` (TS:
+ * sleeve S over tip T) or `AudioJack3` (TRS: S, ring R, T). Drawing only, but for a
+ * TRS jack's plug (D-185, D-355): a TS plug's sleeve joins the ring's spring to S
+ * (drawn dashed), a TRS plug's ring doesn't, and the body says which ("TS cable",
+ * "TRS cable", "cable out").
+ * @param {{trs?: boolean, plug?: string}} draw
  */
 function jack(draw) {
-  const plug = draw.plug ?? "mono";
+  const plug = draw.plug ?? "ts";
   const pins = (/** @type {[string, number][]} */ names) => names.map(([name, y]) => ({ text: name, at: [33, y - 3], size: 6 }));
-  if (!draw.stereo) {
+  if (!draw.trs) {
     return {
       shapes: [
         { path: "M-30,0 L-20,0 L-20,20 L-30,20 Z", fill: true }, { rect: [-20, -30, 40, 50] }, // the plug's end, the body
@@ -698,8 +701,8 @@ function jack(draw) {
       { path: "M0,20 L5,25 L10,20 L40,20" }, // the tip's
       { path: "M40,-20 L-20,-20 L-20,20 L-25,25 L-30,20" }, // the sleeve's
       ...pins([["T", 20], ["R", 0], ["S", -20]]),
-      ...(plug === "mono" ? [{ path: "M-20,10 L-17,10 M-14,10 L-11,10 M-8,10 L-5,10" }] : []), // a mono plug's sleeve, ring to S
-      { text: plug === "none" ? "cable out" : `${plug} cable`, at: [-10, 37], size: 6 },
+      ...(plug === "ts" ? [{ path: "M-20,10 L-17,10 M-14,10 L-11,10 M-8,10 L-5,10" }] : []), // a TS plug's sleeve, ring to S
+      { text: CABLE_TEXT[plug] ?? "TS cable", at: [-10, 37], size: 6 },
     ],
     leads: { T: [40, 20], R: [40, 0], S: [40, -20] },
     box: [-50, -30, 90, 70],
@@ -729,8 +732,8 @@ function battery() {
  * The symbol for a part from the circuit view.
  * @param {{type: string, polarity?: string | null, draw?: any, pins: Array<{name: string}>}} part
  * @param {number} [position] a switch's current position (knob state); a DC jack's is
- *   the Power knob's (0 plugged in, 1 on the battery) and a stereo jack's (the guitar
- *   input's too) its Cable knob's (its place in `draw.plugs`: mono, stereo, none), none
+ *   the Power knob's (0 plugged in, 1 on the battery) and a TRS jack's (the guitar
+ *   input's too) its Cable knob's (its place in `draw.plugs`: ts, trs, none), none
  *   when there's no knob
  * @returns {Symbol}
  */
@@ -854,8 +857,8 @@ export function pinOffsets(part) {
 function fileDraw(part) {
   if (part.type === "switch") return poleDraw(part);
   if (part.type === "dcjack") return { plugged: part.plugged ?? true };
-  if (part.type === "guitar") return { stereo: !!part.stereo, plug: part.plug ?? "mono" };
-  if (part.type === "jack") return { stereo: !!part.stereo, plug: part.plug ?? "mono" };
+  if (part.type === "guitar") return { trs: !!part.trs, plug: part.plug ?? "ts" };
+  if (part.type === "jack") return { trs: !!part.trs, plug: part.plug ?? "ts" };
   if (part.type === "opamp") return { half: part.half ?? null, show_pins: !!part.show_pins };
   if (part.type === "ota") return { half: part.half ?? null };
   return {};

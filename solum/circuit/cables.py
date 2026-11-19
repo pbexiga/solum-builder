@@ -1,17 +1,17 @@
 """Jacks whose cable matters, and what the plug in them does (D-354, D-355, D-364).
 
 A jack is drawing only (D-174), but its contacts switch things on a real pedal, so
-what's in it (`plug`: a mono plug, a stereo plug, none) means something there:
+what's in it (`plug`: a TS plug, a TRS plug, none; D-365) means something there:
 - `input`: its T is on the guitar's net (plugged into IN, D-353): no cable, no guitar;
 - `output`: its T is on the amp's net: no cable, nothing reaches the amp;
-- `ring`: a stereo jack with its ring and sleeve both wired: only a mono plug's long
-  sleeve joins them (a stereo plug's ring is its own);
-- `battery`: a `ring` whose ring takes the battery's − (D-185): without a mono plug the
+- `ring`: a TRS jack with its ring and sleeve both wired: only a TS plug's long
+  sleeve joins them (a TRS plug's ring is its own);
+- `battery`: a `ring` whose ring takes the battery's − (D-185): without a TS plug the
   battery is cut off and, when it alone powers the circuit, the pedal is off.
 A jack with none of these is a drawing and what's in it changes nothing.
 
 The guitar input (IN) is an input jack too (D-364): always `input`, and its ring (a
-stereo IN's, its sleeve being ground) a `ring` or `battery` as a jack's. A J drawn into
+TRS IN's, its sleeve being ground) a `ring` or `battery` as a jack's. A J drawn into
 IN (`jacks_into`) takes over: IN's own plug steps aside, as if it weren't there. All of
 this is per input part, so a second input (stereo's IN R) gets the same.
 """
@@ -65,7 +65,7 @@ def jack_roles(circuit: Circuit, nets: Nets) -> dict[str, frozenset[Role]]:
     for guitar in inputs:
         if not jacks_into(circuit, nets, guitar):
             roles: set[Role] = {"input"}
-            if guitar.stereo:
+            if guitar.trs:
                 roles |= _ring_roles(circuit, nets, nets.net_of(guitar.ref, "ring"), None)
             found[guitar.ref] = frozenset(roles)
     tips = {nets.net_of(g.ref, "out") for g in inputs}
@@ -76,7 +76,7 @@ def jack_roles(circuit: Circuit, nets: Nets) -> dict[str, frozenset[Role]]:
             roles.add("input")
         if amp is not None and tip == nets.net_of(amp.ref, "in"):
             roles.add("output")
-        if jack.stereo:
+        if jack.trs:
             sleeve = nets.net_of(jack.ref, "S")
             roles |= _ring_roles(circuit, nets, nets.net_of(jack.ref, "R"), sleeve)
         if roles:
@@ -85,16 +85,16 @@ def jack_roles(circuit: Circuit, nets: Nets) -> dict[str, frozenset[Role]]:
 
 
 def ring_problem(circuit: Circuit) -> str | None:
-    """Why the drawing is refused, or None (D-364): a J drawn into a stereo input part
+    """Why the drawing is refused, or None (D-364): a J drawn into a TRS input part
     whose ring is wired would give the one jack two rings."""
-    stereo = [g for g in _inputs(circuit) if g.stereo]
-    if not stereo or not any(isinstance(p, Jack) for p in circuit.parts):
+    trs = [g for g in _inputs(circuit) if g.trs]
+    if not trs or not any(isinstance(p, Jack) for p in circuit.parts):
         return None  # the usual case, kept cheap (every parse asks)
     try:
         nets = connect(circuit)
     except ConnectivityError:
         return None  # said elsewhere
-    for guitar in stereo:
+    for guitar in trs:
         into = jacks_into(circuit, nets, guitar)
         if into and len(nets.members[nets.net_of(guitar.ref, "ring")]) > 1:
             j = into[0].ref
@@ -121,17 +121,17 @@ def cable_key(jack: Socket) -> str:
 
 
 def plugs(jack: Socket) -> tuple[Plug, ...]:
-    """What can go in it, for its Knobs switch: a stereo plug only in a stereo jack (in a
-    mono one it's a mono plug)."""
-    return ("mono", "stereo", "none") if jack.stereo else ("mono", "none")
+    """What can go in it, for its Knobs switch: a TRS plug only in a TRS jack (in a TS
+    one it's a TS plug)."""
+    return ("ts", "trs", "none") if jack.trs else ("ts", "none")
 
 
-PLUG_NAMES: dict[Plug, str] = {"mono": "Mono cable", "stereo": "Stereo cable", "none": "Cable out"}
+PLUG_NAMES: dict[Plug, str] = {"ts": "TS cable", "trs": "TRS cable", "none": "Cable out"}
 
 
 def plug_names(jack: Socket) -> list[str]:
-    """Its Knobs switch's positions, by `plugs`: a mono jack's cable is just in or out."""
-    return [PLUG_NAMES[p] for p in plugs(jack)] if jack.stereo else ["Cable in", "Cable out"]
+    """Its Knobs switch's positions, by `plugs`: a TS jack's cable is just in or out."""
+    return [PLUG_NAMES[p] for p in plugs(jack)] if jack.trs else ["Cable in", "Cable out"]
 
 
 def _with(circuit: Circuit, fits: Callable[[Plug], bool]) -> list[CableOut]:
@@ -153,8 +153,8 @@ def cables_out(circuit: Circuit) -> list[CableOut]:
 
 def battery_cutter(circuit: Circuit) -> Socket | None:
     """The jack cutting the battery off: its ring takes the battery's − and there's no
-    mono plug in it (no cable, or a stereo one). None when the battery isn't cut off."""
-    cut = [c for c in _with(circuit, lambda plug: plug != "mono") if "battery" in c.roles]
+    TS plug in it (no cable, or a TRS one). None when the battery isn't cut off."""
+    cut = [c for c in _with(circuit, lambda plug: plug != "ts") if "battery" in c.roles]
     if not cut:
         return None
     jack = circuit.part(cut[0].ref)
@@ -163,13 +163,13 @@ def battery_cutter(circuit: Circuit) -> Socket | None:
 
 
 def battery_cut_off(circuit: Circuit) -> bool:
-    """The battery's − goes to a jack's ring with no mono plug in it, so it's cut off."""
+    """The battery's − goes to a jack's ring with no TS plug in it, so it's cut off."""
     return battery_cutter(circuit) is not None
 
 
 def plug_said(jack: Socket) -> str:
     """What's in a jack that leaves its ring open, as a message says it."""
-    return "has no cable in" if jack.plug == "none" else "has a stereo cable in"
+    return "has no cable in" if jack.plug == "none" else "has a TRS cable in"
 
 
 def _why(c: CableOut) -> str:

@@ -14,7 +14,7 @@ Something in the drawing stops the simulation: a net with no DC path to ground (
 
 ## "The pedal has no power: …"
 
-Every supply is cut off by a plug: the battery by a jack with no cable in (or a stereo one), or the Power menu's supply by the DC jack with no plug in (*The pedal has no power: DC has no plug in.*). Chip models make up a few volts when they have no supply, so the app shows no voltages, curves or render rather than numbers that aren't real. Click the message to select the jack, then set its switch in **Knobs & switches**: *Cable in* (or *Mono cable*) for a jack, *Plugged in* or *DC jack* for the DC jack. See [Power](power.md#no-power).
+Every supply is cut off by a plug: the battery by a jack with no cable in (or a TRS one), or the Power menu's supply by the DC jack with no plug in (*The pedal has no power: DC has no plug in.*). Chip models make up a few volts when they have no supply, so the app shows no voltages, curves or render rather than numbers that aren't real. Click the message to select the jack, then set its switch in **Knobs & switches**: *Cable in* (or *TS cable*) for a jack, *Plugged in* or *DC jack* for the DC jack. See [Power](power.md#no-power).
 
 ## "Can't simulate: … It got stuck at …"
 

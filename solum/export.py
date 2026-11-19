@@ -223,7 +223,7 @@ def _item(part: Part, models: ModelLibrary) -> _Item | None:
     if isinstance(part, ChargePump | Regulator):
         return make("board", part.model, _package(models, part.model, pinout=False))
     if isinstance(part, Jack):
-        what = "stereo (TRS)" if part.stereo else "mono (TS)"
+        what = "TRS" if part.trs else "TS"
         return make("off-board", '¼" jack', what, part.label)
     if isinstance(part, DcJack):
         return make("off-board", "2.1 mm", "centre negative, with a battery lug")
@@ -248,17 +248,17 @@ def _covers(circuit: Circuit, jack: Jack, end: Guitar | AmpInput) -> bool:
 
 def _input_output_jacks(circuit: Circuit) -> list[_Item]:
     """The guitar's and the amp's jacks, for each end no drawn jack stands for: the circuit
-    plugs into both. A stereo guitar input (its ring switching a battery) is a stereo jack."""
+    plugs into both. A TRS guitar input (its ring switching a battery) is a TRS jack."""
     jacks = [p for p in circuit.parts if isinstance(p, Jack)]
     found = []
     for p in circuit.parts:
         if not isinstance(p, Guitar | AmpInput) or any(_covers(circuit, j, p) for j in jacks):
             continue
         if isinstance(p, Guitar):
-            what = "stereo (TRS)" if p.stereo else "mono (TS)"
+            what = "TRS" if p.trs else "TS"
             found.append(_Item("jack", "off-board", '¼" jack', what, "IN (Input)", "IN"))
         else:
-            found.append(_Item("jack", "off-board", '¼" jack', "mono (TS)", "OUT (Output)", "OUT"))
+            found.append(_Item("jack", "off-board", '¼" jack', "TS", "OUT (Output)", "OUT"))
     return found
 
 

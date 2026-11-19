@@ -126,7 +126,7 @@ def test_off_board_by_type_and_the_status_led() -> None:
         .part("LED2", "led", "a", "GND", model="WP7113GD")
         .part("DC", "dcjack", "V+", "GND")
         .part("BAT1", "battery", "b", "GND")
-        .part("J1", "jack", "c", "GND", stereo=True, label="Input")
+        .part("J1", "jack", "c", "GND", trs=True, label="Input")
         .part("J2", "jack", "d", "GND", label="Output")
     )
     rows = [(x.where, x.part, x.value, x.details, x.refs) for x in lines]
@@ -135,12 +135,12 @@ def test_off_board_by_type_and_the_status_led() -> None:
     off = [r for r in rows if r[0] == "off-board"]
     assert [(r[1], r[4]) for r in off] == [
         ("LED", ("LED1 (Status)",)),
-        ("Jack", ("J1 (Input)",)),  # mono and stereo are different parts
+        ("Jack", ("J1 (Input)",)),  # TS and TRS are different parts
         ("Jack", ("J2 (Output)",)),
         ("DC jack", ("DC",)),
         ("Battery", ("BAT1",)),
     ]
-    assert {r[3] for r in off if r[1] == "Jack"} == {"mono (TS)", "stereo (TRS)"}
+    assert {r[3] for r in off if r[1] == "Jack"} == {"TS", "TRS"}
 
 
 def test_measured_transistors_are_bought_separately() -> None:
@@ -192,12 +192,12 @@ def test_one_drawn_jack_leaves_the_other_end_counted() -> None:
     wired = lines_of(
         CircuitBuilder()
         .part("IN", "guitar", "in")
-        .part("J1", "jack", "in", "GND", stereo=True)
+        .part("J1", "jack", "in", "GND", trs=True)
         .part("R1", "resistor", "in", "out", value="1k")
         .part("OUT", "amp", "out")
     )
     jacks = [(x.details, x.refs) for x in wired if x.part == "Jack"]
-    assert jacks == [("stereo (TRS)", ("J1",)), ("mono (TS)", ("OUT (Output)",))]
+    assert jacks == [("TRS", ("J1",)), ("TS", ("OUT (Output)",))]
     labelled = lines_of(
         CircuitBuilder()
         .part("IN", "guitar", "in")

@@ -71,6 +71,8 @@ What a jack's cable does depends on what it's wired to:
 
 **IN is an input jack too.** With no jack drawn into it, IN's own jack is the one the guitar plugs into: its **Guitar cable** switch in Knobs takes the guitar out as J1's would. Set IN's **Input jack** to *stereo* and its ring lug (R) is drawn below it, a switch to ground (IN's sleeve) like a stereo jack's ring: wire the battery's − there and a mono cable switches it on, a stereo cable or none cuts it off, with no J1 drawn at all. IN says what's in it under its circle (*mono cable*, *stereo cable*, *cable out*), following the switch.
 
+![The JFET buffer with no input jack drawn: IN is stereo, the battery's − wired to IN's ring lug. Knobs & switches has Guitar cable set to Stereo cable, IN reads stereo cable, the chip beside Power reads Battery · cut off, and the banner and Frequency pane say the pedal has no power: IN has a stereo cable in, so its battery is cut off.](img/in-jack.png)
+
 Draw a jack into IN (its T on IN's middle or IN's pin) and that jack is the input jack: Knobs has only its switch, and IN's form says *Input jack: Drawn as J1*. Delete J1 or unwire its T and IN's own jack is back. A stereo IN with its ring wired can't take a jack: one jack can't have two rings, so it's refused with *IN's ring is wired: move those wires to J1's R first, or unplug J1.*
 
 Each jack that switches something gets a switch in Knobs & switches, after the pedal's own knobs, named by the jack's label (*Input cable*, *Output cable*) or its ref (*J1 cable*), and IN's *Guitar cable*:

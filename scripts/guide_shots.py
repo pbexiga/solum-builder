@@ -174,15 +174,19 @@ def bias_headroom(page: Page, base: str) -> None:
     shoot(page, "try-changes")
 
 
-def battery_buffer(dc: bool = False, electrolytic: bool = False) -> dict[str, object]:
+def battery_buffer(
+    dc: bool = False, electrolytic: bool = False, own_jack: bool = False
+) -> dict[str, object]:
     """A JFET buffer on a battery: J1 (stereo) plugged into IN, its ring switching the
     battery, and J2 plugged into OUT (D-353 to D-355). Net-checked when it was drawn.
     `dc`: a DC jack in the battery's place and J1 mono; `electrolytic`: C2 a 10µ
-    electrolytic with no rating."""
+    electrolytic with no rating; `own_jack`: no J1, IN's own jack stereo with the
+    battery's − on its ring (D-364)."""
     d = Drawing()
-    d.part("IN", "guitar", (0, 0), volume="250k")
-    d.part("J1", "jack", (-100, 0) if dc else (-100, -20), stereo=not dc, label="Input")
-    d.wire("J1.T", (0, 0))  # J1's T plugs into IN's middle
+    d.part("IN", "guitar", (0, 0), volume="250k", stereo=own_jack)
+    if not own_jack:
+        d.part("J1", "jack", (-100, 0) if dc else (-100, -20), stereo=not dc, label="Input")
+        d.wire("J1.T", (0, 0))  # J1's T plugs into IN's middle
     d.part("C1", "capacitor", (80, 0), value="100n", kind="film")
     d.part("R1", "resistor", (140, 40), 90, value="1M")
     d.part("Q1", "jfet", (200, 0), model="J201")
@@ -207,12 +211,17 @@ def battery_buffer(dc: bool = False, electrolytic: bool = False) -> dict[str, ob
         d.stub("DC.+", "V+", dx=40)
         d.label("V+", "Q1.D")
         d.stub("DC.-", "GND", dx=80)
+    elif own_jack:
+        d.part("BAT1", "battery", (-120, 60))  # its − level with the bend under IN's ring
+        d.label("V+", "BAT1.+", "Q1.D")
+        d.wire("IN.ring", (0, 80), "BAT1.-")
     else:
         d.part("BAT1", "battery", (-20, -100))  # right of J1: its - drops onto R
         d.label("V+", "BAT1.+", "Q1.D")
         d.wire("BAT1.-", (-20, -20), "J1.R")
     d.label("GND", "R1.2", "R2.2", "R3.2")
-    d.stub("J1.S", "GND", dy=-40, rot=180)
+    if not own_jack:
+        d.stub("J1.S", "GND", dy=-40, rot=180)
     d.stub("J2.S", "GND", dy=20)
     power = {"power": {"rails": {"V+": 9.0}}} if dc else {}
     return circuit_to_dict(d.circuit("Battery buffer", probes={"in": "in", "out": "out"}, **power))
@@ -249,6 +258,18 @@ def jacks(page: Page, base: str) -> None:
     wait_for_update(page, before, 120_000)
     page.mouse.click(5, 990)  # nothing selected
     shoot(page, "jacks")
+
+
+def in_jack(page: Page, base: str) -> None:
+    """The battery buffer with no J1: IN's own stereo jack switches the battery (D-364),
+    its Guitar cable switch in Knobs at Stereo cable, so the battery is cut off."""
+    opened_drawn(page, base, battery_buffer(own_jack=True), "Buffer on IN's jack")
+    panes_on_top(page, "knobs", "frequency")
+    before = updates(page)
+    page.locator('#knobs-body [data-knob="IN.plug"] [data-position="1"]').click()  # Stereo
+    wait_for_update(page, before, 120_000)
+    page.mouse.click(5, 990)  # nothing selected
+    shoot(page, "in-jack")
 
 
 def dc_jack_power(page: Page, base: str) -> None:
@@ -293,7 +314,7 @@ def ratings(page: Page, base: str) -> None:
 def final_check(page: Page, base: str) -> None:
     """Properties → Mark as final on the buffer with C2 an electrolytic with no rating:
     the check before final lists it (D-362)."""
-    opened_drawn(page, base, battery_buffer(electrolytic=True), "Buffer to build")
+    opened_drawn(page, base, battery_buffer(electrolytic=True), "Buffer to finish")
     menu(page, "file-menu", "menu-properties")
     page.locator("#toggle-final").click()
     page.wait_for_selector("#final-check .export-row")
@@ -467,6 +488,7 @@ SHOTS: dict[str, Callable[[Page, str], None]] = {
     "bias-headroom": bias_headroom,
     "problems": problems,
     "jacks": jacks,
+    "in-jack": in_jack,
     "dc-jack-power": dc_jack_power,
     "no-power": no_power,
     "ratings": ratings,

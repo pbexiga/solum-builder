@@ -1,0 +1,12 @@
+{
+ "schema": 31,
+ "id": "v31",
+ "name": "v31",
+ "parts": [
+  {"ref": "IN", "pos": [0, 0], "type": "guitar", "source": "pickup",
+   "pickup": {"r": "6k38", "l": "2.55", "c": "151p", "kind": "strat"}, "cable": 3, "volume": "250k"},
+  {"ref": "OUT", "pos": [200, 0], "type": "amp"}
+ ],
+ "wires": [],
+ "labels": []
+}

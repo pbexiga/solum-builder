@@ -15,6 +15,7 @@ import { closeForm, openForm, tryButton } from "./editor/form.js";
 import { capacitorSheet } from "./help.js";
 import { renamesOf } from "./notes-logic.js";
 import { h } from "./panels.js";
+import { pickupBoxes } from "./pickup-form.js";
 import { kindOf } from "./schematic/symbols.js";
 
 /**
@@ -97,6 +98,8 @@ export function inspector(host, app) {
       extra.push(h("div", { class: "sweep-row" }, [h("label", { for: "sweep-values" }, [prompt.label]), values, button]));
     }
     const slide = app.sliders(part);
+    /** @type {ReturnType<typeof pickupBoxes> | null} the guitar's five pickup boxes (D-363) */
+    let pickup = null;
     inspected = part.ref;
     handle = openForm(host, {
       title: part.ref,
@@ -114,9 +117,12 @@ export function inspector(host, app) {
         jfets: lib.jfets, bjts: lib.bjts, chips: lib.chips, batteries: lib.batteries, inductors: lib.inductors, view: app.view(), target: part.type === "trimmer" && app.view() ? targetNode(part.ref, app.view(), app.run()?.op?.voltages) : null }),
       extra,
       onSubmit: async (values) => {
+        // the pickup's R, L and C are what its three set boxes give: the server's answer for them
+        const solved = pickup && values.source !== "ideal" ? await pickup.settle() : undefined;
+        if (typeof solved === "string") return solved || "Couldn't work out the pickup. Try again.";
         let change;
         try {
-          change = editFrom(part, values, { pickups: lib.pickups, batteries: lib.batteries, inductors: lib.inductors, circuit: app.circuit(), zeners: lib.models.zeners, capRating: app.view()?.cap_rating });
+          change = editFrom(part, values, { pickups: lib.pickups, pickup: solved, batteries: lib.batteries, inductors: lib.inductors, circuit: app.circuit(), zeners: lib.models.zeners, capRating: app.view()?.cap_rating });
         } catch (err) {
           return /** @type {Error} */ (err).message;
         }
@@ -166,6 +172,7 @@ export function inspector(host, app) {
     });
     inspectedForm = handle;
     slide?.attach(handle.form, shown);
+    if (part.type === "guitar") pickup = pickupBoxes(handle.form, { order: Object.keys(shownPart.pickup?.set ?? { r: 1, l: 1, c: 1 }), showError: handle.showError });
     // another model changes what the form asks (a germanium transistor's leakage, the
     // model's own values): build it again with what's typed so far (the user, 2026-10-28)
     // so does a switch's type: its positions and poles (D-143)

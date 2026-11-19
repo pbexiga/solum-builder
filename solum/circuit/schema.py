@@ -24,6 +24,7 @@ from pydantic import (
 from solum.circuit.enclosures import CUSTOM as ENCLOSURE_CUSTOM
 from solum.circuit.enclosures import SIZES as ENCLOSURE_SIZES
 from solum.circuit.enclosures import size_of
+from solum.circuit.pickup import PickupError, Quantity, check_set
 from solum.circuit.refs import ref_problem
 from solum.circuit.switches import (
     CUSTOM,
@@ -39,7 +40,7 @@ from solum.circuit.switches import (
 )
 from solum.units import format_quantity, format_value, parse_value
 
-SCHEMA_VERSION: Final = 31
+SCHEMA_VERSION: Final = 32
 
 Point = tuple[int, int]
 Rotation = Literal[0, 90, 180, 270]
@@ -467,12 +468,25 @@ class Regulator(_Part):
 class Pickup(_Model):
     """Pickup coil as a series R-L with its own winding capacitance across the output.
     `kind`: the pickup guide's entry it was filled from (`library/guides/pickups.yaml`);
-    None for values of your own (D-096)."""
+    None for values of your own (D-096). `set` (v32, D-363): the three of R, L, C, peak
+    and Q its form was given, as typed, in typing order (`{"r": "8k2", "peak": "5k2",
+    "q": "2.1"}`); R, L and C are what they give. None: R, L and C were the three."""
 
     r: PositiveValue
     l: PositiveValue  # noqa: E741  (inductance; the domain's own letter)
     c: PositiveValue
     kind: str | None = None
+    set: dict[Quantity, str] | None = None
+
+    @model_validator(mode="after")
+    def _set_gives_rlc(self) -> Self:
+        if self.set is not None:
+            try:
+                given = {str(k): v for k, v in self.set.items()}
+                check_set(given, parse_value(self.r), parse_value(self.l), parse_value(self.c))
+            except PickupError as err:
+                raise ValueError(str(err)) from None
+        return self
 
 
 class Guitar(_Part):
@@ -693,7 +707,7 @@ class Enclosure(_Model):
 
 
 class Circuit(_Model):
-    schema_: Literal[31] = Field(alias="schema")
+    schema_: Literal[32] = Field(alias="schema")
     id: str = Field(pattern=ID_PATTERN)
     name: str
     description: str = ""

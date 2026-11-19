@@ -1059,12 +1059,22 @@ def test_guitar_pickup_fields(js: Page) -> None:
           kept: f.editFrom(strat, form, { pickups }).patch,
           own: f.editFrom(strat, { ...form, pickup_r: '7k', volume: '' }, { pickups }).patch,
           none: f.editFrom(strat, { ...form, source: 'ideal' }, { pickups }).patch,
+          // D-363: the server's answer for the five boxes gives R, L and C and the three set
+          typed: f.editFrom(strat, { ...form, source: 'custom' }, { pickups, pickup: {
+            set: { r: '8k2', peak: '5k2', q: '2.1' }, stored: { r: '8k2', l: '527m', c: '1n777' } } }).patch,
+          measured: f.editFrom(strat, form, { pickups, pickup: {
+            set: { r: '6k38', l: '2.55', c: '151p' }, stored: { r: '6k38', l: '2.55', c: '151p' } } }).patch,
+          short: (() => { try { f.editFrom(strat, form, { pickups, pickup: { set: { r: '8k2' }, stored: null,
+            line: 'R set. Two more: any of L, C, peak or Q.' } }); return null; } catch (e) { return e.message; } })(),
+          reopened: f.inspectorFields({ ...strat, pickup: { r: '8k2', l: '527m', c: '1n777', kind: null,
+            set: { r: '8k2', peak: '5k2', q: '2.1' } } }, ctx).map((x) => [x.name, x.value]),
         };
         """,
     )
     assert r["ideal"] == [
         ["ref", "IN", None], ["source", "ideal", None], ["pickup_r", "6k38", "ideal"],
-        ["pickup_l", "2.55", "ideal"], ["pickup_c", "151p", "ideal"], ["cable", "3", "ideal"],
+        ["pickup_l", "2.55", "ideal"], ["pickup_c", "151p", "ideal"], ["pickup_peak", "", "ideal"],
+        ["pickup_q", "", "ideal"], ["cable", "3", "ideal"],
         ["volume", "", None],  # buffered with no pot: empty, so applying adds none (D-134)
         ["stereo", "mono", None],  # a stereo jack's ring switches a battery (D-143)
     ]  # fmt: skip
@@ -1073,7 +1083,14 @@ def test_guitar_pickup_fields(js: Page) -> None:
         ["custom", "Your own values"],
     ]  # fmt: skip
     assert r["fills"] == {
-        "strat": {"pickup_r": "6k38", "pickup_l": "2.55", "pickup_c": "151p", "volume": "250k"}
+        "strat": {
+            "pickup_r": "6k38",
+            "pickup_l": "2.55",
+            "pickup_c": "151p",
+            "pickup_peak": "",
+            "pickup_q": "",
+            "volume": "250k",
+        }
     }
     assert r["strat"][1] == ["source", "strat"]
     assert r["kept"] == {
@@ -1083,6 +1100,13 @@ def test_guitar_pickup_fields(js: Page) -> None:
     assert r["own"]["pickup"] == {"r": "7k", "l": "2.55", "c": "151p", "kind": None}
     assert r["own"]["volume"] is None
     assert r["none"] == {"source": None, "pickup": None, "cable": None, "volume": "250k"}
+    assert r["typed"]["pickup"] == {"r": "8k2", "l": "527m", "c": "1n777", "kind": None,
+                                    "set": {"r": "8k2", "peak": "5k2", "q": "2.1"}}  # fmt: skip
+    assert r["measured"]["pickup"] == {"r": "6k38", "l": "2.55", "c": "151p", "kind": "strat"}
+    assert (
+        r["short"] == "The pickup needs three of its five. R set. Two more: any of L, C, peak or Q."
+    )
+    assert dict(r["reopened"])["pickup_l"] == "" and dict(r["reopened"])["pickup_q"] == "2.1"
 
 
 def test_inspector_fields_for_pots_and_switches(js: Page) -> None:

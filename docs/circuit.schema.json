@@ -1586,7 +1586,7 @@
     },
     "Pickup": {
       "additionalProperties": false,
-      "description": "Pickup coil as a series R-L with its own winding capacitance across the output.\n`kind`: the pickup guide's entry it was filled from (`library/guides/pickups.yaml`);\nNone for values of your own (D-096).",
+      "description": "Pickup coil as a series R-L with its own winding capacitance across the output.\n`kind`: the pickup guide's entry it was filled from (`library/guides/pickups.yaml`);\nNone for values of your own (D-096). `set` (v32, D-363): the three of R, L, C, peak\nand Q its form was given, as typed, in typing order (`{\"r\": \"8k2\", \"peak\": \"5k2\",\n\"q\": \"2.1\"}`); R, L and C are what they give. None: R, L and C were the three.",
       "properties": {
         "r": {
           "anyOf": [
@@ -1632,6 +1632,30 @@
           ],
           "default": null,
           "title": "Kind"
+        },
+        "set": {
+          "anyOf": [
+            {
+              "additionalProperties": {
+                "type": "string"
+              },
+              "propertyNames": {
+                "enum": [
+                  "r",
+                  "l",
+                  "c",
+                  "peak",
+                  "q"
+                ]
+              },
+              "type": "object"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Set"
         }
       },
       "required": [
@@ -2413,7 +2437,7 @@
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "const": 31,
+      "const": 32,
       "title": "Schema",
       "type": "integer"
     },
@@ -2639,7 +2663,7 @@
     "name",
     "parts"
   ],
-  "title": "Solum Builder circuit, schema v31",
+  "title": "Solum Builder circuit, schema v32",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

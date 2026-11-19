@@ -207,7 +207,7 @@ export function openForm(host, spec) {
   closeForm();
   const error = h("p", { class: "error", role: "alert", hidden: "" });
   const rows = spec.fields.map((f) =>
-    h("div", { class: "form-row" }, [
+    h("div", { class: f.divider ? "form-row divided" : "form-row" }, [
       h("label", { for: `field-${f.name}` }, [f.label]),
       input(f),
       h("span", { class: "unit" }, [f.unit ?? ""]),

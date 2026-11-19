@@ -831,3 +831,18 @@ def test_transistor_gains_for_the_form(monkeypatch: pytest.MonkeyPatch) -> None:
     }  # fmt: skip
     assert gains["2N3906"]["leakage"] == 0.0  # silicon: none recorded
     assert gains["2N3906"]["germanium"] is False
+
+
+def test_pickup_form_works_out_the_other_two(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-363: the guitar form asks as you type; the server says what the boxes show."""
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    body = c.post(
+        "/api/pickup", json={"typed": [["r", "8k2"], ["peak", "5k2"], ["q", "2.1"]]}
+    ).json()
+    assert body["shown"] == {"l": "527m", "c": "1n78"}
+    assert body["stored"] == {"r": "8k2", "l": "527m", "c": "1n777"}
+    assert body["line"] == "Set: R, peak, Q · worked out: L, C"
+    two = c.post("/api/pickup", json={"typed": [["l", "2.5"], ["c", "150p"]]}).json()
+    assert two["dimmed"] == {"peak": "Not the peak: L and C give it."} and two["stored"] is None
+    bad = c.post("/api/pickup", json={"typed": [["l", "2.5"], ["c", "150p"], ["peak", "5k"]]})
+    assert bad.status_code == 422 and bad.json()["message"] == "Not the peak: L and C give it."

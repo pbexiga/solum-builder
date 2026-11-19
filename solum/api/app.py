@@ -53,6 +53,7 @@ from solum.circuit.io import (
     load_circuit,
     parse_circuit,
 )
+from solum.circuit.pickup import PickupError, pickup_form
 from solum.circuit.ratings import RATING_RULES, rating_fill
 from solum.circuit.schema import Circuit, Trimmer, turns
 from solum.circuit.supply import powered_off
@@ -139,7 +140,7 @@ SCHEMATIC_MAX = 8_000_000  # bytes: a drawn schematic is well under this (D-205)
 USER_ERRORS = (
     CircuitError, ConnectivityError, NetlistError, BiasError, ModelError, StoreError, SweepError,
     CantSimulate, LiveError, LinearError, AssetError, NamError, RenderError, WavError,
-    MarkingError, CurveError, FixError, SettingsError, FilterError,
+    MarkingError, CurveError, FixError, SettingsError, FilterError, PickupError,
 )  # fmt: skip
 # what makes a render request fail; a lookup (`cached_only`) answers "not rendered" instead
 LOOKUP_MISSES = (*USER_ERRORS, SimError, HTTPException)
@@ -151,6 +152,12 @@ class SettingsChange(BaseModel):
 
     cache_max_gb: float | None = None
     preferences: dict[str, Any] | None = None  # a null forgets one
+
+
+class PickupRequest(BaseModel):
+    """The guitar form's pickup boxes typed, oldest first: [name, text] (D-363)."""
+
+    typed: list[tuple[str, str]] = Limit(max_length=20)
 
 
 class RunRequest(BaseModel):
@@ -740,6 +747,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def pickups() -> dict[str, Any]:
         """The guitar input's pickup choices, measured (D-096)."""
         return pickup_guide(settings.library_dir).model_dump()
+
+    @app.post("/api/pickup")
+    def pickup(req: PickupRequest) -> dict[str, Any]:
+        """The guitar form's five pickup boxes as typed so far (D-363): which three are
+        set, the other two worked out (`shown`), a box that can't complete it (`dimmed`),
+        the line under them, and, once complete, R, L and C as the file keeps them."""
+        form = pickup_form(req.typed)
+        stored = form.stored() if form.values else None
+        return {"set": form.set, "shown": form.shown, "dimmed": form.dimmed,
+                "line": form.line, "dropped": form.dropped, "stored": stored}  # fmt: skip
 
     @app.get("/api/guides/inductors")
     def inductors() -> dict[str, Any]:

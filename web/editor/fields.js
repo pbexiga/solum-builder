@@ -6,7 +6,8 @@
  *   value: string, options?: Array<[string, string] | [string, string, string]>, unit?: string, hint?: string, about?: string | string[], help?: string,
  *   fills?: Record<string, Record<string, string>>, showIf?: {field: string, not?: string, is?: string}, readonly?: boolean,
  *   lockedWhile?: string[], lockedHint?: string, remove?: {label: string, fields: string[]},
- *   add?: {label: string, fields: string[], values?: Record<string, string>}, hidden?: boolean, range?: {min: number, max: number, message: string}}} Field
+ *   add?: {label: string, fields: string[], values?: Record<string, string>}, hidden?: boolean, range?: {min: number, max: number, message: string},
+ *   divider?: boolean}} Field
  *   `hint`: a few words under the box (what it means); `about`: the rest (how to measure
  *   it, the datasheet's range, the background), in the form's ⓘ under its label (9c);
  *   `help`: a Help page (`"capacitors"`): the hint is a link that opens it;
@@ -18,7 +19,8 @@
  *   hidden, putting `values` in those left empty; `hidden`: its row starts hidden;
  *   `range`: a number outside it is an error, said as soon as the box is left (`fieldProblem`)
  *   `fills`: picking an option sets other fields (option → field → value);
- *   `showIf`: the field shows only while another field isn't `not` (or, with `is`, only while it is)
+ *   `showIf`: the field shows only while another field isn't `not` (or, with `is`, only while it is);
+ *   `divider`: a line above its row, closing off the rows before (the pickup's boxes from the cable)
  * @typedef {{kind: string, name: string, r: string, l: string, c: string, volume: string}} PickupChoice
  * @typedef {{type: string, halves: number, simulated: string[], package: {name: string, pins: Record<string, number>, source: string} | null}} Chip
  *   a chip model's chip: op-amp, inverter or OTA (`/api/models/chips`, D-140, D-180)
@@ -667,16 +669,22 @@ function guitarFields(part, pickups) {
   const has = part.source === "pickup";
   const chosen = has ? (part.pickup?.kind ?? "custom") : "ideal";
   const start = pickups[0] ?? { r: "6k", l: "2.5", c: "150p", volume: "250k" };
-  const fills = Object.fromEntries(pickups.map((p) => [p.kind, { pickup_r: p.r, pickup_l: p.l, pickup_c: p.c, volume: p.volume }]));
+  const fills = Object.fromEntries(pickups.map((p) => [p.kind, { pickup_r: p.r, pickup_l: p.l, pickup_c: p.c, pickup_peak: "", pickup_q: "", volume: p.volume }]));
   const only = { showIf: { field: "source", not: "ideal" } };
+  // the three set (as typed; R, L and C for a measured pickup or an older file); the other two are worked out (D-363)
+  const set = /** @type {Record<string, string>} */ (has ? (part.pickup?.set ?? { r: part.pickup?.r, l: part.pickup?.l, c: part.pickup?.c }) : { r: start.r, l: start.l, c: start.c });
   return [
     { ...select("source", "Pickup", chosen, [["ideal", "Buffered"], ...pickups.map((p) => /** @type {[string, string]} */ ([p.kind, p.name])), ["custom", "Your own values"]]),
       fills, hint: "Its pickup loads the input. Buffered: nothing does.",
       about: "Buffered: a buffer pedal or an active pickup in front, so nothing loads the pickup and the guitar's volume only turns the level. It's also the no-guitar case: an ideal source, like a signal generator." },
-    text("pickup_r", "Coil R", has ? part.pickup?.r : start.r, { unit: "Ω", ...only }),
-    text("pickup_l", "Coil L", has ? part.pickup?.l : start.l, { unit: "H", ...only }),
-    text("pickup_c", "Coil C", has ? part.pickup?.c : start.c, { unit: "F", ...only, hint: "The coil's own; the cable is below." }),
-    num("cable", "Cable", has ? (part.cable ?? 0) : 3, { unit: "m", ...only, hint: "About 100 pF a metre." }),
+    text("pickup_r", "Coil R", set.r, { unit: "Ω", ...only, hint: "The DC resistance: a multimeter across the guitar's jack reads it.",
+      about: ["Type any three of the five; the other two are worked out. The three you typed last are kept.", "Any three but L, C and the peak: L and C already give the peak, so R would be left open."] }),
+    text("pickup_l", "Coil L", set.l, { unit: "H", ...only }),
+    text("pickup_c", "Coil C", set.c, { unit: "F", ...only, hint: "The coil's own; the cable is below." }),
+    text("pickup_peak", "Peak", set.peak, { unit: "Hz", ...only, hint: "Unloaded: the coil alone, without the guitar's pot and cable (the app adds those).",
+      about: "The coil's resonant peak, 1 / (2π·√(LC)). Makers publish it; published ones are sometimes measured with a cable and pots, which pull it lower." }),
+    text("pickup_q", "Q", set.q, { ...only, about: "How sharp the peak is: 2π·peak·L / R. A real pickup's measured Q is lower than its R, L and C alone give (losses in its magnets and covers)." }),
+    num("cable", "Cable", has ? (part.cable ?? 0) : 3, { unit: "m", ...only, divider: true, hint: "About 100 pF a metre." }),
     text("volume", "Volume pot", part.volume ?? "", { unit: "Ω", hint: "The guitar's volume pot. Empty: none. Turn it in Knobs." }),
     { ...select("stereo", "Input jack", part.stereo ? "stereo" : "mono", [["mono", "mono"], ["stereo", "stereo (battery switch)"]]),
       hint: "Stereo: its ring lug (R) is drawn.",
@@ -728,21 +736,32 @@ function optionalNumber(v, what) {
 }
 
 /**
+ * @typedef {{set: Record<string, string>, shown: Record<string, string>, dimmed: Record<string, string>,
+ *   line: string, dropped: string | null, stored: {r: string, l: string, c: string} | null}} PickupAnswer
+ *   the server's answer for the pickup's five boxes (`/api/pickup`, D-363)
+ */
+
+/**
  * A guitar's pickup from its form (D-096): buffered (a stiff source: no coil or cable; its
  * volume pot kept, D-134), or
  * a coil, cable and volume pot. A measured pickup keeps its `kind` while its coil values
- * are the guide's; changed, they're your own.
+ * are the guide's; changed, they're your own. With the server's answer for its five boxes
+ * (`solved`, D-363), R, L and C are what the three set give, and the three are kept as
+ * typed (`set`) unless they're R, L and C; without one, the R, L and C boxes as typed.
  * @param {(k: string) => string} v the form's trimmed values
- * @param {PickupChoice[]} pickups @returns {Record<string, unknown>}
+ * @param {PickupChoice[]} pickups @param {PickupAnswer} [solved] @returns {Record<string, unknown>}
  */
-function guitarPatch(v, pickups) {
+function guitarPatch(v, pickups, solved) {
   if (v("source") === "ideal") return { source: null, pickup: null, cable: null, volume: v("volume") || null };
-  const pickup = { r: v("pickup_r"), l: v("pickup_l"), c: v("pickup_c") };
+  if (solved && !solved.stored) throw new Error(`The pickup needs three of its five. ${solved.line}`);
+  const pickup = solved?.stored ?? { r: v("pickup_r"), l: v("pickup_l"), c: v("pickup_c") };
+  const set = solved?.set ?? null;
+  const plain = !set || Object.keys(set).every((k) => ["r", "l", "c"].includes(k));
   const guide = pickups.find((p) => p.kind === v("source"));
-  const same = guide && guide.r === pickup.r && guide.l === pickup.l && guide.c === pickup.c;
+  const same = plain && guide && guide.r === pickup.r && guide.l === pickup.l && guide.c === pickup.c;
   return {
     source: "pickup",
-    pickup: { ...pickup, kind: same ? guide.kind : null },
+    pickup: { ...pickup, kind: same ? guide.kind : null, ...(plain ? {} : { set }) },
     cable: optionalNumber(v("cable"), "Cable") ?? 0,
     volume: v("volume") || null,
   };
@@ -768,8 +787,8 @@ export function draftFrom(part, values, ctx = {}) {
  * Turn the inspector's form values back into an edit of the part. Throws an Error with a
  * plain message for input that can't be a number; everything else the server checks.
  * @param {any} part @param {Record<string, string>} values from the form, by field name
- * @param {{pickups?: PickupChoice[], batteries?: BatteryState[], inductors?: InductorPreset[], circuit?: any, zeners?: string[], capRating?: {volts: number, kinds: string[]} | null}} [ctx] the measured pickups,
- *   to keep a guitar's `kind`, the battery's states, to keep its `state`, the measured
+ * @param {{pickups?: PickupChoice[], pickup?: PickupAnswer, batteries?: BatteryState[], inductors?: InductorPreset[], circuit?: any, zeners?: string[], capRating?: {volts: number, kinds: string[]} | null}} [ctx] the measured pickups,
+ *   to keep a guitar's `kind`, the server's answer for its pickup's five boxes (D-363), the battery's states, to keep its `state`, the measured
  *   inductors, to keep an inductor's `kind`, the circuit and zener models' ids, for a
  *   diode's ref to follow its model (D-229), and the view's `cap_rating` (D-360)
  * @returns {Edit}
@@ -841,7 +860,7 @@ export function editFrom(part, values, ctx = {}) {
   }
   if ("show_pins" in values) patch.show_pins = v("show_pins") === "on" ? true : null;
   if ("at_rest" in values) patch.off_by_design = v("at_rest") === "off" ? true : null;
-  if ("source" in values) Object.assign(patch, guitarPatch(v, ctx.pickups ?? []));
+  if ("source" in values) Object.assign(patch, guitarPatch(v, ctx.pickups ?? [], ctx.pickup));
   let drain = null;
   if ("drain_volts" in values) {
     const volts = optionalNumber(v("drain_volts"), "Drain target");

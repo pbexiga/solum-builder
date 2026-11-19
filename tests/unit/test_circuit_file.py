@@ -229,10 +229,10 @@ def test_schema_v1_file_loads_as_current(repo: Path) -> None:
     (and dropped provenance), v6 text blocks (and dropped the power mode); a v1 file
     loads unchanged and saves as v6 at v1.0."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v1.json")
-    assert c.schema_ == SCHEMA_VERSION == 31
+    assert c.schema_ == SCHEMA_VERSION == 32
     assert c.tags == [] and c.texts == []
     assert [p.ref for p in c.parts] == ["R1", "R2"]
-    assert circuit_to_dict(c)["schema"] == 31
+    assert circuit_to_dict(c)["schema"] == 32
     assert (str(c.version), c.final) == ("v1.0", False)
 
 
@@ -651,3 +651,30 @@ def test_a_v30_jacks_cable_in_or_out_becomes_what_plug_is_in_it(repo: Path) -> N
     assert [getattr(p, "plug", None) for p in c.parts] == ["none", "mono", "mono", None]
     assert c.part("DC").plugged is False  # type: ignore[union-attr]
     assert "plugged" not in circuit_to_dict(c)["parts"][0]
+
+
+def test_a_v31_pickup_has_no_set(repo: Path) -> None:
+    """v32 (D-363): an older pickup has no `set` (R, L and C were the three)."""
+    c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v31.json")
+    assert c.schema_ == SCHEMA_VERSION
+    guitar = c.part("IN")
+    assert guitar.pickup is not None and guitar.pickup.set is None  # type: ignore[union-attr]
+    assert "set" not in circuit_to_dict(c)["parts"][0]["pickup"]
+
+
+def test_a_pickup_keeps_the_three_typed_as_typed(repo: Path) -> None:
+    data = json.loads((repo / "tests/fixtures/circuits/old/schema-v31.json").read_text())
+    pickup = {"r": "8k2", "l": "527m", "c": "1n777", "set": {"r": "8k2", "peak": "5k2", "q": "2.1"}}
+    data["parts"][0]["pickup"] = pickup
+    c = parse_circuit(data)
+    saved = circuit_to_dict(c)["parts"][0]["pickup"]
+    assert list(saved["set"].items()) == [("r", "8k2"), ("peak", "5k2"), ("q", "2.1")]
+    for wrong in (
+        {"r": "8k2", "peak": "5k2", "q": "4"},
+        {"l": "527m", "c": "1n777", "peak": "5k2"},
+        {"r": "8k2", "peak": "5k2"},
+        {"r": "8k2", "peak": "50k", "q": "2.1"},
+    ):
+        data["parts"][0]["pickup"] = {**pickup, "set": wrong}
+        with pytest.raises(CircuitError):
+            parse_circuit(data)

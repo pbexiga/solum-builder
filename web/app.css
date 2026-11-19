@@ -231,6 +231,10 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 .form-row input:read-only:focus { outline: none; }
 .form-row .unit { color: var(--text-3); font-family: var(--font-mono); }
 .form-row .hint-text { grid-column: 2 / -1; color: var(--text-3); font-size: 12px; }
+.form-row.worked-out input::placeholder { color: var(--text-2); font-style: italic; } /* a pickup's worked-out value (D-363) */
+.form-row.dimmed label, .form-row.dimmed input { opacity: 0.45; } /* the box that can't complete the pickup */
+.form-row.divided { border-top: 1px solid var(--border); padding-top: 10px; margin-top: 4px; } /* the pickup's boxes closed off from the cable */
+.pickup-line { margin: -2px 0 10px 120px; color: var(--text-2); font-size: 12px; }
 .form-row .field-remove { grid-column: 2 / -1; justify-self: start; padding: 1px 8px; font-size: 11px; } /* Remove target (D-127) */
 .form-row.locked + .slider-row { display: none; } /* a trimmer's turn while its target holds (round 3b) */
 /* The inspector's value slider (D-081): the range under the value, its ends and a snap button below */

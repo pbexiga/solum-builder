@@ -556,6 +556,8 @@ table.readout tr.rail th { color: var(--text-2); }
 /* The save prompt and other questions (ask, D-075) */
 .ask-shade { position: fixed; inset: 0; display: flex; align-items: center; justify-content: center; background: var(--scrim); z-index: 50; padding: 16px; }
 .ask { max-width: 440px; width: 100%; background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; padding: 18px 18px 14px; }
+.ask.wide { max-width: 560px; }
+.ask .export-list { max-height: 50vh; overflow-y: auto; margin-bottom: 16px; }
 .ask-title { margin: 0 0 6px; color: var(--text); font-weight: 600; }
 .ask-text { margin: 0 0 16px; color: var(--text-2); }
 .ask-buttons { display: flex; gap: 8px; justify-content: flex-end; }

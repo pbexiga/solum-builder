@@ -538,6 +538,29 @@ def test_export_logic(js: Page) -> None:
     assert result["build"] == [True, False, False]
 
 
+def test_what_counts_before_final(js: Page) -> None:
+    """D-362: the check before a version becomes final is Ready to build's (`readyRows`) on
+    the last save: a build note counts (an electrolytic with no rating), a circuit that
+    doesn't simulate counts, a dismissed note doesn't, and a block goes straight through."""
+    result = run(
+        js,
+        """
+        const e = await m('export-logic.js');
+        const note = { rule: 'cap-no-rating', severity: 'info', refs: ['C9'], nets: [], message: 'C9 has no voltage rating.', build: true };
+        const gone = [{ rule: 'cap-no-rating', refs: ['C9'] }];
+        return {
+          note: e.readyRows({ problems: [note], simulates: true }, { dirty: false }).rows.length,
+          silent: e.readyRows({ problems: [], simulates: false }, { dirty: false }).rows.length,
+          dismissed: e.readyRows({ problems: [note], simulates: true }, { dirty: false, dismissed: gone }),
+          block: 'why' in e.exportTarget({ kind: 'block', id: 'my-stage-v1' }),
+        };
+        """,
+    )
+    assert result["note"] == 1 and result["silent"] == 1
+    assert result["dismissed"] == {"rows": [], "dismissed": 1}
+    assert result["block"]
+
+
 def test_dismissed_problems(js: Page) -> None:
     """D-176: a dismissal names its problem by rule, refs and nets; dismissing keeps the
     reason (trimmed, left out when empty), dismissing again replaces it, and bringing a

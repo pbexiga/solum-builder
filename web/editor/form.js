@@ -273,9 +273,10 @@ export function openForm(host, spec) {
 /**
  * A modal question with a few buttons (the save prompt, D-075), laid out the usual way:
  * an `aside` button on the left, apart from the others; the `primary` one answers Enter
- * and has the focus; Escape answers `cancel`.
+ * and has the focus; Escape answers `cancel`. `body`, when given, makes what goes between
+ * the text and the buttons (a list, D-362), handed `answer` so a row can close it.
  * @template {string} V
- * @param {{title: string, text?: string, cancel: V,
+ * @param {{title: string, text?: string, cancel: V, id?: string, body?: (answer: (value: V) => void) => Node[],
  *   buttons: Array<{label: string, value: V, kind?: "primary" | "aside"}>}} spec
  * @returns {Promise<V>}
  */
@@ -290,9 +291,10 @@ export function ask(spec) {
       el.addEventListener("click", () => answer(b.value));
       return el;
     });
-    const dialog = h("div", { class: "ask", role: "alertdialog", "aria-modal": "true", "aria-labelledby": "ask-title" }, [
+    const dialog = h("div", { class: spec.body ? "ask wide" : "ask", role: "alertdialog", "aria-modal": "true", "aria-labelledby": "ask-title", ...(spec.id ? { id: spec.id } : {}) }, [
       h("p", { class: "ask-title", id: "ask-title" }, [spec.title]),
       ...(spec.text ? [h("p", { class: "ask-text" }, [spec.text])] : []),
+      ...(spec.body ? spec.body(answer) : []),
       h("div", { class: "ask-buttons" }, buttons),
     ]);
     const shade = h("div", { class: "ask-shade" }, [dialog]);

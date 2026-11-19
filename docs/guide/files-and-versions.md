@@ -44,6 +44,9 @@ Every file has a version, shown after its name: *v1.0*, *v1.12*.
 - Each save that changes something counts the minor number on: v1.0, v1.1, v1.2… A save with no changes leaves the file alone.
 - **New major version…** keeps the saved version as **final** (read-only) and carries on in a new file at v2.0, under the same name. Each major version is its own file (`my-boost-v1.json`, `my-boost-v2.json`); older ones show in Open when *Current only* is off. Unsaved changes are asked about first, so what's kept is what's on disk.
 - **Mark as final**, in Properties, makes the current version read-only without starting a new one. **Unlock** (asked first) makes it editable again; its version counts on from where it was.
+- **Before a version becomes final**, both run the same check as File → [Export](export.md)'s *Ready to build*, on the last save: a circuit that doesn't simulate, and every build check still open in [Problems](problems.md) (an electrolytic with no voltage rating, a part with no package, …). With nothing open, it goes ahead as usual. Otherwise a window lists what's open, in the same order as Export: click a row to close it and go to its part, or choose **Mark as final anyway** or **Cancel** (Enter is Cancel). A problem you dismissed in Problems doesn't count. Blocks aren't checked: they aren't built on their own.
+
+![Mark as final on a circuit with an electrolytic missing its rating](img/final-check.png)
 
 Starters and core blocks are always read-only: Save on one asks for a name and makes your own copy.
 

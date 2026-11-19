@@ -290,6 +290,16 @@ def ratings(page: Page, base: str) -> None:
     shoot(page, "ratings", "#panel-problems")
 
 
+def final_check(page: Page, base: str) -> None:
+    """Properties → Mark as final on the buffer with C2 an electrolytic with no rating:
+    the check before final lists it (D-362)."""
+    opened_drawn(page, base, battery_buffer(electrolytic=True), "Buffer to build")
+    menu(page, "file-menu", "menu-properties")
+    page.locator("#toggle-final").click()
+    page.wait_for_selector("#final-check .export-row")
+    shoot(page, "final-check", "#final-check")
+
+
 def problems(page: Page, base: str) -> None:
     opened(page, base, probe=None)
     save_as(page, "Broken")
@@ -460,6 +470,7 @@ SHOTS: dict[str, Callable[[Page, str], None]] = {
     "dc-jack-power": dc_jack_power,
     "no-power": no_power,
     "ratings": ratings,
+    "final-check": final_check,
     "blocks-dialog": blocks_dialog,
     "open-dialog": open_dialog,
     "import-dialog": import_dialog,

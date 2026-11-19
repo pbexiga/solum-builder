@@ -86,20 +86,33 @@ export async function exportSheet(open) {
   });
   try {
     const { check, rows, dismissed } = await checking;
-    const items = rows.map((r) => {
-      const li = h("li", { class: `export-row${r.refs.length ? " pick" : ""}` }, [h("span", { class: `severity sev-${r.severity}` }, [SEVERITY[r.severity]]), h("span", {}, [r.text])]);
-      if (r.refs.length) li.addEventListener("click", () => { view.close(); open.onPick(r.refs[0]); });
-      return li;
-    });
     const sub = `${check.name} ${check.version}, as last saved.`;
     const none = h("p", { class: "export-clear" }, ["Nothing to check: every part says what to buy."]);
-    const gone = dismissed ? [h("p", { class: "hint-text" }, [`${dismissed} dismissed in the Problems panel.`])] : [];
-    ready.replaceChildren(h("p", {}, [sub, " Nothing here stops an export."]), ...(items.length ? [h("ul", { class: "export-list" }, items)] : [none]), ...gone);
+    const list = rows.length ? readyList(rows, (ref) => { view.close(); open.onPick(ref); }) : [none];
+    ready.replaceChildren(h("p", {}, [sub, " Nothing here stops an export."]), ...list, ...dismissedNote(dismissed));
   } catch (err) {
     ready.replaceChildren(h("p", { class: "error" }, [`Couldn't check the last save: ${/** @type {Error} */ (err).message}`]));
   }
   ready.removeAttribute("aria-busy");
 }
+
+/**
+ * The Ready to build rows as a list (D-203), here and before a version becomes final
+ * (D-362): a row naming parts is clicked to pick its first part.
+ * @param {import("./export-logic.js").ReadyRow[]} rows @param {(ref: string) => void} pick
+ * @returns {Node[]}
+ */
+export function readyList(rows, pick) {
+  const items = rows.map((r) => {
+    const li = h("li", { class: `export-row${r.refs.length ? " pick" : ""}` }, [h("span", { class: `severity sev-${r.severity}` }, [SEVERITY[r.severity]]), h("span", {}, [r.text])]);
+    if (r.refs.length) li.addEventListener("click", () => pick(r.refs[0]));
+    return li;
+  });
+  return [h("ul", { class: "export-list" }, items)];
+}
+
+/** How many build checks were dismissed in Problems, when any. @param {number} n @returns {Node[]} */
+export const dismissedNote = (n) => (n ? [h("p", { class: "hint-text" }, [`${n} dismissed in the Problems panel.`])] : []);
 
 /**
  * The last save's schematic, drawn here with the sheet's own renderer (D-205).

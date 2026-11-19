@@ -243,6 +243,7 @@ const files = fileDialogs($("canvas-body"), {
   setDirty: (dirty) => setDirty(dirty),
   showError: (message) => showError(message),
   hint,
+  pickPart: (ref) => void select({ kind: "part", id: ref }),
 });
 const blocks = blockDialogs($("canvas-body"), {
   source: () => state.source,

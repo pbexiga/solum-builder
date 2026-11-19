@@ -1,6 +1,7 @@
 /**
  * The file dialogs (DOM, D-075, D-076): Save, Save as, Open (Recent and All circuits,
- * D-287), Properties (with the enclosure, D-204), final and unlock, New major version,
+ * D-287), Properties (with the enclosure, D-204), final (after the Ready to build check,
+ * D-362) and unlock, New major version,
  * Delete; and the name at the top renamed in place (`nameEditor`, D-287). The Open and Blocks
  * dialogs' shared list controls live here too (`listView`, `listControls`, `entryTag`).
  * The app root owns what is open; this module asks it through `app` and never keeps a
@@ -12,6 +13,7 @@ import { desktopApi } from "./desktop.js";
 import { splitValues } from "./editor/edit.js";
 import { importedFile, openSections, versionTag } from "./editor/files.js";
 import { closeForm, confirmed, openForm } from "./editor/form.js";
+import { readyForFinal } from "./final-check.js";
 import { popOutIcon } from "./help.js";
 import { h } from "./panels.js";
 import { debounce } from "./state.js";
@@ -38,6 +40,7 @@ import { remember, remembered } from "./storage.js";
  * @property {(dirty: boolean) => void} setDirty
  * @property {(message: string | null) => void} showError
  * @property {(text: string) => void} hint the line under the canvas
+ * @property {(ref: string) => void} pickPart select a part (a row of the check before final, D-362)
  */
 
 /**
@@ -435,12 +438,14 @@ export function fileDialogs(host, app) {
   }
 
   /**
-   * Mark the open file final (read-only) or unlock it. Locking needs nothing unsaved;
-   * unlocking asks first. Neither changes the version. Returns a message, or null when done.
+   * Mark the open file final (read-only) or unlock it. Locking needs nothing unsaved and
+   * runs the Ready to build check first (D-362); unlocking asks first. Neither changes the
+   * version. Returns a message, or null when done.
    * @param {boolean} final
    */
   async function setFinal(final) {
     if (final && app.dirty()) return "Save your changes first, then mark it final.";
+    if (final && !(await readyForFinal(finalCheck(() => closeForm())))) return "Not marked final.";
     if (!final) {
       const sure = await confirmed(`Unlock \u201c${app.circuit().name}\u201d?`, "This is a finished version. Unlock it to make changes; its version keeps counting on from where it is.", "Unlock", "unlock");
       if (!sure) return "Still final.";
@@ -453,13 +458,25 @@ export function fileDialogs(host, app) {
   }
 
   /**
+   * What the check before final needs (D-362): the open file, and a row's part picked
+   * after `before` (Properties closes first).
+   * @param {() => void} [before]
+   */
+  function finalCheck(before) {
+    const c = app.circuit();
+    return { source: app.source(), name: c.name, version: versionTag(c), dismissed: c.dismissed, onPick: (/** @type {string} */ ref) => { before?.(); app.pickPart(ref); } };
+  }
+
+  /**
    * File → New major version… (D-075, D-076): the saved version is kept as final
    * (read-only) and work carries on in a new file at the next major (`v2.0`). Unsaved
-   * changes are asked about first, so what's kept is what's on disk.
+   * changes are asked about first, so what's kept is what's on disk; then the Ready to
+   * build check, as for Mark as final (D-362).
    */
   async function newMajor() {
     if (!ownFile() || !app.file()?.current) return;
     if (!(await app.confirmLeave())) return;
+    if (!(await readyForFinal(finalCheck()))) return;
     const c = app.circuit();
     const major = c.version?.major ?? 1;
     const sure = await confirmed(`Start version ${major + 1} of \u201c${c.name}\u201d?`, `Version ${major} (${versionTag(c)}) is kept as final and read-only, and you carry on with v${major + 1}.0. Older versions show in the lists when Current only is off.`, `Start v${major + 1}`, "go");

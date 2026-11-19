@@ -372,6 +372,8 @@ def test_versions_rename_and_final(page: Page, base_url: str) -> None:
     page.locator("form.popup [data-action='cancel']").click()
     # a new major version: v1 kept as final, this one at v2.0, same name and link
     menu(page, "file-menu", "menu-new-major")
+    # a lone resistor doesn't simulate: the check before final says so (D-362)
+    page.locator("#final-check [data-answer='anyway']").click()
     expect(page.locator(".ask-title")).to_have_text("Start version 2 of \u201cFuzz build\u201d?")
     answer(page, "go")
     expect(page.locator("#badges")).to_have_text("v2.0")

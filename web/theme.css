@@ -76,6 +76,10 @@
   --sch-impedance: #7FA9C9;   /* steel blue: View → Impedance, apart from the brass DC voltages (D-147) */
   --sch-type: #B497C8;        /* lavender: View → Capacitor types, apart from both (D-147) */
   --sch-probed-fill: rgba(44, 61, 79, 0.55);  /* ocean */
+  /* the Board view (D-368): the board, its copper strips and holes, from the theme's own colours */
+  --board-base: var(--surface-1);
+  --board-copper: color-mix(in srgb, var(--picked) 16%, transparent);
+  --board-hole: var(--surface-0);
   --scrim: rgba(18, 18, 16, 0.6);     /* behind a modal question (the save prompt) */
 
   /* Plots (read once with getComputedStyle; canvas can't use variables) */

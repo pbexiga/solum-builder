@@ -50,7 +50,13 @@ def x_range(page: Page) -> tuple[float, float]:
 
 def drag_plot(page: Page, f0: float, f1: float) -> None:
     """Drag across the Frequency plot from f0 to f1 (Hz)."""
-    box = page.locator("#frequency-plot .u-over").bounding_box()
+    over = page.locator("#frequency-plot .u-over")
+    box = None
+    for _ in range(40):  # a run finishing redraws the plot: its box once it's there again
+        box = over.bounding_box()
+        if box is not None:
+            break
+        page.wait_for_timeout(50)
     assert box is not None
     x0, x1 = page.evaluate(f"[{PLOT}.valToPos({f0}, 'x'), {PLOT}.valToPos({f1}, 'x')]")
     y = box["y"] + box["height"] / 2

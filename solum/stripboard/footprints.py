@@ -238,6 +238,23 @@ def board_parts(circuit: Circuit, models: ModelLibrary,
     return found, problems
 
 
+def drawing_data(parts: dict[str, BoardPart]) -> dict[str, dict[str, object]]:
+    """What the Board view draws each board part from (D-368), as plain JSON: its shape,
+    legs in order, the spacings allowed, the body in mm, and `refs` the circuit parts on it
+    (a chip's units), so selecting it lights them on the schematic."""
+    out: dict[str, dict[str, object]] = {}
+    for ref, part in sorted(parts.items()):
+        fp = part.footprint
+        out[ref] = {
+            "shape": fp.shape, "kind": part.kind, "legs": list(part.legs),
+            "steps": list(fp.steps), "flat": fp.flat, "stand": fp.stand,
+            "length": fp.length, "width": fp.width, "diameter": fp.diameter,
+            "row_holes": fp.row_holes,
+            "refs": sorted({pin[0] for pin in part.pins.values()} or {ref}),
+        }  # fmt: skip
+    return out
+
+
 def _line(holes: list[Hole]) -> tuple[int, int] | None:
     """The unit step from each hole to the next when they're in a straight row or column
     with equal gaps, as (dx, dy) in holes, else None."""

@@ -12,9 +12,6 @@
 import { remember, remembered } from "./storage.js";
 import { h } from "./panels.js";
 
-const KEY = "solum.panes";
-const OPEN_KEY = "solum.panes.open";
-const SCROLL_KEY = "solum.panes.scroll";
 const SCROLL_SETTLE_MS = 10000; // how long a reload keeps putting the saved scroll back as panes fill
 
 /**
@@ -56,10 +53,14 @@ export function openStates(saved, defaults) {
 
 /**
  * Make the `details` panes in `container` reorderable. Returns `reset`, which puts the
- * default order back and each pane open or shut as it started.
- * @param {HTMLElement} container @returns {{reset: () => void}}
+ * default order back and each pane open or shut as it started. `key`: where the order is
+ * remembered (`<key>.open` the open or shut ones, `<key>.scroll` the scroll): the result
+ * panes' `solum.panes`, the Board view's `solum.boardPanes` (D-368).
+ * @param {HTMLElement} container @param {string} [key] @returns {{reset: () => void}}
  */
-export function reorderable(container) {
+export function reorderable(container, key = "solum.panes") {
+  const openKey = `${key}.open`;
+  const scrollKey = `${key}.scroll`;
   const panes = () => /** @type {HTMLDetailsElement[]} */ ([...container.querySelectorAll(":scope > details")]);
   const defaults = panes().map((p) => p.id);
   const startsOpen = new Map(panes().map((p) => [p.id, p.open]));
@@ -71,13 +72,13 @@ export function reorderable(container) {
   const moveTo = (/** @type {string} */ id, /** @type {number} */ to) => {
     const order = movePane(ids(), id, to);
     apply(order);
-    remember(KEY, order);
+    remember(key, order);
   };
   /** @type {Map<string, boolean>} */
-  let opens = openStates(remembered(OPEN_KEY), startsOpen);
+  let opens = openStates(remembered(openKey), startsOpen);
   const saveOpen = (/** @type {HTMLDetailsElement} */ p) => {
     opens.set(p.id, p.open);
-    remember(OPEN_KEY, Object.fromEntries(opens));
+    remember(openKey, Object.fromEntries(opens));
   };
   for (const pane of panes()) {
     const summary = /** @type {HTMLElement} */ (pane.querySelector(":scope > summary"));
@@ -135,16 +136,16 @@ export function reorderable(container) {
     window.addEventListener("pointerup", onUp, { once: true });
   }
 
-  apply(paneOrder(remembered(KEY), defaults));
+  apply(paneOrder(remembered(key), defaults));
   for (const p of panes()) p.open = opens.get(p.id) ?? true;
-  keepScroll(container, panes());
+  keepScroll(container, panes(), scrollKey);
   return {
     reset() {
-      remember(KEY, null);
+      remember(key, null);
       apply(defaults);
       opens = new Map(startsOpen);
       for (const p of panes()) p.open = startsOpen.get(p.id) ?? true;
-      remember(OPEN_KEY, null);
+      remember(openKey, null);
     },
   };
 }
@@ -155,10 +156,10 @@ export function reorderable(container) {
  * its saved height (`--reserve`) until its own content is that tall, and the list keeps the
  * saved place meanwhile; the first frame already shows it there. The holding ends early
  * when the user scrolls, clicks or types in the list, and after `SCROLL_SETTLE_MS` at most.
- * @param {HTMLElement} container @param {HTMLDetailsElement[]} panes
+ * @param {HTMLElement} container @param {HTMLDetailsElement[]} panes @param {string} scrollKey
  */
-function keepScroll(container, panes) {
-  const saved = /** @type {{top?: unknown, heights?: Record<string, unknown>} | null} */ (remembered(SCROLL_KEY));
+function keepScroll(container, panes, scrollKey) {
+  const saved = /** @type {{top?: unknown, heights?: Record<string, unknown>} | null} */ (remembered(scrollKey));
   const target = Number(saved?.top) || 0;
   /** @type {Map<HTMLDetailsElement, number>} */
   const reserved = new Map();
@@ -196,7 +197,7 @@ function keepScroll(container, panes) {
   }
   container.dataset.ready = "true"; // shown from here (hidden in the CSS until now)
   let timer = 0;
-  const save = () => remember(SCROLL_KEY, {
+  const save = () => remember(scrollKey, {
     top: Math.round(container.scrollTop),
     // a pane out as a large view isn't in the list
     heights: Object.fromEntries(panes.filter((p) => !p.classList.contains("large-view")).map((p) => [p.id, p.offsetHeight])),

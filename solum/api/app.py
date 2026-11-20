@@ -133,6 +133,7 @@ from solum.simulate import (
 from solum.store import CircuitStore, StoreError, blank_circuit, split_id
 from solum.stripboard.board import Layout, layout_from_data
 from solum.stripboard.check import progress
+from solum.stripboard.footprints import board_parts, drawing_data
 from solum.units import parse_value
 from solum.view import circuit_view
 from solum.wiring import wiring_page
@@ -1067,12 +1068,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     @app.post("/api/stripboard")
     def stripboard(req: CircuitRequest) -> dict[str, Any]:
         """The Board view's progress check (D-368) of the open circuit's board (none yet:
-        an empty one): what's left to place, each net, each leg, what's wrong now."""
+        an empty one): what's left to place, each net, each leg, what's wrong now; with
+        each board part's footprint to draw it by (`footprints`)."""
         circuit = parse_circuit(req.circuit)
         board = circuit.stripboard
         layout = layout_from_data(board.model_dump()) if board else Layout(0, 0, ())
-        found = progress(layout, circuit, models, footprint_table(settings.library_dir))
-        return {**asdict(found), "nets_done": found.nets_done}
+        table = footprint_table(settings.library_dir)
+        found = progress(layout, circuit, models, table)
+        footprints = drawing_data(board_parts(circuit, models, table)[0])
+        return {**asdict(found), "nets_done": found.nets_done, "footprints": footprints}
 
     @app.post("/api/part")
     def part(req: PartRequest) -> dict[str, Any]:

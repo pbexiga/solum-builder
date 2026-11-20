@@ -34,6 +34,7 @@ import { actionFor } from "./editor/keys.js";
 import { db, volts } from "./fixed.js";
 import { closeMenus } from "./menus.js";
 import { reorderable } from "./panes.js";
+import { boardView } from "./board/board-view.js";
 import { refusalBar } from "./refusal.js";
 import { liveCurves, liveValues, nearestStep, readingRows } from "./live.js";
 import { h, knobControl, refreshPins, paneInfo, restoreLargeViews, shrinkLargeViews, renderDc, renderKnobs, renderNodeView, renderPartView, renderProbeFailed, renderProblems, renderReadings, renderSweepSummary, showKnob } from "./panels.js";
@@ -341,6 +342,16 @@ const schematic = new Schematic(/** @type {SVGSVGElement} */ (/** @type {unknown
   onMark: (key) => openProblem(key),
   onEmpty: () => select(outputSelection()),
 });
+// the Board view (D-368): the stripboard on the same canvas, its own panes in the column
+const board = boardView($("canvas-body"), {
+  circuit: () => state.circuit,
+  view: () => state.view,
+  positions: () => switchPositions(),
+  selection: () => state.selection,
+  select: (selection) => select(selection),
+  resting: () => outputSelection(),
+  shown: () => updateButtons(),
+});
 const menus = appMenus($("canvas-body"), schematic, {
   pinFrequency: (net) => tools.view.pin(net),
   source: () => state.source,
@@ -509,6 +520,7 @@ function viewUrl(source) {
 function backToEditor() {
   closeForm();
   stopPlacing();
+  board.opened(); // the Schematic view, as a circuit opens
   shrinkLargeViews(); // to their bars, not back in the column: less like a hard refresh (D-127)
 }
 
@@ -630,6 +642,7 @@ function show(view, { fit }) {
   showTitle();
   schematic.capTypes = state.capTypes;
   schematic.draw(view, switchPositions(), { fit });
+  board.changed();
   showDrawnPins();
   if (state.problems?.result) showProblems(); // the circuit's dismissals may have changed (an undo)
   if (controlsChanged) {
@@ -906,7 +919,7 @@ new MutationObserver(() => ($("hint").title = $("hint").textContent ?? "")).obse
 function updateButtons() {
   historyView.update(); // an open History pane follows every change
   document.querySelector('[data-tool="wire"]')?.setAttribute("aria-pressed", String(schematic.wireMode));
-  hint(schematic.wireMode ? HINTS.wiring : HINTS.normal);
+  hint(board.active() ? board.hint : schematic.wireMode ? HINTS.wiring : HINTS.normal);
 }
 
 /** What Delete would remove: the selected part, or the clicked wire or label; never the
@@ -1408,6 +1421,7 @@ async function select(selection) {
   state.selection = selection;
   state.knobLive = null; // its curves were for the old selection's nets
   schematic.select(selection);
+  board.select(selection);
   updateButtons();
   if (selection && !selection.id) return; // a loose wire: selected for Delete, nothing to probe
   state.selecting = refresh();
@@ -1790,6 +1804,7 @@ async function resetPanes() {
   audio.collapse();
   stages.collapse();
   panes.reset();
+  board.resetPanes();
   if (state.run) render(currentNet()); // plots in panes that were shut are drawn at their width
 }
 
@@ -1858,6 +1873,9 @@ function toggleDc() {
   schematic.showDc(state.dc && state.run ? state.run.op.voltages : null, state.run?.op.held);
 }
 
+/** The keys that work in the Board view: the rest edit the schematic. */
+const BOARD_KEYS = new Set(["undo", "redo", "save", "run", "cancel"]);
+
 /** @param {KeyboardEvent} e */
 function onKey(e) {
   const target = /** @type {HTMLElement} */ (e.target);
@@ -1868,6 +1886,7 @@ function onKey(e) {
   if (act?.action === "inspect" && target.closest("button, a, summary")) return; // Enter presses what has focus
   if (!act || !state.circuit) return;
   if (formIsOpen() && act.action !== "cancel") return;
+  if (board.active() && !BOARD_KEYS.has(act.action)) return; // the board edits no part (D-368)
   e.preventDefault();
   closeMenus();
   switch (act.action) {
@@ -1926,9 +1945,9 @@ function wireControls() {
     if (state.run) render(currentNet());
   });
   $("sweep-net").addEventListener("change", () => state.run && render(currentNet()));
-  $("fit-button").addEventListener("click", () => schematic.fit());
-  $("zoom-in").addEventListener("click", () => schematic.zoomBy(1.25));
-  $("zoom-out").addEventListener("click", () => schematic.zoomBy(0.8));
+  $("fit-button").addEventListener("click", () => (board.active() ? board.fit() : schematic.fit()));
+  $("zoom-in").addEventListener("click", () => (board.active() ? board : schematic).zoomBy(1.25));
+  $("zoom-out").addEventListener("click", () => (board.active() ? board : schematic).zoomBy(0.8));
   $("run").addEventListener("click", () => run());
   $("knobs-opening").addEventListener("click", () => useAsOpening());
   const autorun = /** @type {HTMLInputElement} */ ($("autorun"));

@@ -26,7 +26,13 @@ from solum.stripboard.board import (
     segments,
 )
 from solum.stripboard.check import Checked, check_layout, off_board_ends, stripboard_nets
-from solum.stripboard.footprints import board_parts, body_holes, dip_legs, leg_problem
+from solum.stripboard.footprints import (
+    board_parts,
+    body_holes,
+    dip_legs,
+    drawing_data,
+    leg_problem,
+)
 from solum.yamlio import load_yaml
 
 REPO = Path(__file__).resolve().parents[2]
@@ -278,6 +284,14 @@ def test_a_chip_layout_passes(circuit: Callable[..., CircuitBuilder]) -> None:
     board, _ = board_parts(c, MODELS, TABLE)
     assert board["IC1"].pins["8"] == ("IC1C", "V+") and board["IC1"].pins["5"] == ("IC1B", "+")
     assert check(CHIP, c).faults == []
+
+
+def test_drawing_data_names_a_chip_s_units(circuit: Callable[..., CircuitBuilder]) -> None:
+    """The Board view draws IC1 from it and lights its units on the schematic (D-368)."""
+    board, _ = board_parts(_two_buffers(circuit), MODELS, TABLE)
+    chip = drawing_data(board)["IC1"]
+    assert chip["shape"] == "dip" and chip["legs"] == [str(n) for n in range(1, 9)]
+    assert chip["row_holes"] == 3 and chip["refs"] == ["IC1A", "IC1B", "IC1C"]
 
 
 def test_a_missed_cut_under_a_chip_is_named(circuit: Callable[..., CircuitBuilder]) -> None:

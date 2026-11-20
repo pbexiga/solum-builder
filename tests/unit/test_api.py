@@ -858,6 +858,9 @@ def test_stripboard_reports_the_open_circuit_s_board(monkeypatch: pytest.MonkeyP
     empty = c.post("/api/stripboard", json={"circuit": data}).json()
     assert empty["to_place"] == ["C1", "C2", "C3", "C4", "Q1", "R1", "R2", "R3"]
     assert empty["nets_done"] == 0 and empty["done"] is False and empty["faults"] == []
+    q1, r3 = empty["footprints"]["Q1"], empty["footprints"]["R3"]
+    assert q1["shape"] == "inline" and q1["legs"] == ["E", "B", "C"] and q1["refs"] == ["Q1"]
+    assert r3["shape"] == "axial" and r3["stand"] > 0 and r3["length"] > 0
     board = load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")
     done = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": board}}).json()
     assert done["done"] is True and done["nets_done"] == len(done["nets"])

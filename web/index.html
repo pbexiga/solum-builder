@@ -61,6 +61,12 @@
     <section class="canvas" aria-label="Schematic">
       <div class="canvas-body" id="canvas-body">
         <svg id="schematic" role="img" aria-label="Circuit schematic"></svg>
+        <svg id="board" role="img" aria-label="Stripboard" hidden></svg>
+        <div class="view-toggle" role="group" aria-label="Show">
+          <button type="button" id="show-schematic" aria-pressed="true" title="The circuit's schematic">Schematic</button>
+          <button type="button" id="show-board" aria-pressed="false" title="Plan the stripboard: place the parts and check the board against the circuit">Board</button>
+        </div>
+        <p id="board-size" class="board-size" hidden></p>
         <div id="rename-notice" class="rename-notice" role="status" hidden></div>
         <div id="refusal" class="refusal" role="alert" hidden></div>
         <div class="zoom" role="group" aria-label="Zoom">
@@ -147,6 +153,28 @@
       <details open id="panel-audio">
         <summary>Audio</summary>
         <div class="panel-body large-split" id="audio-body"></div>
+      </details>
+    </aside>
+    <aside class="board-panels" id="board-panels" aria-label="Board" hidden>
+      <details open id="board-schematic">
+        <summary>Schematic</summary>
+        <div class="panel-body"><svg id="board-sheet" role="img" aria-label="Circuit schematic, small"></svg></div>
+      </details>
+      <details open id="board-tray">
+        <summary>Tray <span class="count" id="board-tray-count"></span></summary>
+        <div class="panel-body" id="board-tray-body"></div>
+      </details>
+      <details open id="board-nets">
+        <summary>Nets <span class="count" id="board-nets-count"></span></summary>
+        <div class="panel-body" id="board-nets-body"></div>
+      </details>
+      <details open id="board-warnings">
+        <summary>Warnings <span class="count" id="board-warnings-count"></span></summary>
+        <div class="panel-body" id="board-warnings-body"></div>
+      </details>
+      <details id="board-settings">
+        <summary>Settings</summary>
+        <div class="panel-body" id="board-settings-body"></div>
       </details>
     </aside>
   </main>

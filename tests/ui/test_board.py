@@ -44,7 +44,8 @@ def test_the_board_view_shows_the_board_and_its_own_panes(page: Page, base_url: 
     expect(page.locator("#palette")).to_be_hidden()
     expect(page.locator("#board-panels")).to_be_visible()
     assert page.locator("#board .board-part").count() == 8
-    expect(page.locator("#board-size-text")).to_have_text("12 × 9, 1 cut, 2 links")
+    size = "12 × 9 holes (30 × 23 mm), 1 cut, 2 links"
+    expect(page.locator("#board-size-text")).to_have_text(size)
     expect(page.locator("#board .cut")).to_have_count(1)
     expect(page.locator("#board .link")).to_have_count(2)
     # every part placed, every net joined: the progress check says so
@@ -193,18 +194,18 @@ def test_the_board_size_changes_by_hand(
     size = page.locator("#board-size-text")
     page.locator("#board .ruler[data-axis='column'][data-line='0']").click()
     page.get_by_text("Insert a column left of A").click()
-    expect(size).to_have_text("13 × 9, 1 cut, 2 links")
+    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links")
     expect(page.locator("#dirty")).to_be_visible()
     page.locator("#board .ruler[data-axis='column'][data-line='1']").click()
     page.get_by_text("Remove column B").click()
     expect(page.locator("#error")).to_have_text("Column B isn't empty: the pad at B1 is on it.")
     browser_errors[:] = [e for e in browser_errors if "status of 422" not in e]  # the refusal
     page.locator("#board-trim").click()
-    expect(size).to_have_text("11 × 9, 1 cut, 2 links")
+    expect(size).to_have_text("11 × 9 holes (28 × 23 mm), 1 cut, 2 links")
     page.keyboard.press("Control+z")
-    expect(size).to_have_text("13 × 9, 1 cut, 2 links")
+    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links")
     page.keyboard.press("Control+z")
-    expect(size).to_have_text("12 × 9, 1 cut, 2 links")
+    expect(size).to_have_text("12 × 9 holes (30 × 23 mm), 1 cut, 2 links")
     # auto-grow off: the margin greyed
     page.locator("#board-settings > summary").click()
     page.locator("#board-settings-body input[data-setting='grow']").uncheck()
@@ -224,20 +225,21 @@ def test_the_board_has_its_own_undo_history(page: Page, base_url: str) -> None:
     size = page.locator("#board-size-text")
     page.locator("#board .ruler[data-axis='column'][data-line='0']").click()
     page.get_by_text("Insert a column left of A").click()
-    expect(size).to_have_text("13 × 9, 1 cut, 2 links")
+    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links")
     page.locator("#history-button").click()
     current = page.locator("#history-rows .history-step.current")
     expect(current).to_have_text("Insert a column left of A")
     page.locator("#history-button").click()
     page.keyboard.press("Control+z")
-    expect(size).to_have_text("12 × 9, 1 cut, 2 links")
+    expect(size).to_have_text("12 × 9 holes (30 × 23 mm), 1 cut, 2 links")
     page.keyboard.press("Control+z")  # the board's history at its start: R1 stays deleted
     page.keyboard.press("Control+Shift+z")
-    expect(size).to_have_text("13 × 9, 1 cut, 2 links")
+    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links")
     page.locator("#board-button").click()  # back to the schematic
     expect(page.locator('g.part[data-ref="R1"]')).to_have_count(0)
     page.keyboard.press("Control+z")
     expect(page.locator('g.part[data-ref="R1"]')).to_have_count(1)
     show_board(page)
-    expect(size).to_have_text("13 × 9, 1 cut, 2 links")  # the schematic's undo kept the board
+    # the schematic's undo kept the board
+    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links")
     expect(page.locator("#dirty")).to_be_visible()

@@ -1026,7 +1026,8 @@ def test_the_board_tray_and_settings(js: Page) -> None:
 
 
 def test_the_board_size_offers_and_the_empty_board(js: Page) -> None:
-    """D-372: a ruler mark's size changes; an empty board drawn at its starting size."""
+    """D-372: a ruler mark's size changes; an empty board drawn at its starting size; the
+    header line with the size in mm (D-373)."""
     got = run(
         js,
         """
@@ -1037,6 +1038,8 @@ def test_the_board_size_offers_and_the_empty_board(js: Page) -> None:
           strip: b.lineChanges('strip', 0).map((c) => c.label),
           empty: [b.drawnBoard(empty, [11, 8]).columns, b.drawnBoard(empty, [11, 8]).strips],
           kept: b.drawnBoard(b.readBoard({ size: [12, 9] }), [11, 8]).columns,
+          line: b.sizeLine({ columns: 24, strips: 1, cuts: ['A1'], links: [] }),
+          emptyLine: b.sizeLine({ columns: 0, strips: 0, cuts: [], links: [] }),
         };
         """,
     )
@@ -1047,3 +1050,6 @@ def test_the_board_size_offers_and_the_empty_board(js: Page) -> None:
     ]
     assert got["strip"] == ["Insert a strip above 1", "Insert a strip below 1", "Remove strip 1"]
     assert got["empty"] == [11, 8] and got["kept"] == 12
+    # D-373: the size in mm as cut midway between hole lines (24 × 2.54 = 60.96)
+    assert got["line"] == "24 × 1 holes (61 × 3 mm), 1 cut, 0 links"
+    assert got["emptyLine"] == "Empty board"

@@ -130,13 +130,15 @@ export function lineChanges(axis, line) {
 }
 
 /**
- * The board's header line: "12 × 9, 1 cut, 2 links"; an empty board says so.
+ * The board's header line: "12 × 9 holes (30 × 23 mm), 1 cut, 2 links", the size in mm
+ * as cut midway between hole lines, to the nearest mm (D-373); an empty board says so.
  * @param {Board} board
  */
 export function sizeLine(board) {
   if (!board.columns || !board.strips) return "Empty board";
   const plural = (/** @type {number} */ n, /** @type {string} */ word) => `${n} ${word}${n === 1 ? "" : "s"}`;
-  return `${board.columns} × ${board.strips}, ${plural(board.cuts.length, "cut")}, ${plural(board.links.length, "link")}`;
+  const mm = (/** @type {number} */ holes) => Math.round(holes * PITCH_MM);
+  return `${board.columns} × ${board.strips} holes (${mm(board.columns)} × ${mm(board.strips)} mm), ${plural(board.cuts.length, "cut")}, ${plural(board.links.length, "link")}`;
 }
 
 /**

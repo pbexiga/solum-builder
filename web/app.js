@@ -28,7 +28,7 @@ import {
 } from "./editor/edit.js";
 import { ask, closeForm, confirmed, formIsOpen, openForm } from "./editor/form.js";
 import { remember, remembered } from "./storage.js";
-import { History } from "./editor/history.js";
+import { History, withBoard } from "./editor/history.js";
 import { historyPane } from "./history-pane.js";
 import { actionFor } from "./editor/keys.js";
 import { db, volts } from "./fixed.js";
@@ -135,13 +135,17 @@ const state = {
   /** @type {{ref: string, live: import("./live.js").Live} | null} the knob being dragged, D-081 */ knobLive: null,
 };
 
-/** @type {History<any>} */
+/** @type {History<any>} the schematic's undo history */
 const undoStack = new History();
+/** @type {History<any>} the board's own (D-370): its steps change only `circuit.stripboard` */
+const boardStack = new History();
+/** The undo history of the view showing (D-370): Undo, Redo and History act on it. */
+const shownStack = () => (board.active() ? boardStack : undoStack);
 // the header's History button and its pane (D-101): the undo steps, a click goes to one
 const historyView = historyPane(/** @type {HTMLButtonElement} */ ($("history-button")), {
-  rows: () => undoStack.rows(),
+  rows: () => shownStack().rows(),
   go: (steps) => goHistory(steps),
-  session: () => undoStack.session,
+  session: () => shownStack().session,
 });
 const audio = audioPanel($("audio-body"), {
   circuit: () => played(),
@@ -367,7 +371,7 @@ const menus = appMenus($("canvas-body"), schematic, {
   isBlock: () => isBlock(),
   starters: () => state.starters,
   shown: () => state,
-  undoLabels: () => undoStack.labels,
+  undoLabels: () => shownStack().labels,
   selectedItems: () => selectedItems(),
   canPaste: () => canPaste(),
   deletable: () => deletable(),
@@ -586,8 +590,9 @@ async function editSession(name, source, owner) {
       sessionOwner = null;
       undoStack.rollback(mark);
       historyView.update();
-      if (state.circuit === circuit) return;
-      await setCircuit(circuit);
+      const back = withBoard(circuit, state.circuit.stripboard); // the board's own steps stay (D-370)
+      if (back === state.circuit) return;
+      await setCircuit(back);
       setDirty(dirty);
       if (!state.autorun) refresh(); // re-run, as a slider's release does
     },
@@ -626,6 +631,7 @@ async function open(source, reload = false) {
   state.snapshots = { frequency: null, scope: null };
   audio.opened(); // the last circuit's take stops playing
   undoStack.clear();
+  boardStack.clear();
   setDirty(false);
   show(view, { fit: true });
   const first = Object.keys(view.nets)[0];
@@ -699,13 +705,13 @@ async function useAsOpening() {
 
 /**
  * The circuit with its board changed (a size change, D-372), or without it (Settings'
- * *Remove board*, D-370: the view stays on the empty board), one undo step.
+ * *Remove board*, D-370: the view stays on the empty board), one step in the board's own
+ * undo history (D-370).
  * @param {any} stripboard the board's new plain form; null: none
  * @param {string} label
  */
 async function editBoard(stripboard, label) {
-  const { stripboard: _old, ...rest } = state.circuit;
-  const message = await tryEdit(stripboard ? { ...rest, stripboard } : rest, label);
+  const message = await tryEdit(withBoard(state.circuit, stripboard), label, "", boardStack);
   if (message) showError(message);
 }
 
@@ -764,11 +770,12 @@ function showTitle() {
 /**
  * @param {any} next @param {string} label @param {any} [view] @param {string} [source] "curve": made in Edit curve
  * @param {boolean} [now] with Auto-run on, re-run at once (`setCircuit`)
+ * @param {History<any>} [stack] the undo history it goes in: the board's for a board edit (D-370)
  */
-async function edit(next, label, view, source = "", now = false) {
+async function edit(next, label, view, source = "", now = false, stack = undoStack) {
   if (!next || next === state.circuit) return;
-  undoStack.record(state.circuit, label, source, state.selection);
-  await setCircuit(next, view, () => undoStack.discard(), undefined, now);
+  stack.record(state.circuit, label, source, state.selection);
+  await setCircuit(next, view, () => stack.discard(), undefined, now);
 }
 
 /**
@@ -894,14 +901,12 @@ function keepSelection(before) {
 const rerunAfterEdit = debounce(() => refresh(), EDIT_DEBOUNCE_MS);
 
 function undo() {
-  if (undoStack.atSessionStart) return historyView.note("This is where you started editing the curve: Keep or Discard to undo further back.");
-  const prev = undoStack.undo(state.circuit, state.selection);
-  if (prev) setCircuit(prev, undefined, undefined, { selection: undoStack.restored }).then(sessionRerun);
+  if (shownStack().atSessionStart) return historyView.note("This is where you started editing the curve: Keep or Discard to undo further back.");
+  goHistory(-1);
 }
 
 function redo() {
-  const next = undoStack.redo(state.circuit, state.selection);
-  if (next) setCircuit(next, undefined, undefined, { selection: undoStack.restored }).then(sessionRerun);
+  goHistory(1);
 }
 
 /** In Edit curve, undo and redo re-run as its drags do, Auto-run or not (the curve is the point). */
@@ -909,16 +914,24 @@ function sessionRerun() {
   if (undoStack.session && !state.autorun) refresh();
 }
 
-/** Go that many steps through the undo list at once (+ redo, − undo): the History pane's click. @param {number} steps */
+/**
+ * Go that many steps through the shown view's undo list at once (+ redo, − undo): Undo,
+ * Redo and the History pane's click. Each history puts back only its own part (D-370): a
+ * schematic step keeps the board as it is now, a board step the rest of the circuit.
+ * @param {number} steps
+ */
 function goHistory(steps) {
+  const stack = shownStack();
   let c = state.circuit;
   let selection = state.selection;
   for (let k = 0; k < Math.abs(steps); k++) {
-    const next = steps > 0 ? undoStack.redo(c, selection) : undoStack.undo(c, selection);
+    const next = steps > 0 ? stack.redo(c, selection) : stack.undo(c, selection);
     if (!next) break;
-    [c, selection] = [next, undoStack.restored];
+    [c, selection] = [next, stack.restored];
   }
-  if (c !== state.circuit) setCircuit(c, undefined, undefined, { selection }).then(sessionRerun);
+  if (c === state.circuit) return;
+  const shown = stack === boardStack ? withBoard(state.circuit, c.stripboard) : withBoard(c, state.circuit.stripboard);
+  setCircuit(shown, undefined, undefined, { selection }).then(sessionRerun);
 }
 
 
@@ -1137,16 +1150,17 @@ function editLabel(index) {
 /**
  * Check an edit with the server first; apply it only if it's accepted.
  * @param {any} next @param {string} label @param {string} [source] "curve": made in Edit curve
+ * @param {History<any>} [stack] the undo history it goes in (`edit`)
  * @returns {Promise<string | null>} the error, if refused
  */
-async function tryEdit(next, label, source = "") {
+async function tryEdit(next, label, source = "", stack = undoStack) {
   let view;
   try {
     view = await postJson("api/view", { circuit: next });
   } catch (err) {
     return /** @type {Error} */ (err).message;
   }
-  await edit(next, label, view, source, true); // checked first, so one edit on its own: no wait
+  await edit(next, label, view, source, true, stack); // checked first, so one edit on its own: no wait
   sessionRerun(); // in Edit curve, Auto-run off: re-run as undo does, so it shows Keep and Discard
   return null;
 }

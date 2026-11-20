@@ -188,3 +188,18 @@ export class History {
  * @template T
  * @typedef {{label: string, state: T, source: string, selection: unknown}} Step
  */
+
+/**
+ * `circuit` with `stripboard` as its board (null: none), the rest as it is: how the two
+ * undo histories put back only their own part (D-370). A schematic step is its circuit
+ * with the board as it is now; a board step is the circuit as it is now with that board.
+ * The same object when nothing changes.
+ * @template {{stripboard?: unknown}} C
+ * @param {C} circuit @param {unknown} stripboard
+ * @returns {C}
+ */
+export function withBoard(circuit, stripboard) {
+  if ((circuit.stripboard ?? null) === (stripboard ?? null)) return circuit;
+  const { stripboard: _old, ...rest } = circuit;
+  return /** @type {C} */ (stripboard ? { ...rest, stripboard } : rest);
+}

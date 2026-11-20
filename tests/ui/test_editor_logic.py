@@ -529,6 +529,28 @@ def test_history_puts_back_the_selection(js: Page) -> None:
     assert r["squashed"] == ["a", "first"]
 
 
+def test_with_board_puts_back_only_its_own_part(js: Page) -> None:
+    """D-370: a schematic step keeps the board as it is now, a board step the rest of the
+    circuit; no board is no `stripboard` key; nothing changed is the same object."""
+    r = run(
+        js,
+        """
+        const { withBoard } = await m('editor/history.js');
+        const now = { parts: ['R1'], stripboard: { size: 2 } };
+        const schematicStep = withBoard({ parts: ['R1', 'C1'], stripboard: { size: 1 } }, now.stripboard);
+        const boardStep = withBoard(now, { size: 1 });
+        const removed = withBoard(now, null);
+        const none = { parts: [] };
+        return { schematicStep, boardStep, removed, same: withBoard(now, now.stripboard) === now,
+          noneSame: withBoard(none, undefined) === none && withBoard(none, null) === none };
+        """,
+    )
+    assert r["schematicStep"] == {"parts": ["R1", "C1"], "stripboard": {"size": 2}}
+    assert r["boardStep"] == {"parts": ["R1"], "stripboard": {"size": 1}}
+    assert r["removed"] == {"parts": ["R1"]}
+    assert r["same"] and r["noneSame"]
+
+
 def test_history_session_and_rows(js: Page) -> None:
     """Edit curve's session (D-101): undo stops at its start and redo at its end; the
     History pane's rows, newest first, with how far each is and what's out of reach; the

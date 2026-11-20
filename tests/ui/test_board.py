@@ -10,7 +10,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from solum.yamlio import load_yaml
-from tests.ui.conftest import REPO, open_circuit, reload_kept
+from tests.ui.conftest import REPO, click_part, open_circuit, reload_kept
 from tests.ui.test_panes import order as pane_ids
 
 pytestmark = pytest.mark.ui
@@ -211,3 +211,33 @@ def test_the_board_size_changes_by_hand(
     expect(page.locator("#board g.board")).to_have_class("board board-fixed")
     page.locator("#board-settings-body input[data-setting='grow']").check()
     page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
+
+
+def test_the_board_has_its_own_undo_history(page: Page, base_url: str) -> None:
+    """D-370: a schematic edit, then a board edit; Ctrl+Z in each view undoes only its own,
+    and the History pane lists the steps of the view showing."""
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    click_part(page, "R1")
+    page.keyboard.press("Delete")
+    expect(page.locator('g.part[data-ref="R1"]')).to_have_count(0)
+    show_board(page)
+    size = page.locator("#board-size-text")
+    page.locator("#board .ruler[data-axis='column'][data-line='0']").click()
+    page.get_by_text("Insert a column left of A").click()
+    expect(size).to_have_text("13 × 9, 1 cut, 2 links")
+    page.locator("#history-button").click()
+    current = page.locator("#history-rows .history-step.current")
+    expect(current).to_have_text("Insert a column left of A")
+    page.locator("#history-button").click()
+    page.keyboard.press("Control+z")
+    expect(size).to_have_text("12 × 9, 1 cut, 2 links")
+    page.keyboard.press("Control+z")  # the board's history at its start: R1 stays deleted
+    page.keyboard.press("Control+Shift+z")
+    expect(size).to_have_text("13 × 9, 1 cut, 2 links")
+    page.locator("#board-button").click()  # back to the schematic
+    expect(page.locator('g.part[data-ref="R1"]')).to_have_count(0)
+    page.keyboard.press("Control+z")
+    expect(page.locator('g.part[data-ref="R1"]')).to_have_count(1)
+    show_board(page)
+    expect(size).to_have_text("13 × 9, 1 cut, 2 links")  # the schematic's undo kept the board
+    expect(page.locator("#dirty")).to_be_visible()

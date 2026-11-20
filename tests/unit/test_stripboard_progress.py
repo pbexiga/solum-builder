@@ -52,6 +52,18 @@ def test_an_empty_board_has_everything_to_place_and_no_faults() -> None:
     assert p.nets[0].net == "GND"  # ground first
 
 
+def test_a_part_with_no_footprint_is_unplaceable_not_a_fault() -> None:
+    """D-370: the tool opens whatever the circuit's state; a part it can't size is named
+    for the tray and left out of `to_place`, never a fault."""
+    data = RANGEMASTER.model_dump(mode="json", exclude_none=True)
+    for part in data["parts"]:
+        if part["ref"] == "C1":
+            del part["kind"]
+    p = run({"size": [12, 9]}, Circuit.model_validate(data))
+    assert "C1" not in p.to_place and p.faults == []
+    assert len(p.unplaceable) == 1 and "C1" in p.unplaceable[0]
+
+
 def test_the_finished_rangemaster_is_done_net_by_net() -> None:
     p = run(GOOD)
     assert p.done and p.faults == [] and p.to_place == [] and p.pads_to_place == []

@@ -1,6 +1,8 @@
 /**
  * The Board view (D-368): *Schematic* / *Board*, two views of the open circuit on the one
- * canvas. In the Board view the canvas shows the stripboard (`canvas.js`) and the result
+ * canvas, switched by the header's Board button (D-370: quiet with no board, marked once
+ * one is started, pressed in the Board view). In the Board view the canvas shows the
+ * stripboard (`canvas.js`) and the result
  * panes' column holds the board's own panes instead, reorderable and remembered under
  * their own key (`solum.boardPanes`): Schematic (the drawing, smaller), Tray, Nets,
  * Warnings, Settings. Back in the Schematic view the result panes are as they were.
@@ -27,11 +29,14 @@ import { boardRefOf, netWords, netsLine, partsOnNet, readBoard, sizeLine, trayRo
  *   select: (selection: Selection | null) => void,
  *   resting: () => Selection | null,
  *   shown: (board: boolean) => void,
+ *   removeBoard: () => void,
  * }} BoardApp
  *   `resting`: what's selected when the empty canvas is clicked (the root's own choice);
- *   `shown`: told when the view changes, so the root sets its hint (`hint`) and buttons
+ *   `shown`: told when the view changes, so the root sets its hint (`hint`) and buttons;
+ *   `removeBoard`: Settings' *Remove board*, one undo step (D-370)
  */
 
+const BUTTON_TITLE = "Lay out a stripboard for this circuit";
 const HINT = "The board, parts side. Click a part to select it on both drawings. Drag the board to pan, scroll to zoom.";
 
 /**
@@ -43,8 +48,7 @@ export function boardView(host, app) {
   const column = $("board-panels");
   const results = /** @type {HTMLElement} */ (document.querySelector(".panels"));
   const sizeNote = $("board-size");
-  const schematicButton = $("show-schematic");
-  const boardButton = $("show-board");
+  const button = $("board-button");
   let active = false;
   let fitted = false;
   let resultsScroll = 0;
@@ -71,8 +75,7 @@ export function boardView(host, app) {
     onEmpty: () => app.select(app.resting()),
   });
 
-  schematicButton.addEventListener("click", () => show(false));
-  boardButton.addEventListener("click", () => show(true));
+  button.addEventListener("click", () => show(!active));
   // the small schematic only selects: a part dragged there goes back where it was
   /** @type {number[] | null} */
   let pressed = null;
@@ -91,8 +94,8 @@ export function boardView(host, app) {
     svg.toggleAttribute("hidden", !board); // an SVG element has no `hidden` property
     column.hidden = !board;
     sizeNote.hidden = !board;
-    schematicButton.setAttribute("aria-pressed", String(!board));
-    boardButton.setAttribute("aria-pressed", String(board));
+    button.setAttribute("aria-pressed", String(board));
+    button.title = board ? "Back to the schematic" : BUTTON_TITLE;
     if (board) {
       panes ??= reorderable(column, "solum.boardPanes");
       drawSheet(true);
@@ -145,12 +148,19 @@ export function boardView(host, app) {
     if (!progress) return;
     const circuit = app.circuit();
     const rows = trayRows(progress, circuit);
-    $("board-tray-count").textContent = rows.length ? `· ${rows.length}` : "";
-    $("board-tray-body").replaceChildren(rows.length
-      ? h("ul", { class: "board-list" }, rows.map((r) => h("li", { "data-ref": r.ref }, [
+    const unplaceable = progress.unplaceable;
+    const left = rows.length + unplaceable.length;
+    $("board-tray-count").textContent = left ? `· ${left}` : "";
+    $("board-tray-body").replaceChildren(
+      ...(rows.length ? [h("ul", { class: "board-list" }, rows.map((r) => h("li", { "data-ref": r.ref }, [
         h("span", { class: "ref" }, [r.ref]), " ", h("span", { class: "value" }, [r.value]), " ", h("span", { class: "shape" }, [r.shape]),
-      ])))
-      : h("p", { class: "empty" }, ["Every part is on the board."]));
+      ])))] : []),
+      ...(unplaceable.length ? [
+        h("p", { class: "board-subhead" }, ["Can't be placed yet"]),
+        h("ul", { class: "board-list unplaceable" }, unplaceable.map((text) => h("li", {}, [text]))),
+      ] : []),
+      ...(left ? [] : [h("p", { class: "empty" }, ["Every part is on the board."])]),
+    );
     $("board-nets-count").textContent = progress.nets.length ? `· ${progress.nets_done}/${progress.nets.length}` : "";
     $("board-nets-body").replaceChildren(
       h("p", { class: "board-progress" }, [netsLine(progress)]),
@@ -165,7 +175,23 @@ export function boardView(host, app) {
     $("board-warnings-body").replaceChildren(said.length
       ? h("ul", { class: "board-list warnings" }, said.map((text, i) => h("li", { class: i < progress.faults.length + progress.stale.length ? "fault" : "warning" }, [text])))
       : h("p", { class: "empty" }, [progress.done ? "The board matches the circuit." : "Nothing wrong so far."]));
-    if (!$("board-settings-body").childElementCount) $("board-settings-body").append(h("p", { class: "empty" }, ["The editor's settings come with placing parts."]));
+    fillSettings();
+  }
+
+  /** Settings: the editor's settings (to come), *Remove board* at the bottom once one is started. */
+  function fillSettings() {
+    const remove = h("button", { type: "button", id: "remove-board", class: "remove-board" }, ["Remove board"]);
+    remove.title = "Take every part, cut, link and wire off the board (Undo brings them back)";
+    remove.addEventListener("click", () => app.removeBoard());
+    $("board-settings-body").replaceChildren(
+      h("p", { class: "empty" }, ["The editor's settings come with placing parts."]),
+      ...(app.circuit()?.stripboard ? [remove] : []),
+    );
+  }
+
+  /** The button marked once the open circuit has a board. */
+  function mark() {
+    button.classList.toggle("marked", Boolean(app.circuit()?.stripboard));
   }
 
   /** Light the selection on the board. @param {Selection | null} selection */
@@ -186,6 +212,7 @@ export function boardView(host, app) {
     show,
     /** The circuit changed or was opened: drawn again, re-checked. */
     changed() {
+      mark();
       if (!active) return;
       drawSheet();
       draw();
@@ -203,6 +230,7 @@ export function boardView(host, app) {
       progress = null;
       checked = null;
       show(false);
+      mark();
     },
     zoomBy: (/** @type {number} */ factor) => canvas.zoomBy(factor),
     fit: () => canvas.fit(),

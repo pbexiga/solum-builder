@@ -351,9 +351,12 @@ const board = boardView($("canvas-body"), {
   select: (selection) => select(selection),
   resting: () => outputSelection(),
   shown: () => updateButtons(),
+  removeBoard: () => removeBoard(),
 });
 const menus = appMenus($("canvas-body"), schematic, {
   pinFrequency: (net) => tools.view.pin(net),
+  boardShown: () => board.active(),
+  toggleBoard: () => board.show(!board.active()),
   source: () => state.source,
   file: () => state.file,
   circuit: () => state.circuit,
@@ -690,6 +693,13 @@ function played() {
 /** The knobs as they are now, made the circuit's opening positions: one edit, undoable. */
 async function useAsOpening() {
   const message = await tryEdit(withControls(state.circuit, state.view.controls, state.controls), "Knob opening positions");
+  if (message) showError(message);
+}
+
+/** Settings' *Remove board* (D-370): the circuit without its board, one undo step; the view stays on the empty board. */
+async function removeBoard() {
+  const { stripboard: _gone, ...rest } = state.circuit;
+  const message = await tryEdit(rest, "Remove board");
   if (message) showError(message);
 }
 

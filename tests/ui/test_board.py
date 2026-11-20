@@ -1,6 +1,7 @@
 """P6b (D-368): the Board view in a real browser, on the Rangemaster with its hand-made
 board (`tests/fixtures/stripboard/rangemaster.yaml`): the toggle, the board drawn, its own
-panes in the column, the selection lit on both drawings, the result panes back after."""
+panes in the column, the selection lit on both drawings, the result panes back after; the
+Board button (D-370)."""
 
 import itertools
 from typing import Any
@@ -30,7 +31,7 @@ def open_with_board(page: Page, base_url: str, board: dict[str, Any] | None) -> 
 
 
 def show_board(page: Page) -> None:
-    page.locator("#show-board").click()
+    page.locator("#board-button").click()
     expect(page.locator("#board .board-part").first).to_be_visible()
 
 
@@ -68,7 +69,7 @@ def test_the_board_view_shows_the_board_and_its_own_panes(page: Page, base_url: 
     assert page.evaluate("document.getElementById('dirty').hidden")
 
     # back to the Schematic view: the result panes as they were, R2 still selected
-    page.locator("#show-schematic").click()
+    page.locator("#board-button").click()
     expect(page.locator("aside.panels")).to_be_visible()
     expect(page.locator("#board")).to_be_hidden()
     expect(page.locator("#board-panels")).to_be_hidden()
@@ -78,7 +79,7 @@ def test_the_board_view_shows_the_board_and_its_own_panes(page: Page, base_url: 
 
 def test_a_circuit_without_a_board_shows_its_parts_to_place(page: Page, base_url: str) -> None:
     open_with_board(page, base_url, None)
-    page.locator("#show-board").click()
+    page.locator("#board-button").click()
     expect(page.locator("#board-size")).to_have_text("Empty board")
     # the 8 board parts, then the 7 off-board wire ends (VR1's lugs, the supply, IN, OUT)
     expect(page.locator("#board-tray-body li")).to_have_count(15)
@@ -89,7 +90,7 @@ def test_a_circuit_without_a_board_shows_its_parts_to_place(page: Page, base_url
 
 def test_the_board_panes_keep_their_own_order(page: Page, base_url: str) -> None:
     open_with_board(page, base_url, None)
-    page.locator("#show-board").click()
+    page.locator("#board-button").click()
     ids = page.eval_on_selector_all("#board-panels > details", "(ds) => ds.map((d) => d.id)")
     assert ids == [
         "board-schematic",
@@ -110,5 +111,45 @@ def test_the_board_panes_keep_their_own_order(page: Page, base_url: str) -> None
         "board-settings",
     ]
     # the result panes' order is its own
-    page.locator("#show-schematic").click()
+    page.locator("#board-button").click()
     assert pane_ids(page)[0] == "panel-problems"
+
+
+def test_visiting_the_board_changes_nothing_until_placed(page: Page, base_url: str) -> None:
+    """D-370: the Board button opens an empty board; leaving before placing anything leaves
+    the circuit as it was, the button quiet."""
+    open_with_board(page, base_url, None)
+    button = page.locator("#board-button")
+    expect(button).not_to_have_class("board-button marked")
+    expect(button).to_have_attribute("aria-pressed", "false")
+    button.click()
+    expect(button).to_have_attribute("aria-pressed", "true")
+    expect(page.locator("#board-size")).to_have_text("Empty board")
+    expect(page.locator("#remove-board")).to_have_count(0)
+    button.click()
+    expect(button).to_have_attribute("aria-pressed", "false")
+    expect(page.locator("aside.panels")).to_be_visible()
+    assert page.evaluate("document.getElementById('dirty').hidden")
+    expect(button).not_to_have_class("board-button marked")
+    # Tools → Stripboard layout does the same as the button
+    page.locator("#tools-menu").click()
+    page.locator("#menu-board").click()
+    expect(button).to_have_attribute("aria-pressed", "true")
+
+
+def test_a_board_marks_the_button_and_can_be_removed(page: Page, base_url: str) -> None:
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    button = page.locator("#board-button")
+    expect(button).to_have_class("board-button marked")
+    show_board(page)
+    page.locator("#board-settings summary").click()
+    page.locator("#remove-board").click()
+    # one undo step: the view stays on the empty board, the button quiet, Not saved
+    expect(page.locator("#board-size")).to_have_text("Empty board")
+    expect(page.locator("#board .board-part")).to_have_count(0)
+    expect(button).not_to_have_class("board-button marked")
+    expect(button).to_have_attribute("aria-pressed", "true")
+    expect(page.locator("#dirty")).to_be_visible()
+    page.keyboard.press("Control+z")
+    expect(page.locator("#board .board-part")).to_have_count(8)
+    expect(button).to_have_class("board-button marked")

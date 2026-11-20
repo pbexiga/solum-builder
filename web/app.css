@@ -74,6 +74,12 @@ header > *, .menus button, .run-group button, .autorun { white-space: nowrap; fl
 header .sep { width: 1px; align-self: stretch; margin: 2px 0; background: var(--border); }
 .menus button { background: transparent; border-color: transparent; color: var(--text-2); }
 .menus button:hover, .menus button[aria-expanded="true"] { border-color: var(--border); background: var(--surface-2); color: var(--text); }
+/* the Board button (D-370): quiet as the menu words with no board, a brass mark once one is
+   started, pressed in the Board view; never greyed (clicking it is how a board starts) */
+.board-button { position: relative; background: transparent; border-color: transparent; color: var(--text-2); }
+.board-button:hover { border-color: var(--border); background: var(--surface-2); color: var(--text); }
+.board-button.marked::after { content: ""; position: absolute; top: 4px; right: 3px; width: 5px; height: 5px; border-radius: 50%; background: var(--accent); }
+.board-button[aria-pressed="true"] { border-color: var(--border); background: var(--info-bg); color: var(--text); }
 .power { display: flex; align-items: center; gap: 8px; color: var(--text-2); }
 /* who powers the pedal when the drawing has a battery or a DC jack (D-145) */
 .power-chip { color: var(--text-2); font-family: var(--font-mono); font-size: 11px; border: 1px solid var(--border); border-radius: 3px; padding: 0 5px; white-space: nowrap; flex: none; } /* as the Not saved chip */
@@ -299,11 +305,6 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 .zoom button { min-width: 30px; height: 28px; background: var(--surface-2); font-size: 14px; line-height: 1; }
 .zoom #fit-button { font-size: 12px; }
 /* Schematic / Board (D-368): two views of the circuit on the one canvas */
-.view-toggle { position: absolute; right: 12px; top: 12px; display: flex; z-index: 2; }
-.view-toggle button { height: 26px; padding: 0 12px; background: var(--surface-2); font-size: 12px; border-radius: 0; }
-.view-toggle button:first-child { border-radius: 3px 0 0 3px; }
-.view-toggle button:last-child { border-radius: 0 3px 3px 0; border-left: none; }
-.view-toggle button[aria-pressed="true"] { background: var(--info-bg); color: var(--text); }
 .board-size { position: absolute; left: 12px; bottom: 12px; margin: 0; font: 12px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-2); pointer-events: none; }
 body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-show="board"] .panels { display: none; }
 #board { flex: 1; width: 100%; min-height: 0; background-color: var(--surface-0); touch-action: none; user-select: none; cursor: default; }
@@ -337,6 +338,8 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-panels .board-list .shape { color: var(--text-3); }
 .board-panels .board-list li[data-net] { cursor: pointer; }
 .board-panels .board-list li[data-net]:hover .net { color: var(--accent-hi); }
+.board-panels .board-subhead { margin: 10px 0 4px; font-size: 12px; color: var(--text-3); }
+.board-panels .remove-board { margin-top: 12px; }
 .board-panels .net-done .state { color: var(--ok); }
 .board-panels .net-shorted .state { color: var(--error); }
 .board-panels .warnings .fault { color: var(--error); }

@@ -58,6 +58,8 @@ import { addModelSheet, converterSheet, partsSheet, calculatorsSheet, resistorSh
  * @property {() => void} resetPanes
  * @property {() => void} openSettings File → Settings… (D-310)
  * @property {(net: string) => void} pinFrequency the Frequency pane's pin on this net (D-366)
+ * @property {() => boolean} boardShown whether the Board view is showing
+ * @property {() => void} toggleBoard Tools → Stripboard layout: the Board button's click (D-370)
  */
 
 /**
@@ -149,6 +151,8 @@ export function appMenus(host, schematic, app) {
       { label: "Unit converter…", id: "menu-converter", hint: "pF, nF, µF; cap codes", run: () => app.report(converterSheet()) },
       { label: "Resistor colour code…", id: "menu-resistor", hint: "bands ↔ value, E-series", run: () => app.report(resistorSheet()) },
       { label: "Calculators…", id: "menu-calculators", hint: "filters, dividers, parallel and series, dB", run: () => app.report(calculatorsSheet()) },
+      "-",
+      { label: "Stripboard layout", id: "menu-board", hint: "the Board button", checked: app.boardShown(), run: () => app.toggleBoard() },
       "-",
       { label: "Parts and datasheets…", id: "menu-parts", hint: "every model, its sheet and caveats", run: () => app.report(partsSheet()) },
       { label: "Add a model…", id: "menu-add-model", hint: "from a maker's SPICE file", run: () => app.report(addModelSheet(app.refreshModels)) },

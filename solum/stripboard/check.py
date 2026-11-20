@@ -473,12 +473,15 @@ class LegProgress:
 @dataclass(frozen=True)
 class Progress:
     """Where a board stands: `to_place` the parts and off-board wires not on it yet (not
-    faults); `nets` each net's progress; `legs` each board part's legs; `faults` what's
-    wrong now (placement, pads, a part the wrong way round); `stale` parts no longer in
-    the circuit; `warnings` the placement limits broken; `done` the full check passes."""
+    faults); `unplaceable` a sentence per part that can't go on a board yet (no footprint:
+    it stays in the tray, D-370); `nets` each net's progress; `legs` each board part's
+    legs; `faults` what's wrong now (placement, pads, a part the wrong way round); `stale`
+    parts no longer in the circuit; `warnings` the placement limits broken; `done` the
+    full check passes."""
 
     to_place: list[str]
     pads_to_place: list[str]
+    unplaceable: list[str]
     nets: list[NetProgress]
     legs: dict[str, list[LegProgress]]
     faults: list[str]
@@ -539,7 +542,7 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
     faults = [f for f in placement_faults(kept, r.board, r.off_board)
               if not f.endswith(" isn't on the board.")]  # fmt: skip
     pads, missing = _pad_faults(r.layout, r.ends)
-    faults = [*r.unboardable, *faults, *pads, *_wrong_way(r, circuit)]
+    faults = [*faults, *pads, *_wrong_way(r, circuit)]
     # every terminal each net has, placed or not
     wanted: dict[str, list[Terminal]] = defaultdict(list)
     for part in r.board.values():
@@ -583,5 +586,5 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
         legs[ref] = rows
     warnings = limit_warnings(r.layout, placement_limits(circuit, r.nets, r.board))
     done = check_layout(layout, circuit, models, table).ok
-    return Progress(sorted(r.board.keys() - placed), missing, nets, legs, faults, stale,
-                    warnings, done)  # fmt: skip
+    return Progress(sorted(r.board.keys() - placed), missing, r.unboardable, nets, legs,
+                    faults, stale, warnings, done)  # fmt: skip

@@ -27,6 +27,7 @@
       <button type="button" id="help-menu">Help</button>
     </nav>
     <span class="sep" aria-hidden="true"></span>
+    <button type="button" id="board-button" class="board-button" aria-pressed="false" title="Lay out a stripboard for this circuit">Board</button>
     <span class="title">
       <h1 id="circuit-name" class="circuit-name"></h1>
       <span class="name-edit">
@@ -62,10 +63,6 @@
       <div class="canvas-body" id="canvas-body">
         <svg id="schematic" role="img" aria-label="Circuit schematic"></svg>
         <svg id="board" role="img" aria-label="Stripboard" hidden></svg>
-        <div class="view-toggle" role="group" aria-label="Show">
-          <button type="button" id="show-schematic" aria-pressed="true" title="The circuit's schematic">Schematic</button>
-          <button type="button" id="show-board" aria-pressed="false" title="Plan the stripboard: place the parts and check the board against the circuit">Board</button>
-        </div>
         <p id="board-size" class="board-size" hidden></p>
         <div id="rename-notice" class="rename-notice" role="status" hidden></div>
         <div id="refusal" class="refusal" role="alert" hidden></div>

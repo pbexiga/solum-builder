@@ -168,7 +168,7 @@ export function boardRefOf(footprints, ref) {
  * @typedef {{net: string, state: "done" | "pieces" | "shorted", placed: number, total: number,
  *   pieces: number, shorts: Array<{other: string, words: string}>}} NetProgress
  * @typedef {{leg: string, hole: string | null, net: string | null, reach: Array<{to: string, joined: boolean}>}} LegProgress
- * @typedef {{to_place: string[], pads_to_place: string[], nets: NetProgress[],
+ * @typedef {{to_place: string[], pads_to_place: string[], unplaceable: string[], nets: NetProgress[],
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
  *   done: boolean, nets_done: number, footprints: Record<string, Footprint>}} Progress
  *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints)

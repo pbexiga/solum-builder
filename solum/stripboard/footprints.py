@@ -13,6 +13,7 @@ from typing import Literal
 from solum.circuit.parts import pin_offsets
 from solum.circuit.schema import (
     CHIP_UNITS,
+    POLARISED,
     Bjt,
     Capacitor,
     ChargePump,
@@ -31,6 +32,7 @@ from solum.circuit.schema import (
 )
 from solum.export import built_where
 from solum.guides import FootprintTable, InlineSize, RadialSize
+from solum.markings import resistor_bands
 from solum.models import Model, ModelError, ModelLibrary
 from solum.rules.checks import DEFAULT_RATING_W
 from solum.stripboard.board import Hole
@@ -47,7 +49,8 @@ class Footprint:
     """`steps`: the leg spacings allowed, in holes (a radial's span, an inline's step);
     `flat`/`stand`: an axial's least span lying flat and its span standing; the body in mm
     (`length` along the legs' line, `width` across, or `diameter`; none: covers no hole);
-    `order`: the legs in a line or a chip's, in pin order; `row_holes`: a DIP's rows apart."""
+    `order`: the legs in a line or a chip's, in pin order; `row_holes`: a DIP's rows apart;
+    `package`: the table's package it was sized by, for the drawing (an inline part's)."""
 
     shape: Shape
     steps: tuple[int, ...] = ()
@@ -58,6 +61,7 @@ class Footprint:
     diameter: float = 0.0
     order: tuple[str, ...] = ()
     row_holes: int = 0
+    package: str = ""
 
 
 @dataclass(frozen=True)
@@ -95,7 +99,7 @@ def _radial(size: RadialSize) -> Footprint:
 
 def _inline(size: InlineSize, order: tuple[str, ...]) -> Footprint:
     return Footprint("inline", tuple(size.holes), length=size.length, width=size.width,
-                     diameter=size.diameter, order=order)  # fmt: skip
+                     diameter=size.diameter, order=order, package=size.package or "")  # fmt: skip
 
 
 def _package(model: Model, ref: str) -> str:
@@ -249,10 +253,33 @@ def board_parts(circuit: Circuit, models: ModelLibrary,
     return found, problems
 
 
-def drawing_data(parts: dict[str, BoardPart]) -> dict[str, dict[str, object]]:
+def look(part: BoardPart, circuit_part: Part | None) -> dict[str, object]:
+    """How a board part is marked, for its realistic drawing (D-378): a resistor's colour
+    bands (`markings.resistor_bands`, 4 bands with a gold 5 % one; none when its value has
+    no code), the leg on a polarised capacitor's − stripe, the leg at a diode's band or an
+    LED's flat (the cathode), a TO-92's flat face (its legs as read from the face, left to
+    right: the package's pin order)."""
+    if isinstance(circuit_part, Resistor):
+        try:
+            bands = resistor_bands(parse_value(circuit_part.value))
+        except ValueError:
+            bands = None
+        return {"bands": [*bands, "gold"]} if bands else {}
+    if isinstance(circuit_part, Capacitor) and circuit_part.kind in POLARISED:
+        return {"minus": "2"}
+    if isinstance(circuit_part, Diode | Led):
+        return {"cathode": "K"}
+    if part.footprint.package == "TO-92":
+        return {"face": True}
+    return {}
+
+
+def drawing_data(parts: dict[str, BoardPart], circuit: Circuit) -> dict[str, dict[str, object]]:
     """What the Board view draws each board part from (D-368), as plain JSON: its shape,
-    legs in order, the spacings allowed, the body in mm, and `refs` the circuit parts on it
-    (a chip's units), so selecting it lights them on the schematic."""
+    legs in order, the spacings allowed, the body in mm, `refs` the circuit parts on it
+    (a chip's units), so selecting it lights them on the schematic, and `look`, its markings
+    (D-378)."""
+    kinds = {p.ref: p for p in circuit.parts}
     out: dict[str, dict[str, object]] = {}
     for ref, part in sorted(parts.items()):
         fp = part.footprint
@@ -262,6 +289,7 @@ def drawing_data(parts: dict[str, BoardPart]) -> dict[str, dict[str, object]]:
             "length": fp.length, "width": fp.width, "diameter": fp.diameter,
             "row_holes": fp.row_holes,
             "refs": sorted({pin[0] for pin in part.pins.values()} or {ref}),
+            "look": look(part, kinds.get(ref)),
         }  # fmt: skip
     return out
 

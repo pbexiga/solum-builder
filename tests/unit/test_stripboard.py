@@ -337,8 +337,9 @@ def test_a_chip_layout_passes(circuit: Callable[..., CircuitBuilder]) -> None:
 
 def test_drawing_data_names_a_chip_s_units(circuit: Callable[..., CircuitBuilder]) -> None:
     """The Board view draws IC1 from it and lights its units on the schematic (D-368)."""
-    board, _ = board_parts(_two_buffers(circuit), MODELS, TABLE)
-    chip = drawing_data(board)["IC1"]
+    c = _two_buffers(circuit)
+    board, _ = board_parts(c, MODELS, TABLE)
+    chip = drawing_data(board, c)["IC1"]
     assert chip["shape"] == "dip" and chip["legs"] == [str(n) for n in range(1, 9)]
     assert chip["row_holes"] == 3 and chip["refs"] == ["IC1A", "IC1B", "IC1C"]
 
@@ -403,3 +404,16 @@ def test_wire_it_for_me_leaves_a_net_not_on_the_board() -> None:
     wired = wire_for_me(bare, RANGEMASTER, MODELS, TABLE)
     assert "VR1.2" not in {w.lug for w in wired.wires}
     assert "VR1.1" in {w.lug for w in wired.wires}
+
+
+def test_drawing_data_carries_each_part_s_markings() -> None:
+    """D-378: the Rangemaster's resistors' colour bands (470k yellow violet yellow, 68k blue
+    grey orange, gold for 5 %), the electrolytics' − leg, the TO-92-less germanium can and
+    the film caps unmarked."""
+    rangemaster = load_circuit(LIBRARY / "starters" / "dallas-rangemaster.json")
+    board, _ = board_parts(rangemaster, MODELS, TABLE)
+    drawn = drawing_data(board, rangemaster)
+    assert drawn["R1"]["look"] == {"bands": ["yellow", "violet", "yellow", "gold"]}
+    assert drawn["R2"]["look"] == {"bands": ["blue", "grey", "orange", "gold"]}
+    assert drawn["C3"]["look"] == {"minus": "2"}
+    assert drawn["C1"]["look"] == {} and drawn["Q1"]["look"] == {}

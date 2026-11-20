@@ -16,10 +16,18 @@
  *   from a lug to a hole, to another lug, or loose
  * @typedef {{shape: string, kind: string, legs: string[], steps: number[], flat: number,
  *   stand: number, length: number, width: number, diameter: number, row_holes: number,
- *   refs: string[]}} Footprint what `/api/stripboard` sends to draw a board part by
+ *   refs: string[], look?: Look}} Footprint what `/api/stripboard` sends to draw a board part by
+ * @typedef {{bands?: string[], minus?: string, cathode?: string, face?: boolean}} Look a part's
+ *   markings (footprints.py's `look`, D-378): a resistor's colour bands, the leg on an
+ *   electrolytic's − stripe, the cathode's leg (a diode's band), a TO-92's flat face
  * @typedef {{kind: "rect", x: number, y: number, w: number, h: number, angle: number, cx: number, cy: number}
  *   | {kind: "circle", cx: number, cy: number, r: number}
- *   | {kind: "lead", x1: number, y1: number, x2: number, y2: number}} Shape
+ *   | {kind: "lead", x1: number, y1: number, x2: number, y2: number}
+ *   | {kind: "band", x: number, y: number, w: number, h: number, angle: number, cx: number, cy: number, colour: string}
+ *   | {kind: "path", d: string, cx: number, cy: number, angle: number, cls: string}} Shape
+ *   `band`: a colour band or a diode's band across a body; `path`: drawn about (cx, cy)
+ *   turned by `angle`: a TO-92's body ("body"), an electrolytic's stripe ("stripe"), a
+ *   chip's notch ("notch") and pin-1 dot ("dot")
  */
 
 export const STEP = 10; // board units between holes
@@ -145,10 +153,16 @@ export function sizeLine(board) {
   return `${board.columns} × ${board.strips} holes (${mm(board.columns)} × ${mm(board.strips)} mm), ${plural(board.cuts.length, "cut")}, ${plural(board.links.length, "link")}${wires}`;
 }
 
+const BAND_AT = [-0.3, -0.17, -0.04, 0.3]; // a 4-band code's bands along the body, from its first leg
+const round3 = (/** @type {number} */ n) => Math.round(n * 1000) / 1000;
+
 /**
  * The part's body and leads, in board units: a body (a rectangle along the legs' line, or
- * a circle) over the middle of its legs, a lead from each leg to it. A standing axial
- * part's body is a circle over its first leg, a lead down to the other.
+ * a circle) over the middle of its legs, a lead from each leg to it, and its markings
+ * (D-378): a resistor's colour bands, a diode's band at its cathode, an electrolytic's −
+ * stripe, a TO-92's D-shaped body (the flat face on the right of its legs' line, from the
+ * first leg: the package's pins 1 2 3 read from the face), a chip's notch and pin-1 dot. A
+ * standing axial part's body is a circle over its first leg, a lead down to the other.
  * @param {Footprint} fp @param {Array<[string, Hole]>} legs in the footprint's order
  * @param {boolean} standing @returns {Shape[]}
  */
@@ -161,18 +175,60 @@ export function partShapes(fp, legs, standing) {
     const r = Math.max(fp.width * MM, STEP * 0.6) / 2;
     return [...rest.map(([x, y]) => /** @type {Shape} */ ({ kind: "lead", x1: x, y1: y, x2: first[0], y2: first[1] })), { kind: "circle", cx: first[0], cy: first[1], r }];
   }
+  const look = fp.look ?? {};
+  const last = points[points.length - 1];
+  const legAngle = round3((Math.atan2(last[1] - points[0][1], last[0] - points[0][0]) * 180) / Math.PI);
+  /** Whether `leg` is the last leg (the far end of the legs' line). @param {string | undefined} leg */
+  const atEnd = (leg) => legs.findIndex(([name]) => name === leg) === legs.length - 1;
   const cx = points.reduce((s, p) => s + p[0], 0) / points.length;
   const cy = points.reduce((s, p) => s + p[1], 0) / points.length;
-  if (fp.diameter) return [...leadsTo([cx, cy]), { kind: "circle", cx, cy, r: (fp.diameter * MM) / 2 }];
+  if (fp.diameter) {
+    const r = (fp.diameter * MM) / 2;
+    /** @type {Shape[]} */
+    const shapes = [...leadsTo([cx, cy]), { kind: "circle", cx, cy, r }];
+    if (look.minus) {
+      const a = r * 0.45;
+      const b = Math.sqrt(r * r - a * a);
+      shapes.push({ kind: "path", d: `M${round3(a)},${round3(-b)} A${round3(r)},${round3(r)} 0 0 1 ${round3(a)},${round3(b)} Z`, cx, cy, angle: atEnd(look.minus) ? legAngle : legAngle + 180, cls: "stripe" });
+    }
+    return shapes;
+  }
   // along the legs' line: first to last leg; a DIP's along its row, pin 1 to the row's last
   const end = fp.shape === "dip" ? points[Math.max(0, points.length / 2 - 1)] : points[points.length - 1];
   const angle = (Math.atan2(end[1] - points[0][1], end[0] - points[0][0]) * 180) / Math.PI;
   const span = Math.hypot(end[0] - points[0][0], end[1] - points[0][1]);
   const length = fp.length ? fp.length * MM : span + STEP * 0.8;
   const width = Math.max(fp.width * MM, STEP * 0.5);
-  const body = /** @type {Shape} */ ({ kind: "rect", x: cx - length / 2, y: cy - width / 2, w: length, h: width, angle: Math.round(angle * 1000) / 1000, cx, cy });
-  // a DIP's legs sit under its body: no leads to draw
-  return fp.shape === "dip" ? [body] : [...leadsTo([cx, cy]), body];
+  const turned = round3(angle);
+  const body = /** @type {Shape} */ ({ kind: "rect", x: cx - length / 2, y: cy - width / 2, w: length, h: width, angle: turned, cx, cy });
+  if (fp.shape === "dip") { // its legs sit under its body: no leads; the notch at pin 1's end, a dot by pin 1
+    const n = width * 0.14;
+    const dx = points[0][0] - cx;
+    const dy = points[0][1] - cy;
+    const t = (-turned * Math.PI) / 180;
+    const [px, py] = [dx * Math.cos(t) - dy * Math.sin(t), dx * Math.sin(t) + dy * Math.cos(t)];
+    const dot = STEP * 0.12;
+    return [body,
+      { kind: "path", d: `M${round3(-length / 2)},${round3(-n)} A${round3(n)},${round3(n)} 0 0 1 ${round3(-length / 2)},${round3(n)}`, cx, cy, angle: turned, cls: "notch" },
+      { kind: "path", d: `M${round3(px * 0.75 - dot)},${round3(py * 0.55)} a${dot},${dot} 0 1 0 ${2 * dot},0 a${dot},${dot} 0 1 0 ${-2 * dot},0`, cx, cy, angle: turned, cls: "dot" }];
+  }
+  const leads = leadsTo([cx, cy]);
+  if (look.face) {
+    const h = width / 2;
+    const half = length / 2;
+    return [...leads, { kind: "path", d: `M${round3(-half)},${round3(h)} L${round3(half)},${round3(h)} A${round3(half)},${round3(2 * h)} 0 0 0 ${round3(-half)},${round3(h)} Z`, cx, cy, angle: turned, cls: "body" }];
+  }
+  /** A band across the body at `at` (a fraction of its length from the middle, toward the last leg). @param {number} at @param {string} colour @returns {Shape} */
+  const band = (at, colour) => {
+    const w = length * 0.08;
+    const along = at * length;
+    const rad = (turned * Math.PI) / 180;
+    const [bx, by] = [cx + along * Math.cos(rad), cy + along * Math.sin(rad)];
+    return { kind: "band", x: bx - w / 2, y: by - width / 2, w, h: width, angle: turned, cx: bx, cy: by, colour };
+  };
+  const marks = (look.bands ?? []).slice(0, BAND_AT.length).map((colour, i) => band(BAND_AT[i], colour));
+  if (look.cathode) marks.push(band(atEnd(look.cathode) ? 0.32 : -0.32, "cathode"));
+  return [...leads, body, ...marks];
 }
 
 /**
@@ -372,7 +428,7 @@ export const BOARD_SETTINGS = /** @type {const} */ ([
   { key: "next", label: "What to place next", on: true, acts: true, title: "Suggest the part to place next, at the top of the tray" },
   { key: "shorts", label: "Allow shorts while editing, shown red", on: true, acts: true, title: "Off: a move that makes a short is refused" },
   { key: "grow", label: "Auto-grow", on: true, acts: true, title: "The board grows to take in what's placed by its edge, and shrinks back. Off: it stays its size (the margin greyed); add or remove lines on the rulers" },
-  { key: "seeThrough", label: "See-through", on: false, acts: false, title: "The copper side faint under the parts" },
+  { key: "seeThrough", label: "See-through", on: false, acts: true, title: "The parts faint, so the copper and the cuts under them show" },
 ]);
 
 /** @typedef {Record<(typeof BOARD_SETTINGS)[number]["key"], boolean>} BoardSettings */

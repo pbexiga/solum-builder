@@ -387,12 +387,38 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board .board-part.selected .body { stroke: var(--sch-selected); stroke-width: 2.5; }
 #board .board-part.selected .lead, #board .board-part.selected .leg { stroke: var(--sch-selected); fill: var(--sch-selected); }
 #board .board-part.stale .leg { fill: var(--error); }
+/* the realistic drawing (D-378): a resistor's beige body and colour bands, a diode's band, an
+   electrolytic's − stripe, a chip's notch and pin-1 dot; each leg named on hover */
+#board .kind-resistor .body { fill: var(--band-body); }
+#board .band { stroke: none; pointer-events: none; }
+#board .band-black { fill: var(--band-black); } #board .band-brown { fill: var(--band-brown); }
+#board .band-red { fill: var(--band-red); } #board .band-orange { fill: var(--band-orange); }
+#board .band-yellow { fill: var(--band-yellow); } #board .band-green { fill: var(--band-green); }
+#board .band-blue { fill: var(--band-blue); } #board .band-violet { fill: var(--band-violet); }
+#board .band-grey { fill: var(--band-grey); } #board .band-white { fill: var(--band-white); }
+#board .band-gold { fill: var(--band-gold); } #board .band-silver, #board .band-cathode { fill: var(--band-silver); }
+#board .stripe { fill: var(--band-silver); opacity: 0.8; pointer-events: none; }
+#board .notch { fill: none; stroke: var(--sch-line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+#board .dot { fill: var(--sch-line); }
+
+#board .leg-name { display: none; font: 2.6px var(--font-mono); fill: var(--accent-hi); pointer-events: none; }
+#board .board-part:hover .leg-name { display: inline; }
+/* see-through: the bodies faint, the copper and cuts under them showing */
+#board .see-through .board-part .body, #board .see-through .band, #board .see-through .stripe { fill-opacity: 0.25; }
+/* the copper side (D-378), mirrored: strips, cuts ✕ and each solder joint; nothing on the parts side */
+#board .copper .board-parts .body, #board .copper .board-parts .lead, #board .copper .board-parts .band,
+#board .copper .board-parts .stripe, #board .copper .board-parts .notch, #board .copper .board-parts .dot,
+#board .copper .board-labels, #board .copper .leg-name, #board .copper .links .link, #board .copper .off-items,
+#board .copper .off-wire .wire, #board .copper .lug-end, #board .copper .off-wire:not(.pad), #board .copper .guide { display: none; }
+#board .copper .strip { fill: color-mix(in srgb, var(--picked) 30%, transparent); }
+#board .copper .leg, #board .copper .link-end, #board .copper .far-end { fill: var(--silver); }
+.board-tools .board-flip { margin-left: 8px; border-radius: 4px; }
 /* editing (D-374): the tools, a part carried, a link being laid, shorted copper */
 .board-tools { position: absolute; left: 12px; top: 12px; display: flex; gap: 0; }
 .board-tools[hidden] { display: none; }
 .board-tools button { padding: 3px 10px; font: 12px var(--font-ui); border-radius: 0; background: var(--surface-2); }
 .board-tools button:first-child { border-radius: 4px 0 0 4px; }
-.board-tools button:last-child { border-radius: 0 4px 4px 0; }
+.board-tools button[data-tool="links"] { border-radius: 0 4px 4px 0; }
 .board-tools button + button { margin-left: -1px; }
 .board-tools button[aria-pressed="true"] { background: var(--info-bg); color: var(--text); border-color: var(--accent); position: relative; }
 #board[data-tool="cuts"], #board[data-tool="links"] { cursor: crosshair; }

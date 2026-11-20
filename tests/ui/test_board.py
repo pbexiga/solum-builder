@@ -58,12 +58,18 @@ def test_the_board_view_shows_the_board_and_its_own_panes(page: Page, base_url: 
 
     # a part clicked on the board is selected on both drawings
     page.locator("#board .board-part[data-ref='Q1']").click()
-    expect(page.locator("#board .board-part[data-ref='Q1']")).to_have_class("board-part selected")
+    expect(page.locator("#board .board-part[data-ref='Q1']")).to_have_class(
+        re.compile(r"\bboard-part\b.*\bselected\b")
+    )
     expect(page.locator("#board-sheet .part[data-ref='Q1']")).to_have_class("part selected")
     # and one clicked on the small schematic lights on the board
     page.locator("#board-sheet .part[data-ref='R2']").click()
-    expect(page.locator("#board .board-part[data-ref='R2']")).to_have_class("board-part selected")
-    expect(page.locator("#board .board-part[data-ref='Q1']")).to_have_class("board-part")
+    expect(page.locator("#board .board-part[data-ref='R2']")).to_have_class(
+        re.compile(r"\bboard-part\b.*\bselected\b")
+    )
+    expect(page.locator("#board .board-part[data-ref='Q1']")).not_to_have_class(
+        re.compile(r"\bselected\b")
+    )
 
     # the schematic's keys don't act in the Board view: Delete leaves R2 in the circuit
     page.keyboard.press("Delete")
@@ -174,7 +180,6 @@ def test_show_values_is_a_setting_remembered(page: Page, base_url: str) -> None:
     page.locator("#board-settings > summary").click()
     box = page.locator("#board-settings-body input[data-setting='values']")
     expect(box).to_be_checked()
-    expect(page.locator("#board-settings-body input[data-setting='seeThrough']")).to_be_disabled()
     box.uncheck()
     expect(label.locator(".value")).to_have_count(0)
     expect(label.locator(".ref")).to_have_text("R1")
@@ -431,7 +436,7 @@ def test_a_part_placed_finishes_its_nets_and_the_board_is_saved_as_it_was(
     # flipped: its legs swap strips, named as it's made
     # by its leg at H3, under a wire across the board: the wire doesn't take the click
     page.mouse.click(*hole_point(page, 7, 2))
-    expect(c3).to_have_class("board-part selected")
+    expect(c3).to_have_class(re.compile(r"\bboard-part\b.*\bselected\b"))
     page.keyboard.press("f")
     expect(warnings).to_contain_text("C3 is the wrong way round")
     page.keyboard.press("Control+z")
@@ -494,3 +499,30 @@ def test_the_guidance_marks_suggests_and_says_what_is_next(page: Page, base_url:
     expect(page.locator("#board .ghost .mark")).not_to_have_count(0)
     page.keyboard.press("Escape")
     expect(page.locator("#board .ghost .mark")).to_have_count(0)
+
+
+def test_the_realistic_drawing_see_through_and_the_copper_side(page: Page, base_url: str) -> None:
+    """D-378: R1's colour bands and C3's stripe drawn, each leg named; See-through makes the
+    bodies faint; Copper side turns the board over, mirrored, and a cut clicked there is the
+    cut under it (G8), mended."""
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    show_board(page)
+    expect(page.locator("#board .board-part[data-ref='R1'] .band")).to_have_count(4)
+    expect(page.locator("#board .board-part[data-ref='C3'] .stripe")).to_have_count(1)
+    expect(page.locator("#board .board-part[data-ref='Q1'] .leg-name")).to_have_text(
+        ["E", "B", "C"]
+    )
+    page.locator("#board-settings > summary").click()
+    page.locator("#board-settings-body input[data-setting='seeThrough']").check()
+    expect(page.locator("#board g.board.see-through")).to_have_count(1)
+    page.locator("#board-flip").click()
+    expect(page.locator("#board-flip")).to_have_attribute("aria-pressed", "true")
+    expect(page.locator("#board g.board.copper")).to_have_count(1)
+    expect(page.locator("#board .board-label").first).to_be_hidden()
+    page.keyboard.press("c")
+    page.locator("#board .cut").click()
+    expect(page.locator("#board .cut")).to_have_count(0)
+    page.keyboard.press("Control+z")
+    page.locator("#board-flip").click()
+    expect(page.locator("#board-flip")).to_have_attribute("aria-pressed", "false")
+    expect(page.locator("#board g.board.copper")).to_have_count(0)

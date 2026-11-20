@@ -194,7 +194,12 @@ export function boardView(host, app) {
   trimButton.addEventListener("click", () => void resize("trim", "Trim the board"));
   wireButton.addEventListener("click", () => void wireForMe());
   acceptButton.addEventListener("click", () => void boardEdit({ kind: "suggested" }, acceptButton.textContent ?? "Make the suggested cuts and links"));
-  for (const b of tools.querySelectorAll("button")) b.addEventListener("click", () => {
+  const flipButton = $("board-flip");
+  flipButton.addEventListener("click", (e) => {
+    canvas.flip((copper) => flipButton.setAttribute("aria-pressed", String(copper)));
+    if (e.detail) flipButton.blur(); // clicked: the board's keys act again
+  });
+  for (const b of tools.querySelectorAll("button[data-tool]")) b.addEventListener("click", () => {
     setTool(/** @type {any} */ (b.getAttribute("data-tool")));
     b.blur(); // the board's keys act again
   });
@@ -215,7 +220,7 @@ export function boardView(host, app) {
   function setTool(which) {
     tool = which;
     drop();
-    for (const b of tools.querySelectorAll("button")) b.setAttribute("aria-pressed", String(b.getAttribute("data-tool") === which));
+    for (const b of tools.querySelectorAll("button[data-tool]")) b.setAttribute("aria-pressed", String(b.getAttribute("data-tool") === which));
     svg.dataset.tool = which;
     canvas.ghost(null);
   }
@@ -425,7 +430,7 @@ export function boardView(host, app) {
     const wires = board.wires.flatMap((wire, index) => {
       const line = wireLine(wire, lugs);
       const far = wire.hole ? holeName(wire.hole) : wire.to ? lugWords(wire.to) : "loose";
-      return line ? [{ index, line, title: `${lugWords(wire.lug)} to ${far}: drag either end to move it` }] : [];
+      return line ? [{ index, line, title: `${lugWords(wire.lug)} to ${far}: drag either end to move it`, pad: Boolean(wire.hole) }] : [];
     });
     return { items: shown.map((item) => ({ item, at: board.spots[item.ref] ?? progress?.spots[item.ref] ?? /** @type {Hole} */ ([0, 0]) })), wires };
   }
@@ -628,7 +633,7 @@ export function boardView(host, app) {
     const drawn = drawnBoard(board, progress?.start_size);
     const guide = guidanceNow();
     canvas.draw(drawn, progress?.footprints ?? {}, circuit, {
-      fit: !fitted, values: settings.values, rulers: started, fixed: !settings.grow, shorted: checked === circuit ? progress?.shorted ?? [] : [], off: offBoard(),
+      fit: !fitted, values: settings.values, rulers: started, fixed: !settings.grow, shorted: checked === circuit ? progress?.shorted ?? [] : [], off: offBoard(), seeThrough: settings.seeThrough,
       guide: guide ? { rats: guide.ratsnest, cuts: guide.cuts, links: guide.links } : undefined,
     });
     fitted ||= Boolean(drawn.columns && progress); // an empty board's size and the off-board parts come with the first check

@@ -1113,7 +1113,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         parts = board_parts(circuit, models, table)[0]
         items = [{**asdict(i), "size": i.size} for i in found.items]
         return {**asdict(found), "items": items, "nets_done": found.nets_done,
-                "footprints": drawing_data(parts),
+                "footprints": drawing_data(parts, circuit),
                 "start_size": list(start_size(parts)),
                 "guidance": asdict(guidance(layout, circuit, models, table))}  # fmt: skip
 

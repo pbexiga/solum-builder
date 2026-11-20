@@ -10,12 +10,13 @@
  */
 
 import { fitView, panBy, viewBoxText, zoomAt, resizeView } from "../schematic/viewport.js";
-import { STEP, columnName, holeName, holeXY, itemRefs, itemShape, labelAt, partShapes, runRects, shownHoles, valueOf } from "./board-logic.js";
+import { STEP, columnName, holeName, holeXY, itemRefs, itemShape, labelAt, legLabel, partShapes, runRects, shownHoles, valueOf } from "./board-logic.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 const FIT_PAD = STEP; // board units round the shown holes when fitting
 const MAX_FIT_SCALE = 6; // screen pixels per board unit when fitting a small board
 const CLICK_PX = 4; // a press that moves less than this is a click, not a pan
+const FLIP_MS = 450; // the board turning over (D-378)
 
 /**
  * @param {string} tag @param {Record<string, string | number>} [attrs] @param {Element} [parent]
@@ -26,6 +27,17 @@ function el(tag, attrs = {}, parent) {
   for (const [k, v] of Object.entries(attrs)) node.setAttribute(k, String(v));
   parent?.appendChild(node);
   return node;
+}
+
+/**
+ * One of a part's shapes (`partShapes`), leads aside: a body, a band, a marking.
+ * @param {import("./board-logic.js").Shape} s @param {Element} parent
+ */
+function drawShape(s, parent) {
+  if (s.kind === "rect") el("rect", { x: s.x, y: s.y, width: s.w, height: s.h, rx: Math.min(s.h / 3, 3), transform: `rotate(${s.angle} ${s.cx} ${s.cy})`, class: "body" }, parent);
+  else if (s.kind === "circle") el("circle", { cx: s.cx, cy: s.cy, r: s.r, class: "body" }, parent);
+  else if (s.kind === "band") el("rect", { x: s.x, y: s.y, width: s.w, height: s.h, transform: `rotate(${s.angle} ${s.cx} ${s.cy})`, class: `band band-${s.colour}` }, parent);
+  else if (s.kind === "path") el("path", { d: s.d, transform: `translate(${s.cx} ${s.cy}) rotate(${s.angle})`, class: s.cls }, parent);
 }
 
 /**
@@ -61,8 +73,9 @@ function el(tag, attrs = {}, parent) {
  * @typedef {import("./board-logic.js").OffItem} OffItem
  * @typedef {import("./board-logic.js").LugAt} LugAt
  * @typedef {{items: Array<{item: OffItem, at: Hole}>, wires: Array<{index: number,
- *   line: {x1: number, y1: number, x2: number, y2: number, loose: boolean}, title: string}>}} OffBoard
- *   the off-board parts beside the board, where, and the wires' lines (D-375)
+ *   line: {x1: number, y1: number, x2: number, y2: number, loose: boolean}, title: string, pad?: boolean}>}} OffBoard
+ *   the off-board parts beside the board, where, and the wires' lines (D-375); `pad`: the
+ *   wire's far end is in a hole (a solder joint on the copper side)
  * @typedef {import("./board-logic.js").Board} Board
  * @typedef {import("./board-logic.js").Footprint} Footprint
  */
@@ -88,6 +101,12 @@ export function boardCanvas(svg, app) {
   /** @type {Ghost | null} */
   let ghosted = null;
   let pressing = false; // a press on the board is being dragged: no hover then
+  let copper = false; // the copper side up, mirrored (D-378)
+  let flipping = false;
+  /** @type {Parameters<typeof draw> | null} the last drawing, drawn again when the board turns over */
+  let drawn = null;
+  /** The board's middle column, in board units: what it turns over about. */
+  const middle = () => (holes ? ((holes.c0 + holes.c1) / 2) * STEP : 0);
 
   const size = () => {
     const r = svg.getBoundingClientRect();
@@ -99,7 +118,8 @@ export function boardCanvas(svg, app) {
   };
   const toBoard = (/** @type {number} */ clientX, /** @type {number} */ clientY) => {
     const r = svg.getBoundingClientRect();
-    return [vb.x + ((clientX - r.left) / (r.width || 1)) * vb.w, vb.y + ((clientY - r.top) / (r.height || 1)) * vb.h];
+    const x = vb.x + ((clientX - r.left) / (r.width || 1)) * vb.w;
+    return [copper ? 2 * middle() - x : x, vb.y + ((clientY - r.top) / (r.height || 1)) * vb.h];
   };
   new ResizeObserver(() => {
     if (!shown || svg.getBoundingClientRect().width === 0) return; // hidden: keep the view
@@ -136,13 +156,15 @@ export function boardCanvas(svg, app) {
   /**
    * Draw a board. `fit`: fit the view to it (the first time it's shown).
    * @param {Board} board @param {Record<string, Footprint>} footprints @param {any} circuit
-   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, off?: OffBoard, guide?: Guide}} [opts]
+   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, off?: OffBoard, guide?: Guide, seeThrough?: boolean}} [opts]
    *   `values`: label parts with their values too; `rulers`: the columns' letters and the
    *   strips' numbers, each a menu of size changes (a board that's started); `fixed`: auto-grow
    *   off, the margin greyed (D-372); `shorted`: the copper carrying two nets, red (D-374);
-   *   `off`: the off-board parts and wires (D-375); `guide`: the guidance (D-377)
+   *   `off`: the off-board parts and wires (D-375); `guide`: the guidance (D-377);
+   *   `seeThrough`: the parts' bodies faint, the copper and cuts under them showing (D-378)
    */
-  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], off = { items: [], wires: [] }, guide = { rats: [], cuts: [], links: [] } } = {}) {
+  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], off = { items: [], wires: [] }, guide = { rats: [], cuts: [], links: [] }, seeThrough = false } = {}) {
+    drawn = [board, footprints, circuit, { values, rulers, fixed, shorted, off, guide, seeThrough }];
     holes = shownHoles(board);
     beside = null;
     for (const { item, at } of off.items) {
@@ -151,7 +173,8 @@ export function boardCanvas(svg, app) {
       beside = beside ? { minX: Math.min(beside.minX, minX), minY: Math.min(beside.minY, minY), maxX: Math.max(beside.maxX, maxX), maxY: Math.max(beside.maxY, maxY) } : { minX, minY, maxX, maxY };
     }
     svg.replaceChildren();
-    const root = el("g", { class: fixed ? "board board-fixed" : "board" }, svg);
+    const root = el("g", { class: ["board", fixed ? "board-fixed" : "", seeThrough ? "see-through" : "", copper ? "copper" : ""].filter(Boolean).join(" ") }, svg);
+    if (copper) root.setAttribute("transform", `translate(${2 * middle()} 0) scale(-1 1)`);
     const { c0, s0, c1, s1 } = holes;
     const half = STEP / 2;
     // the margin's holes, faint; the board itself, its strips and holes
@@ -195,7 +218,9 @@ export function boardCanvas(svg, app) {
       const mark = (/** @type {"column" | "strip"} */ axis, /** @type {number} */ line, /** @type {number} */ x, /** @type {number} */ y, /** @type {string} */ text) => {
         const g = el("g", { class: "ruler", "data-axis": axis, "data-line": line }, ruled);
         el("rect", { x: x - half, y: y - half, width: STEP, height: STEP, class: "ruler-hit" }, g);
-        el("text", { x, y, "text-anchor": "middle", "dominant-baseline": "central" }, g).textContent = text;
+        const label = el("text", { x, y, "text-anchor": "middle", "dominant-baseline": "central" }, g);
+        label.textContent = text;
+        if (copper) label.setAttribute("transform", `translate(${2 * x} 0) scale(-1 1)`); // readable on the mirrored side
         el("title", {}, g).textContent = `${axis === "column" ? "Column" : "Strip"} ${text}: insert or remove`;
       };
       for (let c = 0; c < board.columns; c++) mark("column", c, c * STEP, (s0 - 1) * STEP, columnName(c));
@@ -205,7 +230,7 @@ export function boardCanvas(svg, app) {
     const labels = el("g", { class: "board-labels" }, root); // over every body
     for (const placed of board.parts) {
       const fp = footprints[placed.ref];
-      const g = el("g", { class: fp ? "board-part" : "board-part stale", "data-ref": placed.ref }, parts);
+      const g = el("g", { class: fp ? `board-part kind-${fp.kind}${fp.look?.minus ? " polarised" : ""}` : "board-part stale", "data-ref": placed.ref }, parts);
       if (!fp) {
         // no longer in the circuit, or no footprint: its legs only, marked
         for (const [, hole] of placed.legs) el("circle", { cx: holeXY(hole)[0], cy: holeXY(hole)[1], r: STEP * 0.3, class: "leg" }, g);
@@ -215,11 +240,12 @@ export function boardCanvas(svg, app) {
       const legs = [...placed.legs].sort((a, b) => (order.get(a[0]) ?? 0) - (order.get(b[0]) ?? 0));
       const shapes = partShapes(fp, legs, placed.standing);
       for (const s of shapes.filter((s) => s.kind === "lead")) el("line", { x1: s.x1, y1: s.y1, x2: s.x2, y2: s.y2, class: "lead" }, g);
-      for (const s of shapes) {
-        if (s.kind === "rect") el("rect", { x: s.x, y: s.y, width: s.w, height: s.h, rx: Math.min(s.h / 3, 3), transform: `rotate(${s.angle} ${s.cx} ${s.cy})`, class: "body" }, g);
-        else if (s.kind === "circle") el("circle", { cx: s.cx, cy: s.cy, r: s.r, class: "body" }, g);
-      }
+      for (const s of shapes) drawShape(s, g);
       for (const [, hole] of legs) el("circle", { cx: holeXY(hole)[0], cy: holeXY(hole)[1], r: STEP * 0.16, class: "leg" }, g);
+      for (const [leg, hole] of legs) { // named on hover (D-378)
+        const [x, y] = holeXY(hole);
+        el("text", { x: x + STEP * 0.3, y: y - STEP * 0.3, class: "leg-name" }, g).textContent = legLabel(fp, leg);
+      }
       const [lx, ly] = labelAt(shapes);
       const text = el("text", { x: lx, y: ly, class: "board-label", "text-anchor": "middle", "data-ref": placed.ref }, labels);
       const value = values ? valueOf(circuit, placed.ref, fp.refs) : "";
@@ -249,8 +275,8 @@ export function boardCanvas(svg, app) {
       el("title", {}, g).textContent = `Suggested cut at ${holeName(cut)}: click to cut the strip there`;
     }
     const wires = el("g", { class: "off-wires" }, root); // over the parts: a wire lies on top
-    for (const { index, line, title } of off.wires) {
-      const g = el("g", { class: line.loose ? "off-wire loose" : "off-wire", "data-wire": index }, wires);
+    for (const { index, line, title, pad } of off.wires) {
+      const g = el("g", { class: ["off-wire", line.loose ? "loose" : "", pad ? "pad" : ""].filter(Boolean).join(" "), "data-wire": index }, wires);
       el("line", { x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, class: "wire" }, g);
       const length = Math.hypot(line.x2 - line.x1, line.y2 - line.y1) || 1;
       const grip = Math.min(STEP * 0.7, length / 3); // the lug end's grip, a little way along
@@ -295,6 +321,43 @@ export function boardCanvas(svg, app) {
     }
   }
 
+  /**
+   * Turn the board over (D-378): the copper side up, mirrored as it lies under the iron,
+   * cuts ✕ and every solder joint; again, back to the parts side. A short animation,
+   * none when the system asks for less motion. Holes are picked through the mirror.
+   * @param {(copper: boolean) => void} [done] told the side now up
+   */
+  function flip(done) {
+    if (flipping || !drawn) return;
+    const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    const to = !copper;
+    // the drawing may be replaced on the way (edge on, or a fresh check): find it each frame
+    const turn = (/** @type {number} */ scale) => svg.querySelector("g.board")?.setAttribute("transform", `translate(${middle() * (1 - scale)} 0) scale(${scale} 1)`);
+    const land = () => {
+      flipping = false;
+      copper = to;
+      if (drawn) draw(...drawn);
+      done?.(copper);
+    };
+    if (still) return land();
+    flipping = true;
+    const start = performance.now();
+    let swapped = false;
+    const step = (/** @type {number} */ now) => {
+      const t = Math.min(1, (now - start) / FLIP_MS);
+      const scale = Math.cos(Math.PI * t) * (to ? 1 : -1); // 1 → −1 to the copper side, −1 → 1 back
+      if (!swapped && t >= 0.5) { // edge on: the other side's drawing
+        swapped = true;
+        copper = to;
+        if (drawn) draw(...drawn);
+      }
+      turn(scale);
+      if (t < 1) requestAnimationFrame(step);
+      else land();
+    };
+    requestAnimationFrame(step);
+  }
+
   /** Draw what the view is about to do, faint (null: nothing). @param {Ghost | null} what */
   function ghost(what) {
     ghosted = what;
@@ -306,8 +369,7 @@ export function boardCanvas(svg, app) {
       const { fp, legs, standing } = what.part;
       for (const s of partShapes(fp, legs, standing)) {
         if (s.kind === "lead") el("line", { x1: s.x1, y1: s.y1, x2: s.x2, y2: s.y2, class: "lead" }, layer);
-        else if (s.kind === "rect") el("rect", { x: s.x, y: s.y, width: s.w, height: s.h, rx: Math.min(s.h / 3, 3), transform: `rotate(${s.angle} ${s.cx} ${s.cy})`, class: "body" }, layer);
-        else el("circle", { cx: s.cx, cy: s.cy, r: s.r, class: "body" }, layer);
+        else drawShape(s, layer);
       }
       for (const [, hole] of legs) el("circle", { cx: holeXY(hole)[0], cy: holeXY(hole)[1], r: STEP * 0.2, class: "leg" }, layer);
     }
@@ -414,6 +476,9 @@ export function boardCanvas(svg, app) {
 
   return {
     draw,
+    flip,
+    /** Whether the copper side is up (D-378). */
+    copper: () => copper,
     light,
     lightNets,
     fit,

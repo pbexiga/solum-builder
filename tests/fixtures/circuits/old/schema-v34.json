@@ -1,0 +1,12 @@
+{
+ "schema": 34,
+ "id": "v34",
+ "name": "v34",
+ "parts": [
+  {"ref": "IN", "pos": [0, 0], "type": "guitar"},
+  {"ref": "R1", "pos": [100, 0], "type": "resistor", "value": "10k"},
+  {"ref": "OUT", "pos": [200, 0], "type": "amp"}
+ ],
+ "wires": [],
+ "labels": []
+}

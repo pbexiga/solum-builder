@@ -38,9 +38,10 @@ from solum.circuit.switches import (
     custom_kind,
     kind_of,
 )
+from solum.stripboard.board import layout_from_data
 from solum.units import format_quantity, format_value, parse_value
 
-SCHEMA_VERSION: Final = 34
+SCHEMA_VERSION: Final = 35
 
 Point = tuple[int, int]
 Rotation = Literal[0, 90, 180, 270]
@@ -710,8 +711,28 @@ class Enclosure(_Model):
         return self
 
 
+class Stripboard(_Model):
+    """The board laid out in the Board view (v35, D-368): the plain form `board.layout_data`
+    writes, holes by name. Only its form is checked here; whether it matches the circuit
+    (a part since deleted, a leg on the wrong net) is the editor's progress check."""
+
+    size: tuple[int, int]  # columns, strips
+    parts: dict[str, dict[str, str]] = Field(default_factory=dict)  # ref → leg → hole
+    standing: list[str] = Field(default_factory=list)
+    cuts: list[str] = Field(default_factory=list)
+    links: list[tuple[str, str]] = Field(default_factory=list)
+    pads: dict[str, list[str]] = Field(default_factory=dict)  # hole → ends
+
+    @model_validator(mode="after")
+    def _readable(self) -> Self:
+        if min(self.size) < 1:
+            raise ValueError("A stripboard has at least one column and one strip.")
+        layout_from_data(self.model_dump())  # a hole that isn't one is a BoardError
+        return self
+
+
 class Circuit(_Model):
-    schema_: Literal[34] = Field(alias="schema")
+    schema_: Literal[35] = Field(alias="schema")
     id: str = Field(pattern=ID_PATTERN)
     name: str
     description: str = ""
@@ -731,6 +752,7 @@ class Circuit(_Model):
     net_notes: dict[str, NoteText] = Field(default_factory=dict)  # by net name (v30)
     dismissed: list[Dismissal] = Field(default_factory=list)  # problems dismissed (D-176)
     enclosure: Enclosure | None = None  # the box it's built in (v23, D-204)
+    stripboard: Stripboard | None = None  # the board laid out in the Board view (v35, D-368)
 
     @model_validator(mode="after")
     def _unique_refs(self) -> Self:

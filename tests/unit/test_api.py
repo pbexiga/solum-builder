@@ -1,3 +1,4 @@
+import json
 import math
 from pathlib import Path
 
@@ -6,11 +7,12 @@ from fastapi.testclient import TestClient
 
 from solum.api import app as app_module
 from solum.cache import cache_from_settings
-from solum.circuit.io import parse_circuit
+from solum.circuit.io import circuit_to_dict, load_circuit, parse_circuit
 from solum.config import load_settings
 from solum.model_import import Added, make_model
 from solum.models import ModelLibrary, ModelType
 from solum.sim.engine import EngineUnavailable, SimResult
+from solum.yamlio import load_yaml
 from tests.unit.test_model_import import FILE, fake_measure
 
 
@@ -846,3 +848,19 @@ def test_pickup_form_works_out_the_other_two(monkeypatch: pytest.MonkeyPatch) ->
     assert two["dimmed"] == {"peak": "Not the peak: L and C give it."} and two["stored"] is None
     bad = c.post("/api/pickup", json={"typed": [["l", "2.5"], ["c", "150p"], ["peak", "5k"]]})
     assert bad.status_code == 422 and bad.json()["message"] == "Not the peak: L and C give it."
+
+
+def test_stripboard_reports_the_open_circuit_s_board(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-368: the progress check of the board the circuit carries; none yet, an empty one."""
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    empty = c.post("/api/stripboard", json={"circuit": data}).json()
+    assert empty["to_place"] == ["C1", "C2", "C3", "C4", "Q1", "R1", "R2", "R3"]
+    assert empty["nets_done"] == 0 and empty["done"] is False and empty["faults"] == []
+    board = load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")
+    done = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": board}}).json()
+    assert done["done"] is True and done["nets_done"] == len(done["nets"])
+    assert json.dumps(done)  # plain JSON all through
+    bad = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": {"size": [0, 1]}}})
+    assert bad.status_code == 422 and "one column" in bad.text

@@ -1027,6 +1027,12 @@ def _v33_to_v34(data: Data) -> Data:
     return {**data, "parts": parts}
 
 
+def _v34_to_v35(data: Data) -> Data:
+    """v35 (D-368) added the circuit's `stripboard`, the board laid out in the Board view;
+    an older circuit has none, so a v34 file is a valid v35 file."""
+    return data
+
+
 MIGRATIONS: dict[int, Migration] = {
     1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5, 5: _v5_to_v6, 6: _v6_to_v7,
     7: _v7_to_v8, 8: _v8_to_v9, 9: _v9_to_v10,
@@ -1035,7 +1041,7 @@ MIGRATIONS: dict[int, Migration] = {
     19: _v19_to_v20, 20: _v20_to_v21, 21: _v21_to_v22, 22: _v22_to_v23,
     23: _v23_to_v24, 24: _v24_to_v25, 25: _v25_to_v26, 26: _v26_to_v27,
     27: _v27_to_v28, 28: _v28_to_v29, 29: _v29_to_v30, 30: _v30_to_v31,
-    31: _v31_to_v32, 32: _v32_to_v33, 33: _v33_to_v34,
+    31: _v31_to_v32, 32: _v32_to_v33, 33: _v33_to_v34, 34: _v34_to_v35,
 }  # fmt: skip
 
 

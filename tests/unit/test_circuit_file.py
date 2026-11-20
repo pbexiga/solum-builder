@@ -7,6 +7,7 @@ from pathlib import Path
 from typing import Any
 
 import pytest
+import yaml
 
 from solum.circuit.connectivity import connect
 from solum.circuit.io import (
@@ -27,6 +28,7 @@ from solum.circuit.schema import (
     id_from_name,
     json_schema_text,
 )
+from solum.stripboard.board import layout_data, layout_from_data
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "circuits" / "jfet-drive.json"
 
@@ -229,10 +231,10 @@ def test_schema_v1_file_loads_as_current(repo: Path) -> None:
     (and dropped provenance), v6 text blocks (and dropped the power mode); a v1 file
     loads unchanged and saves as v6 at v1.0."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v1.json")
-    assert c.schema_ == SCHEMA_VERSION == 34
+    assert c.schema_ == SCHEMA_VERSION == 35
     assert c.tags == [] and c.texts == []
     assert [p.ref for p in c.parts] == ["R1", "R2"]
-    assert circuit_to_dict(c)["schema"] == 34
+    assert circuit_to_dict(c)["schema"] == 35
     assert (str(c.version), c.final) == ("v1.0", False)
 
 
@@ -712,3 +714,42 @@ def test_a_pickup_keeps_the_three_typed_as_typed(repo: Path) -> None:
         data["parts"][0]["pickup"] = {**pickup, "set": wrong}
         with pytest.raises(CircuitError):
             parse_circuit(data)
+
+
+def test_a_v34_circuit_has_no_stripboard(repo: Path) -> None:
+    """v35 (D-368) added `stripboard`; an older circuit has none and saves none."""
+    c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v34.json")
+    assert c.schema_ == SCHEMA_VERSION
+    assert c.stripboard is None
+    assert "stripboard" not in circuit_to_dict(c)
+
+
+def test_a_stripboard_round_trips_in_its_plain_form(repo: Path) -> None:
+    """The board is saved as `layout_data` writes it and read back as it was."""
+    board = yaml.safe_load((repo / "tests/fixtures/stripboard/rangemaster.yaml").read_text())
+    layout = layout_data(layout_from_data(board))
+    data = json.loads((repo / "tests/fixtures/circuits/old/schema-v34.json").read_text())
+    data["schema"] = SCHEMA_VERSION
+    data["stripboard"] = layout
+    saved = circuit_to_dict(parse_circuit(data))
+    assert saved["stripboard"]["cuts"] == ["G8"]
+    assert layout_data(layout_from_data(saved["stripboard"])) == layout
+    assert parse_circuit(json.loads(json.dumps(saved))) == parse_circuit(data)
+
+
+@pytest.mark.parametrize(
+    "bad",
+    [
+        {"size": [0, 9]},
+        {"size": [12, 9], "cuts": ["G0"]},
+        {"size": [12, 9], "parts": {"R1": {"1": "here"}}},
+        {"size": [12, 9], "links": [["A1"]]},
+        {"size": [12]},
+    ],
+)
+def test_a_malformed_stripboard_is_refused(repo: Path, bad: dict[str, Any]) -> None:
+    data = json.loads((repo / "tests/fixtures/circuits/old/schema-v34.json").read_text())
+    data["schema"] = SCHEMA_VERSION
+    data["stripboard"] = bad
+    with pytest.raises(CircuitError):
+        parse_circuit(data)

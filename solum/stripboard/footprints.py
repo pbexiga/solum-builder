@@ -72,6 +72,11 @@ class BoardPart:
     free: frozenset[str] = field(default_factory=frozenset)
     kind: str = ""  # its type, for the words: resistor, bjt, chip...
 
+    @property
+    def legs(self) -> tuple[str, ...]:
+        """Its leg names: in a line's or a chip's order, else its pins'."""
+        return self.footprint.order or tuple(self.pins)
+
 
 class NoFootprint(ValueError):
     """A part the table has no size for (plain-English message)."""
@@ -263,7 +268,7 @@ def dip_legs(pins: int, pin1: Hole, turned: bool = False, row_holes: int = 3) ->
 def leg_problem(part: BoardPart, legs: dict[str, Hole], standing: bool) -> str | None:
     """What's wrong with where the legs are, in plain English, or None."""
     fp = part.footprint
-    names = set(fp.order) if fp.order else set(part.pins)
+    names = set(part.legs)
     if set(legs) != names:
         want = ", ".join(sorted(names))
         return f"{part.ref} needs exactly its legs placed ({want})."

@@ -85,6 +85,7 @@ from solum.guides import (
     GuideError,
     battery_guide,
     capacitor_guide,
+    footprint_table,
     inductor_guide,
     pickup_guide,
 )
@@ -130,6 +131,8 @@ from solum.simulate import (
     simulator_from_settings,
 )
 from solum.store import CircuitStore, StoreError, blank_circuit, split_id
+from solum.stripboard.board import Layout, layout_from_data
+from solum.stripboard.check import progress
 from solum.units import parse_value
 from solum.view import circuit_view
 from solum.wiring import wiring_page
@@ -1060,6 +1063,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         found, checked = checker.check(circuit, sim)
         return {"problems": [asdict(p) for p in found], "checked_op": checked,
                 "ratings": ratings_to_fill(circuit, checked)}  # fmt: skip
+
+    @app.post("/api/stripboard")
+    def stripboard(req: CircuitRequest) -> dict[str, Any]:
+        """The Board view's progress check (D-368) of the open circuit's board (none yet:
+        an empty one): what's left to place, each net, each leg, what's wrong now."""
+        circuit = parse_circuit(req.circuit)
+        board = circuit.stripboard
+        layout = layout_from_data(board.model_dump()) if board else Layout(0, 0, ())
+        found = progress(layout, circuit, models, footprint_table(settings.library_dir))
+        return {**asdict(found), "nets_done": found.nets_done}
 
     @app.post("/api/part")
     def part(req: PartRequest) -> dict[str, Any]:

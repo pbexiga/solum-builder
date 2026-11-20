@@ -2043,6 +2043,82 @@
       "title": "Resistor",
       "type": "object"
     },
+    "Stripboard": {
+      "additionalProperties": false,
+      "description": "The board laid out in the Board view (v35, D-368): the plain form `board.layout_data`\nwrites, holes by name. Only its form is checked here; whether it matches the circuit\n(a part since deleted, a leg on the wrong net) is the editor's progress check.",
+      "properties": {
+        "size": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "integer"
+            },
+            {
+              "type": "integer"
+            }
+          ],
+          "title": "Size",
+          "type": "array"
+        },
+        "parts": {
+          "additionalProperties": {
+            "additionalProperties": {
+              "type": "string"
+            },
+            "type": "object"
+          },
+          "title": "Parts",
+          "type": "object"
+        },
+        "standing": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Standing",
+          "type": "array"
+        },
+        "cuts": {
+          "items": {
+            "type": "string"
+          },
+          "title": "Cuts",
+          "type": "array"
+        },
+        "links": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "string"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Links",
+          "type": "array"
+        },
+        "pads": {
+          "additionalProperties": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "title": "Pads",
+          "type": "object"
+        }
+      },
+      "required": [
+        "size"
+      ],
+      "title": "Stripboard",
+      "type": "object"
+    },
     "Switch": {
       "additionalProperties": false,
       "description": "One pole of a switch (v14, D-143), of a type from `switches.py` (`kind`: spdt,\n3pdt, rotary-2p4t, footswitch…). A single-pole switch is one part (SW1); a\nmulti-pole one is a part per pole (`pole` a, b…: SW1A, SW1B), each placed on its\nown, all of one type, position and label. Its pins are the pole's lugs: 1, 2, 3 on a\ntoggle (2 the common), C and 1…n on a rotary, with the pole's letter on a multi-pole\nswitch (A1, A2, A3). `position` is the index into the type's positions; `names`, if\ngiven, names each position (\"Vintage\", \"Modern\"), an empty one keeping the type's.",
@@ -2447,7 +2523,7 @@
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "const": 34,
+      "const": 35,
       "title": "Schema",
       "type": "integer"
     },
@@ -2665,6 +2741,17 @@
         }
       ],
       "default": null
+    },
+    "stripboard": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/Stripboard"
+        },
+        {
+          "type": "null"
+        }
+      ],
+      "default": null
     }
   },
   "required": [
@@ -2673,7 +2760,7 @@
     "name",
     "parts"
   ],
-  "title": "Solum Builder circuit, schema v34",
+  "title": "Solum Builder circuit, schema v35",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

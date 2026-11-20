@@ -156,11 +156,13 @@ def suggested_cuts(r: Reading) -> list[Hole]:
 def suggested_links(r: Reading, cuts: list[Hole]) -> list[tuple[Hole, Hole]]:
     """With the suggested cuts made, the shortest links joining each net's pieces: down a
     free column, both ends in free copper of the net's own groups, over no leg, pad or
-    link end, under no body but a flat resistor's (as the check allows)."""
+    link end, under no body but a flat resistor's (as the check allows), and no end under
+    another link, laid or suggested."""
     cut = replace(r.layout, cuts=r.layout.cuts | set(cuts))
     copper = copper_groups(cut)
     used, hard, bodies = _blocked(r)
     used |= set(cuts)
+    crossed = {h for link in r.layout.links for h in link.between}  # under a link: no end
     nets_of: dict[int, set[str]] = defaultdict(set)
     for t, hole in _terminal_holes(r).items():
         if hole in copper:
@@ -185,6 +187,8 @@ def suggested_links(r: Reading, cuts: list[Hole]) -> list[tuple[Hole, Hole]]:
                 for column in range(cut.columns):
                     for a in free.get((ga, column), ()):
                         for b in free.get((gb, column), ()):
+                            if a in crossed or b in crossed:
+                                continue
                             top, bottom = sorted((a, b), key=lambda h: h[1])
                             over = Link(top, bottom).between
                             if any(h in used or h in hard for h in over):
@@ -200,10 +204,13 @@ def suggested_links(r: Reading, cuts: list[Hole]) -> list[tuple[Hole, Hole]]:
 
         while heap:  # Kruskal's: the shortest link between two pieces not yet joined
             _, top, bottom, ga, gb = heapq.heappop(heap)
-            if find(ga) == find(gb) or top in taken or bottom in taken:
+            over = Link(top, bottom).between
+            if (find(ga) == find(gb) or top in taken or bottom in taken or top in crossed
+                    or bottom in crossed or any(h in taken for h in over)):  # fmt: skip
                 continue
             parent[find(ga)] = find(gb)
             taken |= {top, bottom}
+            crossed |= set(over)
             links.append((top, bottom))
     return links
 

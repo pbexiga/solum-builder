@@ -94,6 +94,21 @@ def test_a_suggested_link_never_passes_over_a_leg_or_under_a_standing_part() -> 
     assert placement_faults(layout, board, set()) == []
 
 
+def test_suggested_links_never_pass_over_each_other() -> None:
+    """Base (D5, F1, J4) and ground (F5, H6) both in pieces: the shortest link for each in
+    column G overlapped (G1 to G6 over G4 to G5's ends), which the editor then refused.
+    Accepting every suggestion must add no placement fault."""
+    parts = {"R1": {"1": "D1", "2": "D5"}, "R2": {"1": "F1", "2": "F5"},
+             "R3": {"1": "H2", "2": "H6"}, "C1": {"1": "J6", "2": "J4"}}  # fmt: skip
+    g = run({"size": [12, 12], "parts": parts})
+    assert len(g.links) == 3
+    cuts = [hole_name(h) for h in g.cuts]
+    layout = layout_from_data({"size": [12, 12], "parts": parts, "cuts": cuts, "links": linked(g)})
+    board = board_parts(RANGEMASTER, MODELS, TABLE)[0]
+    faults = placement_faults(layout, board, set())
+    assert [f for f in faults if not f.endswith("isn't on the board.")] == []
+
+
 def test_next_follows_the_signal_and_prefers_what_joins_the_board() -> None:
     empty = run({"size": [12, 9]}).next
     assert empty is not None and empty.ref == "C1" and "input" in empty.why

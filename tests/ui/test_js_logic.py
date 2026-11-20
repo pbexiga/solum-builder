@@ -1162,3 +1162,19 @@ def test_off_board_parts_lugs_and_wires_are_drawn_where_they_sit(js: Page) -> No
     assert got["refs"] == [["VR1"], []]
     assert got["line"] == "1 of 2 nets done; 1 lug to wire, 1 loose."
     assert got["done"] == "All 1 nets done."
+
+
+def test_parts_gone_from_the_circuit_are_said_in_one_sentence(js: Page) -> None:
+    """D-376: the Warnings pane's line above its Clear them button."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        return [b.staleLine([]), b.staleLine(['R7']), b.staleLine(['R7', 'R9', 'VR9'])];
+        """,
+    )
+    assert got == [
+        "",
+        "R7 is no longer in the circuit.",
+        "R7, R9 and VR9 are no longer in the circuit.",
+    ]

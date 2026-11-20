@@ -399,6 +399,17 @@ export function netsLine(progress) {
 }
 
 /**
+ * What the board still holds of parts the schematic no longer has (D-376), in one
+ * sentence: "R7 is no longer in the circuit.", "R7 and VR9 are …"; "" when none.
+ * @param {string[]} stale @returns {string}
+ */
+export function staleLine(stale) {
+  if (!stale.length) return "";
+  const names = stale.length > 1 ? `${stale.slice(0, -1).join(", ")} and ${stale[stale.length - 1]}` : stale[0];
+  return `${names} ${stale.length > 1 ? "are" : "is"} no longer in the circuit.`;
+}
+
+/**
  * Each net's state in words: done; in pieces ("2 of 4 placed, in 2 pieces"), with the
  * lugs it still needs wired ("; a wire from VR1 lug 2"); shorted (each short's sentence).
  * @param {NetProgress} net @returns {string}

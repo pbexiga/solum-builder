@@ -30,7 +30,7 @@ import { Schematic } from "../schematic/render.js";
 import { latestOnly } from "../state.js";
 import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
-import { BOARD_SETTINGS, boardRefOf, drawnBoard, firstPose, holeName, isOut, itemRefs, legsAt, legsData, lineChanges, linkFrom, lugPlaces, middleOf, moveWords, netWords, netsLine, offBoardRows, partsOnNet, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, trayGroups, trayRows, wireLine } from "./board-logic.js";
+import { BOARD_SETTINGS, boardRefOf, drawnBoard, firstPose, holeName, isOut, itemRefs, legsAt, legsData, lineChanges, linkFrom, lugPlaces, middleOf, moveWords, netWords, netsLine, offBoardRows, partsOnNet, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, trayGroups, trayRows, wireLine } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -668,12 +668,28 @@ export function boardView(host, app) {
         return row;
       })),
     );
-    const said = [...progress.faults, ...progress.stale.map((ref) => `${ref} is no longer in the circuit.`), ...progress.warnings];
-    $("board-warnings-count").textContent = said.length ? `· ${said.length}` : "";
-    $("board-warnings-body").replaceChildren(said.length
-      ? h("ul", { class: "board-list warnings" }, said.map((text, i) => h("li", { class: i < progress.faults.length + progress.stale.length ? "fault" : "warning" }, [text])))
-      : h("p", { class: "empty" }, [progress.done ? "The board matches the circuit." : "Nothing wrong so far."]));
+    const said = [...progress.faults, ...progress.warnings];
+    const stale = staleLine(progress.stale);
+    $("board-warnings-count").textContent = said.length + progress.stale.length ? `· ${said.length + progress.stale.length}` : "";
+    $("board-warnings-body").replaceChildren(
+      ...(stale ? [staleNote(stale)] : []),
+      ...(said.length
+        ? [h("ul", { class: "board-list warnings" }, said.map((text, i) => h("li", { class: i < progress.faults.length ? "fault" : "warning" }, [text])))]
+        : stale ? [] : [h("p", { class: "empty" }, [progress.done ? "The board matches the circuit." : "Nothing wrong so far."])]),
+    );
     fillSettings();
+  }
+
+  /**
+   * The parts gone from the schematic, said once, with one click to take them all off the
+   * board (D-376): placed parts, off-board parts beside it, their wires.
+   * @param {string} text
+   */
+  function staleNote(text) {
+    const clear = h("button", { type: "button", class: "clear-stale" }, ["Clear them"]);
+    clear.title = "Take them off the board, with their wires (Undo brings them back)";
+    clear.addEventListener("click", () => void boardEdit({ kind: "clear" }, "Clear what's gone from the circuit"));
+    return h("div", { class: "board-stale" }, [h("span", {}, [text]), " ", clear]);
   }
 
   /** Settings: the editor's settings, remembered per viewer; *Remove board* at the bottom once one is started. */

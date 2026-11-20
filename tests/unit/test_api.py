@@ -961,3 +961,20 @@ def test_stripboard_edit_puts_off_board_parts_and_wires(monkeypatch: pytest.Monk
         "/api/stripboard/edit", json={"circuit": back, "kind": "unspot", "ref": "VR1"}
     ).json()["stripboard"]
     assert gone["off"] == {} and not any(w["from"].startswith("VR1") for w in gone["wires"])
+
+
+def test_stripboard_edit_clears_what_the_circuit_no_longer_has(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """D-376: one edit takes off a part deleted from the schematic, with nothing else."""
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
+    good = load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")
+    parts = {**good["parts"], "R9": {"1": "L1", "2": "L5"}}
+    board = {**data, "stripboard": {**good, "parts": parts}}
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    stale = c.post("/api/stripboard", json={"circuit": board}).json()["stale"]
+    assert stale == ["R9"]
+    cleared = c.post("/api/stripboard/edit", json={"circuit": board, "kind": "clear"})
+    assert "R9" not in cleared.json()["stripboard"]["parts"]
+    assert len(cleared.json()["stripboard"]["parts"]) == len(good["parts"])

@@ -134,7 +134,7 @@ from solum.store import CircuitStore, StoreError, blank_circuit, split_id
 from solum.stripboard.board import Layout, layout_data
 from solum.stripboard.check import progress, shorts
 from solum.stripboard.edit import BoardEdit, EditError, EditKind, edit_layout
-from solum.stripboard.footprints import board_parts, drawing_data
+from solum.stripboard.footprints import board_parts, board_refs, drawing_data
 from solum.stripboard.offboard import off_board_items
 from solum.stripboard.size import Axis, SizeError, insert_line, remove_line, start_size, trim
 from solum.stripboard.wiring import WiringError, wire_for_me
@@ -1154,7 +1154,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                  for i in off_board_items(circuit, connect(circuit), parts, models)}  # fmt: skip
         try:
             edited = edit_layout(layout, edit, parts, started=kept is not None, grow=req.grow,
-                                 items=items)  # fmt: skip
+                                 items=items, known=board_refs(circuit))  # fmt: skip
         except EditError as err:
             raise HTTPException(422, str(err)) from None
         if not req.shorts:

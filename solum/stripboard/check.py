@@ -18,7 +18,14 @@ from solum.export import built_where, is_status_led
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
 from solum.stripboard.board import Hole, Layout, Placed, hole_name, segments
-from solum.stripboard.footprints import BoardPart, PinRef, board_parts, body_holes, leg_problem
+from solum.stripboard.footprints import (
+    BoardPart,
+    PinRef,
+    board_parts,
+    board_refs,
+    body_holes,
+    leg_problem,
+)
 from solum.stripboard.limits import limit_warnings, placement_limits
 from solum.stripboard.offboard import SLEEVE, OffItem, default_spots, lug_nets, off_board_items
 
@@ -524,8 +531,9 @@ class Progress:
     bypass hardware the schematic doesn't draw (`stock_bypass`);
     `unplaceable` a sentence per part that can't go on a board yet (no footprint: it stays in
     the tray, D-370); `nets` each net's progress; `legs` each board part's legs; `faults` what's
-    wrong now (placement, pads, a part the wrong way round); `stale` parts no longer in the
-    circuit; `warnings` the placement limits broken; `done` the full check passes."""
+    wrong now (placement, pads, a part the wrong way round, a leg on another net's strip);
+    `stale` parts no longer in the circuit (D-376: placed, beside the board, or wired to);
+    `warnings` the placement limits broken; `done` the full check passes."""
 
     to_place: list[str]
     wires_to_go: list[str]
@@ -598,6 +606,55 @@ def _wrong_way(r: _Reading, circuit: Circuit) -> list[str]:
     return faults
 
 
+def _misplaced(r: _Reading, wanted: dict[str, list[Terminal]], skip: set[str]) -> list[str]:
+    """Each placed leg on a strip that carries only other nets (a part rewired in the
+    schematic since it was placed, or a leg a strip off), with where it should go: the
+    terminals of its own net, the placed ones by hole. Parts in `skip` (already named the
+    wrong way round) are left out."""
+    found = []
+    by_group = groups_by_net(r)
+    for t in sorted(r.words.leg_of, key=_key):
+        ref, _ = r.words.leg_of[t]
+        if ref in skip or t not in r.groups or t not in r.expected:
+            continue
+        own = r.expected[t]
+        here = by_group[r.groups[t]]
+        others = sorted(n for n in here if n != own)
+        mates = [m for m in wanted[own] if m != t]
+        if not others or len(here[own]) > 1 or not mates:
+            continue
+        placed = [r.words(m) for m in sorted(mates, key=_key) if m in r.groups]
+        unplaced = [m for m in mates if m not in r.groups]
+        goes = _listed(placed[:3] + ([f"{len(placed) - 3} more"] if len(placed) > 3 else []))
+        if not placed:
+            many = "s" if len(unplaced) > 1 else ""
+            goes = f"{len(unplaced)} terminal{many} not on the board yet"
+        found.append(
+            f"{_cap(r.words(t))} is on the strip of {', '.join(others)}, but the circuit puts "
+            f"it on {own}: it should join {goes}."
+        )
+    return found
+
+
+def _listed(words: list[str]) -> str:
+    """`a`, `a and b`, `a, b and c`."""
+    return " and ".join([", ".join(words[:-1]), words[-1]] if len(words) > 1 else words)
+
+
+def _gone(r: _Reading, circuit: Circuit) -> list[str]:
+    """What the board holds of parts the circuit no longer has (D-376): placed board parts
+    (one that can't be placed now is still the circuit's: the tray names it), off-board parts
+    put beside it, the parts of lugs a wire still runs to."""
+    in_circuit = board_refs(circuit) | r.off_board
+    gone = {p.ref for p in r.layout.parts} - in_circuit
+    gone |= {ref for ref, _ in r.layout.spots} - {i.ref for i in r.items}
+    for wire in r.layout.wires:
+        for lug in (wire.lug, wire.to):
+            if lug is not None and lug not in r.ends:
+                gone.add(lug.partition(".")[0] if "." in lug else end_words(lug))
+    return sorted(gone)
+
+
 def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
              table: FootprintTable) -> Progress:  # fmt: skip
     """The editor's check of a board in the making (D-368): what's left to place, each
@@ -606,12 +663,13 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
     r = read_layout(layout, circuit, models, table)
     placed = {p.ref for p in r.layout.parts}
     in_circuit = r.board.keys() | r.off_board
-    stale = sorted(placed - in_circuit)
+    stale = _gone(r, circuit)
     kept = replace(r.layout, parts=tuple(p for p in r.layout.parts if p.ref in in_circuit))
     faults = [f for f in placement_faults(kept, r.board, r.off_board)
               if not f.endswith(" isn't on the board.")]  # fmt: skip
     wiring, unwired, loose = _wire_faults(r)
-    faults = [*faults, *wiring, *_wrong_way(r, circuit)]
+    wiring = [f for f in wiring if "which isn't an off-board lug" not in f]  # stale, above
+    turned = _wrong_way(r, circuit)
     # every terminal each net has, placed or not
     wanted: dict[str, list[Terminal]] = defaultdict(list)
     for part in r.board.values():
@@ -619,6 +677,8 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
             wanted[r.nets.net_of(*pin)].append(pin)
     for end in sorted(r.needed):
         wanted[r.ends[end]].append(end)
+    skip = {f.split(" ", 1)[0] for f in turned}
+    faults = [*faults, *wiring, *turned, *_misplaced(r, wanted, skip)]
     by_group = groups_by_net(r)
     seg = segments(r.layout)
     nets = []

@@ -9,6 +9,7 @@ asked by the caller.
 """
 
 from collections.abc import Mapping
+from collections.abc import Set as AbstractSet
 from dataclasses import dataclass, replace
 from typing import Literal
 
@@ -18,7 +19,7 @@ from solum.stripboard.footprints import BoardPart, leg_problem
 from solum.stripboard.size import crop, fit_box, used_holes
 
 EditKind = Literal["place", "remove", "cut", "uncut", "link", "unlink", "spot", "unspot",
-                   "wire", "unwire", "rewire"]  # fmt: skip
+                   "wire", "unwire", "rewire", "clear"]  # fmt: skip
 
 
 class EditError(ValueError):
@@ -34,7 +35,8 @@ class BoardEdit:
     puts off-board part `ref` with its drawing's corner at `holes[0]` (anywhere), `unspot`
     takes it back to the tray with its wires; `wire` draws a wire from lug `ref` to
     `holes[0]`, to lug `to`, or loose (neither); `rewire` puts wire number `index` so
-    instead, `unwire` takes it off."""
+    instead, `unwire` takes it off. `clear` takes off everything of parts the circuit no
+    longer has (D-376): placed parts, off-board parts beside the board, wires to their lugs."""
 
     kind: EditKind
     ref: str = ""
@@ -135,6 +137,20 @@ def _unspot(layout: Layout, ref: str, items: Mapping[str, tuple[str, ...]]) -> L
     return replace(layout, spots=spots, wires=wires)
 
 
+def _clear(layout: Layout, keep: AbstractSet[str],
+           items: Mapping[str, tuple[str, ...]]) -> Layout:  # fmt: skip
+    lugs = {lug for ends in items.values() for lug in ends}
+    cleared = replace(
+        layout,
+        parts=tuple(p for p in layout.parts if p.ref in keep),
+        spots=tuple((ref, at) for ref, at in layout.spots if ref in items),
+        wires=tuple(w for w in layout.wires if w.lug in lugs and (w.to is None or w.to in lugs)),
+    )
+    if cleared == layout:
+        raise EditError("Nothing on the board is gone from the circuit.")
+    return cleared
+
+
 def _new_wire(layout: Layout, edit: BoardEdit, lugs: set[str], skip: int = -1) -> Wire:
     """The wire `edit` draws, refused when a lug isn't one, it runs to itself, or it's
     there already."""
@@ -161,7 +177,7 @@ def _wire_at(layout: Layout, index: int) -> int:
 
 
 def _applied(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
-             items: Mapping[str, tuple[str, ...]]) -> Layout:  # fmt: skip
+             items: Mapping[str, tuple[str, ...]], known: AbstractSet[str]) -> Layout:  # fmt: skip
     holes = edit.holes
     lugs = {lug for ends in items.values() for lug in ends}
     if edit.kind in ("cut", "uncut") and len(holes) != 1:
@@ -190,6 +206,8 @@ def _applied(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
         case "unwire":
             i = _wire_at(layout, edit.index)
             return replace(layout, wires=layout.wires[:i] + layout.wires[i + 1 :])
+        case "clear":
+            return _clear(layout, board.keys() | known, items)
         case "rewire":
             i = _wire_at(layout, edit.index)
             wire = _new_wire(layout, edit, lugs, skip=i)
@@ -215,14 +233,16 @@ def _edge(layout: Layout, holes: set[Hole]) -> str | None:
 
 def edit_layout(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart], *,
                 started: bool, grow: bool,
-                items: Mapping[str, tuple[str, ...]] | None = None) -> Edited:  # fmt: skip
-    """`layout` with `edit` made. `items`: each off-board part's lugs (D-375). `started`:
+                items: Mapping[str, tuple[str, ...]] | None = None,
+                known: AbstractSet[str] = frozenset()) -> Edited:  # fmt: skip
+    """`layout` with `edit` made. `items`: each off-board part's lugs (D-375). `known`: the
+    circuit's board parts that can't be placed now, which `clear` keeps (D-376). `started`:
     the board has been saved before (an empty one is drawn at its start size and becomes
     just what's on it at the first placement).
     `grow`: auto-grow (D-372): the board fits what's on it; off, an edit past its edge is
     refused. A placement fault the edit brings (two things in a hole, a body over a leg, a
     link over a leg) refuses it, named."""
-    after = _applied(layout, edit, board, items or {})
+    after = _applied(layout, edit, board, items or {}, known)
     if not grow:
         edge = _edge(after, set(used_holes(after, board)) - set(used_holes(layout, board)))
         if edge:

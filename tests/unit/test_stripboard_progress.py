@@ -110,6 +110,58 @@ def test_a_part_gone_from_the_circuit_is_stale_not_a_fault() -> None:
     assert p.stale == ["R9"] and p.faults == [] and not p.done
 
 
+def _swapped(a: str, b: str) -> Circuit:
+    """The Rangemaster with parts `a` and `b` trading places in the schematic: each now on
+    the other's nets (a rewiring the board doesn't know about)."""
+    data = RANGEMASTER.model_dump(mode="json", exclude_none=True)
+    for part in data["parts"]:
+        part["ref"] = {a: b, b: a}.get(part["ref"], part["ref"])
+    return Circuit.model_validate(data)
+
+
+def test_a_part_rewired_in_the_schematic_names_its_leg_and_where_it_should_go() -> None:
+    """D-376: R1 and R2 swapped in the schematic. R1 (C8 on strip 8's V- end, C4 the base)
+    now runs base to ground: its C8 leg is on V-'s strip, its own net's terminals are
+    named; R2 likewise. Nothing is stale."""
+    p = run(GOOD, _swapped("R1", "R2"))
+    assert p.stale == [] and not p.done
+    assert p.faults == [
+        "R1's leg at C8 is on the strip of V-, but the circuit puts it on GND: it should join "
+        "C3's + leg at H2, C4's + leg at I2, R3's leg at G2 and 3 more.",
+        "R2's leg at J8 is on the strip of GND, but the circuit puts it on V-: it should join "
+        "C4's − leg at I1, the V- supply's wire at A1 and VR1 lug 1's wire at D1.",
+    ]
+
+
+def test_a_rewired_leg_whose_net_is_not_placed_yet_says_so() -> None:
+    parts = {k: v for k, v in GOOD["parts"].items() if k not in ("R3", "C3", "C4")}
+    wires = [{"from": "V-", "hole": "A1"}]
+    p = run({**GOOD, "parts": parts, "wires": wires}, _swapped("R1", "R2"))
+    # GND's six: R3, C3 and C4's legs, the ground wire, both jacks' sleeves
+    assert p.faults == [
+        "R1's leg at C8 is on the strip of V-, but the circuit puts it on GND: it should join "
+        "6 terminals not on the board yet."
+    ]
+
+
+def test_off_board_parts_and_wires_gone_from_the_circuit_are_stale() -> None:
+    """D-376: an off-board part put beside the board, and a wire to its lug, once the
+    schematic no longer has it: stale (one click clears), not a wiring fault."""
+    data = edited(off={"VR9": [2, -8]}, wires=[*GOOD["wires"], {"from": "VR9.1", "hole": "L1"}])
+    p = run(data)
+    assert p.stale == ["VR9"] and p.faults == []
+
+
+def test_a_placed_part_that_cant_be_placed_now_is_not_stale() -> None:
+    """C1 loses its kind in the schematic: still the circuit's, named in the tray."""
+    data = RANGEMASTER.model_dump(mode="json", exclude_none=True)
+    for part in data["parts"]:
+        if part["ref"] == "C1":
+            del part["kind"]
+    p = run(GOOD, Circuit.model_validate(data))
+    assert p.stale == [] and any("C1" in u for u in p.unplaceable)
+
+
 def test_each_leg_says_what_it_must_reach_and_whether_it_does() -> None:
     parts = {k: v for k, v in GOOD["parts"].items() if k != "R2"}
     p = run({**GOOD, "parts": parts})

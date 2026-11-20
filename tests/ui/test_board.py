@@ -384,3 +384,23 @@ def test_an_off_board_part_is_put_beside_the_board_and_wired(
     page.keyboard.press("Control+z")
     expect(vr1).to_have_count(0)
     page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
+
+
+def test_a_part_deleted_from_the_schematic_is_flagged_and_cleared(
+    page: Page, base_url: str
+) -> None:
+    """D-376: R2 deleted in the schematic stays on the board, said in Warnings with one
+    click to clear; Clear them takes it off as one step of the board's history."""
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    click_part(page, "R2")
+    page.keyboard.press("Delete")
+    expect(page.locator('g.part[data-ref="R2"]')).to_have_count(0)
+    show_board(page)
+    stale = page.locator("#board-warnings-body .board-stale")
+    expect(stale).to_contain_text("R2 is no longer in the circuit.")
+    expect(page.locator("#board .board-part.stale[data-ref='R2']")).to_have_count(1)
+    stale.get_by_role("button", name="Clear them").click()
+    expect(page.locator("#board .board-part[data-ref='R2']")).to_have_count(0)
+    expect(stale).to_have_count(0)
+    page.keyboard.press("Control+z")
+    expect(page.locator("#board .board-part.stale[data-ref='R2']")).to_have_count(1)

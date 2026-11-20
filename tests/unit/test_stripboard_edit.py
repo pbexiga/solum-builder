@@ -11,7 +11,15 @@ import pytest
 from solum.circuit.io import load_circuit
 from solum.guides import footprint_table
 from solum.models import load_models
-from solum.stripboard.board import Hole, Layout, layout_data, layout_from_data, parse_hole
+from solum.stripboard.board import (
+    Hole,
+    Layout,
+    Placed,
+    Wire,
+    layout_data,
+    layout_from_data,
+    parse_hole,
+)
 from solum.stripboard.check import check_layout, progress, runs, shorts
 from solum.stripboard.edit import BoardEdit, Edited, EditError, edit_layout
 from solum.stripboard.footprints import board_parts
@@ -170,3 +178,30 @@ def test_the_shorted_copper_is_drawn_red_in_runs() -> None:
     mended = edit(GOOD, holes_edit("uncut", "G8"))
     red = progress(mended, RANGEMASTER, MODELS, TABLE).shorted
     assert (7, 0, 11) in red  # strip 8, A to L
+
+
+def test_clear_takes_off_whatever_the_circuit_no_longer_has() -> None:
+    """D-376: a part, an off-board part beside the board and a wire to its lug, all gone
+    from the schematic, cleared in one edit; the rest kept as it was."""
+    stale = replace(
+        GOOD,
+        parts=(*GOOD.parts, Placed("R9", (("1", parse_hole("L1")), ("2", parse_hole("L5"))))),
+        spots=(("VR9", (2, -8)),),
+        wires=(*GOOD.wires, Wire("VR9.1", parse_hole("L6")), Wire("VR1.3", None, "VR9.2")),
+    )
+    items = {"VR1": ("VR1.1", "VR1.2", "VR1.3"), "IN": ("IN.out", "IN.S"),
+             "OUT": ("OUT.in", "OUT.S"), "power": ("V-", "GND")}  # fmt: skip
+    cleared = edit_layout(stale, BoardEdit("clear"), BOARD, started=True, grow=False,
+                          items=items)  # fmt: skip
+    assert cleared.layout == GOOD
+    with pytest.raises(EditError, match="Nothing on the board is gone from the circuit"):
+        edit_layout(GOOD, BoardEdit("clear"), BOARD, started=True, grow=False, items=items)
+
+
+def test_clear_keeps_a_part_the_circuit_has_but_cant_place_now() -> None:
+    board = {ref: part for ref, part in BOARD.items() if ref != "C1"}
+    r9 = Placed("R9", (("1", parse_hole("L1")), ("2", parse_hole("L5"))))
+    stale = replace(GOOD, parts=(*GOOD.parts, r9), wires=())
+    kept = edit_layout(stale, BoardEdit("clear"), board, started=True, grow=False,
+                       known={"C1"})  # fmt: skip
+    assert kept.layout == replace(GOOD, wires=())

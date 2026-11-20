@@ -200,6 +200,17 @@ def _chip(ref: str, units: Sequence[Part], model: Model, table: FootprintTable) 
     return BoardPart(ref, shape, pins, free, kind="chip")
 
 
+def board_ref(part: Part) -> str:
+    """The board part a circuit part is on: a chip unit's chip (`IC1` for `IC1A`), else its
+    own ref."""
+    return part.chip if isinstance(part, (PowerUnit, *CHIP_UNITS)) else part.ref
+
+
+def board_refs(circuit: Circuit) -> set[str]:
+    """Every board part the circuit has, placeable now or not (D-376)."""
+    return {board_ref(p) for p in circuit.parts if built_where(p) == "board"}
+
+
 def board_parts(circuit: Circuit, models: ModelLibrary,
                 table: FootprintTable) -> tuple[dict[str, BoardPart], list[str]]:  # fmt: skip
     """The parts that go on the board, by board ref, and what can't go on one (plain

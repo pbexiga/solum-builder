@@ -10,7 +10,7 @@ import pytest
 from playwright.sync_api import Page, expect
 
 from solum.yamlio import load_yaml
-from tests.ui.conftest import REPO, open_circuit
+from tests.ui.conftest import REPO, open_circuit, reload_kept
 from tests.ui.test_panes import order as pane_ids
 
 pytestmark = pytest.mark.ui
@@ -81,10 +81,17 @@ def test_a_circuit_without_a_board_shows_its_parts_to_place(page: Page, base_url
     open_with_board(page, base_url, None)
     page.locator("#board-button").click()
     expect(page.locator("#board-size")).to_have_text("Empty board")
-    # the 8 board parts, then the 7 off-board wire ends (VR1's lugs, the supply, IN, OUT)
-    expect(page.locator("#board-tray-body li")).to_have_count(15)
-    expect(page.locator("#board-tray-body li", has_text="off-board wire")).to_have_count(7)
+    # the 8 board parts; off the board VR1, the guitar's and amp's jacks, the stock
+    # footswitch and status LED (the schematic draws neither, D-370); the 7 wire ends
+    expect(page.locator("#board-tray-body li[data-ref]")).to_have_count(13)
     expect(page.locator("#board-tray-body li[data-ref='Q1']")).to_contain_text("in a line")
+    off = page.locator("#board-tray-body .off-board li")
+    expect(off).to_have_text([
+        "VR1 (Volume) A10k log (A)", 'IN (Input) ¼" jack TS', 'OUT (Output) ¼" jack TS',
+        "Footswitch 3PDT stock, true bypass", "Status LED stock",
+    ])  # fmt: skip
+    wires = "GND, IN.out, OUT.in, V-, VR1.1, VR1.2, VR1.3"
+    expect(page.locator("#board-tray-body .wires")).to_have_text(wires)
     expect(page.locator("#board-nets-body .board-progress")).to_have_text("0 of 8 nets done.")
 
 
@@ -153,3 +160,26 @@ def test_a_board_marks_the_button_and_can_be_removed(page: Page, base_url: str) 
     page.keyboard.press("Control+z")
     expect(page.locator("#board .board-part")).to_have_count(8)
     expect(button).to_have_class("board-button marked")
+
+
+def test_show_values_is_a_setting_remembered(page: Page, base_url: str) -> None:
+    """The editor's settings (spec, *Editor settings*): Show values on by default; off, the
+    labels are refs only, and it stays off after a reload (the server keeps it, D-311)."""
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    show_board(page)
+    label = page.locator("#board .board-label[data-ref='R1']")
+    expect(label.locator(".value")).to_have_count(1)
+    page.locator("#board-settings > summary").click()
+    box = page.locator("#board-settings-body input[data-setting='values']")
+    expect(box).to_be_checked()
+    expect(page.locator("#board-settings-body input[data-setting='grow']")).to_be_disabled()
+    box.uncheck()
+    expect(label.locator(".value")).to_have_count(0)
+    expect(label.locator(".ref")).to_have_text("R1")
+    reload_kept(page)
+    show_board(page)
+    expect(page.locator("#board .board-label[data-ref='R1'] .value")).to_have_count(0)
+    expect(page.locator("#board-settings")).to_have_attribute("open", "")  # kept open too
+    page.locator("#board-settings-body input[data-setting='values']").check()
+    expect(page.locator("#board .board-label[data-ref='R1'] .value")).to_have_count(1)
+    page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")

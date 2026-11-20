@@ -983,3 +983,39 @@ def test_the_power_chip_follows_the_cable_and_dc_switches(js: Page) -> None:
     assert [c and c["text"] for c in got] == [
         "Battery · 9 V", "Battery · cut off", "DC jack", "Battery · cut off", "Battery · 9 V", None,
     ]  # fmt: skip
+
+
+def test_the_board_tray_and_settings(js: Page) -> None:
+    """The Board view's tray: on-board parts with footprint, off-board parts as the parts
+    list names them, then the stock bypass (D-370); the editor's settings read with
+    defaults for anything missing or garbled."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const progress = {
+          to_place: ['R1', 'IC1'], pads_to_place: [], unplaceable: [],
+          footprints: { R1: { shape: 'axial', legs: ['1', '2'], refs: ['R1'] }, IC1: { shape: 'dip', legs: ['1','2','3','4','5','6','7','8'], refs: ['IC1A', 'IC1B'] } },
+          off_board: [{ ref: 'VR1 (Gain)', part: 'Pot', value: 'B100k', details: 'linear (B)' }, { ref: 'SW1', part: 'Switch', value: 'SPDT', details: '' }],
+          stock: ['footswitch', 'status LED'],
+        };
+        const circuit = { parts: [{ ref: 'R1', value: '4k7' }, { ref: 'IC1A', model: 'TL072' }] };
+        return {
+          on: b.trayRows(progress, circuit),
+          off: b.offBoardRows(progress),
+          none: b.readSettings(null),
+          some: b.readSettings({ values: false, grow: 'yes' }),
+        };
+        """,
+    )
+    assert got["on"] == [{"ref": "R1", "value": "4k7", "shape": "axial"},
+                         {"ref": "IC1", "value": "TL072", "shape": "DIP-8"}]  # fmt: skip
+    assert got["off"] == [
+        {"ref": "VR1 (Gain)", "value": "B100k", "shape": "linear (B)"},
+        {"ref": "SW1", "value": "SPDT", "shape": "switch"},
+        {"ref": "Footswitch", "value": "3PDT", "shape": "stock, true bypass"},
+        {"ref": "Status LED", "value": "", "shape": "stock"},
+    ]
+    assert got["none"] == {"values": True, "next": True, "shorts": True, "grow": True,
+                           "seeThrough": False}  # fmt: skip
+    assert got["some"] == {**got["none"], "values": False}  # a garbled one at its default

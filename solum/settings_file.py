@@ -24,6 +24,7 @@ PREFERENCE_KEYS = (
     "solum.panes.open",
     "solum.boardPanes",
     "solum.boardPanes.open",
+    "solum.board",
 )
 PREFERENCE_BYTES = 4000  # the most one preference may take as JSON: they are a few names each
 

@@ -80,9 +80,9 @@ export function boardCanvas(svg, app) {
   /**
    * Draw a board. `fit`: fit the view to it (the first time it's shown).
    * @param {Board} board @param {Record<string, Footprint>} footprints @param {any} circuit
-   * @param {{fit?: boolean}} [opts]
+   * @param {{fit?: boolean, values?: boolean}} [opts] `values`: label parts with their values too
    */
-  function draw(board, footprints, circuit, { fit: fitting = false } = {}) {
+  function draw(board, footprints, circuit, { fit: fitting = false, values = true } = {}) {
     holes = shownHoles(board);
     svg.replaceChildren();
     const root = el("g", { class: "board" }, svg);
@@ -147,8 +147,8 @@ export function boardCanvas(svg, app) {
       for (const [, hole] of legs) el("circle", { cx: holeXY(hole)[0], cy: holeXY(hole)[1], r: STEP * 0.16, class: "leg" }, g);
       const [lx, ly] = labelAt(shapes);
       const text = el("text", { x: lx, y: ly, class: "board-label", "text-anchor": "middle", "data-ref": placed.ref }, labels);
-      el("tspan", { x: lx, dy: "-0.15em", class: "ref" }, text).textContent = placed.ref;
-      const value = valueOf(circuit, placed.ref, fp.refs);
+      const value = values ? valueOf(circuit, placed.ref, fp.refs) : "";
+      el("tspan", { x: lx, dy: value ? "-0.15em" : "0.35em", class: "ref" }, text).textContent = placed.ref;
       if (value) el("tspan", { x: lx, dy: "1.05em", class: "value" }, text).textContent = value;
     }
     if (fitting || !shown) fit();

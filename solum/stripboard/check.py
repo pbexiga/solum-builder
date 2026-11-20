@@ -12,8 +12,8 @@ from typing import Literal
 
 from solum.circuit.connectivity import GROUND, Nets, connect
 from solum.circuit.parts import PIN_WORDS, pin_offsets
-from solum.circuit.schema import POLARISED, Battery, Capacitor, Circuit, DcJack
-from solum.export import built_where
+from solum.circuit.schema import POLARISED, Battery, Capacitor, Circuit, DcJack, Switch
+from solum.export import bom, built_where, is_status_led
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
 from solum.stripboard.board import Hole, Layout, Placed, hole_name, segments
@@ -471,16 +471,38 @@ class LegProgress:
 
 
 @dataclass(frozen=True)
+class OffBoardPart:
+    """An off-board part as the tray lists it, one per thing bought (a switch however many
+    poles, a dual pot once, the guitar's and amp's jacks when none is drawn): `ref` with
+    its name ("VR1 (Gain)"), what it is, its value and details, as the parts list says."""
+
+    ref: str
+    part: str
+    value: str
+    details: str
+
+
+def off_board_parts(circuit: Circuit, models: ModelLibrary) -> list[OffBoardPart]:
+    """The off-board parts, from the parts list's own off-board lines (D-203), in its order."""
+    return [OffBoardPart(ref, line.part, line.value, line.details)
+            for line in bom(circuit, models) if line.where == "off-board"
+            for ref in line.refs]  # fmt: skip
+
+
+@dataclass(frozen=True)
 class Progress:
-    """Where a board stands: `to_place` the parts and off-board wires not on it yet (not
-    faults); `unplaceable` a sentence per part that can't go on a board yet (no footprint:
-    it stays in the tray, D-370); `nets` each net's progress; `legs` each board part's
-    legs; `faults` what's wrong now (placement, pads, a part the wrong way round); `stale`
-    parts no longer in the circuit; `warnings` the placement limits broken; `done` the
-    full check passes."""
+    """Where a board stands: `to_place` the parts and `pads_to_place` the off-board wires not on it
+    yet (not faults); `off_board` the off-board parts not yet beside it (every one until they
+    can be dragged in); `stock` the bypass hardware the schematic doesn't draw (`stock_bypass`);
+    `unplaceable` a sentence per part that can't go on a board yet (no footprint: it stays in
+    the tray, D-370); `nets` each net's progress; `legs` each board part's legs; `faults` what's
+    wrong now (placement, pads, a part the wrong way round); `stale` parts no longer in the
+    circuit; `warnings` the placement limits broken; `done` the full check passes."""
 
     to_place: list[str]
     pads_to_place: list[str]
+    off_board: list[OffBoardPart]
+    stock: list[str]
     unplaceable: list[str]
     nets: list[NetProgress]
     legs: dict[str, list[LegProgress]]
@@ -492,6 +514,22 @@ class Progress:
     @property
     def nets_done(self) -> int:
         return sum(n.state == "done" for n in self.nets)
+
+
+STOCK_FOOTSWITCH = "footswitch"
+STOCK_LED = "status LED"
+
+
+def stock_bypass(circuit: Circuit) -> list[str]:
+    """The stock bypass hardware the Board view offers (D-370): a 3PDT footswitch unless
+    the schematic draws a latching footswitch, a status LED unless it draws one (an LED
+    labelled "status"). Never both a drawn one and the stock one."""
+    stomp = any(
+        isinstance(p, Switch) and p.switch_kind.positions == ("On", "Bypassed")
+        for p in circuit.parts
+    )  # the latching stomps (switches.py's `_stomp`), not a momentary one
+    led = any(is_status_led(p) for p in circuit.parts)
+    return [name for name, drawn in ((STOCK_FOOTSWITCH, stomp), (STOCK_LED, led)) if not drawn]
 
 
 def _terminal_id(t: Terminal, words: _Words) -> str:
@@ -586,5 +624,6 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
         legs[ref] = rows
     warnings = limit_warnings(r.layout, placement_limits(circuit, r.nets, r.board))
     done = check_layout(layout, circuit, models, table).ok
-    return Progress(sorted(r.board.keys() - placed), missing, r.unboardable, nets, legs,
-                    faults, stale, warnings, done)  # fmt: skip
+    return Progress(sorted(r.board.keys() - placed), missing,
+                    off_board_parts(circuit, models), stock_bypass(circuit),
+                    r.unboardable, nets, legs, faults, stale, warnings, done)  # fmt: skip

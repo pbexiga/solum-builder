@@ -168,7 +168,9 @@ export function boardRefOf(footprints, ref) {
  * @typedef {{net: string, state: "done" | "pieces" | "shorted", placed: number, total: number,
  *   pieces: number, shorts: Array<{other: string, words: string}>}} NetProgress
  * @typedef {{leg: string, hole: string | null, net: string | null, reach: Array<{to: string, joined: boolean}>}} LegProgress
- * @typedef {{to_place: string[], pads_to_place: string[], unplaceable: string[], nets: NetProgress[],
+ * @typedef {{ref: string, part: string, value: string, details: string}} OffBoardPart
+ * @typedef {{to_place: string[], pads_to_place: string[], off_board: OffBoardPart[], stock: string[],
+ *   unplaceable: string[], nets: NetProgress[],
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
  *   done: boolean, nets_done: number, footprints: Record<string, Footprint>}} Progress
  *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints)
@@ -177,20 +179,57 @@ export function boardRefOf(footprints, ref) {
 const SHAPE_WORDS = /** @type {Record<string, string>} */ ({ axial: "axial", radial: "radial", inline: "in a line", dip: "DIP", sil: "SIL" });
 
 /**
- * The tray's rows: each part still to place, with its value and footprint, then each
- * off-board wire end still without a pad.
+ * The tray's on-board rows: each part still to place, with its value and footprint.
  * @param {Progress} progress @param {any} circuit
  * @returns {Array<{ref: string, value: string, shape: string}>}
  */
 export function trayRows(progress, circuit) {
-  const parts = progress.to_place.map((ref) => {
+  return progress.to_place.map((ref) => {
     const fp = progress.footprints[ref];
     const pins = fp?.legs.length ?? 0;
     const shape = fp ? (fp.shape === "dip" ? `DIP-${pins}` : SHAPE_WORDS[fp.shape] ?? fp.shape) : "";
     return { ref, value: valueOf(circuit, ref, fp?.refs ?? [ref]), shape };
   });
-  const wires = progress.pads_to_place.map((end) => ({ ref: end, value: "", shape: "off-board wire" }));
-  return [...parts, ...wires];
+}
+
+const STOCK_WORDS = /** @type {Record<string, {ref: string, value: string, shape: string}>} */ ({
+  footswitch: { ref: "Footswitch", value: "3PDT", shape: "stock, true bypass" },
+  "status LED": { ref: "Status LED", value: "", shape: "stock" },
+});
+
+/**
+ * The tray's off-board rows: each off-board part as the parts list names it (its details,
+ * else what it is), then the
+ * stock footswitch and status LED the schematic doesn't draw (D-370).
+ * @param {Progress} progress @returns {Array<{ref: string, value: string, shape: string}>}
+ */
+export function offBoardRows(progress) {
+  const parts = progress.off_board.map((p) => ({ ref: p.ref, value: p.value, shape: p.details || p.part.toLowerCase() }));
+  return [...parts, ...progress.stock.map((id) => STOCK_WORDS[id] ?? { ref: id, value: "", shape: "stock" })];
+}
+
+/**
+ * The editor's settings (spec, *Editor settings*), each on or off, remembered per viewer
+ * (`solum.board`). `acts`: whether it does anything yet (the rest come with the editing
+ * and guidance they belong to, P6b and P6c).
+ */
+export const BOARD_SETTINGS = /** @type {const} */ ([
+  { key: "values", label: "Show values", on: true, acts: true, title: "Label each part with its value as well as its ref" },
+  { key: "next", label: "What to place next", on: true, acts: false, title: "Suggest the part to place next" },
+  { key: "shorts", label: "Allow shorts while editing, shown red", on: true, acts: false, title: "Off: a move that makes a short is refused" },
+  { key: "grow", label: "Auto-grow", on: true, acts: false, title: "The board grows as parts are placed near its edge" },
+  { key: "seeThrough", label: "See-through", on: false, acts: false, title: "The copper side faint under the parts" },
+]);
+
+/** @typedef {Record<(typeof BOARD_SETTINGS)[number]["key"], boolean>} BoardSettings */
+
+/**
+ * The settings as kept, each missing or garbled one at its default.
+ * @param {unknown} kept @returns {BoardSettings}
+ */
+export function readSettings(kept) {
+  const from = kept && typeof kept === "object" ? /** @type {Record<string, unknown>} */ (kept) : {};
+  return /** @type {BoardSettings} */ (Object.fromEntries(BOARD_SETTINGS.map((s) => [s.key, typeof from[s.key] === "boolean" ? from[s.key] : s.on])));
 }
 
 /**

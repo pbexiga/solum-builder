@@ -12,7 +12,7 @@ from solum.circuit.schema import Circuit
 from solum.guides import footprint_table
 from solum.models import load_models
 from solum.stripboard.board import layout_from_data, parse_hole
-from solum.stripboard.check import Progress, check_layout, progress
+from solum.stripboard.check import Progress, check_layout, progress, stock_bypass
 from solum.stripboard.footprints import board_parts
 from solum.stripboard.limits import Limit, group_met, limit_warnings, placement_limits
 from solum.yamlio import load_yaml
@@ -161,3 +161,30 @@ def test_group_met_counts_holes_from_the_pin_one_more_per_extra_leg() -> None:
     assert group_met(pin, [parse_hole("H3"), parse_hole("C3")], clear)  # 3 with two legs
     assert not group_met(pin, [parse_hole("G4")], clear)  # another strip
     assert not group_met(pin, [parse_hole("G3")], lambda h: h == parse_hole("F3"))
+
+
+def test_the_tray_lists_off_board_parts_as_the_parts_list_does() -> None:
+    """The Rangemaster's pot, and the guitar's and amp's jacks it doesn't draw."""
+    p = run({"size": [12, 9]})
+    assert [(o.ref, o.part, o.value) for o in p.off_board] == [
+        ("VR1 (Volume)", "Pot", "A10k"), ("IN (Input)", "Jack", '¼" jack'),
+        ("OUT (Output)", "Jack", '¼" jack'),
+    ]  # fmt: skip
+
+
+def test_stock_bypass_only_when_the_schematic_draws_none() -> None:
+    """D-370: a drawn footswitch or status LED replaces the stock one; never both."""
+    assert stock_bypass(RANGEMASTER) == ["footswitch", "status LED"]
+    klon = load_circuit(LIBRARY / "starters" / "klon-centaur-aion-built.json")
+    assert stock_bypass(klon) == ["status LED"]  # its LED1 isn't labelled "status"
+    data = klon.model_dump(mode="json", exclude_none=True)
+    data["parts"] = [p for p in data["parts"] if p["ref"] not in ("SW2B", "SW2C")]
+    for part in data["parts"]:
+        if part["ref"] == "LED1":
+            part["label"] = "Status"
+        if part["type"] == "switch" and part["kind"] == "footswitch":
+            part["kind"] = "footswitch-momentary"  # a tap-tempo switch is no bypass
+            part.pop("pole", None)
+            part["ref"] = "SW2"
+    data["wires"] = []  # the poles' wires went with them; stock_bypass reads only parts
+    assert stock_bypass(Circuit.model_validate(data)) == ["footswitch"]

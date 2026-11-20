@@ -15,8 +15,9 @@ import { h } from "../panels.js";
 import { reorderable } from "../panes.js";
 import { Schematic } from "../schematic/render.js";
 import { latestOnly } from "../state.js";
+import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
-import { boardRefOf, netWords, netsLine, partsOnNet, readBoard, sizeLine, trayRows } from "./board-logic.js";
+import { BOARD_SETTINGS, boardRefOf, netWords, netsLine, offBoardRows, partsOnNet, readBoard, readSettings, sizeLine, trayRows } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -37,6 +38,7 @@ import { boardRefOf, netWords, netsLine, partsOnNet, readBoard, sizeLine, trayRo
  */
 
 const BUTTON_TITLE = "Lay out a stripboard for this circuit";
+const SETTINGS_KEY = "solum.board"; // the editor's settings, kept by the server (D-311)
 const HINT = "The board, parts side. Click a part to select it on both drawings. Drag the board to pan, scroll to zoom.";
 
 /**
@@ -59,6 +61,7 @@ export function boardView(host, app) {
   /** @type {any} the circuit `progress` is of */
   let checked = null;
   const requests = latestOnly();
+  let settings = readSettings(remembered(SETTINGS_KEY));
 
   const canvas = boardCanvas(svg, {
     onPart: (ref) => {
@@ -117,7 +120,7 @@ export function boardView(host, app) {
   function draw() {
     const circuit = app.circuit();
     const board = readBoard(circuit?.stripboard);
-    canvas.draw(board, progress?.footprints ?? {}, circuit, { fit: !fitted });
+    canvas.draw(board, progress?.footprints ?? {}, circuit, { fit: !fitted, values: settings.values });
     fitted = true;
     sizeNote.textContent = sizeLine(board);
     light(app.selection());
@@ -147,19 +150,24 @@ export function boardView(host, app) {
   function fillPanes() {
     if (!progress) return;
     const circuit = app.circuit();
-    const rows = trayRows(progress, circuit);
+    const row = (/** @type {{ref: string, value: string, shape: string}} */ r) => h("li", { "data-ref": r.ref }, [
+      h("span", { class: "ref" }, [r.ref]), " ", ...(r.value ? [h("span", { class: "value" }, [r.value]), " "] : []), h("span", { class: "shape" }, [r.shape]),
+    ]);
+    const on = trayRows(progress, circuit);
+    const off = offBoardRows(progress);
+    const wires = progress.pads_to_place;
     const unplaceable = progress.unplaceable;
-    const left = rows.length + unplaceable.length;
+    const left = on.length + off.length + wires.length + unplaceable.length;
+    /** @param {string} title @param {HTMLElement[]} items @param {string} [cls] */
+    const section = (title, items, cls = "") => (items.length
+      ? [h("p", { class: "board-subhead" }, [title]), h("ul", { class: `board-list ${cls}`.trim() }, items)]
+      : []);
     $("board-tray-count").textContent = left ? `· ${left}` : "";
     $("board-tray-body").replaceChildren(
-      ...(rows.length ? [h("ul", { class: "board-list" }, rows.map((r) => h("li", { "data-ref": r.ref }, [
-        h("span", { class: "ref" }, [r.ref]), " ", h("span", { class: "value" }, [r.value]), " ", h("span", { class: "shape" }, [r.shape]),
-      ])))] : []),
-      ...(unplaceable.length ? [
-        h("p", { class: "board-subhead" }, ["Can't be placed yet"]),
-        h("ul", { class: "board-list unplaceable" }, unplaceable.map((text) => h("li", {}, [text]))),
-      ] : []),
-      ...(left ? [] : [h("p", { class: "empty" }, ["Every part is on the board."])]),
+      ...(on.length || unplaceable.length ? section("On the board", on.map(row)) : [h("p", { class: "empty" }, ["Every part is on the board."])]),
+      ...section("Off the board", off.map(row), "off-board"),
+      ...section("Wires to the board", wires.length ? [h("li", { class: "wires" }, [[...wires].sort().join(", ")])] : []),
+      ...section("Can't be placed yet", unplaceable.map((text) => h("li", {}, [text])), "unplaceable"),
     );
     $("board-nets-count").textContent = progress.nets.length ? `· ${progress.nets_done}/${progress.nets.length}` : "";
     $("board-nets-body").replaceChildren(
@@ -178,15 +186,25 @@ export function boardView(host, app) {
     fillSettings();
   }
 
-  /** Settings: the editor's settings (to come), *Remove board* at the bottom once one is started. */
+  /** Settings: the editor's settings, remembered per viewer; *Remove board* at the bottom once one is started. */
   function fillSettings() {
+    const boxes = BOARD_SETTINGS.map((setting) => {
+      const box = /** @type {HTMLInputElement} */ (h("input", { type: "checkbox", "data-setting": setting.key }));
+      box.checked = settings[setting.key];
+      box.disabled = !setting.acts;
+      box.addEventListener("change", () => {
+        settings = { ...settings, [setting.key]: box.checked };
+        remember(SETTINGS_KEY, settings);
+        draw();
+      });
+      const label = h("label", { class: setting.acts ? "board-setting" : "board-setting later" }, [box, " ", setting.label]);
+      label.title = setting.acts ? setting.title : `${setting.title}. Comes with placing parts.`;
+      return label;
+    });
     const remove = h("button", { type: "button", id: "remove-board", class: "remove-board" }, ["Remove board"]);
     remove.title = "Take every part, cut, link and wire off the board (Undo brings them back)";
     remove.addEventListener("click", () => app.removeBoard());
-    $("board-settings-body").replaceChildren(
-      h("p", { class: "empty" }, ["The editor's settings come with placing parts."]),
-      ...(app.circuit()?.stripboard ? [remove] : []),
-    );
+    $("board-settings-body").replaceChildren(...boxes, ...(app.circuit()?.stripboard ? [remove] : []));
   }
 
   /** The button marked once the open circuit has a board. */

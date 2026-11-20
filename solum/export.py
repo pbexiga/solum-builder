@@ -67,6 +67,11 @@ ON_BOARD = (Resistor, Capacitor, Inductor, Trimmer, Diode, Bjt, Jfet, Mosfet, Ch
             Regulator, PowerUnit, *CHIP_UNITS)  # fmt: skip
 
 
+def is_status_led(part: Part) -> bool:
+    """Whether `part` is the bypass's status LED: an LED labelled "status" (any case)."""
+    return isinstance(part, Led) and (part.label or "").strip().lower() == STATUS_LED
+
+
 def built_where(part: Part) -> Where | None:
     """Where `part` is built (D-203): on the board or off it; None for what isn't bought
     (the guitar, the amp, a test source; a chip's power unit is its chip, on the board).
@@ -77,7 +82,7 @@ def built_where(part: Part) -> Where | None:
     if isinstance(part, Switch):
         return "board" if part.switch_kind.group == "DIP" else "off-board"
     if isinstance(part, Led):
-        return "off-board" if (part.label or "").strip().lower() == STATUS_LED else "board"
+        return "off-board" if is_status_led(part) else "board"
     if isinstance(part, ON_BOARD):
         return "board"
     return None
@@ -327,7 +332,7 @@ def hardware(circuit: Circuit, models: ModelLibrary) -> list[BomLine]:
         lines.append(BomLine("hardware", "IC socket", name, "so the chip can be swapped",
                              tuple(sorted(refs_, key=ref_key))))  # fmt: skip
     for p in circuit.parts:
-        if isinstance(p, Led) and (p.label or "").strip().lower() == STATUS_LED:
+        if isinstance(p, Led) and is_status_led(p):
             lines.append(
                 BomLine("hardware", "LED bezel", "", f"for {p.model}", (_named(p.ref, p.label),))
             )

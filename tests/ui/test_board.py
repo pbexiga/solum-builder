@@ -404,3 +404,47 @@ def test_a_part_deleted_from_the_schematic_is_flagged_and_cleared(
     expect(stale).to_have_count(0)
     page.keyboard.press("Control+z")
     expect(page.locator("#board .board-part.stale[data-ref='R2']")).to_have_count(1)
+
+
+def test_a_part_placed_finishes_its_nets_and_the_board_is_saved_as_it_was(
+    page: Page, base_url: str
+) -> None:
+    """P6b's tests item and *Accept when*: C3 dragged from the tray finishes its two nets;
+    flipped, it's named the wrong way round as it's made; undone; saved, reloaded and
+    shown again as it was."""
+    board = load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml")
+    del board["parts"]["C3"]
+    open_with_board(page, base_url, board)
+    show_board(page)
+    progress = page.locator("#board-nets-body .board-progress")
+    warnings = page.locator("#board-warnings-body")
+    expect(progress).to_have_text("6 of 8 nets done.")
+    tray_c3 = page.locator("#board-tray-body li[data-ref='C3']")
+    box = tray_c3.bounding_box()
+    assert box
+    drag_to(page, (box["x"] + 20, box["y"] + box["height"] / 2), hole_point(page, 7, 2))  # H3
+    c3 = page.locator("#board .board-part[data-ref='C3']")
+    expect(c3).to_have_count(1)
+    expect(progress).to_have_text("All 8 nets done.")
+    expect(warnings).to_have_text("The board matches the circuit.")
+    # flipped: its legs swap strips, named as it's made
+    # by its leg at H3, under a wire across the board: the wire doesn't take the click
+    page.mouse.click(*hole_point(page, 7, 2))
+    expect(c3).to_have_class("board-part selected")
+    page.keyboard.press("f")
+    expect(warnings).to_contain_text("C3 is the wrong way round")
+    page.keyboard.press("Control+z")
+    expect(warnings).to_have_text("The board matches the circuit.")
+    # saved, reloaded: the board as it was
+    page.keyboard.press("Control+s")
+    expect(page.locator("#dirty")).to_be_hidden()
+    page.reload()
+    expect(page.locator("#board-button")).to_be_visible()
+    show_board(page)
+    expect(c3).to_have_count(1)
+    expect(page.locator("#board .board-part")).to_have_count(8)
+    expect(page.locator("#board-size-text")).to_have_text(
+        "12 × 9 holes (30 × 23 mm), 1 cut, 2 links, 9 wires"
+    )
+    expect(progress).to_have_text("All 8 nets done.")
+    expect(warnings).to_have_text("The board matches the circuit.")

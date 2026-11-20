@@ -221,7 +221,6 @@ export function boardCanvas(svg, app) {
     const wires = el("g", { class: "off-wires" }, root); // over the parts: a wire lies on top
     for (const { index, line, title } of off.wires) {
       const g = el("g", { class: line.loose ? "off-wire loose" : "off-wire", "data-wire": index }, wires);
-      el("line", { x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, class: "wire-hit" }, g);
       el("line", { x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, class: "wire" }, g);
       const length = Math.hypot(line.x2 - line.x1, line.y2 - line.y1) || 1;
       const grip = Math.min(STEP * 0.7, length / 3); // the lug end's grip, a little way along

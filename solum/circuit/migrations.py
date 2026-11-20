@@ -1033,6 +1033,19 @@ def _v34_to_v35(data: Data) -> Data:
     return data
 
 
+def _v35_to_v36(data: Data) -> Data:
+    """v36 (D-375): off-board parts are put beside the board and wired to it. A v35 board's
+    pads (`{hole: [ends]}`) become wires from each end to its hole; no spots yet (the
+    page draws a wired part at its default spot)."""
+    board = data.get("stripboard")
+    if not isinstance(board, dict) or "pads" not in board:
+        return data
+    pads = board.get("pads") or {}
+    wires = [{"from": end, "hole": hole} for hole, ends in pads.items() for end in ends]
+    rest = {k: v for k, v in board.items() if k != "pads"}
+    return {**data, "stripboard": {**rest, "wires": wires}}
+
+
 MIGRATIONS: dict[int, Migration] = {
     1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5, 5: _v5_to_v6, 6: _v6_to_v7,
     7: _v7_to_v8, 8: _v8_to_v9, 9: _v9_to_v10,
@@ -1042,6 +1055,7 @@ MIGRATIONS: dict[int, Migration] = {
     23: _v23_to_v24, 24: _v24_to_v25, 25: _v25_to_v26, 26: _v26_to_v27,
     27: _v27_to_v28, 28: _v28_to_v29, 29: _v29_to_v30, 30: _v30_to_v31,
     31: _v31_to_v32, 32: _v32_to_v33, 33: _v33_to_v34, 34: _v34_to_v35,
+    35: _v35_to_v36,
 }  # fmt: skip
 
 

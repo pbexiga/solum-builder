@@ -131,11 +131,13 @@ from solum.simulate import (
     simulator_from_settings,
 )
 from solum.store import CircuitStore, StoreError, blank_circuit, split_id
-from solum.stripboard.board import Layout, layout_data, layout_from_data
+from solum.stripboard.board import Layout, layout_data
 from solum.stripboard.check import progress, shorts
 from solum.stripboard.edit import BoardEdit, EditError, EditKind, edit_layout
 from solum.stripboard.footprints import board_parts, drawing_data
+from solum.stripboard.offboard import off_board_items
 from solum.stripboard.size import Axis, SizeError, insert_line, remove_line, start_size, trim
+from solum.stripboard.wiring import WiringError, wire_for_me
 from solum.units import parse_value
 from solum.view import circuit_view
 from solum.wiring import wiring_page
@@ -204,6 +206,8 @@ class BoardEditRequest(BaseModel):
     legs: dict[str, tuple[int, int]] = {}
     standing: bool = False
     holes: list[tuple[int, int]] = []
+    to: str | None = None  # a wire's other lug (D-375)
+    index: int = -1  # the wire `unwire` and `rewire` act on
     grow: bool = True
     shorts: bool = True
 
@@ -1096,15 +1100,18 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def stripboard(req: CircuitRequest) -> dict[str, Any]:
         """The Board view's progress check (D-368) of the open circuit's board (none yet:
         an empty one): what's left to place, each net, each leg, what's wrong now; with
-        each board part's footprint to draw it by (`footprints`), and the size an empty
-        board starts at (`start_size`, D-372)."""
+        each board part's footprint to draw it by (`footprints`), each off-board part's
+        drawing's size in holes (`items[].size`, D-375), and the size an empty board starts
+        at (`start_size`, D-372)."""
         circuit = parse_circuit(req.circuit)
         board = circuit.stripboard
-        layout = layout_from_data(board.model_dump()) if board else Layout(0, 0, ())
+        layout = board.layout() if board else Layout(0, 0, ())
         table = footprint_table(settings.library_dir)
         found = progress(layout, circuit, models, table)
         parts = board_parts(circuit, models, table)[0]
-        return {**asdict(found), "nets_done": found.nets_done, "footprints": drawing_data(parts),
+        items = [{**asdict(i), "size": i.size} for i in found.items]
+        return {**asdict(found), "items": items, "nets_done": found.nets_done,
+                "footprints": drawing_data(parts),
                 "start_size": list(start_size(parts))}  # fmt: skip
 
     @app.post("/api/stripboard/size")
@@ -1117,7 +1124,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(
                 422, "Place something on the board first: an empty board has no size yet."
             )
-        layout = layout_from_data(circuit.stripboard.model_dump())
+        layout = circuit.stripboard.layout()
         parts = board_parts(circuit, models, footprint_table(settings.library_dir))[0]
         try:
             if req.change == "trim":
@@ -1140,11 +1147,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         table = footprint_table(settings.library_dir)
         parts = board_parts(circuit, models, table)[0]
         kept = circuit.stripboard
-        layout = layout_from_data(kept.model_dump()) if kept else Layout(*start_size(parts), ())
+        layout = kept.layout() if kept else Layout(*start_size(parts), ())
         edit = BoardEdit(req.kind, req.ref, tuple(req.legs.items()), req.standing,
-                         tuple(req.holes))  # fmt: skip
+                         tuple(req.holes), req.to, req.index)  # fmt: skip
+        items = {i.ref: tuple(lug.end for lug in i.lugs)
+                 for i in off_board_items(circuit, connect(circuit), parts, models)}  # fmt: skip
         try:
-            edited = edit_layout(layout, edit, parts, started=kept is not None, grow=req.grow)
+            edited = edit_layout(layout, edit, parts, started=kept is not None, grow=req.grow,
+                                 items=items)  # fmt: skip
         except EditError as err:
             raise HTTPException(422, str(err)) from None
         if not req.shorts:
@@ -1154,6 +1164,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             if new:
                 raise HTTPException(422, f"{new[0]} Shorts are off in Settings.")
         return {"stripboard": layout_data(edited.layout), "shift": list(edited.shift)}
+
+    @app.post("/api/stripboard/wire")
+    def stripboard_wire(req: CircuitRequest) -> dict[str, Any]:
+        """*Wire it for me* (D-375): the open circuit's board with its off-board parts put
+        beside it and every lug still to wire wired; nothing to do is a 422 saying why."""
+        circuit = parse_circuit(req.circuit)
+        table = footprint_table(settings.library_dir)
+        kept = circuit.stripboard
+        if kept is None:
+            raise HTTPException(422, "Place the parts on the board first: then their wires.")
+        try:
+            wired = wire_for_me(kept.layout(), circuit, models, table)
+        except WiringError as err:
+            raise HTTPException(422, str(err)) from None
+        return {"stripboard": layout_data(wired)}
 
     @app.post("/api/part")
     def part(req: PartRequest) -> dict[str, Any]:

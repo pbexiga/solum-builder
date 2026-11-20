@@ -1,7 +1,8 @@
 """The check of a stripboard layout against its circuit (D-367).
 
 The board is read back into nets (strips between cuts, joined by links; each leg puts its
-pin on its strip; each pad its off-board ends) and compared, pin for pin, with the
+pin on its strip; each off-board wire its lug on its pad's strip or with another lug,
+D-375) and compared, pin for pin, with the
 circuit's own nets from `connect`: there is no second notion of a net. Every fault is a
 plain-English sentence naming the parts and holes; a layout with none is the circuit.
 """
@@ -11,17 +12,17 @@ from dataclasses import dataclass, field, replace
 from typing import Literal
 
 from solum.circuit.connectivity import GROUND, Nets, connect
-from solum.circuit.parts import PIN_WORDS, pin_offsets
-from solum.circuit.schema import POLARISED, Battery, Capacitor, Circuit, DcJack, Switch
-from solum.export import bom, built_where, is_status_led
+from solum.circuit.parts import PIN_WORDS
+from solum.circuit.schema import POLARISED, Capacitor, Circuit, Switch
+from solum.export import built_where, is_status_led
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
 from solum.stripboard.board import Hole, Layout, Placed, hole_name, segments
 from solum.stripboard.footprints import BoardPart, PinRef, board_parts, body_holes, leg_problem
 from solum.stripboard.limits import limit_warnings, placement_limits
+from solum.stripboard.offboard import SLEEVE, OffItem, default_spots, lug_nets, off_board_items
 
-Terminal = PinRef | str  # a board part's pin, or an off-board end ("VR1.1", "V+")
-SUPPLY_PARTS = (Battery, DcJack)  # a drawn supply: its own pins are the supply's wires
+Terminal = PinRef | str  # a board part's pin, or an off-board lug ("VR1.1", "IN.S", "V+")
 _TWO_PIN_WORDS = {"A": "anode", "K": "cathode"}
 _TRIMMER_WORDS = {"1": "lug 1", "2": "wiper", "3": "lug 3"}
 
@@ -39,30 +40,12 @@ class Checked:
         return not self.faults
 
 
-def off_board_ends(circuit: Circuit, nets: Nets, board: dict[str, BoardPart]) -> dict[str, str]:
-    """Every off-board wire the board needs, end → net: each off-board part's pin on a net
-    the board carries (pot lugs, IN's and OUT's, a jack's), and each supply rail and
-    ground the board carries unless a drawn battery or DC jack's pin brings it."""
-    carried = {nets.net_of(*pin) for part in board.values() for pin in part.pins.values()}
-    ends: dict[str, str] = {}
-    brought: set[str] = set()
-    for part in circuit.parts:
-        if built_where(part) == "board":
-            continue
-        for pin in pin_offsets(part):
-            net = nets.by_pin.get((part.ref, pin))
-            if net in carried:
-                ends[f"{part.ref}.{pin}"] = net
-                if isinstance(part, SUPPLY_PARTS):
-                    brought.add(net)
-    for supply in sorted({*circuit.power.rails, GROUND} & carried - brought):
-        ends[supply] = supply
-    return ends
-
-
 def end_words(end: str) -> str:
-    """An off-board end in words: "the input", "ground", "the V- supply", "VR1 lug 1"."""
-    named = {"IN.out": "the input", "OUT.in": "the output", GROUND: "ground"}
+    """An off-board lug in words: "the input", "the input jack's sleeve", "ground", "the V-
+    supply", "VR1 lug 1"."""
+    named = {"IN.out": "the input", "OUT.in": "the output", GROUND: "ground",
+             f"IN.{SLEEVE}": "the input jack's sleeve",
+             f"OUT.{SLEEVE}": "the output jack's sleeve"}  # fmt: skip
     if end in named:
         return named[end]
     ref, dot, pin = end.partition(".")
@@ -88,15 +71,15 @@ class _Words:
                     self.where[pin] = hole_name(hole)
                     self.hole_of[pin] = hole
                     self.leg_of[pin] = (placed.ref, leg)
-        for pad in layout.pads:
-            for end in pad.ends:
-                self.where[end] = hole_name(pad.hole)
-                self.hole_of[end] = pad.hole
+        for wire in layout.wires:
+            if wire.hole is not None:
+                self.where.setdefault(wire.lug, hole_name(wire.hole))
+                self.hole_of.setdefault(wire.lug, wire.hole)
 
     def __call__(self, terminal: Terminal) -> str:
         at = self.where.get(terminal, "")
         if isinstance(terminal, str):
-            return f"the wire to {end_words(terminal)} (pad {at})"
+            return f"{end_words(terminal)}'s wire at {at}" if at else end_words(terminal)
         ref, pin = terminal
         board_ref, leg = self.leg_of.get(terminal, (ref, pin))
         part = self.board.get(board_ref)
@@ -116,7 +99,7 @@ class _Words:
 
 
 def _occupants(layout: Layout) -> tuple[dict[Hole, list[str]], list[str]]:
-    """Who has a wire or leg in each hole, and the faults of where links and pads are."""
+    """Who has a wire or leg in each hole, and the faults of where links and wires are."""
     used: dict[Hole, list[str]] = defaultdict(list)
     faults = []
     for placed in layout.parts:
@@ -128,8 +111,9 @@ def _occupants(layout: Layout) -> tuple[dict[Hole, list[str]], list[str]]:
             faults.append(f"A link runs down a column: {name} doesn't.")
         for hole in (link.a, link.b):
             used[hole].append(name)
-    for pad in layout.pads:
-        used[pad.hole].append(f"the pad for {', '.join(end_words(e) for e in pad.ends)}")
+    for wire in layout.wires:
+        if wire.hole is not None:
+            used[wire.hole].append(f"the wire from {end_words(wire.lug)}")
     for hole, who in sorted(used.items(), key=lambda kv: (kv[0][1], kv[0][0])):
         if not layout.on_board(hole):
             faults.append(f"{_cap(who[0])} is at {hole_name(hole)}, off the board.")
@@ -157,7 +141,7 @@ def placement_faults(layout: Layout, board: dict[str, BoardPart],
         faults.append(f"{ref} isn't on the board.")
     for ref in sorted(placed.keys() - board.keys()):
         if ref in off_board:
-            faults.append(f"{ref} goes off the board: wire it to pads instead.")
+            faults.append(f"{ref} goes off the board: put it beside the board and wire it.")
         else:
             faults.append(f"{ref} is on the board but not in the circuit.")
     used, occupied = _occupants(layout)
@@ -212,10 +196,48 @@ def copper_groups(layout: Layout) -> dict[Hole, int]:
     return {hole: find(n) for hole, n in seg.items()}
 
 
+def joined_groups(layout: Layout) -> tuple[dict[Hole, int], dict[str, int]]:
+    """Each copper hole's group and each wired lug's, wires joining them (D-375): a lug
+    wired to a hole is in that hole's group, lugs wired together share one; a lug only on
+    a loose wire, or wired to a cut hole or one off the board, has none."""
+    copper = copper_groups(layout)
+    parent: dict[tuple[str, object], tuple[str, object]] = {}
+
+    def find(node: tuple[str, object]) -> tuple[str, object]:
+        while parent.get(node, node) != node:
+            node = parent[node]
+        return node
+
+    def join(a: tuple[str, object], b: tuple[str, object]) -> None:
+        ra, rb = find(a), find(b)
+        if ra != rb:
+            parent[max(ra, rb, key=repr)] = min(ra, rb, key=repr)
+
+    for wire in layout.wires:
+        if wire.hole is not None and wire.hole in copper:
+            join(("lug", wire.lug), ("copper", copper[wire.hole]))
+        elif wire.to is not None:
+            join(("lug", wire.lug), ("lug", wire.to))
+    members: dict[tuple[str, object], list[tuple[str, object]]] = defaultdict(list)
+    for node in list(parent):
+        members[find(node)].append(node)
+    fresh = max(copper.values(), default=0) + 1
+    number: dict[tuple[str, object], int] = {}
+    for root, nodes in sorted(members.items(), key=lambda kv: repr(kv[0])):
+        coppers = [int(str(n[1])) for n in [root, *nodes] if n[0] == "copper"]
+        if coppers:
+            number[root] = min(coppers)
+        else:
+            number[root], fresh = fresh, fresh + 1
+    holes = {h: number.get(find(("copper", g)), g) for h, g in copper.items()}
+    lugs = {str(n[1]): number[find(n)] for n in [*parent, *members] if n[0] == "lug"}
+    return holes, lugs
+
+
 def stripboard_nets(layout: Layout, board: dict[str, BoardPart]) -> dict[Terminal, int]:
     """The board read back into nets: each terminal (a board part's pin, a free leg as
-    (ref, "#leg"), a pad's end) → its group; terminals in one group are joined."""
-    copper = copper_groups(layout)
+    (ref, "#leg"), a wired lug) → its group; terminals in one group are joined."""
+    copper, lugs = joined_groups(layout)
     groups: dict[Terminal, int] = {}
     for placed in layout.parts:
         part = board.get(placed.ref)
@@ -226,10 +248,7 @@ def stripboard_nets(layout: Layout, board: dict[str, BoardPart]) -> dict[Termina
                 groups[part.pins[leg]] = copper[hole]
             elif leg in part.free:
                 groups[(placed.ref, f"#{leg}")] = copper[hole]
-    for pad in layout.pads:
-        if pad.hole in copper:
-            for end in pad.ends:
-                groups[end] = copper[pad.hole]
+    groups.update(lugs)
     return groups
 
 
@@ -294,7 +313,7 @@ def either_way(part: BoardPart, circuit_part: object) -> bool:
 def _expected(groups: dict[Terminal, int], ends: dict[str, str],
               nets: Nets) -> dict[Terminal, str]:  # fmt: skip
     """Each terminal on the board → the net the circuit puts it on (a free leg a net of
-    its own, a pad's end its wire's net; a pad for nothing, none)."""
+    its own, a lug its pin's net; a lug of nothing, none)."""
     expected: dict[Terminal, str] = {}
     for t in groups:
         if isinstance(t, str):
@@ -370,47 +389,53 @@ class _Reading:
     board: dict[str, BoardPart]
     unboardable: list[str]  # parts the footprints table can't size
     off_board: set[str]
-    ends: dict[str, str]
+    items: list[OffItem]
+    ends: dict[str, str]  # every lug → its net
+    needed: set[str]  # the lugs on a net with something else to join
     layout: Layout  # either-way parts turned to fit
     words: _Words
     groups: dict[Terminal, int]
     expected: dict[Terminal, str]
 
 
-def _read(layout: Layout, circuit: Circuit, models: ModelLibrary,
+def read_layout(layout: Layout, circuit: Circuit, models: ModelLibrary,
           table: FootprintTable) -> _Reading:  # fmt: skip
     nets = connect(circuit)
     board, unboardable = board_parts(circuit, models, table)
     off_board = {p.ref for p in circuit.parts if built_where(p) != "board"}
-    ends = off_board_ends(circuit, nets, board)
+    items = off_board_items(circuit, nets, board, models)
+    ends = lug_nets(items)
+    count: dict[str, int] = defaultdict(int)
+    for part in board.values():
+        for pin in part.pins.values():
+            count[nets.net_of(*pin)] += 1
+    for net in ends.values():
+        count[net] += 1
+    needed = {end for end, net in ends.items() if count[net] > 1}
     layout = _oriented(layout, board, circuit, nets, ends)
     groups = stripboard_nets(layout, board)
-    return _Reading(nets, board, unboardable, off_board, ends, layout,
+    return _Reading(nets, board, unboardable, off_board, items, ends, needed, layout,
                     _Words(circuit, board, layout), groups,
                     _expected(groups, ends, nets))  # fmt: skip
 
 
-def _pad_faults(layout: Layout, ends: dict[str, str]) -> tuple[list[str], list[str]]:
-    """Pads for nothing or twice over, and the ends that have no pad yet."""
+def _wire_faults(r: _Reading) -> tuple[list[str], list[str], int]:
+    """Wires from or to a lug the circuit has no such lug for, or from a lug to itself;
+    the needed lugs not wired to anything yet; how many wires are loose."""
     faults = []
-    seen: dict[str, str] = {}
-    for pad in layout.pads:
-        for end in pad.ends:
-            if end not in ends:
-                faults.append(
-                    f"Pad {hole_name(pad.hole)} goes to {end!r}, which isn't an off-board "
-                    "wire this circuit needs."
-                )
-            elif end in seen:
-                faults.append(
-                    f"{_cap(end_words(end))} has two pads ({seen[end]} and "
-                    f"{hole_name(pad.hole)}): give it one."
-                )
-            seen.setdefault(end, hole_name(pad.hole))
-    return faults, [end for end in ends if end not in seen]
+    for wire in r.layout.wires:
+        for lug in (wire.lug, wire.to):
+            if lug is not None and lug not in r.ends:
+                faults.append(f"A wire goes to {lug!r}, which isn't an off-board lug of this "
+                              "circuit.")  # fmt: skip
+        if wire.to == wire.lug:
+            faults.append(f"A wire runs from {end_words(wire.lug)} to itself.")
+    loose = sum(w.hole is None and w.to is None for w in r.layout.wires)
+    unwired = [end for end in r.ends if end in r.needed and end not in r.groups]
+    return faults, unwired, loose
 
 
-def _by_group(r: _Reading) -> dict[int, dict[str, list[Terminal]]]:
+def groups_by_net(r: _Reading) -> dict[int, dict[str, list[Terminal]]]:
     """Each joined group of the board → its terminals by the net the circuit wants."""
     found: dict[int, dict[str, list[Terminal]]] = defaultdict(lambda: defaultdict(list))
     for t in sorted(r.expected, key=_key):
@@ -421,13 +446,15 @@ def _by_group(r: _Reading) -> dict[int, dict[str, list[Terminal]]]:
 def check_layout(layout: Layout, circuit: Circuit, models: ModelLibrary,
                  table: FootprintTable) -> Checked:  # fmt: skip
     """Check `layout` against `circuit`: every fault in plain English (D-367)."""
-    r = _read(layout, circuit, models, table)
+    r = read_layout(layout, circuit, models, table)
     faults = [*r.unboardable, *placement_faults(r.layout, r.board, r.off_board)]
-    pads, missing = _pad_faults(r.layout, r.ends)
-    faults += pads + [f"There's no pad for {end_words(end)}." for end in missing]
+    wiring, unwired, _ = _wire_faults(r)
+    faults += wiring + [f"{_cap(end_words(end))} isn't wired yet." for end in unwired]
+    faults += [f"The wire from {end_words(w.lug)} is loose: solder its other end."
+               for w in r.layout.wires if w.hole is None and w.to is None]  # fmt: skip
     by_net: dict[str, dict[int, list[Terminal]]] = defaultdict(lambda: defaultdict(list))
     seg = segments(r.layout)
-    for group, here in _by_group(r).items():
+    for group, here in groups_by_net(r).items():
         found = list(here.values())
         faults += [_short(*_closest(found[0], other, r.words, seg), r.words)
                    for other in found[1:]]  # fmt: skip
@@ -461,7 +488,7 @@ class Short:
 class NetProgress:
     """One net the board carries: `placed` of its `total` terminals on the board, in
     `pieces` joined groups; `done` when all are placed, joined and touch no other net;
-    `wires` the off-board ends on it still waiting for a pad."""
+    `wires` its off-board lugs not wired yet, in words ("VR1 lug 2", "ground")."""
 
     net: str
     state: NetState
@@ -469,13 +496,13 @@ class NetProgress:
     total: int
     pieces: int
     shorts: tuple[Short, ...] = ()
-    wires: tuple[str, ...] = ()  # its off-board ends with no pad yet (D-371)
+    wires: tuple[str, ...] = ()  # its lugs not wired yet, in words (D-371, D-375)
 
 
 @dataclass(frozen=True)
 class Reach:
     """A terminal a leg must reach (`R2.1` a board part's leg, `VR1.1` or `GND` an
-    off-board wire's end) and whether the board joins them yet."""
+    off-board lug) and whether the board joins them yet."""
 
     to: str
     joined: bool
@@ -490,37 +517,21 @@ class LegProgress:
 
 
 @dataclass(frozen=True)
-class OffBoardPart:
-    """An off-board part as the tray lists it, one per thing bought (a switch however many
-    poles, a dual pot once, the guitar's and amp's jacks when none is drawn): `ref` with
-    its name ("VR1 (Gain)"), what it is, its value and details, as the parts list says."""
-
-    ref: str
-    part: str
-    value: str
-    details: str
-
-
-def off_board_parts(circuit: Circuit, models: ModelLibrary) -> list[OffBoardPart]:
-    """The off-board parts, from the parts list's own off-board lines (D-203), in its order."""
-    return [OffBoardPart(ref, line.part, line.value, line.details)
-            for line in bom(circuit, models) if line.where == "off-board"
-            for ref in line.refs]  # fmt: skip
-
-
-@dataclass(frozen=True)
 class Progress:
-    """Where a board stands: `to_place` the parts and `pads_to_place` the off-board wires not on it
-    yet (not faults); `off_board` the off-board parts not yet beside it (every one until they
-    can be dragged in); `stock` the bypass hardware the schematic doesn't draw (`stock_bypass`);
+    """Where a board stands: `to_place` the parts not on it yet and `wires_to_go` the lugs not
+    wired yet (not faults), `loose` how many wires have a free end; `items` every off-board
+    part (D-375), `spots` where each is drawn (put there, else its default); `stock` the
+    bypass hardware the schematic doesn't draw (`stock_bypass`);
     `unplaceable` a sentence per part that can't go on a board yet (no footprint: it stays in
     the tray, D-370); `nets` each net's progress; `legs` each board part's legs; `faults` what's
     wrong now (placement, pads, a part the wrong way round); `stale` parts no longer in the
     circuit; `warnings` the placement limits broken; `done` the full check passes."""
 
     to_place: list[str]
-    pads_to_place: list[str]
-    off_board: list[OffBoardPart]
+    wires_to_go: list[str]
+    loose: int
+    items: list[OffItem]
+    spots: dict[str, Hole]
     stock: list[str]
     unplaceable: list[str]
     nets: list[NetProgress]
@@ -565,7 +576,7 @@ def _wrong_way(r: _Reading, circuit: Circuit) -> list[str]:
     """Each polarised two-leg part placed each leg on the other's net."""
     kinds = {p.ref: p for p in circuit.parts}
     faults = []
-    by_group = _by_group(r)
+    by_group = groups_by_net(r)
     for placed in r.layout.parts:
         part = r.board.get(placed.ref)
         if part is None or len(part.pins) != 2 or part.footprint.shape not in ("axial", "radial"):
@@ -592,24 +603,23 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
     """The editor's check of a board in the making (D-368): what's left to place, each
     net's progress, each leg's needs, what's wrong now. `check_layout` still decides a
     board is done."""
-    r = _read(layout, circuit, models, table)
+    r = read_layout(layout, circuit, models, table)
     placed = {p.ref for p in r.layout.parts}
     in_circuit = r.board.keys() | r.off_board
     stale = sorted(placed - in_circuit)
     kept = replace(r.layout, parts=tuple(p for p in r.layout.parts if p.ref in in_circuit))
     faults = [f for f in placement_faults(kept, r.board, r.off_board)
               if not f.endswith(" isn't on the board.")]  # fmt: skip
-    pads, missing = _pad_faults(r.layout, r.ends)
-    unpadded = set(missing)
-    faults = [*faults, *pads, *_wrong_way(r, circuit)]
+    wiring, unwired, loose = _wire_faults(r)
+    faults = [*faults, *wiring, *_wrong_way(r, circuit)]
     # every terminal each net has, placed or not
     wanted: dict[str, list[Terminal]] = defaultdict(list)
     for part in r.board.values():
         for pin in part.pins.values():
             wanted[r.nets.net_of(*pin)].append(pin)
-    for end, net in r.ends.items():
-        wanted[net].append(end)
-    by_group = _by_group(r)
+    for end in sorted(r.needed):
+        wanted[r.ends[end]].append(end)
+    by_group = groups_by_net(r)
     seg = segments(r.layout)
     nets = []
     for net in sorted(wanted, key=lambda n: (n != GROUND, n)):
@@ -627,7 +637,7 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
             "shorted" if shorts else
             "done" if len(here) == len(members) and len(groups) == 1 else "pieces"
         )  # fmt: skip
-        wires = tuple(t for t in members if isinstance(t, str) and t in unpadded)
+        wires = tuple(end_words(t) for t in members if isinstance(t, str) and t in unwired)
         nets.append(NetProgress(net, state, len(here), len(members), len(groups),
                                 tuple(shorts), wires))  # fmt: skip
     legs: dict[str, list[LegProgress]] = {}
@@ -648,9 +658,10 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
     warnings = limit_warnings(r.layout, placement_limits(circuit, r.nets, r.board))
     done = check_layout(layout, circuit, models, table).ok
     mixed = {g for g, here in by_group.items() if len(here) > 1}
-    red = {hole for hole, g in copper_groups(r.layout).items() if g in mixed}
-    return Progress(sorted(r.board.keys() - placed), missing,
-                    off_board_parts(circuit, models), stock_bypass(circuit),
+    red = {hole for hole, g in joined_groups(r.layout)[0].items() if g in mixed}
+    spots = {**default_spots(r.items, r.layout), **dict(r.layout.spots)}
+    return Progress(sorted(r.board.keys() - placed), unwired, loose, r.items,
+                    {i.ref: spots[i.ref] for i in r.items}, stock_bypass(circuit),
                     r.unboardable, nets, legs, faults, stale, warnings, done,
                     runs(red))  # fmt: skip
 
@@ -659,10 +670,10 @@ def shorts(layout: Layout, circuit: Circuit, models: ModelLibrary,
            table: FootprintTable) -> dict[frozenset[str], str]:  # fmt: skip
     """Each pair of nets the board joins and the circuit doesn't, with its sentence (the
     nearest pair of terminals): what a board edit is refused for with shorts off (D-374)."""
-    r = _read(layout, circuit, models, table)
+    r = read_layout(layout, circuit, models, table)
     seg = segments(r.layout)
     found: dict[frozenset[str], str] = {}
-    for here in _by_group(r).values():
+    for here in groups_by_net(r).values():
         nets = list(here)
         for i, a in enumerate(nets):
             for b in nets[i + 1 :]:

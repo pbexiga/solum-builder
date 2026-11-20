@@ -10,7 +10,10 @@
  *
  * @typedef {[number, number]} Hole (column, strip), from 0
  * @typedef {{size: [number, number], parts?: Record<string, Record<string, string>>,
- *   standing?: string[], cuts?: string[], links?: string[][], pads?: Record<string, string[]>}} BoardData
+ *   standing?: string[], cuts?: string[], links?: string[][], wires?: WireData[],
+ *   off?: Record<string, [number, number]>}} BoardData
+ * @typedef {{from: string, hole?: string, lug?: string}} WireData an off-board wire (D-375):
+ *   from a lug to a hole, to another lug, or loose
  * @typedef {{shape: string, kind: string, legs: string[], steps: number[], flat: number,
  *   stand: number, length: number, width: number, diameter: number, row_holes: number,
  *   refs: string[]}} Footprint what `/api/stripboard` sends to draw a board part by
@@ -53,8 +56,10 @@ export function parseHole(name) {
 export const holeXY = (hole) => [hole[0] * STEP, hole[1] * STEP];
 
 /**
- * The board read from its plain form: each placed part's legs in holes, the cuts, links
- * and pads. Names that aren't holes are left out (the server's check names them).
+ * The board read from its plain form: each placed part's legs in holes, the cuts, links,
+ * off-board wires (`hole` null: to another lug, `to`, or loose) and the spots off-board
+ * parts were put at (D-375). Names that aren't holes are left out (the server's check
+ * names them).
  * @param {BoardData | null | undefined} data
  */
 export function readBoard(data) {
@@ -75,10 +80,8 @@ export function readBoard(data) {
     parts,
     cuts: holes(data?.cuts ?? []),
     links: (data?.links ?? []).map((pair) => holes(pair)).filter((pair) => pair.length === 2),
-    pads: Object.entries(data?.pads ?? {}).flatMap(([name, ends]) => {
-      const hole = parseHole(name);
-      return hole ? [{ hole, ends }] : [];
-    }),
+    wires: (data?.wires ?? []).map((w) => ({ lug: w.from, hole: w.hole ? parseHole(w.hole) : null, to: w.lug ?? null })),
+    spots: /** @type {Record<string, Hole>} */ ({ ...(data?.off ?? {}) }),
   };
 }
 
@@ -138,7 +141,8 @@ export function sizeLine(board) {
   if (!board.columns || !board.strips) return "Empty board";
   const plural = (/** @type {number} */ n, /** @type {string} */ word) => `${n} ${word}${n === 1 ? "" : "s"}`;
   const mm = (/** @type {number} */ holes) => Math.round(holes * PITCH_MM);
-  return `${board.columns} × ${board.strips} holes (${mm(board.columns)} × ${mm(board.strips)} mm), ${plural(board.cuts.length, "cut")}, ${plural(board.links.length, "link")}`;
+  const wires = board.wires.length ? `, ${plural(board.wires.length, "wire")}` : "";
+  return `${board.columns} × ${board.strips} holes (${mm(board.columns)} × ${mm(board.strips)} mm), ${plural(board.cuts.length, "cut")}, ${plural(board.links.length, "link")}${wires}`;
 }
 
 /**
@@ -204,8 +208,11 @@ export function boardRefOf(footprints, ref) {
  * @typedef {{net: string, state: "done" | "pieces" | "shorted", placed: number, total: number,
  *   pieces: number, shorts: Array<{other: string, words: string}>, wires?: string[]}} NetProgress
  * @typedef {{leg: string, hole: string | null, net: string | null, reach: Array<{to: string, joined: boolean}>}} LegProgress
- * @typedef {{ref: string, part: string, value: string, details: string}} OffBoardPart
- * @typedef {{to_place: string[], pads_to_place: string[], off_board: OffBoardPart[], stock: string[],
+ * @typedef {{end: string, label: string, net: string}} Lug an off-board part's lug: `end` as wires name it
+ * @typedef {{ref: string, name: string, kind: string, value: string, details: string, lugs: Lug[],
+ *   size: [number, number]}} OffItem an off-board part beside the board (D-375), its drawing `size` in holes
+ * @typedef {{to_place: string[], wires_to_go: string[], loose: number, items: OffItem[],
+ *   spots: Record<string, Hole>, stock: string[],
  *   unplaceable: string[], nets: NetProgress[],
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
  *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number],
@@ -216,9 +223,10 @@ export function boardRefOf(footprints, ref) {
 const SHAPE_WORDS = /** @type {Record<string, string>} */ ({ axial: "axial", radial: "radial", inline: "in a line", dip: "DIP", sil: "SIL" });
 
 /**
- * @typedef {{ref: string, value: string, shape: string, mark?: string, kind?: string, select?: string}} TrayRow
+ * @typedef {{ref: string, value: string, shape: string, mark?: string, kind?: string, select?: string, item?: string}} TrayRow
  *   `mark`: the footprint's shape, for the little drawing beside it; `select`: the
- *   circuit part a click selects (none for stock hardware)
+ *   circuit part a click selects (none for stock hardware); `item`: the off-board part
+ *   it is, dragged out beside the board (D-375)
  */
 
 /**
@@ -259,14 +267,98 @@ const STOCK_WORDS = /** @type {Record<string, TrayRow>} */ ({
 });
 
 /**
- * The tray's off-board rows: each off-board part as the parts list names it (its details,
- * else what it is), then the
- * stock footswitch and status LED the schematic doesn't draw (D-370).
- * @param {Progress} progress @returns {TrayRow[]}
+ * The circuit parts an off-board part stands for (a dual pot's gangs, the guitar for the
+ * input jack), from its lugs; none for Power.
+ * @param {OffItem} item @returns {string[]}
  */
-export function offBoardRows(progress) {
-  const parts = progress.off_board.map((p) => ({ ref: p.ref, value: p.value, shape: p.details || p.part.toLowerCase(), select: p.ref.split(" ")[0] }));
+export function itemRefs(item) {
+  if (item.kind === "power") return [];
+  return [...new Set(item.lugs.map((l) => l.end.split(".")[0]))];
+}
+
+/**
+ * Whether an off-board part is beside the board: put somewhere, or wired (a board from
+ * before v36, whose wires came from pads, D-375).
+ * @param {OffItem} item @param {Board} board
+ */
+export function isOut(item, board) {
+  if (board.spots[item.ref]) return true;
+  const lugs = new Set(item.lugs.map((l) => l.end));
+  return board.wires.some((w) => lugs.has(w.lug) || (w.to !== null && lugs.has(w.to)));
+}
+
+/**
+ * The tray's off-board rows: each off-board part not yet beside the board, as the parts
+ * list names it (its details, else what it is), `item` set so it can be dragged out; then
+ * the stock footswitch and status LED the schematic doesn't draw (D-370).
+ * @param {Progress} progress @param {Board} board @returns {TrayRow[]}
+ */
+export function offBoardRows(progress, board) {
+  const parts = progress.items.filter((i) => !isOut(i, board)).map((i) => ({ ref: i.name, value: i.value, shape: i.details || i.kind, select: itemRefs(i)[0], item: i.ref }));
   return [...parts, ...progress.stock.map((id) => STOCK_WORDS[id] ?? { ref: id, value: "", shape: "stock" })];
+}
+
+/**
+ * @typedef {{x: number, y: number, w: number, h: number}} Box
+ * @typedef {{end: string, label: string, x: number, y: number}} LugAt
+ */
+
+/**
+ * An off-board part's drawing with its corner at hole `at`: its body, and its lugs in a
+ * row along the bottom, `LUG_GAP` holes apart (offboard.py's `LUG_GAP`), in board units.
+ * @param {OffItem} item @param {Hole} at @returns {{body: Box, lugs: LugAt[]}}
+ */
+export function itemShape(item, at) {
+  const [w, h] = item.size;
+  const [x0, y0] = holeXY(at);
+  const body = { x: x0 - STEP / 2, y: y0 - STEP / 2, w: w * STEP, h: (h - 1) * STEP };
+  const lugs = item.lugs.map((lug, i) => ({ end: lug.end, label: lug.label, x: x0 + (1 + 2 * i) * STEP, y: y0 + (h - 1) * STEP }));
+  return { body, lugs };
+}
+
+/**
+ * Where each lug is drawn, for the off-board parts beside the board: each at its spot
+ * (the board's, else the server's default).
+ * @param {Progress} progress @param {Board} board @returns {Record<string, LugAt>}
+ */
+export function lugPlaces(progress, board) {
+  /** @type {Record<string, LugAt>} */
+  const at = {};
+  for (const item of progress.items) {
+    if (!isOut(item, board)) continue;
+    for (const lug of itemShape(item, board.spots[item.ref] ?? progress.spots[item.ref]).lugs) at[lug.end] = lug;
+  }
+  return at;
+}
+
+export const LOOSE_DROP = STEP * 1.6; // how far a loose wire hangs below its lug
+
+/**
+ * A wire's line in board units: from its lug to its hole, to its other lug, or hanging
+ * loose below its lug; null when its lug isn't drawn.
+ * @param {{lug: string, hole: Hole | null, to: string | null}} wire @param {Record<string, LugAt>} lugs
+ * @returns {{x1: number, y1: number, x2: number, y2: number, loose: boolean} | null}
+ */
+export function wireLine(wire, lugs) {
+  const from = lugs[wire.lug];
+  if (!from) return null;
+  if (wire.hole) {
+    const [x2, y2] = holeXY(wire.hole);
+    return { x1: from.x, y1: from.y, x2, y2, loose: false };
+  }
+  const to = wire.to ? lugs[wire.to] : null;
+  if (to) return { x1: from.x, y1: from.y, x2: to.x, y2: to.y, loose: false };
+  return { x1: from.x, y1: from.y, x2: from.x, y2: from.y + LOOSE_DROP, loose: true };
+}
+
+/**
+ * The spot an off-board part goes to when carried with the pointer at `hole`: held by
+ * the middle of its body.
+ * @param {OffItem} item @param {Hole} hole @returns {Hole}
+ */
+export function spotFor(item, hole) {
+  const [w, h] = item.size;
+  return [hole[0] - Math.floor(w / 2), hole[1] - Math.floor((h - 1) / 2)];
 }
 
 /**
@@ -300,12 +392,15 @@ export function readSettings(kept) {
 export function netsLine(progress) {
   const total = progress.nets.length;
   if (!total) return "No nets to join.";
-  return progress.nets_done === total ? `All ${total} nets done.` : `${progress.nets_done} of ${total} nets done.`;
+  const nets = progress.nets_done === total ? `All ${total} nets done` : `${progress.nets_done} of ${total} nets done`;
+  const left = progress.wires_to_go.length;
+  const loose = progress.loose ? `, ${progress.loose} loose` : "";
+  return left || progress.loose ? `${nets}; ${left} ${left === 1 ? "lug" : "lugs"} to wire${loose}.` : `${nets}.`;
 }
 
 /**
  * Each net's state in words: done; in pieces ("2 of 4 placed, in 2 pieces"), with the
- * off-board wires it still needs ("; a wire from VR1.2"); shorted (each short's sentence).
+ * lugs it still needs wired ("; a wire from VR1 lug 2"); shorted (each short's sentence).
  * @param {NetProgress} net @returns {string}
  */
 export function netWords(net) {

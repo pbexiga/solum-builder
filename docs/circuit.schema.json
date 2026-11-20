@@ -263,6 +263,45 @@
       "title": "Bjt",
       "type": "object"
     },
+    "BoardWire": {
+      "additionalProperties": false,
+      "description": "An off-board wire (v36, D-375): `from` a lug (`VR1.2`, `IN.S`, `V+`) to a `hole` on\nthe board, to another `lug`, or loose (neither).",
+      "properties": {
+        "from": {
+          "title": "From",
+          "type": "string"
+        },
+        "hole": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Hole"
+        },
+        "lug": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Lug"
+        }
+      },
+      "required": [
+        "from"
+      ],
+      "title": "BoardWire",
+      "type": "object"
+    },
     "Capacitor": {
       "additionalProperties": false,
       "description": "For polarised kinds, pin 1 is +.",
@@ -2045,7 +2084,7 @@
     },
     "Stripboard": {
       "additionalProperties": false,
-      "description": "The board laid out in the Board view (v35, D-368): the plain form `board.layout_data`\nwrites, holes by name. Only its form is checked here; whether it matches the circuit\n(a part since deleted, a leg on the wrong net) is the editor's progress check.",
+      "description": "The board laid out in the Board view (v35, D-368): the plain form `board.layout_data`\nwrites, holes by name. Only its form is checked here; whether it matches the circuit\n(a part since deleted, a leg on the wrong net) is the editor's progress check. v36\n(D-375): off-board parts' spots beside the board and their wires, for v35's pads.",
       "properties": {
         "size": {
           "maxItems": 2,
@@ -2102,14 +2141,28 @@
           "title": "Links",
           "type": "array"
         },
-        "pads": {
+        "wires": {
+          "items": {
+            "$ref": "#/$defs/BoardWire"
+          },
+          "title": "Wires",
+          "type": "array"
+        },
+        "off": {
           "additionalProperties": {
-            "items": {
-              "type": "string"
-            },
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "integer"
+              }
+            ],
             "type": "array"
           },
-          "title": "Pads",
+          "title": "Off",
           "type": "object"
         }
       },
@@ -2523,7 +2576,7 @@
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "const": 35,
+      "const": 36,
       "title": "Schema",
       "type": "integer"
     },
@@ -2760,7 +2813,7 @@
     "name",
     "parts"
   ],
-  "title": "Solum Builder circuit, schema v35",
+  "title": "Solum Builder circuit, schema v36",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

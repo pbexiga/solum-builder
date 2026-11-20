@@ -994,17 +994,22 @@ def test_the_board_tray_and_settings(js: Page) -> None:
         """
         const b = await m('board/board-logic.js');
         const progress = {
-          to_place: ['R1', 'IC1'], pads_to_place: [], unplaceable: [],
+          to_place: ['R1', 'IC1'], wires_to_go: [], loose: 0, unplaceable: [],
           footprints: { R1: { shape: 'axial', kind: 'resistor', legs: ['1', '2'], refs: ['R1'] }, IC1: { shape: 'dip', kind: 'chip', legs: ['1','2','3','4','5','6','7','8'], refs: ['IC1A', 'IC1B'] } },
-          off_board: [{ ref: 'VR1 (Gain)', part: 'Pot', value: 'B100k', details: 'linear (B)' }, { ref: 'SW1', part: 'Switch', value: 'SPDT', details: '' }],
+          items: [
+            { ref: 'VR1', name: 'VR1 (Gain)', kind: 'pot', value: 'B100k', details: 'linear (B)', lugs: [{ end: 'VR1.1', label: '1', net: 'a' }], size: [3, 3] },
+            { ref: 'SW1', name: 'SW1', kind: 'switch', value: 'SPDT', details: '', lugs: [{ end: 'SW1.1', label: '1', net: 'b' }], size: [3, 3] },
+            { ref: 'IN', name: 'IN (Input)', kind: 'jack', value: '¼" jack', details: 'TS', lugs: [{ end: 'IN.out', label: 'T', net: 'in' }], size: [3, 3] },
+          ],
+          spots: { VR1: [0, -7], SW1: [5, -7], IN: [16, 0] },
           stock: ['footswitch', 'status LED'],
         };
         const circuit = { parts: [{ ref: 'R1', value: '4k7' }, { ref: 'IC1A', model: 'TL072' }] };
         return {
           on: b.trayRows(progress, circuit).map(({ ref, value, shape }) => ({ ref, value, shape })),
           groups: b.trayGroups(b.trayRows(progress, circuit)).map((g) => [g.title, g.rows.map((r) => r.ref)]),
-          wires: b.netWords({ net: 'x', state: 'pieces', placed: 1, total: 3, pieces: 1, shorts: [], wires: ['VR1.2'] }),
-          off: b.offBoardRows(progress).map(({ ref, value, shape }) => ({ ref, value, shape })),
+          wires: b.netWords({ net: 'x', state: 'pieces', placed: 1, total: 3, pieces: 1, shorts: [], wires: ['VR1 lug 2'] }),
+          off: b.offBoardRows(progress, b.readBoard({ size: [4, 4], wires: [{ from: 'IN.out', hole: 'A1' }] })).map(({ ref, value, shape, item }) => ({ ref, value, shape, item })),
           none: b.readSettings(null),
           some: b.readSettings({ values: false, grow: 'yes' }),
         };
@@ -1012,14 +1017,14 @@ def test_the_board_tray_and_settings(js: Page) -> None:
     )
     assert got["on"] == [{"ref": "R1", "value": "4k7", "shape": "axial"},
                          {"ref": "IC1", "value": "TL072", "shape": "DIP-8"}]  # fmt: skip
-    assert got["off"] == [
-        {"ref": "VR1 (Gain)", "value": "B100k", "shape": "linear (B)"},
-        {"ref": "SW1", "value": "SPDT", "shape": "switch"},
-        {"ref": "Footswitch", "value": "3PDT", "shape": "stock, true bypass"},
-        {"ref": "Status LED", "value": "", "shape": "stock"},
+    assert got["off"] == [  # IN is wired (a board from pads): beside the board, not in the tray
+        {"ref": "VR1 (Gain)", "value": "B100k", "shape": "linear (B)", "item": "VR1"},
+        {"ref": "SW1", "value": "SPDT", "shape": "switch", "item": "SW1"},
+        {"ref": "Footswitch", "value": "3PDT", "shape": "stock, true bypass", "item": None},
+        {"ref": "Status LED", "value": "", "shape": "stock", "item": None},
     ]
     assert got["groups"] == [["Resistors", ["R1"]], ["Chips", ["IC1"]]]
-    assert got["wires"] == "1 of 3 placed; a wire from VR1.2"
+    assert got["wires"] == "1 of 3 placed; a wire from VR1 lug 2"
     assert got["none"] == {"values": True, "next": True, "shorts": True, "grow": True,
                            "seeThrough": False}  # fmt: skip
     assert got["some"] == {**got["none"], "values": False}  # a garbled one at its default
@@ -1038,8 +1043,9 @@ def test_the_board_size_offers_and_the_empty_board(js: Page) -> None:
           strip: b.lineChanges('strip', 0).map((c) => c.label),
           empty: [b.drawnBoard(empty, [11, 8]).columns, b.drawnBoard(empty, [11, 8]).strips],
           kept: b.drawnBoard(b.readBoard({ size: [12, 9] }), [11, 8]).columns,
-          line: b.sizeLine({ columns: 24, strips: 1, cuts: ['A1'], links: [] }),
-          emptyLine: b.sizeLine({ columns: 0, strips: 0, cuts: [], links: [] }),
+          line: b.sizeLine({ columns: 24, strips: 1, cuts: ['A1'], links: [], wires: [] }),
+          wired: b.sizeLine({ columns: 2, strips: 2, cuts: [], links: [], wires: [{}, {}] }),
+          emptyLine: b.sizeLine({ columns: 0, strips: 0, cuts: [], links: [], wires: [] }),
         };
         """,
     )
@@ -1052,6 +1058,7 @@ def test_the_board_size_offers_and_the_empty_board(js: Page) -> None:
     assert got["empty"] == [11, 8] and got["kept"] == 12
     # D-373: the size in mm as cut midway between hole lines (24 × 2.54 = 60.96)
     assert got["line"] == "24 × 1 holes (61 × 3 mm), 1 cut, 0 links"
+    assert got["wired"] == "2 × 2 holes (5 × 5 mm), 0 cuts, 0 links, 2 wires"
     assert got["emptyLine"] == "Empty board"
 
 
@@ -1109,3 +1116,49 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
     assert got["keys"] == ["turn", "flip", "stand", "longer", "shorter", "remove", "cuts",
                            "links", "parts", "cancel", None]  # fmt: skip
     assert got["ctrl"] is None
+
+
+def test_off_board_parts_lugs_and_wires_are_drawn_where_they_sit(js: Page) -> None:
+    """D-375: an off-board part's lugs along the bottom of its drawing, two holes apart; a
+    wire from its lug to a hole, to another lug, or hanging loose; a part dropped from the
+    tray held by its middle; the Nets line counts the lugs still to wire."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const pot = { ref: 'VR1', name: 'VR1', kind: 'pot', value: '', details: '', size: [7, 3],
+          lugs: ['1', '2', '3'].map((n) => ({ end: `VR1.${n}`, label: n, net: n })) };
+        const jack = { ref: 'IN', name: 'IN', kind: 'jack', value: '', details: '', size: [5, 3],
+          lugs: [{ end: 'IN.out', label: 'T', net: 'in' }, { end: 'IN.S', label: 'S', net: 'GND' }] };
+        const board = b.readBoard({ size: [4, 4], off: { VR1: [0, -7] },
+          wires: [{ from: 'VR1.1', hole: 'B2' }, { from: 'VR1.3', lug: 'IN.S' }, { from: 'VR1.2' }] });
+        const progress = { items: [pot, jack], spots: { VR1: [9, 9], IN: [8, 0] } };
+        const lugs = b.lugPlaces(progress, board);
+        return {
+          shape: b.itemShape(pot, [0, -7]),
+          lugs: Object.keys(lugs),
+          wires: board.wires.map((w) => b.wireLine(w, lugs)),
+          spot: b.spotFor(pot, [10, -5]),
+          out: [b.isOut(pot, board), b.isOut(jack, board), b.isOut(jack, b.readBoard({ size: [1, 1] }))],
+          refs: [b.itemRefs(pot), b.itemRefs({ ...jack, kind: 'power' })],
+          line: b.netsLine({ nets: [{}, {}], nets_done: 1, wires_to_go: ['VR1.2'], loose: 1 }),
+          done: b.netsLine({ nets: [{}], nets_done: 1, wires_to_go: [], loose: 0 }),
+        };
+        """,
+    )
+    assert got["shape"]["body"] == {"x": -5, "y": -75, "w": 70, "h": 20}
+    assert [(lug["x"], lug["y"]) for lug in got["shape"]["lugs"]] == [
+        (10, -50),
+        (30, -50),
+        (50, -50),
+    ]
+    assert got["lugs"] == ["VR1.1", "VR1.2", "VR1.3", "IN.out", "IN.S"]
+    hole, lug, loose = got["wires"]
+    assert hole == {"x1": 10, "y1": -50, "x2": 10, "y2": 10, "loose": False}
+    assert (lug["x2"], lug["y2"], lug["loose"]) == (110, 20, False)  # IN at its default spot
+    assert loose["loose"] is True and loose["y2"] > loose["y1"]
+    assert got["spot"] == [7, -6]
+    assert got["out"] == [True, True, False]
+    assert got["refs"] == [["VR1"], []]
+    assert got["line"] == "1 of 2 nets done; 1 lug to wire, 1 loose."
+    assert got["done"] == "All 1 nets done."

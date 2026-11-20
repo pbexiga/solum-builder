@@ -1,6 +1,7 @@
 /**
  * The board canvas (D-368): the stripboard drawn in SVG at real proportions, parts side,
- * parts as outlines with ref and value, shorted copper red (D-374). Pans (drag the empty
+ * parts as outlines with ref and value, shorted copper red (D-374), the off-board parts
+ * beside it with their lugs and wires (D-375). Pans (drag the empty
  * board), zooms (wheel, the canvas's buttons), and tells the view what was clicked,
  * pressed, dragged and hovered, as holes; draws the view's ghost (a part being carried, a
  * link being laid, the hole a tool would act on). The shapes come from `board-logic.js`;
@@ -8,7 +9,7 @@
  */
 
 import { fitView, panBy, viewBoxText, zoomAt, resizeView } from "../schematic/viewport.js";
-import { STEP, columnName, holeName, holeXY, labelAt, partShapes, shortedRects, shownHoles, valueOf } from "./board-logic.js";
+import { STEP, columnName, holeName, holeXY, itemRefs, itemShape, labelAt, partShapes, shortedRects, shownHoles, valueOf } from "./board-logic.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 const FIT_PAD = STEP; // board units round the shown holes when fitting
@@ -28,24 +29,34 @@ function el(tag, attrs = {}, parent) {
 
 /**
  * @typedef {import("./board-logic.js").Hole} Hole
- * @typedef {{ref: string | null, hole: Hole, link: [Hole, Hole] | null}} Spot
- *   what's under the pointer: a board part's ref, the nearest hole, a link's ends
+ * @typedef {{ref: string | null, hole: Hole, link: [Hole, Hole] | null, item: string | null,
+ *   lug: string | null, wire: {index: number, end: "lug" | "far"} | null, point: [number, number]}} Spot
+ *   what's under the pointer: a board part's ref, the nearest hole, a link's ends; an
+ *   off-board part's ref, a lug's end, a wire's number and which end (D-375); the point in
+ *   board units
  * @typedef {{
  *   onClick: (spot: Spot) => void,
  *   onLine: (axis: "column" | "strip", line: number, x: number, y: number) => void,
  *   onPress: (spot: Spot) => boolean,
- *   onDrag: (hole: Hole) => void,
- *   onRelease: (hole: Hole, moved: boolean) => void,
+ *   onDrag: (hole: Hole, point: [number, number]) => void,
+ *   onRelease: (hole: Hole, moved: boolean, spot: Spot) => void,
  *   onHover: (hole: Hole | null) => void,
- *   onMenu: (ref: string, x: number, y: number) => void,
+ *   onMenu: (spot: Spot, x: number, y: number) => boolean,
  * }} CanvasApp
  *   `onClick`: a press that didn't move (and the view didn't take); `onLine`: a ruler's mark
  *   clicked (a column's letter, a strip's number), at (x, y) in the window; `onPress`: true
  *   when the view takes the press (moving a part, laying a link), so it's dragged through
- *   `onDrag` and ended by `onRelease` instead of panning; `onHover`: the pointer over the
- *   board with no button down (null: it left); `onMenu`: a part right-clicked
- * @typedef {{part?: {fp: Footprint, legs: Array<[string, Hole]>, standing: boolean}, link?: [Hole, Hole], hole?: Hole}} Ghost
+ *   `onDrag` and ended by `onRelease` (with what's under the pointer there) instead of
+ *   panning; `onHover`: the pointer over the board with no button down (null: it left);
+ *   `onMenu`: a right-click, true when the view showed a menu for it
+ * @typedef {{part?: {fp: Footprint, legs: Array<[string, Hole]>, standing: boolean}, link?: [Hole, Hole], hole?: Hole,
+ *   item?: {item: OffItem, at: Hole}, wire?: {x1: number, y1: number, x2: number, y2: number}}} Ghost
  *   what the view is about to do, drawn faint over the board
+ * @typedef {import("./board-logic.js").OffItem} OffItem
+ * @typedef {import("./board-logic.js").LugAt} LugAt
+ * @typedef {{items: Array<{item: OffItem, at: Hole}>, wires: Array<{index: number,
+ *   line: {x1: number, y1: number, x2: number, y2: number, loose: boolean}, title: string}>}} OffBoard
+ *   the off-board parts beside the board, where, and the wires' lines (D-375)
  * @typedef {import("./board-logic.js").Board} Board
  * @typedef {import("./board-logic.js").Footprint} Footprint
  */
@@ -60,8 +71,12 @@ export function boardCanvas(svg, app) {
   let shown = null;
   /** @type {{c0: number, s0: number, c1: number, s1: number} | null} */
   let holes = null;
+  /** @type {{minX: number, minY: number, maxX: number, maxY: number} | null} the off-board parts' extent */
+  let beside = null;
   /** @type {string[]} */
   let lit = [];
+  /** @type {string[]} */
+  let litItems = [];
   /** @type {Ghost | null} */
   let ghosted = null;
   let pressing = false; // a press on the board is being dragged: no hover then
@@ -88,10 +103,17 @@ export function boardCanvas(svg, app) {
   function fit() {
     if (!holes) return;
     const { width, height } = size();
-    vb = fitView({ // the rulers sit a hole outside the margin
+    const box = { // the rulers sit a hole outside the margin
       minX: (holes.c0 - 1) * STEP - FIT_PAD, minY: (holes.s0 - 1) * STEP - FIT_PAD,
       maxX: holes.c1 * STEP + FIT_PAD, maxY: holes.s1 * STEP + FIT_PAD,
-    }, width, height);
+    };
+    if (beside) {
+      box.minX = Math.min(box.minX, beside.minX - FIT_PAD);
+      box.minY = Math.min(box.minY, beside.minY - FIT_PAD);
+      box.maxX = Math.max(box.maxX, beside.maxX + FIT_PAD);
+      box.maxY = Math.max(box.maxY, beside.maxY + FIT_PAD);
+    }
+    vb = fitView(box, width, height);
     const minW = width / MAX_FIT_SCALE;
     if (vb.w < minW) vb = zoomAt(vb, vb.x + vb.w / 2, vb.y + vb.h / 2, vb.w / minW);
     apply();
@@ -106,13 +128,20 @@ export function boardCanvas(svg, app) {
   /**
    * Draw a board. `fit`: fit the view to it (the first time it's shown).
    * @param {Board} board @param {Record<string, Footprint>} footprints @param {any} circuit
-   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>}} [opts]
+   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, off?: OffBoard}} [opts]
    *   `values`: label parts with their values too; `rulers`: the columns' letters and the
    *   strips' numbers, each a menu of size changes (a board that's started); `fixed`: auto-grow
-   *   off, the margin greyed (D-372); `shorted`: the copper carrying two nets, red (D-374)
+   *   off, the margin greyed (D-372); `shorted`: the copper carrying two nets, red (D-374);
+   *   `off`: the off-board parts and wires (D-375)
    */
-  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [] } = {}) {
+  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], off = { items: [], wires: [] } } = {}) {
     holes = shownHoles(board);
+    beside = null;
+    for (const { item, at } of off.items) {
+      const { body } = itemShape(item, at);
+      const [minX, minY, maxX, maxY] = [body.x, body.y - STEP, body.x + body.w, body.y + body.h + STEP];
+      beside = beside ? { minX: Math.min(beside.minX, minX), minY: Math.min(beside.minY, minY), maxX: Math.max(beside.maxX, maxX), maxY: Math.max(beside.maxY, maxY) } : { minX, minY, maxX, maxY };
+    }
     svg.replaceChildren();
     const root = el("g", { class: fixed ? "board board-fixed" : "board" }, svg);
     const { c0, s0, c1, s1 } = holes;
@@ -151,13 +180,8 @@ export function boardCanvas(svg, app) {
       el("line", { x1, y1, x2, y2, class: "link" }, g);
       for (const [x, y] of [[x1, y1], [x2, y2]]) el("circle", { cx: x, cy: y, r: STEP * 0.18, class: "link-end" }, g);
     }
-    const pads = el("g", { class: "pads" }, root);
-    for (const pad of board.pads) {
-      const [x, y] = holeXY(pad.hole);
-      const g = el("g", { class: "pad", "data-hole": holeName(pad.hole) }, pads);
-      el("circle", { cx: x, cy: y, r: STEP * 0.3, class: "pad-ring" }, g);
-      el("title", {}, g).textContent = `${holeName(pad.hole)}: ${pad.ends.join(", ")}`;
-    }
+    const items = el("g", { class: "off-items" }, root);
+    for (const { item, at } of off.items) drawItem(item, at, items, values);
     if (rulers) {
       const ruled = el("g", { class: "rulers" }, root);
       const mark = (/** @type {"column" | "strip"} */ axis, /** @type {number} */ line, /** @type {number} */ x, /** @type {number} */ y, /** @type {string} */ text) => {
@@ -194,11 +218,45 @@ export function boardCanvas(svg, app) {
       el("tspan", { x: lx, dy: value ? "-0.15em" : "0.35em", class: "ref" }, text).textContent = placed.ref;
       if (value) el("tspan", { x: lx, dy: "1.05em", class: "value" }, text).textContent = value;
     }
+    const wires = el("g", { class: "off-wires" }, root); // over the parts: a wire lies on top
+    for (const { index, line, title } of off.wires) {
+      const g = el("g", { class: line.loose ? "off-wire loose" : "off-wire", "data-wire": index }, wires);
+      el("line", { x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, class: "wire-hit" }, g);
+      el("line", { x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, class: "wire" }, g);
+      const length = Math.hypot(line.x2 - line.x1, line.y2 - line.y1) || 1;
+      const grip = Math.min(STEP * 0.7, length / 3); // the lug end's grip, a little way along
+      const gx = line.x1 + ((line.x2 - line.x1) / length) * grip;
+      const gy = line.y1 + ((line.y2 - line.y1) / length) * grip;
+      el("circle", { cx: gx, cy: gy, r: STEP * 0.16, class: "wire-end lug-end", "data-end": "lug" }, g);
+      el("circle", { cx: line.x2, cy: line.y2, r: STEP * 0.22, class: "wire-end far-end", "data-end": "far" }, g);
+      el("title", {}, g).textContent = title;
+    }
     el("g", { class: "ghost" }, root);
     if (fitting || !shown) fit();
     else apply();
-    light(lit);
+    light(lit, litItems);
     ghost(ghosted);
+  }
+
+  /**
+   * An off-board part: its body with its name, its lugs along the bottom, labelled.
+   * @param {OffItem} item @param {Hole} at @param {Element} parent @param {boolean} values @param {string} [cls]
+   */
+  function drawItem(item, at, parent, values, cls = "off-item") {
+    const { body, lugs } = itemShape(item, at);
+    const g = el("g", { class: `${cls} off-${item.kind}`, "data-item": item.ref, "data-refs": itemRefs(item).join(" ") }, parent);
+    el("rect", { x: body.x, y: body.y, width: body.w, height: body.h, rx: 2, class: "off-body" }, g);
+    const text = el("text", { x: body.x + body.w / 2, y: body.y + body.h / 2, class: "off-label", "text-anchor": "middle" }, g);
+    const value = values && item.value ? item.value : "";
+    el("tspan", { x: body.x + body.w / 2, dy: value ? "-0.15em" : "0.35em", class: "ref" }, text).textContent = item.kind === "power" ? item.name : item.ref;
+    if (value) el("tspan", { x: body.x + body.w / 2, dy: "1.05em", class: "value" }, text).textContent = value;
+    el("title", {}, g).textContent = item.name;
+    for (const lug of lugs) {
+      const l = el("g", { class: "lug", "data-lug": lug.end }, g);
+      el("circle", { cx: lug.x, cy: lug.y, r: STEP * 0.32, class: "lug-ring" }, l);
+      el("text", { x: lug.x, y: lug.y - STEP * 0.45, class: "lug-label", "text-anchor": "middle" }, l).textContent = lug.label;
+      el("title", {}, l).textContent = `${item.ref} ${lug.label}: drag to a hole or another lug to wire it`;
+    }
   }
 
   /** Draw what the view is about to do, faint (null: nothing). @param {Ghost | null} what */
@@ -224,13 +282,19 @@ export function boardCanvas(svg, app) {
       const [x, y] = holeXY(what.hole);
       el("circle", { cx: x, cy: y, r: STEP * 0.36, class: "aim" }, layer);
     }
+    if (what?.item) drawItem(what.item.item, what.item.at, layer, false, "off-item");
+    if (what?.wire) el("line", { ...what.wire, class: "wire" }, layer);
   }
 
-  /** Light the board parts `refs` (the selection). @param {string[]} refs */
-  function light(refs) {
+  /**
+   * Light the board parts `refs` and the off-board parts `items` (the selection).
+   * @param {string[]} refs @param {string[]} [items]
+   */
+  function light(refs, items = []) {
     lit = refs;
-    for (const node of svg.querySelectorAll(".board-part.selected")) node.classList.remove("selected");
-    for (const node of svg.querySelectorAll(".board-label.selected")) node.classList.remove("selected");
+    litItems = items;
+    for (const node of svg.querySelectorAll(".board-part.selected, .board-label.selected, .off-items .off-item.selected")) node.classList.remove("selected");
+    for (const ref of items) svg.querySelector(`.off-items .off-item[data-item="${CSS.escape(ref)}"]`)?.classList.add("selected");
     for (const ref of refs) {
       svg.querySelector(`.board-part[data-ref="${CSS.escape(ref)}"]`)?.classList.add("selected");
       svg.querySelector(`.board-label[data-ref="${CSS.escape(ref)}"]`)?.classList.add("selected");
@@ -244,13 +308,29 @@ export function boardCanvas(svg, app) {
     apply();
   }, { passive: false });
 
-  /** What's under a pointer event. @param {MouseEvent} e @returns {Spot} */
-  const spotOf = (e) => {
-    const target = /** @type {Element} */ (e.target);
-    const link = target.closest(".board-link");
+  /**
+   * What's under a point in the window: `target` the element there (an event's, else the
+   * topmost at the point, the ghost aside).
+   * @param {number} clientX @param {number} clientY @param {Element | null} [target] @returns {Spot}
+   */
+  const spotAt = (clientX, clientY, target = null) => {
+    const at = target ?? document.elementsFromPoint(clientX, clientY).find((n) => svg.contains(n) && !n.closest(".ghost")) ?? svg;
+    const link = at.closest(".board-link");
     const ends = link ? ["data-a", "data-b"].map((k) => /** @type {Hole} */ (String(link.getAttribute(k)).split(",").map(Number))) : null;
-    return { ref: target.closest(".board-part")?.getAttribute("data-ref") ?? null, hole: holeAt(e.clientX, e.clientY), link: /** @type {[Hole, Hole] | null} */ (ends) };
+    const wire = at.closest(".off-wire");
+    const end = at.closest("[data-end]")?.getAttribute("data-end");
+    return {
+      ref: at.closest(".board-part")?.getAttribute("data-ref") ?? null,
+      hole: holeAt(clientX, clientY),
+      link: /** @type {[Hole, Hole] | null} */ (ends),
+      item: at.closest(".off-items .off-item")?.getAttribute("data-item") ?? null,
+      lug: at.closest(".off-items .lug")?.getAttribute("data-lug") ?? null,
+      wire: wire && end ? { index: Number(wire.getAttribute("data-wire")), end: end === "lug" ? "lug" : "far" } : null,
+      point: /** @type {[number, number]} */ (toBoard(clientX, clientY)),
+    };
   };
+  /** What's under a pointer event. @param {MouseEvent} e */
+  const spotOf = (e) => spotAt(e.clientX, e.clientY, /** @type {Element} */ (e.target));
 
   svg.addEventListener("pointerdown", (e) => {
     if (e.button !== 0) return;
@@ -266,7 +346,7 @@ export function boardCanvas(svg, app) {
       const dy = ev.clientY - start.y;
       if (!moved && Math.hypot(dx, dy) < CLICK_PX) return;
       moved = true;
-      if (taken) return app.onDrag(holeAt(ev.clientX, ev.clientY));
+      if (taken) return app.onDrag(holeAt(ev.clientX, ev.clientY), /** @type {[number, number]} */ (toBoard(ev.clientX, ev.clientY)));
       svg.classList.add("panning");
       vb = panBy(start.vb, dx, dy, size().width);
       apply();
@@ -275,7 +355,7 @@ export function boardCanvas(svg, app) {
       window.removeEventListener("pointermove", onMove);
       svg.classList.remove("panning");
       pressing = false;
-      if (taken) return app.onRelease(holeAt(ev.clientX, ev.clientY), moved);
+      if (taken) return app.onRelease(holeAt(ev.clientX, ev.clientY), moved, spotAt(ev.clientX, ev.clientY));
       if (moved) return;
       if (ruler) return app.onLine(/** @type {"column" | "strip"} */ (ruler.getAttribute("data-axis")), Number(ruler.getAttribute("data-line")), e.clientX, e.clientY);
       app.onClick(spot);
@@ -289,10 +369,7 @@ export function boardCanvas(svg, app) {
   });
   svg.addEventListener("pointerleave", () => app.onHover(null));
   svg.addEventListener("contextmenu", (e) => {
-    const ref = spotOf(e).ref;
-    if (!ref) return;
-    e.preventDefault();
-    app.onMenu(ref, e.clientX, e.clientY);
+    if (app.onMenu(spotOf(e), e.clientX, e.clientY)) e.preventDefault();
   });
 
   return {

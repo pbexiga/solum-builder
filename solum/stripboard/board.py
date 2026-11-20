@@ -4,7 +4,9 @@ A grid of holes 0.1" apart; the copper strips run along the rows. A hole is (col
 strip), both from 0; on paper the columns are lettered and the strips numbered from 1,
 so (5, 6) is F7. A part is its legs in holes; a cut takes the copper off one hole, which
 splits its strip there (and holds no leg); a link is a wire along a column joining two
-holes; a pad is a hole an off-board wire is soldered into.
+holes. Off-board parts sit beside the board at a spot (any hole, on or off it, as drawn)
+and are joined to it by wires: from a lug to a hole (its pad), lug to lug, or loose
+(D-375).
 """
 
 import re
@@ -79,12 +81,14 @@ class Link:
 
 
 @dataclass(frozen=True)
-class Pad:
-    """A hole an off-board wire goes into; `ends` what it goes to: an off-board part's pin
-    (`VR1.1`, `IN.out`) or a supply (`V+`, `GND`)."""
+class Wire:
+    """An off-board wire from `lug` (an off-board part's lug: `VR1.1`, `IN.out`, `IN.S`, or
+    a supply, `V+`, `GND`) to a hole on the board (`hole`, its pad), to another lug (`to`),
+    or loose (neither)."""
 
-    hole: Hole
-    ends: tuple[str, ...]
+    lug: str
+    hole: Hole | None = None
+    to: str | None = None
 
 
 @dataclass(frozen=True)
@@ -94,7 +98,13 @@ class Layout:
     parts: tuple[Placed, ...]
     cuts: frozenset[Hole] = frozenset()
     links: tuple[Link, ...] = ()
-    pads: tuple[Pad, ...] = ()
+    wires: tuple[Wire, ...] = ()
+    spots: tuple[tuple[str, Hole], ...] = ()  # each off-board part put beside the board
+
+    @property
+    def pads(self) -> list[Hole]:
+        """The holes wires are soldered into."""
+        return [w.hole for w in self.wires if w.hole is not None]
 
     def on_board(self, hole: Hole) -> bool:
         return 0 <= hole[0] < self.columns and 0 <= hole[1] < self.strips
@@ -121,8 +131,10 @@ def _holes(data: Iterable[str]) -> list[Hole]:
 
 def layout_from_data(data: Mapping[str, Any]) -> Layout:
     """A layout from its plain form: `{size: [columns, strips], parts: {R1: {1: B2, 2:
-    B6}, ...}, standing: [R2], cuts: [F7], links: [[A1, A4]], pads: {A1: [V-]}}`, holes
-    by name (the form a test or the circuit file writes)."""
+    B6}, ...}, standing: [R2], cuts: [F7], links: [[A1, A4]], wires: [{from: VR1.1, hole:
+    A1}, {from: VR1.3, lug: IN.S}, {from: V+}], off: {VR1: [2, -6]}}`, holes by name but
+    an off-board part's spot (it may be off the board) as [column, strip] (the form a
+    test or the circuit file writes)."""
     try:
         columns, strips = (int(n) for n in data["size"])
         standing = set(data.get("standing", ()))
@@ -135,16 +147,33 @@ def layout_from_data(data: Mapping[str, Any]) -> Layout:
             for ref, legs in data.get("parts", {}).items()
         )
         links = tuple(Link(*_holes(pair)) for pair in data.get("links", ()))
-        pads = tuple(
-            Pad(parse_hole(h), tuple(str(e) for e in ends))
-            for h, ends in data.get("pads", {}).items()
-        )
+        wires = tuple(_wire(w) for w in data.get("wires", ()))
+        spots = tuple((str(ref), (int(at[0]), int(at[1])))
+                      for ref, at in data.get("off", {}).items())  # fmt: skip
         return Layout(columns, strips, parts, frozenset(_holes(data.get("cuts", ()))), links,
-                      pads)  # fmt: skip
+                      wires, spots)  # fmt: skip
     except (KeyError, TypeError, ValueError) as err:
         if isinstance(err, BoardError):
             raise
         raise BoardError("The stripboard layout's data is incomplete or malformed.") from None
+
+
+def _wire(data: Mapping[str, Any]) -> Wire:
+    hole, to = data.get("hole"), data.get("lug")
+    if hole is not None and to is not None:
+        raise BoardError("A wire goes from its lug to a hole or to another lug, not both.")
+    return Wire(str(data["from"]), parse_hole(hole) if hole is not None else None,
+                str(to) if to is not None else None)  # fmt: skip
+
+
+def wire_data(wire: Wire) -> dict[str, str]:
+    """A wire's plain form: `{from: VR1.1, hole: A1}`, `{from: .., lug: ..}`, `{from: ..}`."""
+    found = {"from": wire.lug}
+    if wire.hole is not None:
+        found["hole"] = hole_name(wire.hole)
+    if wire.to is not None:
+        found["lug"] = wire.to
+    return found
 
 
 def layout_data(layout: Layout) -> dict[str, Any]:
@@ -155,5 +184,6 @@ def layout_data(layout: Layout) -> dict[str, Any]:
         "standing": [p.ref for p in layout.parts if p.standing],
         "cuts": [hole_name(h) for h in sorted(layout.cuts, key=lambda h: (h[1], h[0]))],
         "links": [[hole_name(link.a), hole_name(link.b)] for link in layout.links],
-        "pads": {hole_name(p.hole): list(p.ends) for p in layout.pads},
+        "wires": [wire_data(w) for w in layout.wires],
+        "off": {ref: list(at) for ref, at in layout.spots},
     }

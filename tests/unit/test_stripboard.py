@@ -25,7 +25,7 @@ from solum.stripboard.board import (
     parse_hole,
     segments,
 )
-from solum.stripboard.check import Checked, check_layout, off_board_ends, stripboard_nets
+from solum.stripboard.check import Checked, check_layout, stripboard_nets
 from solum.stripboard.footprints import (
     board_parts,
     body_holes,
@@ -33,6 +33,8 @@ from solum.stripboard.footprints import (
     drawing_data,
     leg_problem,
 )
+from solum.stripboard.offboard import default_spots, lug_nets, off_board_items
+from solum.stripboard.wiring import WiringError, wire_for_me
 from solum.yamlio import load_yaml
 
 REPO = Path(__file__).resolve().parents[2]
@@ -167,13 +169,41 @@ def test_the_hand_made_rangemaster_layout_passes() -> None:
     assert result.nets == len(connect(RANGEMASTER).members)  # every net is on the board
 
 
-def test_off_board_wires_are_each_pot_lug_the_input_the_output_and_the_supply() -> None:
+def test_off_board_lugs_are_each_pot_lug_the_jacks_and_the_supply() -> None:
+    """D-375: the parts list's off-board parts in its order (the undrawn jacks with their
+    sleeves on ground), then Power for the supplies no drawn part brings."""
     nets = connect(RANGEMASTER)
     board, _ = board_parts(RANGEMASTER, MODELS, TABLE)
-    assert off_board_ends(RANGEMASTER, nets, board) == {
-        "IN.out": "in", "VR1.1": "V-", "VR1.2": "C2.1", "VR1.3": "Q1.C", "OUT.in": "out",
-        "GND": "GND", "V-": "V-",
+    items = off_board_items(RANGEMASTER, nets, board, MODELS)
+    assert [(i.ref, i.name, i.kind) for i in items] == [
+        ("VR1", "VR1 (Volume)", "pot"), ("IN", "IN (Input)", "jack"),
+        ("OUT", "OUT (Output)", "jack"), ("power", "Power", "power"),
+    ]  # fmt: skip
+    assert [lug.label for lug in items[1].lugs] == ["T", "S"]
+    assert lug_nets(items) == {
+        "VR1.1": "V-", "VR1.2": "C2.1", "VR1.3": "Q1.C", "IN.out": "in", "IN.S": "GND",
+        "OUT.in": "out", "OUT.S": "GND", "V-": "V-", "GND": "GND",
     }  # fmt: skip
+    assert items[0].size == (7, 3)
+
+
+def test_a_dual_pot_is_one_off_board_part_with_its_gangs_lugs() -> None:
+    bd2 = load_circuit(LIBRARY / "starters" / "boss-bd2.json")
+    board, _ = board_parts(bd2, MODELS, TABLE)
+    items = {i.ref: i for i in off_board_items(bd2, connect(bd2), board, MODELS)}
+    assert [lug.end for lug in items["VR1"].lugs] == [
+        "VR1A.1", "VR1A.2", "VR1A.3", "VR1B.1", "VR1B.2", "VR1B.3"]  # fmt: skip
+    assert [lug.label for lug in items["VR1"].lugs][:2] == ["A1", "A2"]
+
+
+def test_default_spots_put_pots_on_top_input_right_output_left() -> None:
+    nets = connect(RANGEMASTER)
+    board, _ = board_parts(RANGEMASTER, MODELS, TABLE)
+    items = off_board_items(RANGEMASTER, nets, board, MODELS)
+    spots = default_spots(items, layout_from_data(GOOD))  # 12 × 9
+    assert spots["VR1"] == (0, -7)  # above the margin, its bottom 2 strips clear of it
+    assert spots["IN"] == (16, 0) and spots["OUT"][0] + items[2].size[0] - 1 == -5
+    assert spots["power"][1] == 13
 
 
 def test_a_missed_cut_is_refused() -> None:
@@ -204,20 +234,39 @@ def test_a_transistor_turned_round_is_refused() -> None:
     assert "Q1's emitter at E5" in " ".join(result.faults)
 
 
-def test_a_missing_pad_or_a_pad_for_nothing_is_refused() -> None:
-    pads = {k: v for k, v in GOOD["pads"].items() if k != "D1"}
-    assert "There's no pad for VR1 lug 1." in check(edited(pads=pads)).faults
-    wrong = check(edited(pads={**GOOD["pads"], "L1": ["VR2.1"]}))
-    assert "Pad L1 goes to 'VR2.1', which isn't an off-board wire this circuit needs." in (
-        wrong.faults
+def test_an_unwired_lug_a_wire_to_nothing_or_a_loose_wire_is_refused() -> None:
+    wires = [w for w in GOOD["wires"] if w["from"] != "VR1.1"]
+    assert check(edited(wires=wires)).faults == ["VR1 lug 1 isn't wired yet."]
+    wrong = check(edited(wires=[*GOOD["wires"], {"from": "VR2.1", "hole": "L1"}]))
+    assert "A wire goes to 'VR2.1', which isn't an off-board lug of this circuit." in (wrong.faults)
+    loose = check(edited(wires=[*wires, {"from": "VR1.1"}]))
+    assert "The wire from VR1 lug 1 is loose: solder its other end." in loose.faults
+
+
+def test_lugs_wired_together_join_their_nets() -> None:
+    """The output jack's sleeve reaches ground through the input's (D-375); wired to the
+    input instead, it's a short."""
+    assert check(GOOD).ok
+    wires = [w for w in GOOD["wires"] if w["from"] != "OUT.S"]
+    short = check(edited(wires=[*wires, {"from": "OUT.S", "lug": "IN.out"}]))
+    assert short.faults[0].startswith("The output jack's sleeve and C1's leg at F6 are joined")
+
+
+def test_a_wire_in_a_cut_hole_or_beside_a_leg_is_refused() -> None:
+    wires = [{**w, "hole": "G8"} if w["from"] == "VR1.1" else w for w in GOOD["wires"]]
+    cut = check(edited(wires=wires))
+    assert "The wire from VR1 lug 1 is in a cut hole (G8): the cut takes its copper away." in (
+        cut.faults
     )
+    wires = [{**w, "hole": "E3"} if w["from"] == "VR1.1" else w for w in GOOD["wires"]]
+    assert "Q1 and the wire from VR1 lug 1 share hole E3." in check(edited(wires=wires)).faults
 
 
 def test_missing_extra_and_off_board_parts_are_named() -> None:
     parts = {k: v for k, v in GOOD["parts"].items() if k != "C4"}
     assert "C4 isn't on the board." in check(edited(parts=parts) | {"parts": parts}).faults
     extra = check(edited(parts={"VR1": {"1": "L1", "2": "L2", "3": "L3"}}))
-    assert "VR1 goes off the board: wire it to pads instead." in extra.faults
+    assert "VR1 goes off the board: put it beside the board and wire it." in extra.faults
 
 
 def test_two_legs_in_a_hole_or_a_body_over_a_leg_is_refused() -> None:
@@ -275,7 +324,7 @@ CHIP = {
     "standing": ["R1"],
     "cuts": ["F3", "F4", "F5", "F6"],  # the chip's own, between its rows
     "links": [["C3", "C4"], ["J4", "J5"], ["K1", "K3"], ["A2", "A10"], ["B6", "B10"]],
-    "pads": {"D1": ["V+"], "D2": ["GND"]},
+    "wires": [{"from": "V+", "hole": "D1"}, {"from": "GND", "hole": "D2"}],
 }
 
 
@@ -328,3 +377,29 @@ def test_every_starter_but_the_kit_builds_gets_its_footprints() -> None:
     path = LIBRARY / "starters" / "marshall-bluesbreaker-aion.json"
     _, dip = board_parts(load_circuit(path), MODELS, TABLE)
     assert dip == ["There's no board size for DIP switches (SW3) yet."]  # once, not per pole
+
+
+# --- Wire it for me (D-375) ----------------------------------------------------------
+
+
+def test_wire_it_for_me_wires_every_lug_to_a_board_that_passes() -> None:
+    """Every off-board part put at its default spot, each lug wired to the nearest free
+    hole on a strip of its net only; the same board wires the same way; done twice, the
+    second has nothing to do."""
+    bare = layout_from_data({**GOOD, "wires": [], "off": {"VR1": [2, -8]}})
+    wired = wire_for_me(bare, RANGEMASTER, MODELS, TABLE)
+    assert check_layout(wired, RANGEMASTER, MODELS, TABLE).faults == []
+    assert dict(wired.spots)["VR1"] == (2, -8)  # put there by hand: kept
+    assert set(dict(wired.spots)) == {"VR1", "IN", "OUT", "power"}
+    assert wire_for_me(bare, RANGEMASTER, MODELS, TABLE) == wired
+    with pytest.raises(WiringError, match="Nothing to wire"):
+        wire_for_me(wired, RANGEMASTER, MODELS, TABLE)
+
+
+def test_wire_it_for_me_leaves_a_net_not_on_the_board() -> None:
+    """With C2 not placed, VR1's wiper has no strip to go to: left to wire."""
+    parts = {k: v for k, v in GOOD["parts"].items() if k != "C2"}
+    bare = layout_from_data({**GOOD, "parts": parts, "wires": []})
+    wired = wire_for_me(bare, RANGEMASTER, MODELS, TABLE)
+    assert "VR1.2" not in {w.lug for w in wired.wires}
+    assert "VR1.1" in {w.lug for w in wired.wires}

@@ -44,7 +44,7 @@ def test_the_board_view_shows_the_board_and_its_own_panes(page: Page, base_url: 
     expect(page.locator("#palette")).to_be_hidden()
     expect(page.locator("#board-panels")).to_be_visible()
     assert page.locator("#board .board-part").count() == 8
-    size = "12 × 9 holes (30 × 23 mm), 1 cut, 2 links"
+    size = "12 × 9 holes (30 × 23 mm), 1 cut, 2 links, 9 wires"
     expect(page.locator("#board-size-text")).to_have_text(size)
     expect(page.locator("#board .cut")).to_have_count(1)
     expect(page.locator("#board .link")).to_have_count(2)
@@ -85,25 +85,27 @@ def test_a_circuit_without_a_board_shows_its_parts_to_place(page: Page, base_url
     page.locator("#board-button").click()
     expect(page.locator("#board-size-text")).to_have_text("Empty board")
     # the Tray on the left (D-371): the 8 board parts by kind; off the board VR1, the
-    # guitar's and amp's jacks, the stock footswitch and status LED (D-370)
+    # guitar's and amp's jacks, Power (D-375), the stock footswitch and status LED (D-370)
     expect(page.locator("#board-tray")).to_be_visible()
-    expect(page.locator("#board-tray-count")).to_have_text("· 13 left")
-    expect(page.locator("#board-tray-body li[data-ref]")).to_have_count(13)
+    expect(page.locator("#board-tray-count")).to_have_text("· 14 left")
+    expect(page.locator("#board-tray-body li[data-ref]")).to_have_count(14)
     kinds = ["Resistors", "Capacitors", "Transistors"]
     expect(page.locator("#board-tray-body .board-subhead")).to_have_text(kinds)
     expect(page.locator("#board-tray-body li[data-ref='Q1']")).to_contain_text("in a line")
     off = page.locator("#board-tray-body .off-board li")
     expect(off).to_have_text([
         "VR1 (Volume) A10k log (A)", 'IN (Input) ¼" jack TS', 'OUT (Output) ¼" jack TS',
-        "Footswitch 3PDT stock, true bypass", "Status LED stock",
+        "Power the supply's wires", "Footswitch 3PDT stock, true bypass", "Status LED stock",
     ])  # fmt: skip
     # a row selects its part on the small schematic
     page.locator("#board-tray-body li[data-ref='R2']").click()
     expect(page.locator("#board-sheet .part[data-ref='R2']")).to_have_class("part selected")
-    # the wire ends are with their nets
+    # the lugs to wire are with their nets
     c2 = page.locator("#board-nets-body li[data-net='C2.1']")
-    expect(c2).to_contain_text("a wire from VR1.2")
-    expect(page.locator("#board-nets-body .board-progress")).to_have_text("0 of 8 nets done.")
+    expect(c2).to_contain_text("a wire from VR1 lug 2")
+    expect(page.locator("#board-nets-body .board-progress")).to_have_text(
+        "0 of 8 nets done; 9 lugs to wire."
+    )
 
 
 def test_the_board_panes_keep_their_own_order(page: Page, base_url: str) -> None:
@@ -194,20 +196,20 @@ def test_the_board_size_changes_by_hand(
     size = page.locator("#board-size-text")
     page.locator("#board .ruler[data-axis='column'][data-line='0']").click()
     page.get_by_text("Insert a column left of A").click()
-    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links")
+    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links, 9 wires")
     expect(page.locator("#dirty")).to_be_visible()
     page.locator("#board .ruler[data-axis='column'][data-line='1']").click()
     page.get_by_text("Remove column B").click()
     expect(page.locator("#refusal .refusal-text")).to_have_text(
-        "Column B isn't empty: the pad at B1 is on it."
+        "Column B isn't empty: the wire at B1 is on it."
     )
     browser_errors[:] = [e for e in browser_errors if "status of 422" not in e]  # the refusal
     page.locator("#board-trim").click()
-    expect(size).to_have_text("11 × 9 holes (28 × 23 mm), 1 cut, 2 links")
+    expect(size).to_have_text("11 × 9 holes (28 × 23 mm), 1 cut, 2 links, 9 wires")
     page.keyboard.press("Control+z")
-    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links")
+    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links, 9 wires")
     page.keyboard.press("Control+z")
-    expect(size).to_have_text("12 × 9 holes (30 × 23 mm), 1 cut, 2 links")
+    expect(size).to_have_text("12 × 9 holes (30 × 23 mm), 1 cut, 2 links, 9 wires")
     # auto-grow off: the margin greyed
     page.locator("#board-settings > summary").click()
     page.locator("#board-settings-body input[data-setting='grow']").uncheck()
@@ -227,23 +229,23 @@ def test_the_board_has_its_own_undo_history(page: Page, base_url: str) -> None:
     size = page.locator("#board-size-text")
     page.locator("#board .ruler[data-axis='column'][data-line='0']").click()
     page.get_by_text("Insert a column left of A").click()
-    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links")
+    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links, 9 wires")
     page.locator("#history-button").click()
     current = page.locator("#history-rows .history-step.current")
     expect(current).to_have_text("Insert a column left of A")
     page.locator("#history-button").click()
     page.keyboard.press("Control+z")
-    expect(size).to_have_text("12 × 9 holes (30 × 23 mm), 1 cut, 2 links")
+    expect(size).to_have_text("12 × 9 holes (30 × 23 mm), 1 cut, 2 links, 9 wires")
     page.keyboard.press("Control+z")  # the board's history at its start: R1 stays deleted
     page.keyboard.press("Control+Shift+z")
-    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links")
+    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links, 9 wires")
     page.locator("#board-button").click()  # back to the schematic
     expect(page.locator('g.part[data-ref="R1"]')).to_have_count(0)
     page.keyboard.press("Control+z")
     expect(page.locator('g.part[data-ref="R1"]')).to_have_count(1)
     show_board(page)
     # the schematic's undo kept the board
-    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links")
+    expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links, 9 wires")
     expect(page.locator("#dirty")).to_be_visible()
 
 
@@ -326,4 +328,59 @@ def test_parts_are_placed_turned_moved_cut_and_linked_by_hand(
         "aria-pressed", "true"
     )
     browser_errors[:] = [e for e in browser_errors if "status of 422" not in e]  # the refusal
+    page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
+
+
+def lug_point(page: Page, end: str) -> tuple[float, float]:
+    box = page.locator(f"#board .off-items .lug[data-lug='{end}'] .lug-ring").bounding_box()
+    assert box
+    return box["x"] + box["width"] / 2, box["y"] + box["height"] / 2
+
+
+def test_an_off_board_part_is_put_beside_the_board_and_wired(
+    page: Page, base_url: str, browser_errors: list[str]
+) -> None:
+    """D-375: VR1 dragged out of the tray beside the board; its three lugs wired to their
+    holes finish the Rangemaster; a wire's end moved, left loose from its menu (counted in
+    Nets), undone; VR1 back to the tray takes its wires; Wire it for me puts it back."""
+    board = load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml")
+    board["wires"] = [w for w in board["wires"] if not w["from"].startswith("VR1")]
+    open_with_board(page, base_url, board)
+    show_board(page)
+    tray_vr1 = page.locator("#board-tray-body li[data-ref='VR1 (Volume)']")
+    expect(tray_vr1).to_be_visible()
+    box = tray_vr1.bounding_box()
+    assert box
+    drag_to(page, (box["x"] + 20, box["y"] + box["height"] / 2), hole_point(page, 4, -8))
+    vr1 = page.locator("#board .off-items .off-item[data-item='VR1']")
+    expect(vr1).to_have_count(1)
+    expect(tray_vr1).to_have_count(0)
+    wires = page.locator("#board .off-wire")
+    for end, hole in (("VR1.1", (3, 0)), ("VR1.2", (0, 6)), ("VR1.3", (0, 4))):  # D1, A7, A5
+        drag_to(page, lug_point(page, end), hole_point(page, *hole))
+    expect(wires).to_have_count(9)  # the six kept, and VR1's three
+    warnings = page.locator("#board-warnings-body")
+    expect(warnings).to_have_text("The board matches the circuit.")
+    expect(page.locator("#board-size-text")).to_contain_text("9 wires")
+    # left loose from the wire's menu: still to do; undone
+    last = wires.last.locator(".far-end")
+    last.click(button="right")
+    page.get_by_role("menuitem", name="Leave its end loose").click()
+    expect(page.locator("#board .off-wire.loose")).to_have_count(1)
+    expect(page.locator("#board-nets-body .board-progress")).to_contain_text("1 loose")
+    page.keyboard.press("Control+z")
+    expect(page.locator("#board .off-wire.loose")).to_have_count(0)
+    # back to the tray, its wires with it
+    vr1.locator(".off-body").click(button="right")
+    page.get_by_role("menuitem", name="Back to the tray, with its wires").click()
+    expect(vr1).to_have_count(0)
+    expect(wires).to_have_count(6)
+    expect(page.locator("#board-tray-body li[data-ref='VR1 (Volume)']")).to_be_visible()
+    # Wire it for me: VR1 out beside the board again and wired, one undo step
+    page.locator("#board-wire").click()
+    expect(vr1).to_have_count(1)
+    expect(warnings).to_have_text("The board matches the circuit.")
+    expect(page.locator("#board-wire")).to_be_hidden()
+    page.keyboard.press("Control+z")
+    expect(vr1).to_have_count(0)
     page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")

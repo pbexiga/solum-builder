@@ -1,5 +1,6 @@
 # A hand-made stripboard layout of the Dallas Rangemaster starter (D-367): P6a's check
-# must pass it, and refuse each broken copy in tests/unit/test_stripboard.py.
+# must pass it, and refuse each broken copy in tests/unit/test_stripboard.py. Off-board wires
+# (D-375): each lug to its pad, the output jack's sleeve to the input's.
 #   strip 1 V-, 2 GND, 3 Q1's emitter, 4 its base, 5 its collector, 6 the input,
 #   7 C2 to VR1's wiper, 8 V- (left of the cut at G8) and GND (right), 9 the output.
 size: [12, 9]
@@ -15,11 +16,13 @@ parts:
 standing: [R3]
 cuts: [G8]
 links: [[B1, B8], [K2, K8]]
-pads:
-  A1: [V-]
-  D1: [VR1.1]
-  A2: [GND]
-  A5: [VR1.3]
-  A6: [IN.out]
-  A7: [VR1.2]
-  A9: [OUT.in]
+wires:
+  - {from: V-, hole: A1}
+  - {from: VR1.1, hole: D1}
+  - {from: GND, hole: A2}
+  - {from: IN.S, hole: D2}
+  - {from: OUT.S, lug: IN.S}
+  - {from: VR1.3, hole: A5}
+  - {from: IN.out, hole: A6}
+  - {from: VR1.2, hole: A7}
+  - {from: OUT.in, hole: A9}

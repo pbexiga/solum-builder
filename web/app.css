@@ -306,7 +306,7 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 .zoom #fit-button { font-size: 12px; }
 /* Schematic / Board (D-368): two views of the circuit on the one canvas */
 .board-size { position: absolute; left: 12px; bottom: 12px; margin: 0; font: 12px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-2); pointer-events: none; }
-.board-size[hidden], .board-trim[hidden] { display: none; }
+.board-size[hidden], .board-trim[hidden] { display: none; } /* Trim and Wire it for me */
 .board-trim { pointer-events: auto; margin-left: 8px; padding: 1px 8px; font: 12px var(--font-ui); }
 body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-show="board"] .panels { display: none; }
 /* the Tray: the palette's place in the Board view (D-371) */
@@ -348,7 +348,25 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board .cut { stroke: var(--error); stroke-width: 1.5; vector-effect: non-scaling-stroke; fill: none; }
 #board .link { stroke: var(--sch-line); stroke-width: 1.2; }
 #board .link-end { fill: var(--sch-line); }
-#board .pad-ring { fill: none; stroke: var(--text-2); stroke-width: 1.2; stroke-dasharray: 2 1.5; }
+/* off-board parts beside the board and their wires (D-375) */
+#board .off-item { cursor: grab; }
+#board .off-body { fill: var(--surface-1); stroke: var(--sch-line); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+#board .off-power .off-body { stroke-dasharray: 3 2; }
+#board .off-item.selected .off-body { stroke: var(--sch-selected); stroke-width: 2.2; }
+#board .off-label { font: 3.2px var(--font-ui); fill: var(--text); pointer-events: none; }
+#board .off-label .value { font-family: var(--font-mono); fill: var(--text-2); }
+#board .lug { cursor: crosshair; }
+#board .lug-ring { fill: var(--board-base); stroke: var(--brass); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+#board .lug:hover .lug-ring { stroke: var(--accent-hi); stroke-width: 2; }
+#board .lug-label { font: 2.6px var(--font-mono); fill: var(--text-2); pointer-events: none; }
+#board .off-wire .wire { stroke: var(--brass); stroke-width: 1.4; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+#board .off-wire.loose .wire { stroke-dasharray: 3 2; }
+#board .wire-hit { stroke: transparent; stroke-width: 4; }
+#board .wire-end { fill: var(--brass); cursor: move; }
+#board .off-wire.loose .far-end { fill: var(--surface-2); stroke: var(--brass); stroke-width: 1; vector-effect: non-scaling-stroke; }
+#board .off-wire:hover .wire { stroke: var(--accent-hi); }
+#board .ghost .wire { stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 2 1.5; vector-effect: non-scaling-stroke; }
+#board .ghost .off-body { stroke: var(--accent); stroke-dasharray: 3 2; }
 #board .board-part { cursor: pointer; }
 #board .board-part .body { fill: var(--surface-2); stroke: var(--sch-line); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
 #board .board-part .lead { stroke: var(--sch-line); stroke-width: 1; }

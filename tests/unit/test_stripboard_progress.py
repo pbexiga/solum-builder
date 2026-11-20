@@ -44,8 +44,9 @@ def states(p: Progress) -> dict[str, str]:
 def test_an_empty_board_has_everything_to_place_and_no_faults() -> None:
     p = run({"size": [12, 9]})
     assert p.to_place == BOARD_REFS
-    assert sorted(p.pads_to_place) == ["GND", "IN.out", "OUT.in", "V-", "VR1.1", "VR1.2",
-                                       "VR1.3"]  # fmt: skip
+    assert sorted(p.wires_to_go) == ["GND", "IN.S", "IN.out", "OUT.S", "OUT.in", "V-",
+                                     "VR1.1", "VR1.2", "VR1.3"]  # fmt: skip
+    assert p.loose == 0
     assert p.faults == [] and p.stale == [] and not p.done
     assert set(states(p).values()) == {"pieces"}
     assert all(n.placed == 0 and n.pieces == 0 for n in p.nets)
@@ -66,7 +67,7 @@ def test_a_part_with_no_footprint_is_unplaceable_not_a_fault() -> None:
 
 def test_the_finished_rangemaster_is_done_net_by_net() -> None:
     p = run(GOOD)
-    assert p.done and p.faults == [] and p.to_place == [] and p.pads_to_place == []
+    assert p.done and p.faults == [] and p.to_place == [] and p.wires_to_go == []
     assert p.nets_done == len(p.nets) == len(connect(RANGEMASTER).members)
     assert all(n.placed == n.total and n.pieces == 1 for n in p.nets)
 
@@ -163,13 +164,24 @@ def test_group_met_counts_holes_from_the_pin_one_more_per_extra_leg() -> None:
     assert not group_met(pin, [parse_hole("G3")], lambda h: h == parse_hole("F3"))
 
 
-def test_the_tray_lists_off_board_parts_as_the_parts_list_does() -> None:
-    """The Rangemaster's pot, and the guitar's and amp's jacks it doesn't draw."""
+def test_the_off_board_parts_are_the_parts_list_s_and_power() -> None:
+    """The Rangemaster's pot, the guitar's and amp's jacks it doesn't draw, and Power
+    (D-375); each drawn at its default spot until it's put somewhere."""
     p = run({"size": [12, 9]})
-    assert [(o.ref, o.part, o.value) for o in p.off_board] == [
-        ("VR1 (Volume)", "Pot", "A10k"), ("IN (Input)", "Jack", '¼" jack'),
-        ("OUT (Output)", "Jack", '¼" jack'),
+    assert [(o.name, o.kind, o.value) for o in p.items] == [
+        ("VR1 (Volume)", "pot", "A10k"), ("IN (Input)", "jack", '¼" jack'),
+        ("OUT (Output)", "jack", '¼" jack'), ("Power", "power", ""),
     ]  # fmt: skip
+    assert p.spots["VR1"] == (0, -7)
+    moved = run({"size": [12, 9], "off": {"VR1": [4, -9]}})
+    assert moved.spots["VR1"] == (4, -9)
+
+
+def test_a_loose_wire_is_to_do_not_a_fault() -> None:
+    wires = [w for w in GOOD["wires"] if w["from"] != "VR1.2"]
+    p = run(edited(wires=[*wires, {"from": "VR1.2"}]))
+    assert p.loose == 1 and p.wires_to_go == ["VR1.2"] and p.faults == [] and not p.done
+    assert {n.net: n.wires for n in p.nets}["C2.1"] == ("VR1 lug 2",)
 
 
 def test_stock_bypass_only_when_the_schematic_draws_none() -> None:
@@ -191,8 +203,9 @@ def test_stock_bypass_only_when_the_schematic_draws_none() -> None:
 
 
 def test_each_net_names_its_off_board_wires_still_to_land() -> None:
-    """D-371: the wire ends are listed with their nets (the Nets pane), not in the tray."""
+    """D-371: the lugs still to wire are listed with their nets (the Nets pane), in words."""
     empty = {n.net: n.wires for n in run({"size": [12, 9]}).nets}
-    assert empty["V-"] == ("V-", "VR1.1") and empty["C2.1"] == ("VR1.2",)
-    assert sum(len(w) for w in empty.values()) == 7
+    assert empty["V-"] == ("the V- supply", "VR1 lug 1") and empty["C2.1"] == ("VR1 lug 2",)
+    assert empty["GND"] == ("ground", "the input jack's sleeve", "the output jack's sleeve")
+    assert sum(len(w) for w in empty.values()) == 9
     assert all(n.wires == () for n in run(GOOD).nets)

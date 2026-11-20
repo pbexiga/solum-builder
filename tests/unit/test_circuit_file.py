@@ -231,10 +231,10 @@ def test_schema_v1_file_loads_as_current(repo: Path) -> None:
     (and dropped provenance), v6 text blocks (and dropped the power mode); a v1 file
     loads unchanged and saves as v6 at v1.0."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v1.json")
-    assert c.schema_ == SCHEMA_VERSION == 35
+    assert c.schema_ == SCHEMA_VERSION == 36
     assert c.tags == [] and c.texts == []
     assert [p.ref for p in c.parts] == ["R1", "R2"]
-    assert circuit_to_dict(c)["schema"] == 35
+    assert circuit_to_dict(c)["schema"] == 36
     assert (str(c.version), c.final) == ("v1.0", False)
 
 
@@ -753,3 +753,16 @@ def test_a_malformed_stripboard_is_refused(repo: Path, bad: dict[str, Any]) -> N
     data["stripboard"] = bad
     with pytest.raises(CircuitError):
         parse_circuit(data)
+
+
+def test_a_v35_board_s_pads_become_wires(repo: Path) -> None:
+    """v36 (D-375): each end of a v35 pad becomes a wire from that lug to the pad's hole."""
+    c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v35.json")
+    assert c.schema_ == SCHEMA_VERSION
+    board = circuit_to_dict(c)["stripboard"]
+    assert "pads" not in board
+    assert board["wires"] == [
+        {"from": "IN.out", "hole": "A1"}, {"from": "OUT.in", "hole": "A3"},
+        {"from": "GND", "hole": "A3"},
+    ]  # fmt: skip
+    assert c.stripboard is not None and c.stripboard.layout().pads == [(0, 0), (0, 2), (0, 2)]

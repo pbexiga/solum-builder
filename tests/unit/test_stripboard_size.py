@@ -14,7 +14,7 @@ from solum.guides import footprint_table
 from solum.models import load_models
 from solum.stripboard.board import (
     Layout,
-    Pad,
+    Wire,
     column_name,
     hole_name,
     layout_data,
@@ -52,12 +52,12 @@ def legs(layout: Layout, ref: str) -> dict[str, str]:
     return layout_data(layout)["parts"][ref]
 
 
-def test_used_holes_are_legs_bodies_cuts_links_and_pads() -> None:
+def test_used_holes_are_legs_bodies_cuts_links_and_wires() -> None:
     used = used_holes(GOOD, BOARD)
     assert used[parse_hole("E4")] == "Q1"
     assert used[parse_hole("G8")] == "the cut at G8"
     assert used[parse_hole("B5")] == "the link from B1 to B8"  # passed over
-    assert used[parse_hole("A6")] == "the pad at A6"
+    assert used[parse_hole("A6")] == "the wire at A6"
     assert box(used) == (0, 0, 10, 8)  # A1 to K9: column L is empty
     assert box([]) is None
 
@@ -110,7 +110,7 @@ def test_an_empty_column_can_be_taken_out() -> None:
 
 
 def test_a_line_that_isnt_empty_names_whats_on_it() -> None:
-    with pytest.raises(SizeError, match="Column A isn't empty: the pad at A1 is on it"):
+    with pytest.raises(SizeError, match="Column A isn't empty: the wire at A1 is on it"):
         remove_line(GOOD, BOARD, "column", 0)
     with pytest.raises(SizeError, match="Column G isn't empty: R3 is on it"):
         remove_line(GOOD, BOARD, "column", 6)
@@ -140,16 +140,16 @@ def test_insert_then_remove_gives_the_board_back(axis: str, at: int) -> None:
 
 
 def test_fit_grows_to_take_in_whats_in_the_margin() -> None:
-    after = replace(GOOD, pads=(*GOOD.pads, Pad((-2, -1), ("VR1.9",))))
+    after = replace(GOOD, wires=(*GOOD.wires, Wire("VR1.9", (-2, -1))))
     grown = fit(GOOD, after, BOARD)
     assert (grown.columns, grown.strips) == (14, 10)
     assert legs(grown, "Q1") == {"E": "G4", "B": "G5", "C": "G6"}
 
 
 def test_fit_shrinks_only_by_the_lines_the_edit_emptied() -> None:
-    """Taking every pad off column A empties it: the board loses it. Column L was empty
+    """Taking every wire off column A empties it: the board loses it. Column L was empty
     before (as if added by hand): it stays."""
-    after = replace(GOOD, pads=tuple(p for p in GOOD.pads if p.hole[0] != 0))
+    after = replace(GOOD, wires=tuple(w for w in GOOD.wires if not w.hole or w.hole[0]))
     shrunk = fit(GOOD, after, BOARD)
     assert (shrunk.columns, shrunk.strips) == (11, 9)
     assert legs(shrunk, "Q1") == {"E": "D3", "B": "D4", "C": "D5"}

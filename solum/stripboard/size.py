@@ -10,7 +10,7 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import replace
 from typing import Literal
 
-from solum.stripboard.board import Hole, Layout, Link, Pad, Placed, column_name, hole_name
+from solum.stripboard.board import Hole, Layout, Link, Placed, column_name, hole_name
 from solum.stripboard.footprints import PITCH, BoardPart, body_holes, leg_problem
 
 Axis = Literal["column", "strip"]
@@ -42,7 +42,7 @@ def used_holes(layout: Layout, board: Mapping[str, BoardPart]) -> dict[Hole, str
         for hole in (link.a, link.b, *link.between):
             used.setdefault(hole, name)
     for pad in layout.pads:
-        used.setdefault(pad.hole, f"the pad at {hole_name(pad.hole)}")
+        used.setdefault(pad, f"the wire at {hole_name(pad)}")
     return used
 
 
@@ -65,7 +65,10 @@ def _moved(layout: Layout, move: Callable[[Hole], Hole]) -> Layout:
         ),
         cuts=frozenset(move(h) for h in layout.cuts),
         links=tuple(Link(move(link.a), move(link.b)) for link in layout.links),
-        pads=tuple(Pad(move(p.hole), p.ends) for p in layout.pads),
+        wires=tuple(
+            replace(w, hole=move(w.hole)) if w.hole is not None else w for w in layout.wires
+        ),
+        spots=tuple((ref, move(at)) for ref, at in layout.spots),
     )
 
 

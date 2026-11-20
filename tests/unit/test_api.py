@@ -1,6 +1,7 @@
 import json
 import math
 from pathlib import Path
+from typing import Any
 
 import pytest
 from fastapi.testclient import TestClient
@@ -864,6 +865,8 @@ def test_stripboard_reports_the_open_circuit_s_board(monkeypatch: pytest.MonkeyP
     board = load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")
     done = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": board}}).json()
     assert done["done"] is True and done["nets_done"] == len(done["nets"])
+    assert done["items"][0]["ref"] == "VR1" and done["items"][0]["size"] == [7, 3]
+    assert done["spots"]["IN"] == [16, 0] and done["wires_to_go"] == []
     assert json.dumps(done)  # plain JSON all through
     bad = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": {"size": [0, 1]}}})
     assert bad.status_code == 422 and "one column" in bad.text
@@ -892,7 +895,7 @@ def test_stripboard_size_changes_the_open_circuit_s_board(monkeypatch: pytest.Mo
     )
     assert (
         refused.status_code == 422
-        and refused.json()["message"] == "Column A isn't empty: the pad at A1 is on it."
+        and refused.json()["message"] == "Column A isn't empty: the wire at A1 is on it."
     )
 
 
@@ -909,7 +912,7 @@ def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.M
     ).json()
     assert first == {
         "stripboard": {"size": [1, 5], "parts": {"R2": {"1": "A1", "2": "A5"}}, "standing": [],
-                       "cuts": [], "links": [], "pads": {}},
+                       "cuts": [], "links": [], "wires": [], "off": {}},
         "shift": [-3, -2],
     }  # fmt: skip
     board = {**data, "stripboard": load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")}
@@ -922,3 +925,39 @@ def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.M
     short = c.post("/api/stripboard/edit", json={**mend, "shorts": False})
     assert short.status_code == 422
     assert short.json()["message"].endswith("Shorts are off in Settings.")
+
+
+def test_stripboard_edit_puts_off_board_parts_and_wires(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-375: an off-board part put beside the board, a wire drawn to a hole, moved to a
+    lug, taken off; the part back to the tray takes its wires; refusals say why."""
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
+    board = {**data, "stripboard": load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")}
+    c = client(monkeypatch, lambda _s: FakeEngine())
+
+    def edit(**change: Any) -> Any:
+        return c.post("/api/stripboard/edit", json={"circuit": board, **change})
+
+    spot = edit(kind="spot", ref="VR1", holes=[[2, -8]]).json()["stripboard"]
+    assert spot["off"] == {"VR1": [2, -8]} and spot["size"] == [12, 9]
+    unknown = edit(kind="spot", ref="VR9", holes=[[2, -8]])
+    assert unknown.status_code == 422 and "VR9 isn't an off-board part" in unknown.json()["message"]
+    wires = board["stripboard"]["wires"]
+    i = next(n for n, w in enumerate(wires) if w["from"] == "VR1.2")
+    moved = edit(kind="rewire", index=i, ref="VR1.2", holes=[[6, 6]]).json()["stripboard"]
+    assert moved["wires"][i] == {"from": "VR1.2", "hole": "G7"}
+    to_lug = edit(kind="rewire", index=i, ref="VR1.2", to="IN.out").json()["stripboard"]
+    assert to_lug["wires"][i] == {"from": "VR1.2", "lug": "IN.out"}
+    loose = edit(kind="wire", ref="VR1.2").json()["stripboard"]
+    assert loose["wires"][-1] == {"from": "VR1.2"}
+    shared = edit(kind="wire", ref="VR1.2", holes=[[4, 2]])  # Q1's emitter
+    assert shared.status_code == 422 and "share hole E3" in shared.json()["message"]
+    twice = edit(kind="wire", ref="VR1.1", holes=[[3, 0]])
+    assert twice.json()["message"] == "There's a wire there already."
+    off = edit(kind="unwire", index=i).json()["stripboard"]
+    assert len(off["wires"]) == len(wires) - 1
+    back = {**board, "stripboard": spot}
+    gone = c.post(
+        "/api/stripboard/edit", json={"circuit": back, "kind": "unspot", "ref": "VR1"}
+    ).json()["stripboard"]
+    assert gone["off"] == {} and not any(w["from"].startswith("VR1") for w in gone["wires"])

@@ -272,7 +272,7 @@ export function boardRefOf(footprints, ref) {
  *   unplaceable: string[], nets: NetProgress[],
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
  *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number],
- *   shorted: Array<[number, number, number]>, guidance: Guidance}} Progress
+ *   shorted: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, guidance: Guidance}} Progress
  *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints and the
  *   guidance, D-377)
  */
@@ -764,6 +764,7 @@ export const BOARD_SETTINGS = /** @type {const} */ ([
   { key: "shorts", label: "Allow shorts while editing, shown red", on: true, acts: true, title: "Off: a move that makes a short is refused" },
   { key: "grow", label: "Auto-grow", on: true, acts: true, title: "The board grows to take in what's placed by its edge, and shrinks back. Off: it stays its size (the margin greyed); add or remove lines on the rulers" },
   { key: "seeThrough", label: "See-through", on: false, acts: true, title: "The parts faint, so the copper and the cuts under them show" },
+  { key: "rails", label: "Highlight rails", on: false, acts: true, title: "The supply's copper (V+, V-) rose, ground's grey" },
 ]);
 
 /** @typedef {Record<(typeof BOARD_SETTINGS)[number]["key"], boolean>} BoardSettings */

@@ -428,6 +428,8 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board[data-tool="cuts"], #board[data-tool="links"] { cursor: crosshair; }
 #board.carrying { cursor: grabbing; }
 #board .strip.shorted { fill: var(--error); opacity: 0.45; }
+#board .strip.rail-supply { fill: var(--board-rail-supply); }
+#board .strip.rail-ground { fill: var(--board-rail-ground); }
 #board .ghost { pointer-events: none; opacity: 0.6; }
 #board .ghost .body { fill: var(--surface-2); stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
 #board .ghost .lead { stroke: var(--accent); stroke-width: 1; }
@@ -447,8 +449,8 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board[data-tool="links"] .board-link { cursor: pointer; }
 #board[data-tool="links"] .board-link:hover .link { stroke: var(--error); }
 .board-tray .board-list li.carriable { cursor: grab; touch-action: none; user-select: none; }
-#board .board-label { font: 3.2px var(--font-ui); fill: var(--text); pointer-events: none; paint-order: stroke; stroke: var(--surface-2); stroke-width: 0.8px; }
-#board .board-label .value { font-family: var(--font-mono); fill: var(--text-2); }
+#board .board-label { font: 600 3.2px var(--font-ui); fill: var(--text); pointer-events: none; paint-order: stroke; stroke: var(--surface-0); stroke-width: 1.5px; stroke-linejoin: round; } /* a thick dark edge: readable over colour bands and light bodies */
+#board .board-label .value { font-family: var(--font-mono); font-weight: 500; fill: var(--text); }
 #board .board-label.selected .ref { fill: var(--sch-selected); }
 .board-panels .board-progress { margin: 0 0 8px; color: var(--text); }
 .board-panels .board-list { list-style: none; margin: 0; padding: 0; }

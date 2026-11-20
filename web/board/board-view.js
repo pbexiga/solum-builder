@@ -678,7 +678,7 @@ export function boardView(host, app) {
     const drawn = drawnBoard(board, progress?.start_size);
     const guide = guidanceNow();
     canvas.draw(drawn, progress?.footprints ?? {}, circuit, {
-      fit: !fitted, values: settings.values, rulers: started, fixed: !settings.grow, shorted: checked === circuit ? progress?.shorted ?? [] : [], off: offBoard(), seeThrough: settings.seeThrough,
+      fit: !fitted, values: settings.values, rulers: started, fixed: !settings.grow, shorted: checked === circuit ? progress?.shorted ?? [] : [], rails: settings.rails && checked === circuit ? progress?.rails ?? {} : {}, off: offBoard(), seeThrough: settings.seeThrough,
       guide: guide ? { rats: guide.ratsnest, cuts: guide.cuts, links: guide.links } : undefined,
     });
     fitted ||= Boolean(drawn.columns && progress); // an empty board's size and the off-board parts come with the first check

@@ -79,6 +79,8 @@
   /* the Board view (D-368): the board, its copper strips and holes, from the theme's own colours */
   --board-base: var(--surface-1);
   --board-copper: color-mix(in srgb, var(--picked) 16%, transparent);
+  --board-rail-supply: color-mix(in srgb, var(--sch-supply) 50%, transparent);  /* V+ / V- copper, Highlight rails (D-381): the supply's rose, apart from a short's red */
+  --board-rail-ground: color-mix(in srgb, var(--text-3) 50%, transparent);      /* GND copper */
   --board-hole: var(--surface-0);
   --scrim: rgba(18, 18, 16, 0.6);     /* behind a modal question (the save prompt) */
 

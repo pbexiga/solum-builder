@@ -158,15 +158,16 @@ export function boardCanvas(svg, app) {
   /**
    * Draw a board. `fit`: fit the view to it (the first time it's shown).
    * @param {Board} board @param {Record<string, Footprint>} footprints @param {any} circuit
-   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, off?: OffBoard, guide?: Guide, seeThrough?: boolean}} [opts]
+   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, off?: OffBoard, guide?: Guide, seeThrough?: boolean}} [opts]
    *   `values`: label parts with their values too; `rulers`: the columns' letters and the
    *   strips' numbers, each a menu of size changes (a board that's started); `fixed`: auto-grow
    *   off, the margin greyed (D-372); `shorted`: the copper carrying two nets, red (D-374);
+   *   `rails`: the copper carrying only a rail, by net, tinted (Highlight rails, D-381);
    *   `off`: the off-board parts and wires (D-375); `guide`: the guidance (D-377);
    *   `seeThrough`: the parts' bodies faint, the copper and cuts under them showing (D-378)
    */
-  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], off = { items: [], wires: [] }, guide = { rats: [], cuts: [], links: [] }, seeThrough = false } = {}) {
-    drawn = [board, footprints, circuit, { values, rulers, fixed, shorted, off, guide, seeThrough }];
+  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], rails = {}, off = { items: [], wires: [] }, guide = { rats: [], cuts: [], links: [] }, seeThrough = false } = {}) {
+    drawn = [board, footprints, circuit, { values, rulers, fixed, shorted, rails, off, guide, seeThrough }];
     holes = shownHoles(board);
     beside = null;
     for (const { item, at } of off.items) {
@@ -187,6 +188,10 @@ export function boardCanvas(svg, app) {
       const strips = el("g", { class: "strips" }, root);
       for (let s = 0; s < board.strips; s++) {
         el("rect", { x: -half + 0.6, y: s * STEP - half + 0.8, width: board.columns * STEP - 1.2, height: STEP - 1.6, rx: 1, class: "strip" }, strips);
+      }
+      for (const [net, runs] of Object.entries(rails)) {
+        const cls = net === "GND" ? "rail-ground" : "rail-supply";
+        for (const r of runRects(runs)) el("rect", { x: r.x + 0.6, y: r.y + 0.8, width: r.w - 1.2, height: r.h - 1.6, rx: 1, class: `strip ${cls}`, "data-rail": net }, strips);
       }
       for (const r of runRects(shorted)) el("rect", { x: r.x + 0.6, y: r.y + 0.8, width: r.w - 1.2, height: r.h - 1.6, rx: 1, class: "strip shorted" }, strips);
     }

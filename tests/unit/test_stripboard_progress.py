@@ -261,3 +261,13 @@ def test_each_net_names_its_off_board_wires_still_to_land() -> None:
     assert empty["GND"] == ("ground", "the input jack's sleeve", "the output jack's sleeve")
     assert sum(len(w) for w in empty.values()) == 9
     assert all(n.wires == () for n in run(GOOD).nets)
+
+
+def test_the_rails_copper_is_given_by_net() -> None:
+    """D-381: on the Rangemaster (PNP, so V- is its supply) strip 8 is V- left of the cut at
+    G8 and GND right of it; links B1–B8 and K2–K8 join strips 1 (V-) and 2 (GND). Copper
+    carrying two nets is a short's, not a rail's."""
+    p = run(GOOD)
+    assert p.rails == {"GND": [(1, 0, 11), (7, 7, 11)], "V-": [(0, 0, 11), (7, 0, 5)]}
+    shorted = run(edited(cuts=[]))
+    assert (7, 0, 11) not in [r for found in shorted.rails.values() for r in found]

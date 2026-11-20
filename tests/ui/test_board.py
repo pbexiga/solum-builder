@@ -192,6 +192,25 @@ def test_show_values_is_a_setting_remembered(page: Page, base_url: str) -> None:
     page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
 
 
+def test_highlight_rails_tints_the_supply_and_ground_copper(page: Page, base_url: str) -> None:
+    """D-381: off by default; on, the Rangemaster's V- copper (its supply, PNP) and GND
+    copper are tinted, nothing else; off again, gone."""
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    show_board(page)
+    rails = page.locator("#board .strip[data-rail]")
+    expect(rails).to_have_count(0)
+    page.locator("#board-settings > summary").click()
+    box = page.locator("#board-settings-body input[data-setting='rails']")
+    expect(box).not_to_be_checked()
+    box.check()
+    expect(page.locator("#board .strip.rail-supply[data-rail='V-']")).to_have_count(2)
+    expect(page.locator("#board .strip.rail-ground[data-rail='GND']")).to_have_count(2)
+    expect(rails).to_have_count(4)
+    box.uncheck()
+    expect(rails).to_have_count(0)
+    page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
+
+
 def test_the_board_size_changes_by_hand(
     page: Page, base_url: str, browser_errors: list[str]
 ) -> None:

@@ -297,6 +297,21 @@ def in_jack(page: Page, base: str) -> None:
     shoot(page, "in-jack")
 
 
+def pickup_form(page: Page, base: str) -> None:
+    """The IN form with your own pickup by R, peak and Q: L and C worked out (D-363)."""
+    opened(page, base, probe=None)
+    click_part(page, "IN")
+    page.keyboard.press("Enter")
+    page.locator("#field-source").select_option("custom")
+    for name, value in (("r", "8k2"), ("peak", "5k2"), ("q", "2.1")):
+        page.locator(f"#field-pickup_{name}").fill(value)
+    page.wait_for_function(
+        "() => document.getElementById('pickup-line')?.textContent.startsWith('Set: R, peak, Q')"
+    )
+    page.locator("#field-pickup_q").blur()
+    shoot(page, "pickup-form", "form.popup")
+
+
 def dc_jack_power(page: Page, base: str) -> None:
     """The buffer on a DC jack alone, unplugged (D-359): its Power switch in Knobs, the
     chip *DC jack · unplugged* and the no-power banner."""
@@ -515,6 +530,7 @@ SHOTS: dict[str, Callable[[Page, str], None]] = {
     "problems": problems,
     "jacks": jacks,
     "in-jack": in_jack,
+    "pickup-form": pickup_form,
     "dc-jack-power": dc_jack_power,
     "no-power": no_power,
     "ratings": ratings,

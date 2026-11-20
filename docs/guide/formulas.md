@@ -118,6 +118,19 @@ Gains in a row multiply; their decibels add.
 
 Tools → **Calculators…** → *Decibels* converts either way.
 
+## Pickup peak and Q
+
+A pickup is a coil (R, L) with its own capacitance C across it. Unloaded, it peaks at:
+
+`peak = 1 / (2 × π × √(L × C))`  and  `Q = 2 × π × peak × L / R`
+
+with R in ohms, L in henries, C in farads and the peak in hertz.
+
+- The Strat in the IN form's list, 2.55 H with 151 pF, peaks at 1 / (2 × π × √(2.55 × 0.000000000151)) = 8.11 kHz; with 6.38 kΩ its Q is 2 × π × 8110 × 2.55 / 6380 = 20.4.
+- Going the other way, an 8.2 kΩ pickup peaking at 5.2 kHz with a Q of 2.1 has L = 2.1 × 8200 / (2 × π × 5200) = 0.527 H, and C = 1 / ((2 × π × 5200)² × 0.527) = 1.78 nF.
+
+Any three of the five give the other two, except L, C and the peak, which leave R open. The IN form does these sums as you type: see [Your own pickup](getting-audio.md#your-own-pickup).
+
 ## Ohm's law and power
 
 `V = I × R`  and  `P = V × I`

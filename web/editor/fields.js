@@ -690,7 +690,7 @@ function guitarFields(part, pickups, taken) {
     taken
       ? readonly("input_jack", "Input jack", `Drawn as ${taken}`, `${taken}, drawn into ${part.ref}, is the input jack: its cable switch is in Knobs.`)
       : { ...select("trs", "Input jack", part.trs ? "trs" : "ts", [["ts", "TS"], ["trs", "TRS (battery switch)"]]),
-        hint: "Stereo: its ring lug (R) is drawn. Its cable switch is in Knobs.",
+        hint: "TRS: its ring lug (R) is drawn. Its cable switch is in Knobs.",
         about: "A TS cable's sleeve joins the ring to ground, so a battery's − wired there is on only with a TS cable in; a TRS cable or none leaves it off." },
   ];
 }

@@ -16,6 +16,22 @@ In the app, open the Audio pane's **Guitar** drawer and press **Upload…**. The
 
 In the circuit's **IN** part (the Audio pane's Pedal drawer has **Edit the guitar input…**), pick the pickup you recorded with. The render takes that pickup's sound out of the clip before playing it into the circuit, so a fuzz, which loads the pickup heavily, sounds as it would with the guitar plugged in.
 
+### Your own pickup
+
+The **Pickup** list has five measured pickups (a Strat, a Tele, a P-90, a PAF and a hot humbucker). If yours isn't one of them, pick **Your own values** and enter it the way you have it: from the maker's sheet, or measured.
+
+![The IN form with R, peak and Q typed, and L and C worked out](img/pickup-form.png)
+
+- The pickup is five boxes: **Coil R**, **Coil L**, **Coil C**, **Peak** and **Q**. **Type any three; the other two are worked out**, shown greyed in their boxes (≈ 527m).
+- **R** is the easiest to get: a multimeter across the guitar's jack reads it, with the volume full up (at 0 it reads nothing; the volume pot across the coil makes it read a few per cent low, close enough). Makers publish R, usually with L or the peak.
+- **Peak** is the unloaded one: the coil alone, without the guitar's pot and cable, which the form adds from the boxes below. Published peaks are sometimes measured with a cable and pots, which pull them lower.
+- The line under the boxes says what's set and what's worked out, or what it still needs.
+- **The three you typed last are kept.** Type a fourth and the one you typed longest ago becomes worked out; the line says which.
+- **L, C and the peak can't be the three:** L and C already give the peak, so R would be left open. With two of them typed, the third is dimmed and says why: type R or Q instead.
+- Reopening the form shows the three you typed, as you typed them. A measured pickup shows its peak and Q worked out (the Strat's peak is 8.11 kHz); typing into any box makes it your own.
+
+The sums are in [Formulas](formulas.md#pickup-peak-and-q). A real pickup's measured Q is usually lower than its R, L and C give, from losses in its magnets and cover; the form uses the simple model, so type the R and the peak you have and let Q follow if you're unsure.
+
 ## 2. Download an amp capture
 
 An amp capture is a model of a real amplifier made with NAM (Neural Amp Modeler), as a `.nam` file. Many are shared for free at [tone3000.com](https://www.tone3000.com/).

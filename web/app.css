@@ -307,6 +307,29 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 /* Schematic / Board (D-368): two views of the circuit on the one canvas */
 .board-size { position: absolute; left: 12px; bottom: 12px; margin: 0; font: 12px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-2); pointer-events: none; }
 body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-show="board"] .panels { display: none; }
+/* the Tray: the palette's place in the Board view (D-371) */
+.board-tray { width: 232px; flex: none; overflow-y: auto; background: var(--surface-1); border-right: 1px solid var(--border); padding: 6px 10px 16px; font-size: 13px; }
+.board-tray[hidden] { display: none; }
+.board-tray h2, .board-tray h3 { font-family: var(--font-display); font-weight: 300; text-transform: uppercase; letter-spacing: 0.2em; font-size: 10px; color: var(--text-3); margin: 10px 2px 6px; }
+.board-tray h2 { color: var(--text-2); }
+.board-tray h3 { margin-top: 16px; }
+.board-tray .count { letter-spacing: 0; }
+.board-tray .board-subhead { margin: 8px 0 2px; font-size: 12px; color: var(--text-3); }
+.board-tray .board-list { list-style: none; margin: 0; padding: 0; }
+.board-tray .board-list li { padding: 3px 2px; color: var(--text-2); border-radius: 3px; }
+.board-tray .board-list li.pickable { cursor: pointer; }
+.board-tray .board-list li.pickable:hover { background: var(--surface-2); }
+.board-tray .board-list .ref { font-family: var(--font-mono); color: var(--text); margin-right: 6px; }
+.board-tray .board-list .value { font-family: var(--font-mono); margin-right: 6px; }
+.board-tray .board-list .shape { color: var(--text-3); }
+.board-tray .unplaceable li { color: var(--text-3); }
+.board-tray .done { color: var(--text-2); }
+/* a footprint's mark beside its row: axial a bar, radial a circle, in a line three legs, DIP a notched box */
+.board-tray .fp { display: inline-block; width: 14px; height: 8px; margin-right: 6px; vertical-align: middle; border: 1.5px solid var(--text-3); box-sizing: border-box; }
+.board-tray .fp-axial { height: 6px; border-radius: 2px; }
+.board-tray .fp-radial { width: 9px; height: 9px; margin: 0 8.5px 0 2.5px; border-radius: 50%; }
+.board-tray .fp-inline, .board-tray .fp-sil { border: none; background: radial-gradient(circle, var(--text-3) 1.6px, transparent 1.8px) 0 0 / 4.67px 8px repeat-x; }
+.board-tray .fp-dip { height: 10px; border-radius: 1px; background: radial-gradient(circle at 0 50%, var(--text-3) 2px, transparent 2.2px); }
 #board { flex: 1; width: 100%; min-height: 0; background-color: var(--surface-0); touch-action: none; user-select: none; cursor: default; }
 #board[hidden] { display: none; }
 #board.panning { cursor: grabbing; }

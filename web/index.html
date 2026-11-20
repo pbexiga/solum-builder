@@ -59,6 +59,10 @@
   </header>
   <main class="workspace">
     <nav class="palette" aria-label="Parts" id="palette"></nav>
+    <aside class="board-tray" id="board-tray" aria-label="Tray" hidden>
+      <h2>Tray <span class="count" id="board-tray-count"></span></h2>
+      <div id="board-tray-body"></div>
+    </aside>
     <section class="canvas" aria-label="Schematic">
       <div class="canvas-body" id="canvas-body">
         <svg id="schematic" role="img" aria-label="Circuit schematic"></svg>
@@ -153,21 +157,17 @@
       </details>
     </aside>
     <aside class="board-panels" id="board-panels" aria-label="Board" hidden>
+      <details open id="board-warnings">
+        <summary>Warnings <span class="count" id="board-warnings-count"></span></summary>
+        <div class="panel-body" id="board-warnings-body"></div>
+      </details>
       <details open id="board-schematic">
         <summary>Schematic</summary>
         <div class="panel-body"><svg id="board-sheet" role="img" aria-label="Circuit schematic, small"></svg></div>
       </details>
-      <details open id="board-tray">
-        <summary>Tray <span class="count" id="board-tray-count"></span></summary>
-        <div class="panel-body" id="board-tray-body"></div>
-      </details>
       <details open id="board-nets">
         <summary>Nets <span class="count" id="board-nets-count"></span></summary>
         <div class="panel-body" id="board-nets-body"></div>
-      </details>
-      <details open id="board-warnings">
-        <summary>Warnings <span class="count" id="board-warnings-count"></span></summary>
-        <div class="panel-body" id="board-warnings-body"></div>
       </details>
       <details id="board-settings">
         <summary>Settings</summary>

@@ -443,7 +443,8 @@ class Short:
 @dataclass(frozen=True)
 class NetProgress:
     """One net the board carries: `placed` of its `total` terminals on the board, in
-    `pieces` joined groups; `done` when all are placed, joined and touch no other net."""
+    `pieces` joined groups; `done` when all are placed, joined and touch no other net;
+    `wires` the off-board ends on it still waiting for a pad."""
 
     net: str
     state: NetState
@@ -451,6 +452,7 @@ class NetProgress:
     total: int
     pieces: int
     shorts: tuple[Short, ...] = ()
+    wires: tuple[str, ...] = ()  # its off-board ends with no pad yet (D-371)
 
 
 @dataclass(frozen=True)
@@ -580,6 +582,7 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
     faults = [f for f in placement_faults(kept, r.board, r.off_board)
               if not f.endswith(" isn't on the board.")]  # fmt: skip
     pads, missing = _pad_faults(r.layout, r.ends)
+    unpadded = set(missing)
     faults = [*faults, *pads, *_wrong_way(r, circuit)]
     # every terminal each net has, placed or not
     wanted: dict[str, list[Terminal]] = defaultdict(list)
@@ -606,7 +609,9 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
             "shorted" if shorts else
             "done" if len(here) == len(members) and len(groups) == 1 else "pieces"
         )  # fmt: skip
-        nets.append(NetProgress(net, state, len(here), len(members), len(groups), tuple(shorts)))
+        wires = tuple(t for t in members if isinstance(t, str) and t in unpadded)
+        nets.append(NetProgress(net, state, len(here), len(members), len(groups),
+                                tuple(shorts), wires))  # fmt: skip
     legs: dict[str, list[LegProgress]] = {}
     holes = {(p.ref, leg): hole_name(h) for p in r.layout.parts for leg, h in p.legs}
     for ref, part in sorted(r.board.items()):

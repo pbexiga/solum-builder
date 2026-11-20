@@ -73,6 +73,8 @@ def test_the_board_view_shows_the_board_and_its_own_panes(page: Page, base_url: 
     expect(page.locator("aside.panels")).to_be_visible()
     expect(page.locator("#board")).to_be_hidden()
     expect(page.locator("#board-panels")).to_be_hidden()
+    expect(page.locator("#board-tray")).to_be_hidden()
+    expect(page.locator("#palette")).to_be_visible()
     assert pane_ids(page) == results
     expect(page.locator("#schematic .part[data-ref='R2']")).to_have_class("part selected")
 
@@ -81,17 +83,25 @@ def test_a_circuit_without_a_board_shows_its_parts_to_place(page: Page, base_url
     open_with_board(page, base_url, None)
     page.locator("#board-button").click()
     expect(page.locator("#board-size")).to_have_text("Empty board")
-    # the 8 board parts; off the board VR1, the guitar's and amp's jacks, the stock
-    # footswitch and status LED (the schematic draws neither, D-370); the 7 wire ends
+    # the Tray on the left (D-371): the 8 board parts by kind; off the board VR1, the
+    # guitar's and amp's jacks, the stock footswitch and status LED (D-370)
+    expect(page.locator("#board-tray")).to_be_visible()
+    expect(page.locator("#board-tray-count")).to_have_text("· 13 left")
     expect(page.locator("#board-tray-body li[data-ref]")).to_have_count(13)
+    kinds = ["Resistors", "Capacitors", "Transistors"]
+    expect(page.locator("#board-tray-body .board-subhead")).to_have_text(kinds)
     expect(page.locator("#board-tray-body li[data-ref='Q1']")).to_contain_text("in a line")
     off = page.locator("#board-tray-body .off-board li")
     expect(off).to_have_text([
         "VR1 (Volume) A10k log (A)", 'IN (Input) ¼" jack TS', 'OUT (Output) ¼" jack TS',
         "Footswitch 3PDT stock, true bypass", "Status LED stock",
     ])  # fmt: skip
-    wires = "GND, IN.out, OUT.in, V-, VR1.1, VR1.2, VR1.3"
-    expect(page.locator("#board-tray-body .wires")).to_have_text(wires)
+    # a row selects its part on the small schematic
+    page.locator("#board-tray-body li[data-ref='R2']").click()
+    expect(page.locator("#board-sheet .part[data-ref='R2']")).to_have_class("part selected")
+    # the wire ends are with their nets
+    c2 = page.locator("#board-nets-body li[data-net='C2.1']")
+    expect(c2).to_contain_text("a wire from VR1.2")
     expect(page.locator("#board-nets-body .board-progress")).to_have_text("0 of 8 nets done.")
 
 
@@ -99,24 +109,12 @@ def test_the_board_panes_keep_their_own_order(page: Page, base_url: str) -> None
     open_with_board(page, base_url, None)
     page.locator("#board-button").click()
     ids = page.eval_on_selector_all("#board-panels > details", "(ds) => ds.map((d) => d.id)")
-    assert ids == [
-        "board-schematic",
-        "board-tray",
-        "board-nets",
-        "board-warnings",
-        "board-settings",
-    ]
+    assert ids == ["board-warnings", "board-schematic", "board-nets", "board-settings"]
     grip = page.locator("[data-grip='board-nets']")
     grip.focus()
     grip.press("ArrowUp")
     moved = page.eval_on_selector_all("#board-panels > details", "(ds) => ds.map((d) => d.id)")
-    assert moved == [
-        "board-schematic",
-        "board-nets",
-        "board-tray",
-        "board-warnings",
-        "board-settings",
-    ]
+    assert moved == ["board-warnings", "board-nets", "board-schematic", "board-settings"]
     # the result panes' order is its own
     page.locator("#board-button").click()
     assert pane_ids(page)[0] == "panel-problems"

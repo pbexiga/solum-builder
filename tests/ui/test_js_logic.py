@@ -995,14 +995,16 @@ def test_the_board_tray_and_settings(js: Page) -> None:
         const b = await m('board/board-logic.js');
         const progress = {
           to_place: ['R1', 'IC1'], pads_to_place: [], unplaceable: [],
-          footprints: { R1: { shape: 'axial', legs: ['1', '2'], refs: ['R1'] }, IC1: { shape: 'dip', legs: ['1','2','3','4','5','6','7','8'], refs: ['IC1A', 'IC1B'] } },
+          footprints: { R1: { shape: 'axial', kind: 'resistor', legs: ['1', '2'], refs: ['R1'] }, IC1: { shape: 'dip', kind: 'chip', legs: ['1','2','3','4','5','6','7','8'], refs: ['IC1A', 'IC1B'] } },
           off_board: [{ ref: 'VR1 (Gain)', part: 'Pot', value: 'B100k', details: 'linear (B)' }, { ref: 'SW1', part: 'Switch', value: 'SPDT', details: '' }],
           stock: ['footswitch', 'status LED'],
         };
         const circuit = { parts: [{ ref: 'R1', value: '4k7' }, { ref: 'IC1A', model: 'TL072' }] };
         return {
-          on: b.trayRows(progress, circuit),
-          off: b.offBoardRows(progress),
+          on: b.trayRows(progress, circuit).map(({ ref, value, shape }) => ({ ref, value, shape })),
+          groups: b.trayGroups(b.trayRows(progress, circuit)).map((g) => [g.title, g.rows.map((r) => r.ref)]),
+          wires: b.netWords({ net: 'x', state: 'pieces', placed: 1, total: 3, pieces: 1, shorts: [], wires: ['VR1.2'] }),
+          off: b.offBoardRows(progress).map(({ ref, value, shape }) => ({ ref, value, shape })),
           none: b.readSettings(null),
           some: b.readSettings({ values: false, grow: 'yes' }),
         };
@@ -1016,6 +1018,8 @@ def test_the_board_tray_and_settings(js: Page) -> None:
         {"ref": "Footswitch", "value": "3PDT", "shape": "stock, true bypass"},
         {"ref": "Status LED", "value": "", "shape": "stock"},
     ]
+    assert got["groups"] == [["Resistors", ["R1"]], ["Chips", ["IC1"]]]
+    assert got["wires"] == "1 of 3 placed; a wire from VR1.2"
     assert got["none"] == {"values": True, "next": True, "shorts": True, "grow": True,
                            "seeThrough": False}  # fmt: skip
     assert got["some"] == {**got["none"], "values": False}  # a garbled one at its default

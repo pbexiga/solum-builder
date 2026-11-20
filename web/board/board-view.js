@@ -2,10 +2,10 @@
  * The Board view (D-368): *Schematic* / *Board*, two views of the open circuit on the one
  * canvas, switched by the header's Board button (D-370: quiet with no board, marked once
  * one is started, pressed in the Board view). In the Board view the canvas shows the
- * stripboard (`canvas.js`) and the result
- * panes' column holds the board's own panes instead, reorderable and remembered under
- * their own key (`solum.boardPanes`): Schematic (the drawing, smaller), Tray, Nets,
- * Warnings, Settings. Back in the Schematic view the result panes are as they were.
+ * stripboard (`canvas.js`), the Tray takes the palette's place on the left (D-371), and
+ * the result panes' column holds the board's own panes instead, reorderable and
+ * remembered under their own key (`solum.boardPanes`): Warnings, Schematic (the drawing,
+ * smaller), Nets, Settings. Back in the Schematic view the result panes are as they were.
  * Selecting a part or a net on either drawing lights it on both. The board's state comes
  * from the server's progress check (`POST /api/stripboard`) after every change.
  */
@@ -17,7 +17,7 @@ import { Schematic } from "../schematic/render.js";
 import { latestOnly } from "../state.js";
 import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
-import { BOARD_SETTINGS, boardRefOf, netWords, netsLine, offBoardRows, partsOnNet, readBoard, readSettings, sizeLine, trayRows } from "./board-logic.js";
+import { BOARD_SETTINGS, boardRefOf, netWords, netsLine, offBoardRows, partsOnNet, readBoard, readSettings, sizeLine, trayGroups, trayRows } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -48,6 +48,7 @@ export function boardView(host, app) {
   const $ = (/** @type {string} */ id) => /** @type {HTMLElement} */ (document.getElementById(id));
   const svg = /** @type {SVGSVGElement} */ (/** @type {unknown} */ ($("board")));
   const column = $("board-panels");
+  const tray = $("board-tray");
   const results = /** @type {HTMLElement} */ (document.querySelector(".panels"));
   const sizeNote = $("board-size");
   const button = $("board-button");
@@ -64,14 +65,16 @@ export function boardView(host, app) {
   let settings = readSettings(remembered(SETTINGS_KEY));
 
   const canvas = boardCanvas(svg, {
-    onPart: (ref) => {
-      const refs = progress?.footprints[ref]?.refs ?? [ref];
-      app.select(refs.length === 1
-        ? { kind: "part", id: refs[0] }
-        : { kind: "items", id: "", items: { parts: refs, wires: [], labels: [] } });
-    },
+    onPart: (ref) => selectPart(ref),
     onEmpty: () => app.select(app.resting()),
   });
+  /** Select a board part (a chip: its units) or a circuit part on both drawings. @param {string} ref */
+  function selectPart(ref) {
+    const refs = progress?.footprints[ref]?.refs ?? [ref];
+    app.select(refs.length === 1
+      ? { kind: "part", id: refs[0] }
+      : { kind: "items", id: "", items: { parts: refs, wires: [], labels: [] } });
+  }
   const sheet = new Schematic(/** @type {SVGSVGElement} */ (/** @type {unknown} */ ($("board-sheet"))), {
     onNet: (net) => app.select({ kind: "net", id: net }),
     onPart: (ref) => app.select({ kind: "part", id: ref }),
@@ -96,6 +99,7 @@ export function boardView(host, app) {
     document.body.dataset.show = board ? "board" : "schematic";
     svg.toggleAttribute("hidden", !board); // an SVG element has no `hidden` property
     column.hidden = !board;
+    tray.hidden = !board;
     sizeNote.hidden = !board;
     button.setAttribute("aria-pressed", String(board));
     button.title = board ? "Back to the schematic" : BUTTON_TITLE;
@@ -150,24 +154,33 @@ export function boardView(host, app) {
   function fillPanes() {
     if (!progress) return;
     const circuit = app.circuit();
-    const row = (/** @type {{ref: string, value: string, shape: string}} */ r) => h("li", { "data-ref": r.ref }, [
-      h("span", { class: "ref" }, [r.ref]), " ", ...(r.value ? [h("span", { class: "value" }, [r.value]), " "] : []), h("span", { class: "shape" }, [r.shape]),
-    ]);
-    const on = trayRows(progress, circuit);
+    const inCircuit = new Set((circuit?.parts ?? []).map((/** @type {any} */ p) => p.ref));
+    const row = (/** @type {import("./board-logic.js").TrayRow} */ r) => {
+      const item = h("li", { "data-ref": r.ref }, [
+        ...(r.mark ? [h("span", { class: `fp fp-${r.mark}`, "aria-hidden": "true" })] : []),
+        h("span", { class: "ref" }, [r.ref]), " ", ...(r.value ? [h("span", { class: "value" }, [r.value]), " "] : []), h("span", { class: "shape" }, [r.shape]),
+      ]);
+      const pick = r.select && (progress?.footprints[r.select] || inCircuit.has(r.select)) ? r.select : null;
+      if (pick) {
+        item.classList.add("pickable");
+        item.addEventListener("click", () => selectPart(pick));
+      }
+      return item;
+    };
+    const groups = trayGroups(trayRows(progress, circuit));
+    const on = groups.reduce((n, g) => n + g.rows.length, 0);
     const off = offBoardRows(progress);
-    const wires = progress.pads_to_place;
     const unplaceable = progress.unplaceable;
-    const left = on.length + off.length + wires.length + unplaceable.length;
-    /** @param {string} title @param {HTMLElement[]} items @param {string} [cls] */
-    const section = (title, items, cls = "") => (items.length
-      ? [h("p", { class: "board-subhead" }, [title]), h("ul", { class: `board-list ${cls}`.trim() }, items)]
-      : []);
-    $("board-tray-count").textContent = left ? `· ${left}` : "";
+    const left = on + off.length + unplaceable.length;
+    /** @param {string} title @param {number} count @param {HTMLElement[]} body */
+    const section = (title, count, body) => (count ? [h("h3", {}, [title, " ", h("span", { class: "count" }, [String(count)])]), ...body] : []);
+    $("board-tray-count").textContent = left ? `· ${left} left` : "";
     $("board-tray-body").replaceChildren(
-      ...(on.length || unplaceable.length ? section("On the board", on.map(row)) : [h("p", { class: "empty" }, ["Every part is on the board."])]),
-      ...section("Off the board", off.map(row), "off-board"),
-      ...section("Wires to the board", wires.length ? [h("li", { class: "wires" }, [[...wires].sort().join(", ")])] : []),
-      ...section("Can't be placed yet", unplaceable.map((text) => h("li", {}, [text])), "unplaceable"),
+      ...(on || unplaceable.length
+        ? section("On the board", on, groups.flatMap((g) => [h("p", { class: "board-subhead" }, [g.title]), h("ul", { class: "board-list" }, g.rows.map(row))]))
+        : [h("p", { class: "empty done" }, ["✓ Every part is on the board."])]),
+      ...section("Off the board", off.length, [h("ul", { class: "board-list off-board" }, off.map(row))]),
+      ...section("Can't be placed yet", unplaceable.length, [h("ul", { class: "board-list unplaceable" }, unplaceable.map((text) => h("li", {}, [text])))]),
     );
     $("board-nets-count").textContent = progress.nets.length ? `· ${progress.nets_done}/${progress.nets.length}` : "";
     $("board-nets-body").replaceChildren(

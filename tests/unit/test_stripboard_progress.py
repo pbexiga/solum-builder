@@ -188,3 +188,11 @@ def test_stock_bypass_only_when_the_schematic_draws_none() -> None:
             part["ref"] = "SW2"
     data["wires"] = []  # the poles' wires went with them; stock_bypass reads only parts
     assert stock_bypass(Circuit.model_validate(data)) == ["footswitch"]
+
+
+def test_each_net_names_its_off_board_wires_still_to_land() -> None:
+    """D-371: the wire ends are listed with their nets (the Nets pane), not in the tray."""
+    empty = {n.net: n.wires for n in run({"size": [12, 9]}).nets}
+    assert empty["V-"] == ("V-", "VR1.1") and empty["C2.1"] == ("VR1.2",)
+    assert sum(len(w) for w in empty.values()) == 7
+    assert all(n.wires == () for n in run(GOOD).nets)

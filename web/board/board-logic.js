@@ -166,7 +166,7 @@ export function boardRefOf(footprints, ref) {
 
 /**
  * @typedef {{net: string, state: "done" | "pieces" | "shorted", placed: number, total: number,
- *   pieces: number, shorts: Array<{other: string, words: string}>}} NetProgress
+ *   pieces: number, shorts: Array<{other: string, words: string}>, wires?: string[]}} NetProgress
  * @typedef {{leg: string, hole: string | null, net: string | null, reach: Array<{to: string, joined: boolean}>}} LegProgress
  * @typedef {{ref: string, part: string, value: string, details: string}} OffBoardPart
  * @typedef {{to_place: string[], pads_to_place: string[], off_board: OffBoardPart[], stock: string[],
@@ -179,20 +179,44 @@ export function boardRefOf(footprints, ref) {
 const SHAPE_WORDS = /** @type {Record<string, string>} */ ({ axial: "axial", radial: "radial", inline: "in a line", dip: "DIP", sil: "SIL" });
 
 /**
+ * @typedef {{ref: string, value: string, shape: string, mark?: string, kind?: string, select?: string}} TrayRow
+ *   `mark`: the footprint's shape, for the little drawing beside it; `select`: the
+ *   circuit part a click selects (none for stock hardware)
+ */
+
+/**
  * The tray's on-board rows: each part still to place, with its value and footprint.
- * @param {Progress} progress @param {any} circuit
- * @returns {Array<{ref: string, value: string, shape: string}>}
+ * @param {Progress} progress @param {any} circuit @returns {TrayRow[]}
  */
 export function trayRows(progress, circuit) {
   return progress.to_place.map((ref) => {
     const fp = progress.footprints[ref];
     const pins = fp?.legs.length ?? 0;
     const shape = fp ? (fp.shape === "dip" ? `DIP-${pins}` : SHAPE_WORDS[fp.shape] ?? fp.shape) : "";
-    return { ref, value: valueOf(circuit, ref, fp?.refs ?? [ref]), shape };
+    return { ref, value: valueOf(circuit, ref, fp?.refs ?? [ref]), shape, mark: fp?.shape ?? "", kind: fp?.kind ?? "", select: ref };
   });
 }
 
-const STOCK_WORDS = /** @type {Record<string, {ref: string, value: string, shape: string}>} */ ({
+/** The tray's groups, in the parts list's order (export.py's `ORDER`), each kind's heading. */
+const KIND_GROUPS = /** @type {Array<[string, string[]]>} */ ([
+  ["Resistors", ["resistor"]], ["Trimmers", ["trimmer"]], ["Capacitors", ["capacitor"]],
+  ["Inductors", ["inductor"]], ["Diodes and LEDs", ["diode", "led"]],
+  ["Transistors", ["bjt", "jfet", "mosfet"]], ["Chips", ["chip", "chargepump", "regulator"]],
+]);
+
+/**
+ * The on-board rows under their kind's heading, empty kinds left out; a kind not listed
+ * goes under *Other*.
+ * @param {TrayRow[]} rows @returns {Array<{title: string, rows: TrayRow[]}>}
+ */
+export function trayGroups(rows) {
+  const known = new Set(KIND_GROUPS.flatMap(([, kinds]) => kinds));
+  const groups = KIND_GROUPS.map(([title, kinds]) => ({ title, rows: rows.filter((r) => kinds.includes(r.kind ?? "")) }));
+  groups.push({ title: "Other", rows: rows.filter((r) => !known.has(r.kind ?? "")) });
+  return groups.filter((g) => g.rows.length);
+}
+
+const STOCK_WORDS = /** @type {Record<string, TrayRow>} */ ({
   footswitch: { ref: "Footswitch", value: "3PDT", shape: "stock, true bypass" },
   "status LED": { ref: "Status LED", value: "", shape: "stock" },
 });
@@ -201,10 +225,10 @@ const STOCK_WORDS = /** @type {Record<string, {ref: string, value: string, shape
  * The tray's off-board rows: each off-board part as the parts list names it (its details,
  * else what it is), then the
  * stock footswitch and status LED the schematic doesn't draw (D-370).
- * @param {Progress} progress @returns {Array<{ref: string, value: string, shape: string}>}
+ * @param {Progress} progress @returns {TrayRow[]}
  */
 export function offBoardRows(progress) {
-  const parts = progress.off_board.map((p) => ({ ref: p.ref, value: p.value, shape: p.details || p.part.toLowerCase() }));
+  const parts = progress.off_board.map((p) => ({ ref: p.ref, value: p.value, shape: p.details || p.part.toLowerCase(), select: p.ref.split(" ")[0] }));
   return [...parts, ...progress.stock.map((id) => STOCK_WORDS[id] ?? { ref: id, value: "", shape: "stock" })];
 }
 
@@ -243,15 +267,17 @@ export function netsLine(progress) {
 }
 
 /**
- * Each net's state in words: done; in pieces ("2 of 4 pins placed, in 2 pieces");
- * shorted (each short's sentence).
+ * Each net's state in words: done; in pieces ("2 of 4 placed, in 2 pieces"), with the
+ * off-board wires it still needs ("; a wire from VR1.2"); shorted (each short's sentence).
  * @param {NetProgress} net @returns {string}
  */
 export function netWords(net) {
   if (net.state === "shorted") return net.shorts.map((s) => s.words).join(" ");
   if (net.state === "done") return "done";
   const placed = `${net.placed} of ${net.total} placed`;
-  return net.pieces > 1 ? `${placed}, in ${net.pieces} pieces` : placed;
+  const words = net.pieces > 1 ? `${placed}, in ${net.pieces} pieces` : placed;
+  const wires = net.wires ?? [];
+  return wires.length ? `${words}; ${wires.length === 1 ? "a wire" : "wires"} from ${wires.join(", ")}` : words;
 }
 
 /**

@@ -867,6 +867,8 @@ def test_stripboard_reports_the_open_circuit_s_board(monkeypatch: pytest.MonkeyP
     assert done["done"] is True and done["nets_done"] == len(done["nets"])
     assert done["items"][0]["ref"] == "VR1" and done["items"][0]["size"] == [7, 3]
     assert done["spots"]["IN"] == [16, 0] and done["wires_to_go"] == []
+    assert done["guidance"]["next"] is None and done["guidance"]["ratsnest"] == []
+    assert empty["guidance"]["next"]["ref"] == "C1"  # nearest the input (D-377)
     assert json.dumps(done)  # plain JSON all through
     bad = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": {"size": [0, 1]}}})
     assert bad.status_code == 422 and "one column" in bad.text
@@ -925,6 +927,12 @@ def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.M
     short = c.post("/api/stripboard/edit", json={**mend, "shorts": False})
     assert short.status_code == 422
     assert short.json()["message"].endswith("Shorts are off in Settings.")
+    bare = {**data, "stripboard": {**board["stripboard"], "cuts": [], "links": []}}
+    accepted = c.post("/api/stripboard/edit", json={"circuit": bare, "kind": "suggested"}).json()
+    assert accepted["stripboard"]["cuts"] == ["D8"]  # every suggestion, one edit (D-377)
+    assert sorted(accepted["stripboard"]["links"]) == [["B1", "B8"], ["K2", "K8"]]
+    nothing = c.post("/api/stripboard/edit", json={"circuit": board, "kind": "suggested"})
+    assert nothing.status_code == 422 and nothing.json()["message"].startswith("Nothing to suggest")
 
 
 def test_stripboard_edit_puts_off_board_parts_and_wires(monkeypatch: pytest.MonkeyPatch) -> None:

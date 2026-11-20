@@ -216,8 +216,9 @@ export function boardRefOf(footprints, ref) {
  *   unplaceable: string[], nets: NetProgress[],
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
  *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number],
- *   shorted: Array<[number, number, number]>}} Progress
- *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints)
+ *   shorted: Array<[number, number, number]>, guidance: Guidance}} Progress
+ *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints and the
+ *   guidance, D-377)
  */
 
 const SHAPE_WORDS = /** @type {Record<string, string>} */ ({ axial: "axial", radial: "radial", inline: "in a line", dip: "DIP", sil: "SIL" });
@@ -368,7 +369,7 @@ export function spotFor(item, hole) {
  */
 export const BOARD_SETTINGS = /** @type {const} */ ([
   { key: "values", label: "Show values", on: true, acts: true, title: "Label each part with its value as well as its ref" },
-  { key: "next", label: "What to place next", on: true, acts: false, title: "Suggest the part to place next" },
+  { key: "next", label: "What to place next", on: true, acts: true, title: "Suggest the part to place next, at the top of the tray" },
   { key: "shorts", label: "Allow shorts while editing, shown red", on: true, acts: true, title: "Off: a move that makes a short is refused" },
   { key: "grow", label: "Auto-grow", on: true, acts: true, title: "The board grows to take in what's placed by its edge, and shrinks back. Off: it stays its size (the margin greyed); add or remove lines on the rulers" },
   { key: "seeThrough", label: "See-through", on: false, acts: false, title: "The copper side faint under the parts" },
@@ -552,10 +553,10 @@ export function moveWords(move, pose) {
 export const legsData = (legs) => Object.fromEntries(legs);
 
 /**
- * The red copper of a short (`progress.shorted`: [strip, first column, last column] runs).
+ * Copper runs as rectangles ([strip, first column, last column]): a short's red copper (`progress.shorted`).
  * @param {Array<[number, number, number]>} runs
  */
-export function shortedRects(runs) {
+export function runRects(runs) {
   return runs.map(([strip, c0, c1]) => ({ x: (c0 - 0.5) * STEP, y: (strip - 0.5) * STEP, w: (c1 - c0 + 1) * STEP, h: STEP }));
 }
 
@@ -566,4 +567,93 @@ export function shortedRects(runs) {
  */
 export function linkFrom(from, to) {
   return to[1] === from[1] ? null : [from, [from[0], to[1]]];
+}
+
+/**
+ * @typedef {{net: string, a: Hole, b: Hole}} Strand a ratsnest line: two pieces of `net` not joined yet
+ * @typedef {{marks: Record<string, Array<[number, number, number]>>, ratsnest: Strand[], cuts: Hole[],
+ *   links: Array<[Hole, Hole]>, next: {ref: string, why: string} | null}} Guidance
+ *   what `/api/stripboard` sends to guide the next step (guidance.py, D-377): each net's
+ *   free copper as runs, the ratsnest, the suggested cuts and links, what to place next
+ */
+
+/**
+ * The holes marked for a part being carried: the free copper of each of its legs' nets,
+ * where that leg would join its net (none for a net not on the board yet).
+ * @param {Progress} progress @param {Guidance} guidance @param {string} ref @returns {Hole[]}
+ */
+export function markedHoles(progress, guidance, ref) {
+  const nets = new Set((progress.legs[ref] ?? []).map((l) => l.net).filter((n) => n !== null));
+  /** @type {Hole[]} */
+  const holes = [];
+  for (const net of nets) {
+    for (const [strip, c0, c1] of guidance.marks[/** @type {string} */ (net)] ?? []) {
+      for (let c = c0; c <= c1; c++) holes.push([c, strip]);
+    }
+  }
+  return holes;
+}
+
+/**
+ * A board part's leg as the builder reads it: a chip's "pin 3", a trimmer's "lug 2", a
+ * named leg as it is ("B", "K"), else "leg 1".
+ * @param {Footprint | undefined} fp @param {string} leg
+ */
+export function legLabel(fp, leg) {
+  if (!/^\d+$/.test(leg)) return leg;
+  if (fp?.shape === "dip" || fp?.shape === "sil") return `pin ${leg}`;
+  return fp?.kind === "trimmer" ? `lug ${leg}` : `leg ${leg}`;
+}
+
+/**
+ * @typedef {{to: string, words: string, state: "joined" | "apart" | "unplaced", lug: boolean}} NeedReach
+ *   a terminal a leg must reach; `lug`: an off-board lug (its "unplaced" is "not wired")
+ * @typedef {{leg: string, hole: string | null, net: string | null, reach: NeedReach[]}} Need
+ */
+
+/**
+ * A part's needs, leg by leg (spec, *Guidance as you edit*): each leg's hole and net, and
+ * the terminals it must reach: joined already, apart (placed or wired, not joined), or not
+ * placed or wired yet. `lugWords` names an off-board lug ("VR1 lug 2").
+ * @param {Progress} progress @param {string} ref @param {(end: string) => string} lugWords @returns {Need[]}
+ */
+export function legNeeds(progress, ref, lugWords) {
+  const fp = progress.footprints[ref];
+  const unwired = new Set(progress.wires_to_go);
+  return (progress.legs[ref] ?? []).map((l) => ({
+    leg: legLabel(fp, l.leg),
+    hole: l.hole,
+    net: l.net,
+    reach: l.reach.map((r) => {
+      const dot = r.to.lastIndexOf(".");
+      const other = dot > 0 ? r.to.slice(0, dot) : "";
+      const legs = progress.legs[other];
+      if (!legs) return { to: r.to, words: lugWords(r.to), state: r.joined ? "joined" : unwired.has(r.to) ? "unplaced" : "apart", lug: true };
+      const leg = r.to.slice(dot + 1);
+      const placed = legs.find((x) => x.leg === leg)?.hole;
+      return { to: r.to, words: `${other} ${legLabel(progress.footprints[other], leg)}`, state: r.joined ? "joined" : placed ? "apart" : "unplaced", lug: false };
+    }),
+  }));
+}
+
+/**
+ * The nets a board part's legs are on (to light their ratsnest lines).
+ * @param {Progress} progress @param {string} ref @returns {Set<string>}
+ */
+export function netsOf(progress, ref) {
+  return new Set((progress.legs[ref] ?? []).map((l) => l.net).filter((n) => n !== null));
+}
+
+/**
+ * The suggested cuts and links in words, for the button that makes them all: "Make the
+ * suggested cut and 2 links"; "" when there are none.
+ * @param {Guidance} guidance
+ */
+export function suggestionsLine(guidance) {
+  const cuts = guidance.cuts.length;
+  const links = guidance.links.length;
+  if (!cuts && !links) return "";
+  const said = (/** @type {number} */ n, /** @type {string} */ word) => (n === 1 ? `${word}` : `${n} ${word}s`);
+  const parts = [cuts ? said(cuts, "cut") : "", links ? said(links, "link") : ""].filter(Boolean);
+  return `Make the suggested ${parts.join(" and ")}`;
 }

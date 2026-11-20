@@ -2,14 +2,15 @@
  * The board canvas (D-368): the stripboard drawn in SVG at real proportions, parts side,
  * parts as outlines with ref and value, shorted copper red (D-374), the off-board parts
  * beside it with their lugs and wires (D-375). Pans (drag the empty
- * board), zooms (wheel, the canvas's buttons), and tells the view what was clicked,
+ * board), zooms (wheel, the canvas's buttons), draws the guidance (D-377: the ratsnest,
+ * the suggested cuts and links faded, the holes marked for a part being carried), and tells the view what was clicked,
  * pressed, dragged and hovered, as holes; draws the view's ghost (a part being carried, a
  * link being laid, the hole a tool would act on). The shapes come from `board-logic.js`;
  * the board and footprints from the view.
  */
 
 import { fitView, panBy, viewBoxText, zoomAt, resizeView } from "../schematic/viewport.js";
-import { STEP, columnName, holeName, holeXY, itemRefs, itemShape, labelAt, partShapes, shortedRects, shownHoles, valueOf } from "./board-logic.js";
+import { STEP, columnName, holeName, holeXY, itemRefs, itemShape, labelAt, partShapes, runRects, shownHoles, valueOf } from "./board-logic.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 const FIT_PAD = STEP; // board units round the shown holes when fitting
@@ -30,10 +31,11 @@ function el(tag, attrs = {}, parent) {
 /**
  * @typedef {import("./board-logic.js").Hole} Hole
  * @typedef {{ref: string | null, hole: Hole, link: [Hole, Hole] | null, item: string | null,
- *   lug: string | null, wire: {index: number, end: "lug" | "far"} | null, point: [number, number]}} Spot
+ *   lug: string | null, wire: {index: number, end: "lug" | "far"} | null,
+ *   suggest: {kind: "cut" | "link", holes: Hole[]} | null, point: [number, number]}} Spot
  *   what's under the pointer: a board part's ref, the nearest hole, a link's ends; an
- *   off-board part's ref, a lug's end, a wire's number and which end (D-375); the point in
- *   board units
+ *   off-board part's ref, a lug's end, a wire's number and which end (D-375); a suggested
+ *   cut or link (D-377); the point in board units
  * @typedef {{
  *   onClick: (spot: Spot) => void,
  *   onLine: (axis: "column" | "strip", line: number, x: number, y: number) => void,
@@ -50,8 +52,12 @@ function el(tag, attrs = {}, parent) {
  *   panning; `onHover`: the pointer over the board with no button down (null: it left);
  *   `onMenu`: a right-click, true when the view showed a menu for it
  * @typedef {{part?: {fp: Footprint, legs: Array<[string, Hole]>, standing: boolean}, link?: [Hole, Hole], hole?: Hole,
- *   item?: {item: OffItem, at: Hole}, wire?: {x1: number, y1: number, x2: number, y2: number}}} Ghost
- *   what the view is about to do, drawn faint over the board
+ *   item?: {item: OffItem, at: Hole}, wire?: {x1: number, y1: number, x2: number, y2: number},
+ *   marks?: Hole[]}} Ghost
+ *   what the view is about to do, drawn faint over the board; `marks`: the holes where a
+ *   carried part's legs would join their nets (D-377)
+ * @typedef {{rats: Array<{net: string, a: Hole, b: Hole}>, cuts: Hole[], links: Array<[Hole, Hole]>}} Guide
+ *   the guidance drawn on the board (D-377): the ratsnest, the suggested cuts and links
  * @typedef {import("./board-logic.js").OffItem} OffItem
  * @typedef {import("./board-logic.js").LugAt} LugAt
  * @typedef {{items: Array<{item: OffItem, at: Hole}>, wires: Array<{index: number,
@@ -77,6 +83,8 @@ export function boardCanvas(svg, app) {
   let lit = [];
   /** @type {string[]} */
   let litItems = [];
+  /** @type {Set<string>} */
+  let litNets = new Set();
   /** @type {Ghost | null} */
   let ghosted = null;
   let pressing = false; // a press on the board is being dragged: no hover then
@@ -128,13 +136,13 @@ export function boardCanvas(svg, app) {
   /**
    * Draw a board. `fit`: fit the view to it (the first time it's shown).
    * @param {Board} board @param {Record<string, Footprint>} footprints @param {any} circuit
-   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, off?: OffBoard}} [opts]
+   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, off?: OffBoard, guide?: Guide}} [opts]
    *   `values`: label parts with their values too; `rulers`: the columns' letters and the
    *   strips' numbers, each a menu of size changes (a board that's started); `fixed`: auto-grow
    *   off, the margin greyed (D-372); `shorted`: the copper carrying two nets, red (D-374);
-   *   `off`: the off-board parts and wires (D-375)
+   *   `off`: the off-board parts and wires (D-375); `guide`: the guidance (D-377)
    */
-  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], off = { items: [], wires: [] } } = {}) {
+  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], off = { items: [], wires: [] }, guide = { rats: [], cuts: [], links: [] } } = {}) {
     holes = shownHoles(board);
     beside = null;
     for (const { item, at } of off.items) {
@@ -155,7 +163,7 @@ export function boardCanvas(svg, app) {
       for (let s = 0; s < board.strips; s++) {
         el("rect", { x: -half + 0.6, y: s * STEP - half + 0.8, width: board.columns * STEP - 1.2, height: STEP - 1.6, rx: 1, class: "strip" }, strips);
       }
-      for (const r of shortedRects(shorted)) el("rect", { x: r.x + 0.6, y: r.y + 0.8, width: r.w - 1.2, height: r.h - 1.6, rx: 1, class: "strip shorted" }, strips);
+      for (const r of runRects(shorted)) el("rect", { x: r.x + 0.6, y: r.y + 0.8, width: r.w - 1.2, height: r.h - 1.6, rx: 1, class: "strip shorted" }, strips);
     }
     const dots = el("g", { class: "holes" }, root);
     for (let s = s0; s <= s1; s++) {
@@ -218,6 +226,28 @@ export function boardCanvas(svg, app) {
       el("tspan", { x: lx, dy: value ? "-0.15em" : "0.35em", class: "ref" }, text).textContent = placed.ref;
       if (value) el("tspan", { x: lx, dy: "1.05em", class: "value" }, text).textContent = value;
     }
+    const guiding = el("g", { class: "guide" }, root); // over the parts, so a suggestion can be clicked
+    for (const { net, a, b } of guide.rats) {
+      const [x1, y1] = holeXY(a);
+      const [x2, y2] = holeXY(b);
+      el("line", { x1, y1, x2, y2, class: "rat", "data-net": net }, guiding);
+    }
+    for (const [a, b] of guide.links) {
+      const [x1, y1] = holeXY(a);
+      const [x2, y2] = holeXY(b);
+      const g = el("g", { class: "suggested", "data-suggest": "link", "data-holes": `${a.join(",")};${b.join(",")}` }, guiding);
+      el("line", { x1, y1, x2, y2, class: "link-hit" }, g);
+      el("line", { x1, y1, x2, y2, class: "suggested-link" }, g);
+      el("title", {}, g).textContent = `Suggested link ${holeName(a)}–${holeName(b)}: click to lay it`;
+    }
+    for (const cut of guide.cuts) {
+      const [x, y] = holeXY(cut);
+      const d = STEP * 0.28;
+      const g = el("g", { class: "suggested", "data-suggest": "cut", "data-holes": cut.join(",") }, guiding);
+      el("circle", { cx: x, cy: y, r: STEP * 0.45, class: "suggest-hit" }, g);
+      el("path", { d: `M${x - d},${y - d} L${x + d},${y + d} M${x - d},${y + d} L${x + d},${y - d}`, class: "suggested-cut" }, g);
+      el("title", {}, g).textContent = `Suggested cut at ${holeName(cut)}: click to cut the strip there`;
+    }
     const wires = el("g", { class: "off-wires" }, root); // over the parts: a wire lies on top
     for (const { index, line, title } of off.wires) {
       const g = el("g", { class: line.loose ? "off-wire loose" : "off-wire", "data-wire": index }, wires);
@@ -234,7 +264,14 @@ export function boardCanvas(svg, app) {
     if (fitting || !shown) fit();
     else apply();
     light(lit, litItems);
+    lightNets(litNets);
     ghost(ghosted);
+  }
+
+  /** Light the ratsnest lines of `nets` (a selected or carried part's, D-377). @param {Set<string>} nets */
+  function lightNets(nets) {
+    litNets = nets;
+    for (const line of svg.querySelectorAll(".guide .rat")) line.classList.toggle("lit", nets.has(line.getAttribute("data-net") ?? ""));
   }
 
   /**
@@ -264,6 +301,7 @@ export function boardCanvas(svg, app) {
     const layer = svg.querySelector(".ghost");
     if (!layer) return;
     layer.replaceChildren();
+    for (const hole of what?.marks ?? []) el("circle", { cx: holeXY(hole)[0], cy: holeXY(hole)[1], r: STEP * 0.3, class: "mark" }, layer);
     if (what?.part) {
       const { fp, legs, standing } = what.part;
       for (const s of partShapes(fp, legs, standing)) {
@@ -318,6 +356,8 @@ export function boardCanvas(svg, app) {
     const ends = link ? ["data-a", "data-b"].map((k) => /** @type {Hole} */ (String(link.getAttribute(k)).split(",").map(Number))) : null;
     const wire = at.closest(".off-wire");
     const end = at.closest("[data-end]")?.getAttribute("data-end");
+    const suggested = at.closest(".suggested");
+    const holes = suggested ? String(suggested.getAttribute("data-holes")).split(";").map((h) => /** @type {Hole} */ (h.split(",").map(Number))) : [];
     return {
       ref: at.closest(".board-part")?.getAttribute("data-ref") ?? null,
       hole: holeAt(clientX, clientY),
@@ -325,6 +365,7 @@ export function boardCanvas(svg, app) {
       item: at.closest(".off-items .off-item")?.getAttribute("data-item") ?? null,
       lug: at.closest(".off-items .lug")?.getAttribute("data-lug") ?? null,
       wire: wire && end ? { index: Number(wire.getAttribute("data-wire")), end: end === "lug" ? "lug" : "far" } : null,
+      suggest: suggested ? { kind: suggested.getAttribute("data-suggest") === "link" ? "link" : "cut", holes } : null,
       point: /** @type {[number, number]} */ (toBoard(clientX, clientY)),
     };
   };
@@ -374,6 +415,7 @@ export function boardCanvas(svg, app) {
   return {
     draw,
     light,
+    lightNets,
     fit,
     ghost,
     holeAt,

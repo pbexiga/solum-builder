@@ -1094,7 +1094,7 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
           chipFlip: b.posed(ic, b.firstPose(ic), 'flip'),
           link: b.linkFrom([3, 1], [6, 5]),
           noLink: b.linkFrom([3, 1], [6, 1]),
-          red: b.shortedRects([[7, 0, 11]]),
+          red: b.runRects([[7, 0, 11]]),
           keys: [' ', 'f', 's', '+', '-', 'Delete', 'c', 'k', 'p', 'Escape', 'r'].map((key) => k.boardActionFor({ key })?.action ?? null),
           ctrl: k.boardActionFor({ key: 'z', ctrl: true }),
         };

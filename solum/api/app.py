@@ -135,6 +135,7 @@ from solum.stripboard.board import Layout, layout_data
 from solum.stripboard.check import progress, shorts
 from solum.stripboard.edit import BoardEdit, EditError, EditKind, edit_layout
 from solum.stripboard.footprints import board_parts, board_refs, drawing_data
+from solum.stripboard.guidance import guidance
 from solum.stripboard.offboard import off_board_items
 from solum.stripboard.size import Axis, SizeError, insert_line, remove_line, start_size, trim
 from solum.stripboard.wiring import WiringError, wire_for_me
@@ -201,7 +202,7 @@ class BoardEditRequest(BaseModel):
     `shorts` whether an edit may make a short (the editor's settings)."""
 
     circuit: dict[str, Any]
-    kind: EditKind
+    kind: EditKind | Literal["suggested"]  # suggested: every suggested cut and link (D-377)
     ref: str = ""
     legs: dict[str, tuple[int, int]] = {}
     standing: bool = False
@@ -1101,8 +1102,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         """The Board view's progress check (D-368) of the open circuit's board (none yet:
         an empty one): what's left to place, each net, each leg, what's wrong now; with
         each board part's footprint to draw it by (`footprints`), each off-board part's
-        drawing's size in holes (`items[].size`, D-375), and the size an empty board starts
-        at (`start_size`, D-372)."""
+        drawing's size in holes (`items[].size`, D-375), the size an empty board starts
+        at (`start_size`, D-372), and the guidance (`guidance`: marked holes, ratsnest,
+        suggested cuts and links, what to place next, D-377)."""
         circuit = parse_circuit(req.circuit)
         board = circuit.stripboard
         layout = board.layout() if board else Layout(0, 0, ())
@@ -1112,7 +1114,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         items = [{**asdict(i), "size": i.size} for i in found.items]
         return {**asdict(found), "items": items, "nets_done": found.nets_done,
                 "footprints": drawing_data(parts),
-                "start_size": list(start_size(parts))}  # fmt: skip
+                "start_size": list(start_size(parts)),
+                "guidance": asdict(guidance(layout, circuit, models, table))}  # fmt: skip
 
     @app.post("/api/stripboard/size")
     def stripboard_size(req: BoardSizeRequest) -> dict[str, Any]:
@@ -1148,10 +1151,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         parts = board_parts(circuit, models, table)[0]
         kept = circuit.stripboard
         layout = kept.layout() if kept else Layout(*start_size(parts), ())
-        edit = BoardEdit(req.kind, req.ref, tuple(req.legs.items()), req.standing,
-                         tuple(req.holes), req.to, req.index)  # fmt: skip
         items = {i.ref: tuple(lug.end for lug in i.lugs)
                  for i in off_board_items(circuit, connect(circuit), parts, models)}  # fmt: skip
+        if req.kind == "suggested":
+            found = guidance(layout, circuit, models, table)
+            suggested = [BoardEdit("cut", holes=(h,)) for h in found.cuts]
+            suggested += [BoardEdit("link", holes=pair) for pair in found.links]
+            if kept is None or not suggested:
+                raise HTTPException(422, "Nothing to suggest: no strip carries two nets "
+                                         "and no link would join a net's pieces.")  # fmt: skip
+            try:
+                for one in suggested:
+                    layout = edit_layout(layout, one, parts, started=True, grow=False,
+                                         items=items).layout  # fmt: skip
+            except EditError as err:
+                raise HTTPException(422, str(err)) from None
+            return {"stripboard": layout_data(layout), "shift": [0, 0]}
+        edit = BoardEdit(req.kind, req.ref, tuple(req.legs.items()), req.standing,
+                         tuple(req.holes), req.to, req.index)  # fmt: skip
         try:
             edited = edit_layout(layout, edit, parts, started=kept is not None, grow=req.grow,
                                  items=items, known=board_refs(circuit))  # fmt: skip

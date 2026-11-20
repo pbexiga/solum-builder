@@ -105,7 +105,7 @@ class _Words:
         return f"{ref}'s leg at {at}"
 
 
-def _occupants(layout: Layout) -> tuple[dict[Hole, list[str]], list[str]]:
+def occupants(layout: Layout) -> tuple[dict[Hole, list[str]], list[str]]:
     """Who has a wire or leg in each hole, and the faults of where links and wires are."""
     used: dict[Hole, list[str]] = defaultdict(list)
     faults = []
@@ -151,7 +151,7 @@ def placement_faults(layout: Layout, board: dict[str, BoardPart],
             faults.append(f"{ref} goes off the board: put it beside the board and wire it.")
         else:
             faults.append(f"{ref} is on the board but not in the circuit.")
-    used, occupied = _occupants(layout)
+    used, occupied = occupants(layout)
     faults += occupied
     bodies: dict[Hole, list[str]] = defaultdict(list)
     flat: set[str] = set()
@@ -389,7 +389,7 @@ def _oriented(layout: Layout, board: dict[str, BoardPart], circuit: Circuit, net
 
 
 @dataclass
-class _Reading:
+class Reading:
     """A layout read against its circuit: what both checks start from."""
 
     nets: Nets
@@ -406,7 +406,7 @@ class _Reading:
 
 
 def read_layout(layout: Layout, circuit: Circuit, models: ModelLibrary,
-          table: FootprintTable) -> _Reading:  # fmt: skip
+          table: FootprintTable) -> Reading:  # fmt: skip
     nets = connect(circuit)
     board, unboardable = board_parts(circuit, models, table)
     off_board = {p.ref for p in circuit.parts if built_where(p) != "board"}
@@ -421,12 +421,12 @@ def read_layout(layout: Layout, circuit: Circuit, models: ModelLibrary,
     needed = {end for end, net in ends.items() if count[net] > 1}
     layout = _oriented(layout, board, circuit, nets, ends)
     groups = stripboard_nets(layout, board)
-    return _Reading(nets, board, unboardable, off_board, items, ends, needed, layout,
+    return Reading(nets, board, unboardable, off_board, items, ends, needed, layout,
                     _Words(circuit, board, layout), groups,
                     _expected(groups, ends, nets))  # fmt: skip
 
 
-def _wire_faults(r: _Reading) -> tuple[list[str], list[str], int]:
+def _wire_faults(r: Reading) -> tuple[list[str], list[str], int]:
     """Wires from or to a lug the circuit has no such lug for, or from a lug to itself;
     the needed lugs not wired to anything yet; how many wires are loose."""
     faults = []
@@ -442,7 +442,7 @@ def _wire_faults(r: _Reading) -> tuple[list[str], list[str], int]:
     return faults, unwired, loose
 
 
-def groups_by_net(r: _Reading) -> dict[int, dict[str, list[Terminal]]]:
+def groups_by_net(r: Reading) -> dict[int, dict[str, list[Terminal]]]:
     """Each joined group of the board → its terminals by the net the circuit wants."""
     found: dict[int, dict[str, list[Terminal]]] = defaultdict(lambda: defaultdict(list))
     for t in sorted(r.expected, key=_key):
@@ -580,7 +580,7 @@ def _terminal_id(t: Terminal, words: _Words) -> str:
     return f"{ref}.{leg}"
 
 
-def _wrong_way(r: _Reading, circuit: Circuit) -> list[str]:
+def _wrong_way(r: Reading, circuit: Circuit) -> list[str]:
     """Each polarised two-leg part placed each leg on the other's net."""
     kinds = {p.ref: p for p in circuit.parts}
     faults = []
@@ -606,7 +606,7 @@ def _wrong_way(r: _Reading, circuit: Circuit) -> list[str]:
     return faults
 
 
-def _misplaced(r: _Reading, wanted: dict[str, list[Terminal]], skip: set[str]) -> list[str]:
+def _misplaced(r: Reading, wanted: dict[str, list[Terminal]], skip: set[str]) -> list[str]:
     """Each placed leg on a strip that carries only other nets (a part rewired in the
     schematic since it was placed, or a leg a strip off), with where it should go: the
     terminals of its own net, the placed ones by hole. Parts in `skip` (already named the
@@ -641,7 +641,7 @@ def _listed(words: list[str]) -> str:
     return " and ".join([", ".join(words[:-1]), words[-1]] if len(words) > 1 else words)
 
 
-def _gone(r: _Reading, circuit: Circuit) -> list[str]:
+def _gone(r: Reading, circuit: Circuit) -> list[str]:
     """What the board holds of parts the circuit no longer has (D-376): placed board parts
     (one that can't be placed now is still the circuit's: the tray names it), off-board parts
     put beside it, the parts of lugs a wire still runs to."""

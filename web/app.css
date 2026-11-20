@@ -308,6 +308,17 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 .board-size { position: absolute; left: 12px; bottom: 12px; margin: 0; font: 12px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-2); pointer-events: none; }
 .board-size[hidden], .board-trim[hidden] { display: none; } /* Trim and Wire it for me */
 .board-trim { pointer-events: auto; margin-left: 8px; padding: 1px 8px; font: 12px var(--font-ui); }
+.board-needs { position: absolute; right: 12px; top: 12px; max-width: 300px; max-height: 45%; overflow-y: auto; margin: 0; padding: 6px 10px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 4px; font-size: 12px; color: var(--text-2); }
+.board-needs[hidden] { display: none; }
+.board-needs h3 { margin: 0 0 4px; font: 12px var(--font-mono); color: var(--text); }
+.board-needs ul { list-style: none; margin: 0; padding: 0; }
+.board-needs .need { margin: 3px 0; }
+.board-needs .leg { color: var(--text); }
+.board-needs .where, .board-needs .net { font-family: var(--font-mono); }
+.board-needs .unused { color: var(--text-3); }
+.board-needs .reach { padding-left: 12px; }
+.board-needs .state { color: var(--text-3); }
+.board-needs .reach-joined .state { color: var(--ok); }
 body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-show="board"] .panels { display: none; }
 /* the Tray: the palette's place in the Board view (D-371) */
 .board-tray { width: 232px; flex: none; overflow-y: auto; background: var(--surface-1); border-right: 1px solid var(--border); padding: 6px 10px 16px; font-size: 13px; }
@@ -326,6 +337,8 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-tray .board-list .shape { color: var(--text-3); }
 .board-tray .unplaceable li { color: var(--text-3); }
 .board-tray .done { color: var(--text-2); }
+.board-tray .board-next { margin: 4px 0 8px; padding: 4px 6px; border-left: 2px solid var(--accent); background: var(--surface-2); color: var(--text); cursor: pointer; }
+.board-tray .board-list li.next { background: var(--info-bg); color: var(--text); }
 /* a footprint's mark beside its row: axial a bar, radial a circle, in a line three legs, DIP a notched box */
 .board-tray .fp { display: inline-block; width: 14px; height: 8px; margin-right: 6px; vertical-align: middle; border: 1.5px solid var(--text-3); box-sizing: border-box; }
 .board-tray .fp-axial { height: 6px; border-radius: 2px; }
@@ -392,6 +405,15 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board .ghost .link { stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 2 1.5; }
 #board .ghost .aim { fill: none; stroke: var(--accent); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
 #board .link-hit { stroke: transparent; stroke-width: 5; }
+/* guidance (D-377): the ratsnest, a carried part's marked holes, suggested cuts and links faded */
+#board .rat { stroke: var(--text-3); stroke-width: 0.8; stroke-dasharray: 1.5 1.5; opacity: 0.7; vector-effect: non-scaling-stroke; pointer-events: none; }
+#board .rat.lit { stroke: var(--accent-hi); stroke-width: 1.4; opacity: 1; }
+#board .ghost .mark { fill: none; stroke: var(--ok); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+#board .suggested { cursor: pointer; opacity: 0.4; }
+#board .suggested:hover { opacity: 0.9; }
+#board .suggested-link { stroke: var(--sch-line); stroke-width: 1.2; stroke-dasharray: 2 1.5; }
+#board .suggested-cut { stroke: var(--error); stroke-width: 1.5; vector-effect: non-scaling-stroke; fill: none; }
+#board .suggest-hit { fill: transparent; }
 #board[data-tool="links"] .board-link { cursor: pointer; }
 #board[data-tool="links"] .board-link:hover .link { stroke: var(--error); }
 .board-tray .board-list li.carriable { cursor: grab; touch-action: none; user-select: none; }

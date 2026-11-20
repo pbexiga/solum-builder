@@ -4,6 +4,7 @@ panes in the column, the selection lit on both drawings, the result panes back a
 Board button (D-370)."""
 
 import itertools
+import re
 from typing import Any
 
 import pytest
@@ -173,7 +174,7 @@ def test_show_values_is_a_setting_remembered(page: Page, base_url: str) -> None:
     page.locator("#board-settings > summary").click()
     box = page.locator("#board-settings-body input[data-setting='values']")
     expect(box).to_be_checked()
-    expect(page.locator("#board-settings-body input[data-setting='next']")).to_be_disabled()
+    expect(page.locator("#board-settings-body input[data-setting='seeThrough']")).to_be_disabled()
     box.uncheck()
     expect(label.locator(".value")).to_have_count(0)
     expect(label.locator(".ref")).to_have_text("R1")
@@ -448,3 +449,48 @@ def test_a_part_placed_finishes_its_nets_and_the_board_is_saved_as_it_was(
     )
     expect(progress).to_have_text("All 8 nets done.")
     expect(warnings).to_have_text("The board matches the circuit.")
+
+
+def test_the_guidance_marks_suggests_and_says_what_is_next(page: Page, base_url: str) -> None:
+    """D-377: the Rangemaster without R3, its cut and links: the tray says R3 is next; the
+    ratsnest and the faded cut and links show; a suggested cut clicked is made (an undo
+    step), the rest made with one button; a selected part's needs leg by leg; a part
+    carried from the tray marks the holes where its legs would join their nets."""
+    board = load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml")
+    del board["parts"]["R3"]
+    board["standing"], board["cuts"], board["links"] = [], [], []
+    open_with_board(page, base_url, board)
+    show_board(page)
+    expect(page.locator("#board-tray-body .board-next")).to_contain_text("Next: R3.")
+    expect(page.locator("#board-tray-body li[data-ref='R3']")).to_have_class(re.compile("next"))
+    accept = page.locator("#board-accept")
+    expect(accept).to_have_text("Make the suggested cut and 2 links")
+    suggested = page.locator("#board .suggested")
+    expect(suggested).to_have_count(3)
+    expect(page.locator("#board .rat")).not_to_have_count(0)
+    # one suggested cut clicked: made, one undo step
+    page.locator("#board .suggested[data-suggest='cut']").click()
+    expect(page.locator("#board .cut")).to_have_count(1)
+    expect(accept).to_have_text("Make the suggested 2 links")
+    page.keyboard.press("Control+z")
+    expect(page.locator("#board .cut")).to_have_count(0)
+    # all of them with the button
+    accept.click()
+    expect(page.locator("#board .cut")).to_have_count(1)
+    expect(page.locator("#board .link")).to_have_count(2)
+    expect(suggested).to_have_count(0)
+    expect(accept).to_be_hidden()
+    expect(page.locator("#board .rat")).to_have_count(0)
+    # Q1 selected: its needs, leg by leg (its emitter still needs R3)
+    page.locator("#board .board-part[data-ref='Q1']").click()
+    needs = page.locator("#board-needs")
+    expect(needs).to_be_visible()
+    expect(needs.locator("li.need").first).to_contain_text("E")
+    expect(needs).to_contain_text("R3 leg 1 not placed yet")
+    expect(needs).to_contain_text("✓")
+    # R3 picked up from the tray: the holes its legs would join are marked
+    page.locator("#board-tray-body .board-next").click()
+    page.mouse.move(*hole_point(page, 6, 4))
+    expect(page.locator("#board .ghost .mark")).not_to_have_count(0)
+    page.keyboard.press("Escape")
+    expect(page.locator("#board .ghost .mark")).to_have_count(0)

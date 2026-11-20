@@ -68,7 +68,8 @@
         <svg id="schematic" role="img" aria-label="Circuit schematic"></svg>
         <svg id="board" role="img" aria-label="Stripboard" hidden></svg>
         <div id="board-tools" class="board-tools" role="group" aria-label="Board tools" hidden><button type="button" data-tool="parts" aria-pressed="true" title="Place and move parts (P)">Parts</button><button type="button" data-tool="cuts" aria-pressed="false" title="Click a hole to cut the strip there, a cut to mend it (C)">Cuts</button><button type="button" data-tool="links" aria-pressed="false" title="Drag down a column to lay a link; click a link to lift it (K)">Links</button></div>
-        <div id="board-size" class="board-size" hidden><span id="board-size-text"></span> <button type="button" id="board-trim" class="board-trim" title="Take the empty columns and strips off the board's edges" hidden>Trim</button> <button type="button" id="board-wire" class="board-trim" title="Put the pots, jacks and power beside the board and wire each lug to the nearest free hole on its strip" hidden>Wire it for me</button></div>
+        <div id="board-size" class="board-size" hidden><span id="board-size-text"></span> <button type="button" id="board-trim" class="board-trim" title="Take the empty columns and strips off the board's edges" hidden>Trim</button> <button type="button" id="board-wire" class="board-trim" title="Put the pots, jacks and power beside the board and wire each lug to the nearest free hole on its strip" hidden>Wire it for me</button> <button type="button" id="board-accept" class="board-trim" title="Make every suggested cut and link, the faded ones on the board (one undo step)" hidden></button></div>
+        <div id="board-needs" class="board-needs" aria-live="polite" hidden></div>
         <div id="rename-notice" class="rename-notice" role="status" hidden></div>
         <div id="refusal" class="refusal" role="alert" hidden></div>
         <div class="zoom" role="group" aria-label="Zoom">

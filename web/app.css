@@ -372,9 +372,9 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board .lug-ring { fill: var(--board-base); stroke: var(--brass); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
 #board .lug:hover .lug-ring { stroke: var(--accent-hi); stroke-width: 2; }
 #board .lug-label { font: 2.6px var(--font-mono); fill: var(--text-2); pointer-events: none; }
-#board .off-wire .wire { stroke: var(--brass); stroke-width: 1.4; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+#board .off-wire .wire { fill: none; stroke: var(--brass); stroke-width: 1.4; stroke-linecap: round; vector-effect: non-scaling-stroke; }
 #board .off-wire.loose .wire { stroke-dasharray: 3 2; }
-#board .off-wire line { pointer-events: none; } /* only its ends are picked up: a press on the line reaches the part under it */
+#board .off-wire path { pointer-events: none; } /* only its ends are picked up: a press on the line reaches the part under it */
 #board .wire-end { fill: var(--brass); cursor: move; }
 #board .off-wire.loose .far-end { fill: var(--surface-2); stroke: var(--brass); stroke-width: 1; vector-effect: non-scaling-stroke; }
 #board .off-wire:hover .wire { stroke: var(--accent-hi); }

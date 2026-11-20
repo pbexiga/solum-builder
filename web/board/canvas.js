@@ -10,7 +10,7 @@
  */
 
 import { fitView, panBy, viewBoxText, zoomAt, resizeView } from "../schematic/viewport.js";
-import { STEP, columnName, holeName, holeXY, itemRefs, itemShape, labelAt, legLabel, partShapes, runRects, shownHoles, valueOf } from "./board-logic.js";
+import { STEP, columnName, holeName, holeXY, itemRefs, itemShape, labelAt, legLabel, partShapes, pointAlong, routePath, runRects, shownHoles, valueOf, wireHops, wireRoutes } from "./board-logic.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 const FIT_PAD = STEP; // board units round the shown holes when fitting
@@ -73,9 +73,9 @@ function drawShape(s, parent) {
  * @typedef {import("./board-logic.js").OffItem} OffItem
  * @typedef {import("./board-logic.js").LugAt} LugAt
  * @typedef {{items: Array<{item: OffItem, at: Hole}>, wires: Array<{index: number,
- *   line: {x1: number, y1: number, x2: number, y2: number, loose: boolean}, title: string, pad?: boolean}>}} OffBoard
- *   the off-board parts beside the board, where, and the wires' lines (D-375); `pad`: the
- *   wire's far end is in a hole (a solder joint on the copper side)
+ *   line: import("./board-logic.js").WireLine, title: string, pad?: boolean}>}} OffBoard
+ *   the off-board parts beside the board, where, and the wires' ends (D-375), drawn routed
+ *   with hops (D-379); `pad`: the wire's far end is in a hole (a solder joint on the copper side)
  * @typedef {import("./board-logic.js").Board} Board
  * @typedef {import("./board-logic.js").Footprint} Footprint
  */
@@ -275,17 +275,17 @@ export function boardCanvas(svg, app) {
       el("title", {}, g).textContent = `Suggested cut at ${holeName(cut)}: click to cut the strip there`;
     }
     const wires = el("g", { class: "off-wires" }, root); // over the parts: a wire lies on top
-    for (const { index, line, title, pad } of off.wires) {
+    const routes = wireRoutes(off.wires.map((w) => w.line), board);
+    const hops = wireHops(routes);
+    off.wires.forEach(({ index, line, title, pad }, i) => {
+      const route = routes[i] ?? [[line.x1, line.y1], [line.x2, line.y2]];
       const g = el("g", { class: ["off-wire", line.loose ? "loose" : "", pad ? "pad" : ""].filter(Boolean).join(" "), "data-wire": index }, wires);
-      el("line", { x1: line.x1, y1: line.y1, x2: line.x2, y2: line.y2, class: "wire" }, g);
-      const length = Math.hypot(line.x2 - line.x1, line.y2 - line.y1) || 1;
-      const grip = Math.min(STEP * 0.7, length / 3); // the lug end's grip, a little way along
-      const gx = line.x1 + ((line.x2 - line.x1) / length) * grip;
-      const gy = line.y1 + ((line.y2 - line.y1) / length) * grip;
+      el("path", { d: routePath(route, hops[i]), class: "wire" }, g);
+      const [gx, gy] = pointAlong(route, STEP * 0.5); // the lug end's grip, a little way along
       el("circle", { cx: gx, cy: gy, r: STEP * 0.16, class: "wire-end lug-end", "data-end": "lug" }, g);
       el("circle", { cx: line.x2, cy: line.y2, r: STEP * 0.22, class: "wire-end far-end", "data-end": "far" }, g);
       el("title", {}, g).textContent = title;
-    }
+    });
     el("g", { class: "ghost" }, root);
     if (fitting || !shown) fit();
     else apply();

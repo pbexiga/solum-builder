@@ -357,7 +357,10 @@ export function offBoardRows(progress, board) {
 
 /**
  * @typedef {{x: number, y: number, w: number, h: number}} Box
- * @typedef {{end: string, label: string, x: number, y: number}} LugAt
+ * @typedef {{end: string, label: string, x: number, y: number, box?: Box}} LugAt `box`: its
+ *   part's body (to route a wire round it, D-379)
+ * @typedef {{x1: number, y1: number, x2: number, y2: number, loose: boolean, hole: boolean, box: Box | null}} WireLine
+ *   a wire's ends in board units; `hole`: its far end is in a hole; `box`: its lug's part's body
  */
 
 /**
@@ -383,7 +386,8 @@ export function lugPlaces(progress, board) {
   const at = {};
   for (const item of progress.items) {
     if (!isOut(item, board)) continue;
-    for (const lug of itemShape(item, board.spots[item.ref] ?? progress.spots[item.ref]).lugs) at[lug.end] = lug;
+    const { body, lugs } = itemShape(item, board.spots[item.ref] ?? progress.spots[item.ref]);
+    for (const lug of lugs) at[lug.end] = { ...lug, box: body };
   }
   return at;
 }
@@ -394,18 +398,152 @@ export const LOOSE_DROP = STEP * 1.6; // how far a loose wire hangs below its lu
  * A wire's line in board units: from its lug to its hole, to its other lug, or hanging
  * loose below its lug; null when its lug isn't drawn.
  * @param {{lug: string, hole: Hole | null, to: string | null}} wire @param {Record<string, LugAt>} lugs
- * @returns {{x1: number, y1: number, x2: number, y2: number, loose: boolean} | null}
+ * @returns {WireLine | null}
  */
 export function wireLine(wire, lugs) {
   const from = lugs[wire.lug];
   if (!from) return null;
+  const start = { x1: from.x, y1: from.y, box: from.box ?? null };
   if (wire.hole) {
     const [x2, y2] = holeXY(wire.hole);
-    return { x1: from.x, y1: from.y, x2, y2, loose: false };
+    return { ...start, x2, y2, loose: false, hole: true };
   }
   const to = wire.to ? lugs[wire.to] : null;
-  if (to) return { x1: from.x, y1: from.y, x2: to.x, y2: to.y, loose: false };
-  return { x1: from.x, y1: from.y, x2: from.x, y2: from.y + LOOSE_DROP, loose: true };
+  if (to) return { ...start, x2: to.x, y2: to.y, loose: false, hole: false };
+  return { ...start, x2: from.x, y2: from.y + LOOSE_DROP, loose: true, hole: false };
+}
+
+const LANE = STEP * 0.3; // the gap between wires running side by side round the board
+const STUB = STEP * 0.6; // how far a wire drops from its lug before it turns
+const CORNER = STEP * 0.25; // a bend's rounding
+export const HOP = STEP * 0.3; // a hop's radius, where a wire crosses another
+
+/**
+ * The off-board wires' routes, as points with square corners (D-379): each leaves its lug
+ * downward, runs round the board's edge on the lug's side in a lane of its own, and comes
+ * in to its hole along the gap between two strips (from the left or right) or two columns
+ * (from above or below), turning into the hole at the end; a wire from below goes round
+ * its own part's body first; wires sharing a gap are spread apart in it. Lug to lug: down
+ * from each and across beneath (beneath the board if it's in the way). Loose: its
+ * short drop. Drawing only: a wire is still lug + hole (D-375).
+ * @param {Array<WireLine | null>} lines @param {{columns: number, strips: number}} board
+ * @returns {Array<Array<[number, number]> | null>}
+ */
+export function wireRoutes(lines, board) {
+  const half = STEP / 2;
+  const edge = { left: -half, right: board.columns * STEP - half, top: -half, bottom: board.strips * STEP - half };
+  /** @type {Record<string, number>} */
+  const lanes = {};
+  const lane = (/** @type {string} */ side) => (lanes[side] = (lanes[side] ?? 0) + 1);
+  const SPREAD = [0, -2, 2, -3.5, 3.5]; // wires sharing a gap, apart within it (holes fill ±1.4 of 5)
+  const spread = (/** @type {string} */ gap) => SPREAD[(lane(gap) - 1) % SPREAD.length] * (STEP / 10);
+  return lines.map((line) => {
+    if (!line) return null;
+    const { x1, y1, x2, y2 } = line;
+    if (line.loose) return [[x1, y1], [x2, y2]];
+    const drop = y1 + STUB;
+    if (!line.hole) {
+      let under = Math.max(y1, y2) + STUB + (lane("lugs") - 1) * LANE;
+      const across = Math.min(x1, x2) < edge.right && Math.max(x1, x2) > edge.left;
+      if (across && under > edge.top - STEP && under < edge.bottom + LANE) under = edge.bottom + lane("bottom") * LANE; // round beneath the board
+      return tidy([[x1, y1], [x1, under], [x2, under], [x2, y2]]);
+    }
+    const side = x1 < edge.left ? "left" : x1 > edge.right ? "right" : y1 < edge.top ? "top" : "bottom";
+    const k = lane(side);
+    if (side === "left" || side === "right") {
+      const cx = side === "left" ? edge.left - k * LANE : edge.right + k * LANE;
+      const gap = y2 - half + spread(`s${y2}`); // the gap above the hole's strip
+      return tidy([[x1, y1], [x1, drop], [cx, drop], [cx, gap], [x2, gap], [x2, y2]]);
+    }
+    const gap = x2 - half + spread(`c${x2}`); // the gap left of the hole's column
+    if (side === "top") {
+      const cy = Math.max(edge.top - k * LANE, drop);
+      return tidy([[x1, y1], [x1, cy], [gap, cy], [gap, y2], [x2, y2]]);
+    }
+    const box = line.box ?? { x: x1, y: y1, w: 0, h: 0 };
+    const ex = x2 < box.x + box.w / 2 ? box.x - k * LANE : box.x + box.w + k * LANE; // round the body
+    const cy = Math.min(edge.bottom + k * LANE, box.y - k * LANE);
+    return tidy([[x1, y1], [x1, drop], [ex, drop], [ex, cy], [gap, cy], [gap, y2], [x2, y2]]);
+  });
+}
+
+/** Points without repeats or a middle point on a straight run. @param {Array<[number, number]>} points */
+function tidy(points) {
+  /** @type {Array<[number, number]>} */
+  const out = [];
+  for (const p of points) {
+    const last = out[out.length - 1];
+    if (last && last[0] === p[0] && last[1] === p[1]) continue;
+    const before = out[out.length - 2];
+    if (before && last && ((before[0] === last[0] && last[0] === p[0]) || (before[1] === last[1] && last[1] === p[1]))) out.pop();
+    out.push(p);
+  }
+  return out;
+}
+
+/**
+ * Where the wires cross: for each route, each hop as [segment index, x], always on the
+ * crossing's level run (so each crossing hops once), kept clear of the bends.
+ * @param {Array<Array<[number, number]> | null>} routes @returns {Array<Array<[number, number]>>}
+ */
+export function wireHops(routes) {
+  const clear = CORNER + HOP;
+  /** @type {Array<{route: number, x: number, y1: number, y2: number}>} */
+  const uprights = [];
+  routes.forEach((r, route) => r?.forEach((p, i) => {
+    const q = r[i + 1];
+    if (q && p[0] === q[0]) uprights.push({ route, x: p[0], y1: Math.min(p[1], q[1]), y2: Math.max(p[1], q[1]) });
+  }));
+  return routes.map((r, route) => {
+    /** @type {Array<[number, number]>} */
+    const hops = [];
+    r?.forEach((p, i) => {
+      const q = r[i + 1];
+      if (!q || p[1] !== q[1]) return;
+      const [lo, hi] = [Math.min(p[0], q[0]), Math.max(p[0], q[0])];
+      for (const u of uprights) {
+        if (u.route === route || u.x <= lo + clear || u.x >= hi - clear || p[1] <= u.y1 + clear || p[1] >= u.y2 - clear) continue;
+        hops.push([i, u.x]);
+      }
+    });
+    return hops;
+  });
+}
+
+/**
+ * An SVG path through a route's points: bends rounded, a half-circle bump up at each hop.
+ * @param {Array<[number, number]>} points @param {Array<[number, number]>} [hops] as `wireHops` gives
+ */
+export function routePath(points, hops = []) {
+  const n = (/** @type {number} */ v) => String(Math.round(v * 100) / 100);
+  const parts = [`M${n(points[0][0])},${n(points[0][1])}`];
+  for (let i = 1; i < points.length; i++) {
+    const [a, p, b] = [points[i - 1], points[i], points[i + 1]];
+    const dx = Math.sign(p[0] - a[0]);
+    for (const [, x] of hops.filter((h) => h[0] === i - 1).sort((h, g) => (h[1] - g[1]) * dx)) {
+      parts.push(`L${n(x - dx * HOP)},${n(p[1])}`, `A${n(HOP)},${n(HOP)} 0 0 ${dx > 0 ? 1 : 0} ${n(x + dx * HOP)},${n(p[1])}`);
+    }
+    if (!b) {
+      parts.push(`L${n(p[0])},${n(p[1])}`);
+      continue;
+    }
+    const r = Math.min(CORNER, Math.hypot(p[0] - a[0], p[1] - a[1]) / 2, Math.hypot(b[0] - p[0], b[1] - p[1]) / 2);
+    const into = [Math.sign(p[0] - a[0]), Math.sign(p[1] - a[1])];
+    const out = [Math.sign(b[0] - p[0]), Math.sign(b[1] - p[1])];
+    parts.push(`L${n(p[0] - into[0] * r)},${n(p[1] - into[1] * r)}`, `Q${n(p[0])},${n(p[1])} ${n(p[0] + out[0] * r)},${n(p[1] + out[1] * r)}`);
+  }
+  return parts.join(" ");
+}
+
+/** The point `d` along a route from its start (its end if the route is shorter). @param {Array<[number, number]>} points @param {number} d @returns {[number, number]} */
+export function pointAlong(points, d) {
+  for (let i = 1; i < points.length; i++) {
+    const [a, b] = [points[i - 1], points[i]];
+    const length = Math.hypot(b[0] - a[0], b[1] - a[1]);
+    if (d <= length && length) return [a[0] + ((b[0] - a[0]) * d) / length, a[1] + ((b[1] - a[1]) * d) / length];
+    d -= length;
+  }
+  return points[points.length - 1];
 }
 
 /**

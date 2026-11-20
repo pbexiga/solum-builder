@@ -1154,7 +1154,10 @@ def test_off_board_parts_lugs_and_wires_are_drawn_where_they_sit(js: Page) -> No
     ]
     assert got["lugs"] == ["VR1.1", "VR1.2", "VR1.3", "IN.out", "IN.S"]
     hole, lug, loose = got["wires"]
-    assert hole == {"x1": 10, "y1": -50, "x2": 10, "y2": 10, "loose": False}
+    assert {k: hole[k] for k in ("x1", "y1", "x2", "y2", "loose", "hole")} == {
+        "x1": 10, "y1": -50, "x2": 10, "y2": 10, "loose": False, "hole": True,
+    }  # fmt: skip
+    assert hole["box"] == got["shape"]["body"]
     assert (lug["x2"], lug["y2"], lug["loose"]) == (110, 20, False)  # IN at its default spot
     assert loose["loose"] is True and loose["y2"] > loose["y1"]
     assert got["spot"] == [7, -6]
@@ -1162,6 +1165,40 @@ def test_off_board_parts_lugs_and_wires_are_drawn_where_they_sit(js: Page) -> No
     assert got["refs"] == [["VR1"], []]
     assert got["line"] == "1 of 2 nets done; 1 lug to wire, 1 loose."
     assert got["done"] == "All 1 nets done."
+
+
+def test_off_board_wires_are_routed_with_square_corners_and_hop_where_they_cross(js: Page) -> None:
+    """D-379: a wire from a lug left of the board drops, runs up its lane by the board's
+    edge and comes in along the gap above its hole's strip; from above, along the gap left
+    of its hole's column; lug to lug, down and across beneath (beneath the board when it's in
+    the way); a second wire on a side takes
+    the next lane out; where one wire's level run crosses another's upright it hops."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const board = { columns: 10, strips: 8 };
+        const box = { x: -75, y: 0, w: 50, h: 20 };
+        const left = { x1: -60, y1: 25, x2: 30, y2: 40, loose: false, hole: true, box };
+        const left2 = { ...left, x1: -40, y2: 60 };
+        const top = { x1: 20, y1: -40, x2: 50, y2: 30, loose: false, hole: true, box: { x: 0, y: -65, w: 50, h: 20 } };
+        const lugs = { x1: -60, y1: 25, x2: -40, y2: 25, loose: false, hole: false, box };
+        const across = { x1: -60, y1: 25, x2: 160, y2: 25, loose: false, hole: false, box };
+        const routes = b.wireRoutes([left, left2, top, lugs, null, across], board);
+        const cross = b.wireHops([[[0, 0], [100, 0]], [[50, -40], [50, 40]]]);
+        return { routes, cross, path: b.routePath([[0, 0], [100, 0], [100, 50]], cross[0]), along: b.pointAlong([[0, 0], [10, 0], [10, 10]], 15) };
+        """,
+    )
+    left, left2, top, lugs, missing, across = got["routes"]
+    assert left == [[-60, 25], [-60, 31], [-8, 31], [-8, 35], [30, 35], [30, 40]]
+    assert left2[2][0] == -11  # the next lane out
+    assert top == [[20, -40], [20, -8], [45, -8], [45, 30], [50, 30]]
+    assert lugs == [[-60, 25], [-60, 31], [-40, 31], [-40, 25]]
+    assert missing is None
+    assert across == [[-60, 25], [-60, 78], [160, 78], [160, 25]]  # round beneath the board
+    assert got["cross"] == [[[0, 50]], []]  # the level run hops, the upright doesn't
+    assert "A3,3 0 0 1 53,0" in got["path"] and "Q100,0" in got["path"]
+    assert got["along"] == [10, 5]
 
 
 def test_parts_gone_from_the_circuit_are_said_in_one_sentence(js: Page) -> None:

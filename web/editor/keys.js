@@ -47,6 +47,34 @@ export function actionFor(press) {
 }
 
 /**
+ * The keys of the Board view (D-374), where the schematic's part keys mean nothing: Space
+ * turns the part carried or selected, F flips it, S stands it up or lays it flat, + and −
+ * lengthen and shorten its legs, Del takes it back to the tray, C and K the cut and link
+ * tools, Esc drops what's carried or goes back to placing parts. Ctrl keys stay
+ * `actionFor`'s (undo, redo, save, run).
+ * @param {Press} press @returns {Action | null}
+ */
+export function boardActionFor(press) {
+  if (press.ctrl || press.meta || press.alt) return null;
+  const key = press.key.length === 1 ? press.key.toLowerCase() : press.key;
+  switch (key) {
+    case "Escape": return { action: "cancel" };
+    case "Delete":
+    case "Backspace": return { action: "remove" };
+    case " ": return { action: "turn" };
+    case "f": return { action: "flip" };
+    case "s": return { action: "stand" };
+    case "+":
+    case "=": return { action: "longer" };
+    case "-": return { action: "shorter" };
+    case "c": return { action: "cuts" };
+    case "k": return { action: "links" };
+    case "p": return { action: "parts" };
+  }
+  return null;
+}
+
+/**
  * @typedef {{keys: string, does: string, press?: Press, action?: string}} Hotkey
  *   `press` and `action` tie a row to actionFor (a test checks they agree); rows without
  *   them are the mouse, or keys handled where they apply (a form, a plot, a pane).
@@ -91,6 +119,14 @@ export function hotkeyGroups() {
       { keys: "Shift+drag", does: "Select what's in the box (Ctrl+Shift+drag adds to it)" },
       { keys: "Ctrl+click", does: "Add or remove one thing from the selection (Shift+click too)" },
       { keys: "Double-click a part", does: "Edit it" },
+    ] },
+    { title: "On the board", rows: [
+      { keys: "Drag from the tray", does: "Place a part (or click it, then click the board)" },
+      { keys: "Space / F / S", does: "Turn, flip, stand up or lay flat the part carried or selected" },
+      { keys: "+ / −", does: "Longer or shorter legs" },
+      { keys: "Del or Backspace", does: "Take the selected part back to the tray" },
+      { keys: "P / C / K", does: "Place parts, make cuts, lay links" },
+      { keys: "Esc", does: "Drop what's carried; back to placing parts" },
     ] },
     { title: "Elsewhere", rows: [
       { keys: "Enter / Esc", does: "In a part's form: apply / cancel" },

@@ -208,7 +208,8 @@ export function boardRefOf(footprints, ref) {
  * @typedef {{to_place: string[], pads_to_place: string[], off_board: OffBoardPart[], stock: string[],
  *   unplaceable: string[], nets: NetProgress[],
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
- *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number]}} Progress
+ *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number],
+ *   shorted: Array<[number, number, number]>}} Progress
  *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints)
  */
 
@@ -276,7 +277,7 @@ export function offBoardRows(progress) {
 export const BOARD_SETTINGS = /** @type {const} */ ([
   { key: "values", label: "Show values", on: true, acts: true, title: "Label each part with its value as well as its ref" },
   { key: "next", label: "What to place next", on: true, acts: false, title: "Suggest the part to place next" },
-  { key: "shorts", label: "Allow shorts while editing, shown red", on: true, acts: false, title: "Off: a move that makes a short is refused" },
+  { key: "shorts", label: "Allow shorts while editing, shown red", on: true, acts: true, title: "Off: a move that makes a short is refused" },
   { key: "grow", label: "Auto-grow", on: true, acts: true, title: "The board grows to take in what's placed by its edge, and shrinks back. Off: it stays its size (the margin greyed); add or remove lines on the rulers" },
   { key: "seeThrough", label: "See-through", on: false, acts: false, title: "The copper side faint under the parts" },
 ]);
@@ -322,4 +323,141 @@ export function netWords(net) {
  */
 export function partsOnNet(progress, net) {
   return Object.entries(progress.legs).filter(([, legs]) => legs.some((l) => l.hole && l.net === net)).map(([ref]) => ref);
+}
+
+/**
+ * @typedef {{turns: number, flipped: boolean, standing: boolean, span: number}} Pose
+ *   how a part sits, from its footprint's own way (legs down across the strips, first leg
+ *   on top): turned a quarter `turns` times clockwise on screen, its legs' order `flipped`,
+ *   an axial part `standing`, `span` holes between a two-leg part's legs or a line's legs
+ *   (0 for a chip). The server decides whether it may sit there (D-374).
+ * @typedef {Array<[string, Hole]>} Pattern each leg's hole, from where the part is put
+ */
+
+/** A part's first pose: its footprint's own way, lying flat, the least span. @param {Footprint} fp @returns {Pose} */
+export function firstPose(fp) {
+  const span = fp.shape === "axial" ? fp.flat : fp.shape === "dip" ? 0 : (fp.steps[0] ?? 1);
+  return { turns: 0, flipped: false, standing: false, span };
+}
+
+/**
+ * Each leg's offset in a pose, the first leg at [0, 0] before turning.
+ * @param {Footprint} fp @param {Pose} pose @returns {Pattern}
+ */
+export function legPattern(fp, pose) {
+  const n = fp.legs.length;
+  /** @type {Array<[number, number]>} */
+  let at;
+  if (fp.shape === "dip") {
+    const half = n / 2;
+    at = fp.legs.map((_, i) => (i < half ? [0, i] : [fp.row_holes, n - 1 - i]));
+  } else {
+    const step = fp.shape === "axial" && pose.standing ? fp.stand : pose.span;
+    at = fp.legs.map((_, i) => [0, i * step]);
+  }
+  const names = pose.flipped && fp.shape !== "dip" ? [...fp.legs].reverse() : fp.legs;
+  const turn = (/** @type {[number, number]} */ [x, y]) => /** @type {[number, number]} */ ([-y, x]);
+  return names.map((leg, i) => {
+    let p = at[i];
+    for (let t = 0; t < ((pose.turns % 4) + 4) % 4; t++) p = turn(p);
+    return [leg, [p[0] + 0, p[1] + 0]]; // + 0: no -0
+  });
+}
+
+/** The hole a pattern is held by: its legs' middle, rounded. @param {Pattern} pattern @returns {Hole} */
+export function middleOf(pattern) {
+  const mean = (/** @type {number} */ k) => pattern.reduce((s, [, h]) => s + h[k], 0) / (pattern.length || 1);
+  return [Math.round(mean(0)), Math.round(mean(1))];
+}
+
+/**
+ * The legs of a part in `pose` with its middle at `hole`.
+ * @param {Footprint} fp @param {Pose} pose @param {Hole} hole @returns {Pattern}
+ */
+export function legsAt(fp, pose, hole) {
+  const pattern = legPattern(fp, pose);
+  const [mx, my] = middleOf(pattern);
+  return pattern.map(([leg, [x, y]]) => [leg, [hole[0] - mx + x, hole[1] - my + y]]);
+}
+
+/**
+ * The pose a placed part sits in (its legs as the board holds them), so turning or moving
+ * it starts from there; null when its legs fit no pose (a board from a file, odd).
+ * @param {Footprint} fp @param {Array<[string, Hole]>} legs @param {boolean} standing
+ * @returns {Pose | null}
+ */
+export function poseOf(fp, legs, standing) {
+  const at = new Map(legs.map(([leg, hole]) => [leg, hole]));
+  const a = at.get(fp.legs[0]);
+  const b = at.get(fp.legs[1]);
+  if (!a || !b) return null;
+  const span = fp.shape === "dip" ? 0 : fp.shape === "axial" && standing ? fp.flat : Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
+  for (const flipped of [false, true]) {
+    for (let turns = 0; turns < 4; turns++) {
+      const pose = { turns, flipped, standing, span };
+      const pattern = legPattern(fp, pose);
+      const [, origin] = pattern[0];
+      const first = /** @type {Hole} */ (at.get(pattern[0][0]));
+      const fits = pattern.every(([leg, [x, y]]) => {
+        const hole = at.get(leg);
+        return hole && hole[0] - first[0] === x - origin[0] && hole[1] - first[1] === y - origin[1];
+      });
+      if (fits) return pose;
+    }
+  }
+  return null;
+}
+
+/**
+ * A pose changed by one of the editor's moves: `turn` a quarter (a chip half round: it
+ * only sits across the strips), `flip` its legs' order (not a chip), `stand` up or lay
+ * flat (an axial part), `longer` or `shorter` its span (a flat axial part from its least
+ * span, a radial or a line through its footprint's spacings). Null when the move doesn't
+ * apply to this part.
+ * @param {Footprint} fp @param {Pose} pose @param {"turn" | "flip" | "stand" | "longer" | "shorter"} move
+ * @returns {Pose | null}
+ */
+export function posed(fp, pose, move) {
+  if (move === "turn") return { ...pose, turns: (pose.turns + (fp.shape === "dip" ? 2 : 1)) % 4 };
+  if (move === "flip") return fp.shape === "dip" ? null : { ...pose, flipped: !pose.flipped };
+  if (move === "stand") return fp.shape === "axial" ? { ...pose, standing: !pose.standing, span: fp.flat } : null;
+  if (fp.shape === "dip" || pose.standing) return null;
+  const by = move === "longer" ? 1 : -1;
+  if (fp.shape === "axial") {
+    const span = pose.span + by;
+    return span >= fp.flat ? { ...pose, span } : null;
+  }
+  const i = fp.steps.indexOf(pose.span) + by;
+  return i >= 0 && i < fp.steps.length ? { ...pose, span: fp.steps[i] } : null;
+}
+
+/**
+ * The plain words of a pose move, for the menu and the undo list.
+ * @param {"turn" | "flip" | "stand" | "longer" | "shorter"} move @param {Pose} pose
+ */
+export function moveWords(move, pose) {
+  return { turn: "Turn", flip: "Flip", stand: pose.standing ? "Lay flat" : "Stand up", longer: "Longer legs", shorter: "Shorter legs" }[move];
+}
+
+/**
+ * The legs in the board's plain form for the server: leg → [column, strip].
+ * @param {Pattern} legs @returns {Record<string, Hole>}
+ */
+export const legsData = (legs) => Object.fromEntries(legs);
+
+/**
+ * The red copper of a short (`progress.shorted`: [strip, first column, last column] runs).
+ * @param {Array<[number, number, number]>} runs
+ */
+export function shortedRects(runs) {
+  return runs.map(([strip, c0, c1]) => ({ x: (c0 - 0.5) * STEP, y: (strip - 0.5) * STEP, w: (c1 - c0 + 1) * STEP, h: STEP }));
+}
+
+/**
+ * The link a drag from `from` to `to` lays: down `from`'s column to `to`'s strip; null
+ * when it stays on one strip.
+ * @param {Hole} from @param {Hole} to @returns {[Hole, Hole] | null}
+ */
+export function linkFrom(from, to) {
+  return to[1] === from[1] ? null : [from, [from[0], to[1]]];
 }

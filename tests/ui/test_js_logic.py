@@ -1053,3 +1053,59 @@ def test_the_board_size_offers_and_the_empty_board(js: Page) -> None:
     # D-373: the size in mm as cut midway between hole lines (24 × 2.54 = 60.96)
     assert got["line"] == "24 × 1 holes (61 × 3 mm), 1 cut, 0 links"
     assert got["emptyLine"] == "Empty board"
+
+
+def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> None:
+    """D-374: a part's legs in each pose, held by its middle; the pose a placed part sits
+    in read back from its legs; the moves each footprint allows; a link laid down a column;
+    the Board view's own keys."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const k = await m('editor/keys.js');
+        const r = { shape: 'axial', legs: ['1', '2'], steps: [], flat: 4, stand: 1, refs: ['R1'] };
+        const q = { shape: 'inline', legs: ['E', 'B', 'C'], steps: [1, 2], flat: 0, stand: 0, refs: ['Q1'] };
+        const ic = { shape: 'dip', legs: ['1','2','3','4','5','6','7','8'], steps: [], flat: 0, stand: 0, row_holes: 3, refs: ['IC1A'] };
+        const first = b.firstPose(r);
+        const turned = b.posed(r, first, 'turn');
+        const standing = b.posed(r, first, 'stand');
+        const placedQ = b.legsAt(q, b.posed(q, b.firstPose(q), 'flip'), [5, 5]);
+        return {
+          first,
+          down: b.legsAt(r, first, [5, 5]),
+          turned: b.legsAt(r, turned, [5, 5]),
+          standing: b.legsAt(r, standing, [5, 5]),
+          longer: b.posed(r, first, 'longer').span,
+          shorter: b.posed(r, first, 'shorter'),
+          flippedQ: placedQ,
+          poseQ: b.poseOf(q, placedQ, false),
+          poseTurned: b.poseOf(r, b.legsAt(r, b.posed(r, turned, 'turn'), [2, 2]), false),
+          wideQ: b.posed(q, b.firstPose(q), 'longer').span,
+          chip: b.legsAt(ic, b.firstPose(ic), [4, 4]),
+          chipTurn: b.posed(ic, b.firstPose(ic), 'turn').turns,
+          chipFlip: b.posed(ic, b.firstPose(ic), 'flip'),
+          link: b.linkFrom([3, 1], [6, 5]),
+          noLink: b.linkFrom([3, 1], [6, 1]),
+          red: b.shortedRects([[7, 0, 11]]),
+          keys: [' ', 'f', 's', '+', '-', 'Delete', 'c', 'k', 'p', 'Escape', 'r'].map((key) => k.boardActionFor({ key })?.action ?? null),
+          ctrl: k.boardActionFor({ key: 'z', ctrl: true }),
+        };
+        """,
+    )
+    assert got["first"] == {"turns": 0, "flipped": False, "standing": False, "span": 4}
+    assert got["down"] == [["1", [5, 3]], ["2", [5, 7]]]  # across the strips, middle at F6
+    assert got["turned"] == [["1", [7, 5]], ["2", [3, 5]]]  # a quarter turn about its middle
+    assert got["standing"] == [["1", [5, 4]], ["2", [5, 5]]]
+    assert got["longer"] == 5 and got["shorter"] is None
+    assert got["flippedQ"] == [["C", [5, 4]], ["B", [5, 5]], ["E", [5, 6]]]
+    # a line turned half round is the same legs as flipped: the first match is kept
+    assert got["poseQ"] == {"turns": 2, "flipped": False, "standing": False, "span": 1}
+    assert got["poseTurned"]["turns"] == 2 and got["wideQ"] == 2
+    assert got["chip"][:2] == [["1", [2, 2]], ["2", [2, 3]]] and got["chip"][7] == ["8", [5, 2]]
+    assert got["chipTurn"] == 2 and got["chipFlip"] is None
+    assert got["link"] == [[3, 1], [3, 5]] and got["noLink"] is None
+    assert got["red"] == [{"x": -5, "y": 65, "w": 120, "h": 10}]
+    assert got["keys"] == ["turn", "flip", "stand", "longer", "shorter", "remove", "cuts",
+                           "links", "parts", "cancel", None]  # fmt: skip
+    assert got["ctrl"] is None

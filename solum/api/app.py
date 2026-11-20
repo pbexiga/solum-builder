@@ -132,7 +132,8 @@ from solum.simulate import (
 )
 from solum.store import CircuitStore, StoreError, blank_circuit, split_id
 from solum.stripboard.board import Layout, layout_data, layout_from_data
-from solum.stripboard.check import progress
+from solum.stripboard.check import progress, shorts
+from solum.stripboard.edit import BoardEdit, EditError, EditKind, edit_layout
 from solum.stripboard.footprints import board_parts, drawing_data
 from solum.stripboard.size import Axis, SizeError, insert_line, remove_line, start_size, trim
 from solum.units import parse_value
@@ -190,6 +191,21 @@ class BoardSizeRequest(BaseModel):
     change: Literal["insert", "remove", "trim"]
     axis: Axis = "column"
     at: int = 0
+
+
+class BoardEditRequest(BaseModel):
+    """A hand edit of the open circuit's board (D-374): `edit` one of `edit.BoardEdit`'s
+    kinds, holes as [column, strip] from 0 (the margin's negative); `grow` auto-grow,
+    `shorts` whether an edit may make a short (the editor's settings)."""
+
+    circuit: dict[str, Any]
+    kind: EditKind
+    ref: str = ""
+    legs: dict[str, tuple[int, int]] = {}
+    standing: bool = False
+    holes: list[tuple[int, int]] = []
+    grow: bool = True
+    shorts: bool = True
 
 
 def check_tone(tone: float) -> None:
@@ -1113,6 +1129,31 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except SizeError as err:
             raise HTTPException(422, str(err)) from None
         return {"stripboard": layout_data(changed)}
+
+    @app.post("/api/stripboard/edit")
+    def stripboard_edit(req: BoardEditRequest) -> dict[str, Any]:
+        """The open circuit's board with one hand edit made (D-374): its new plain form and
+        `shift` (how far its holes moved as the board grew or shrank at the top or left),
+        for the page to apply as an edit. One that can't be made is a 422 saying why; with
+        `shorts` off, so is one that joins two nets the circuit keeps apart."""
+        circuit = parse_circuit(req.circuit)
+        table = footprint_table(settings.library_dir)
+        parts = board_parts(circuit, models, table)[0]
+        kept = circuit.stripboard
+        layout = layout_from_data(kept.model_dump()) if kept else Layout(*start_size(parts), ())
+        edit = BoardEdit(req.kind, req.ref, tuple(req.legs.items()), req.standing,
+                         tuple(req.holes))  # fmt: skip
+        try:
+            edited = edit_layout(layout, edit, parts, started=kept is not None, grow=req.grow)
+        except EditError as err:
+            raise HTTPException(422, str(err)) from None
+        if not req.shorts:
+            was = shorts(layout, circuit, models, table)
+            new = [words for pair, words in shorts(edited.layout, circuit, models, table).items()
+                   if pair not in was]  # fmt: skip
+            if new:
+                raise HTTPException(422, f"{new[0]} Shorts are off in Settings.")
+        return {"stripboard": layout_data(edited.layout), "shift": list(edited.shift)}
 
     @app.post("/api/part")
     def part(req: PartRequest) -> dict[str, Any]:

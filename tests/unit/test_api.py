@@ -894,3 +894,31 @@ def test_stripboard_size_changes_the_open_circuit_s_board(monkeypatch: pytest.Mo
         refused.status_code == 422
         and refused.json()["message"] == "Column A isn't empty: the pad at A1 is on it."
     )
+
+
+def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-374: a hand edit as the board's new plain form and how far it moved; the first
+    placement on no board makes one; a refused edit says why; with shorts off, a short is
+    refused."""
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    first = c.post(
+        "/api/stripboard/edit",
+        json={"circuit": data, "kind": "place", "ref": "R2", "legs": {"1": [3, 2], "2": [3, 6]}},
+    ).json()
+    assert first == {
+        "stripboard": {"size": [1, 5], "parts": {"R2": {"1": "A1", "2": "A5"}}, "standing": [],
+                       "cuts": [], "links": [], "pads": {}},
+        "shift": [-3, -2],
+    }  # fmt: skip
+    board = {**data, "stripboard": load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")}
+    refused = c.post(
+        "/api/stripboard/edit", json={"circuit": board, "kind": "cut", "holes": [[9, 3]]}
+    )
+    assert refused.status_code == 422 and refused.json()["message"].startswith("R2 is in J4")
+    mend = {"circuit": board, "kind": "uncut", "holes": [[6, 7]]}
+    assert c.post("/api/stripboard/edit", json=mend).json()["stripboard"]["cuts"] == []
+    short = c.post("/api/stripboard/edit", json={**mend, "shorts": False})
+    assert short.status_code == 422
+    assert short.json()["message"].endswith("Shorts are off in Settings.")

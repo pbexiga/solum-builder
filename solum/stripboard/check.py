@@ -7,7 +7,7 @@ plain-English sentence naming the parts and holes; a layout with none is the cir
 """
 
 from collections import defaultdict
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 from typing import Literal
 
 from solum.circuit.connectivity import GROUND, Nets, connect
@@ -195,9 +195,8 @@ def placement_faults(layout: Layout, board: dict[str, BoardPart],
     return faults
 
 
-def stripboard_nets(layout: Layout, board: dict[str, BoardPart]) -> dict[Terminal, int]:
-    """The board read back into nets: each terminal (a board part's pin, a free leg as
-    (ref, "#leg"), a pad's end) → its group; terminals in one group are joined."""
+def copper_groups(layout: Layout) -> dict[Hole, int]:
+    """Each copper hole's joined group: its strip segment's, with links joining segments."""
     seg = segments(layout)
     parent: dict[int, int] = {}
 
@@ -210,21 +209,39 @@ def stripboard_nets(layout: Layout, board: dict[str, BoardPart]) -> dict[Termina
         a, b = seg.get(link.a), seg.get(link.b)
         if a is not None and b is not None:
             parent[max(find(a), find(b))] = min(find(a), find(b))
+    return {hole: find(n) for hole, n in seg.items()}
+
+
+def stripboard_nets(layout: Layout, board: dict[str, BoardPart]) -> dict[Terminal, int]:
+    """The board read back into nets: each terminal (a board part's pin, a free leg as
+    (ref, "#leg"), a pad's end) → its group; terminals in one group are joined."""
+    copper = copper_groups(layout)
     groups: dict[Terminal, int] = {}
     for placed in layout.parts:
         part = board.get(placed.ref)
         for leg, hole in placed.legs:
-            if part is None or hole not in seg:
+            if part is None or hole not in copper:
                 continue
             if leg in part.pins:
-                groups[part.pins[leg]] = find(seg[hole])
+                groups[part.pins[leg]] = copper[hole]
             elif leg in part.free:
-                groups[(placed.ref, f"#{leg}")] = find(seg[hole])
+                groups[(placed.ref, f"#{leg}")] = copper[hole]
     for pad in layout.pads:
-        if pad.hole in seg:
+        if pad.hole in copper:
             for end in pad.ends:
-                groups[end] = find(seg[pad.hole])
+                groups[end] = copper[pad.hole]
     return groups
+
+
+def runs(holes: set[Hole]) -> list[tuple[int, int, int]]:
+    """Holes as runs along their strips, `(strip, first column, last column)`, top to bottom."""
+    found: list[tuple[int, int, int]] = []
+    for column, strip in sorted(holes, key=lambda h: (h[1], h[0])):
+        if found and found[-1][0] == strip and found[-1][2] == column - 1:
+            found[-1] = (strip, found[-1][1], column)
+        else:
+            found.append((strip, column, column))
+    return found
 
 
 def _short(a: Terminal, b: Terminal, words: _Words) -> str:
@@ -512,6 +529,7 @@ class Progress:
     stale: list[str]
     warnings: list[str]
     done: bool
+    shorted: list[tuple[int, int, int]] = field(default_factory=list)
 
     @property
     def nets_done(self) -> int:
@@ -629,6 +647,25 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
         legs[ref] = rows
     warnings = limit_warnings(r.layout, placement_limits(circuit, r.nets, r.board))
     done = check_layout(layout, circuit, models, table).ok
+    mixed = {g for g, here in by_group.items() if len(here) > 1}
+    red = {hole for hole, g in copper_groups(r.layout).items() if g in mixed}
     return Progress(sorted(r.board.keys() - placed), missing,
                     off_board_parts(circuit, models), stock_bypass(circuit),
-                    r.unboardable, nets, legs, faults, stale, warnings, done)  # fmt: skip
+                    r.unboardable, nets, legs, faults, stale, warnings, done,
+                    runs(red))  # fmt: skip
+
+
+def shorts(layout: Layout, circuit: Circuit, models: ModelLibrary,
+           table: FootprintTable) -> dict[frozenset[str], str]:  # fmt: skip
+    """Each pair of nets the board joins and the circuit doesn't, with its sentence (the
+    nearest pair of terminals): what a board edit is refused for with shorts off (D-374)."""
+    r = _read(layout, circuit, models, table)
+    seg = segments(r.layout)
+    found: dict[frozenset[str], str] = {}
+    for here in _by_group(r).values():
+        nets = list(here)
+        for i, a in enumerate(nets):
+            for b in nets[i + 1 :]:
+                words = _short(*_closest(here[a], here[b], r.words, seg), r.words)
+                found.setdefault(frozenset((a, b)), words)
+    return found

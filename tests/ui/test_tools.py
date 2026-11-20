@@ -101,8 +101,9 @@ def test_hot_keys(page: Page, base_url: str) -> None:
     open_circuit(page, base_url)
     menu(page, "help-menu", "menu-hotkeys")
     keys = page.locator("#hotkeys")
-    expect(keys.locator("h3")).to_have_count(5)
+    expect(keys.locator("h3")).to_have_count(6)
     expect(keys).to_contain_text("Ctrl+Shift+Z or Ctrl+Y")
+    expect(keys.locator("tr", has_text="Make cuts")).to_contain_text("P / C / K")  # D-374
     expect(keys.locator("tr", has_text="Resistor")).to_contain_text("R")
     page.keyboard.press("Escape")
     expect(keys).to_have_count(0)

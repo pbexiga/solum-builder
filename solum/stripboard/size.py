@@ -69,24 +69,21 @@ def _moved(layout: Layout, move: Callable[[Hole], Hole]) -> Layout:
     )
 
 
-def _cropped(layout: Layout, keep: Box) -> Layout:
+def crop(layout: Layout, keep: Box) -> Layout:
     """The layout with `keep` as its whole board, everything moved so its corner is A1."""
     c0, s0, c1, s1 = keep
     moved = _moved(layout, lambda h: (h[0] - c0, h[1] - s0))
     return replace(moved, columns=c1 - c0 + 1, strips=s1 - s0 + 1)
 
 
-def fit(before: Layout | None, after: Layout, board: Mapping[str, BoardPart]) -> Layout:
-    """`after` (an edit of `before`, in its holes; a leg may sit off it, in the margin)
-    with auto-grow (D-372): grown to take in everything on it, and shrunk at an edge only
-    by the lines this edit emptied, so lines added by hand stay. `before` None (the first
-    placement on an empty board): the board is just what's on it. Nothing left on it: its
-    size kept (an empty board, the margin round it)."""
+def fit_box(before: Layout | None, after: Layout, board: Mapping[str, BoardPart]) -> Box | None:
+    """The box, in `after`'s holes, that auto-grow makes the board (D-372): grown to take
+    in everything on it, and shrunk at an edge only by the lines this edit emptied, so
+    lines added by hand stay. `before` None (the first placement on an empty board): just
+    what's on it. None when nothing is left on it (its size kept)."""
     used = box(used_holes(after, board))
-    if used is None:
-        return after
-    if before is None:
-        return _cropped(after, used)
+    if used is None or before is None:
+        return used
     was = used_holes(before, board)
     c0, s0 = min(0, used[0]), min(0, used[1])
     c1, s1 = max(after.columns - 1, used[2]), max(after.strips - 1, used[3])
@@ -102,7 +99,15 @@ def fit(before: Layout | None, after: Layout, board: Mapping[str, BoardPart]) ->
         s0 += 1
     while s1 > used[3] and emptied(1, s1):
         s1 -= 1
-    return _cropped(after, (c0, s0, c1, s1))
+    return c0, s0, c1, s1
+
+
+def fit(before: Layout | None, after: Layout, board: Mapping[str, BoardPart]) -> Layout:
+    """`after` (an edit of `before`, in its holes; a leg may sit off it, in the margin)
+    with auto-grow (`fit_box`), everything moved so the board's corner is A1. Nothing
+    left on it: its size kept (an empty board, the margin round it)."""
+    keep = fit_box(before, after, board)
+    return after if keep is None else crop(after, keep)
 
 
 def trim(layout: Layout, board: Mapping[str, BoardPart]) -> Layout:
@@ -111,7 +116,7 @@ def trim(layout: Layout, board: Mapping[str, BoardPart]) -> Layout:
     used = box(used_holes(layout, board))
     if used is None:
         raise SizeError("There's nothing on the board to trim it to.")
-    return _cropped(layout, used)
+    return crop(layout, used)
 
 
 def line_name(axis: Axis, line: int) -> str:

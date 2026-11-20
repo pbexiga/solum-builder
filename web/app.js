@@ -30,7 +30,7 @@ import { ask, closeForm, confirmed, formIsOpen, openForm } from "./editor/form.j
 import { remember, remembered } from "./storage.js";
 import { History, withBoard } from "./editor/history.js";
 import { historyPane } from "./history-pane.js";
-import { actionFor } from "./editor/keys.js";
+import { actionFor, boardActionFor } from "./editor/keys.js";
 import { db, volts } from "./fixed.js";
 import { closeMenus } from "./menus.js";
 import { reorderable } from "./panes.js";
@@ -356,7 +356,7 @@ const board = boardView($("canvas-body"), {
   resting: () => outputSelection(),
   shown: () => updateButtons(),
   editBoard: (stripboard, label) => editBoard(stripboard, label),
-  showError: (message) => showError(message),
+  refuse: (message) => refusal.show(message),
 });
 const menus = appMenus($("canvas-body"), schematic, {
   pinFrequency: (net) => tools.view.pin(net),
@@ -1909,14 +1909,22 @@ const BOARD_KEYS = new Set(["undo", "redo", "save", "run", "cancel"]);
 /** @param {KeyboardEvent} e */
 function onKey(e) {
   const target = /** @type {HTMLElement} */ (e.target);
-  const act = actionFor({ key: e.key, ctrl: e.ctrlKey, meta: e.metaKey, shift: e.shiftKey, alt: e.altKey });
+  const press = { key: e.key, ctrl: e.ctrlKey, meta: e.metaKey, shift: e.shiftKey, alt: e.altKey };
+  const own = target.closest("input, select, textarea, form") || (e.key === " " && target.closest("button, a, summary")); // Space presses what has focus
+  const boardAct = board.active() && state.circuit && !formIsOpen() && !own ? boardActionFor(press) : null;
+  if (boardAct && board.key(boardAct.action)) { // the board's own keys first (D-374)
+    e.preventDefault();
+    closeMenus();
+    return;
+  }
+  const act = actionFor(press);
   // keys typed into a field are the field's, except Run from the header's own controls
   const header = act?.action === "run" && !target.closest("form");
   if (target.closest("input, select, textarea, form") && !header) return;
   if (act?.action === "inspect" && target.closest("button, a, summary")) return; // Enter presses what has focus
   if (!act || !state.circuit) return;
   if (formIsOpen() && act.action !== "cancel") return;
-  if (board.active() && !BOARD_KEYS.has(act.action)) return; // the board edits no part (D-368)
+  if (board.active() && !BOARD_KEYS.has(act.action)) return; // the schematic's part keys (D-368)
   e.preventDefault();
   closeMenus();
   switch (act.action) {

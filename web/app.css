@@ -356,6 +356,27 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board .board-part.selected .body { stroke: var(--sch-selected); stroke-width: 2.5; }
 #board .board-part.selected .lead, #board .board-part.selected .leg { stroke: var(--sch-selected); fill: var(--sch-selected); }
 #board .board-part.stale .leg { fill: var(--error); }
+/* editing (D-374): the tools, a part carried, a link being laid, shorted copper */
+.board-tools { position: absolute; left: 12px; top: 12px; display: flex; gap: 0; }
+.board-tools[hidden] { display: none; }
+.board-tools button { padding: 3px 10px; font: 12px var(--font-ui); border-radius: 0; background: var(--surface-2); }
+.board-tools button:first-child { border-radius: 4px 0 0 4px; }
+.board-tools button:last-child { border-radius: 0 4px 4px 0; }
+.board-tools button + button { margin-left: -1px; }
+.board-tools button[aria-pressed="true"] { background: var(--info-bg); color: var(--text); border-color: var(--accent); position: relative; }
+#board[data-tool="cuts"], #board[data-tool="links"] { cursor: crosshair; }
+#board.carrying { cursor: grabbing; }
+#board .strip.shorted { fill: var(--error); opacity: 0.45; }
+#board .ghost { pointer-events: none; opacity: 0.6; }
+#board .ghost .body { fill: var(--surface-2); stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
+#board .ghost .lead { stroke: var(--accent); stroke-width: 1; }
+#board .ghost .leg { fill: var(--accent); }
+#board .ghost .link { stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 2 1.5; }
+#board .ghost .aim { fill: none; stroke: var(--accent); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+#board .link-hit { stroke: transparent; stroke-width: 5; }
+#board[data-tool="links"] .board-link { cursor: pointer; }
+#board[data-tool="links"] .board-link:hover .link { stroke: var(--error); }
+.board-tray .board-list li.carriable { cursor: grab; touch-action: none; user-select: none; }
 #board .board-label { font: 3.2px var(--font-ui); fill: var(--text); pointer-events: none; paint-order: stroke; stroke: var(--surface-2); stroke-width: 0.8px; }
 #board .board-label .value { font-family: var(--font-mono); fill: var(--text-2); }
 #board .board-label.selected .ref { fill: var(--sch-selected); }

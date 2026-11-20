@@ -198,7 +198,9 @@ def test_the_board_size_changes_by_hand(
     expect(page.locator("#dirty")).to_be_visible()
     page.locator("#board .ruler[data-axis='column'][data-line='1']").click()
     page.get_by_text("Remove column B").click()
-    expect(page.locator("#error")).to_have_text("Column B isn't empty: the pad at B1 is on it.")
+    expect(page.locator("#refusal .refusal-text")).to_have_text(
+        "Column B isn't empty: the pad at B1 is on it."
+    )
     browser_errors[:] = [e for e in browser_errors if "status of 422" not in e]  # the refusal
     page.locator("#board-trim").click()
     expect(size).to_have_text("11 × 9 holes (28 × 23 mm), 1 cut, 2 links")
@@ -243,3 +245,85 @@ def test_the_board_has_its_own_undo_history(page: Page, base_url: str) -> None:
     # the schematic's undo kept the board
     expect(size).to_have_text("13 × 9 holes (33 × 23 mm), 1 cut, 2 links")
     expect(page.locator("#dirty")).to_be_visible()
+
+
+def hole_point(page: Page, column: int, strip: int) -> tuple[float, float]:
+    """A hole's middle on the screen (board units: 10 a hole, D-369)."""
+    point = page.evaluate(
+        """([c, s]) => {
+          const svg = document.getElementById('board');
+          const p = new DOMPoint(c * 10, s * 10).matrixTransform(svg.getScreenCTM());
+          return [p.x, p.y];
+        }""",
+        [column, strip],
+    )
+    return point[0], point[1]
+
+
+def drag_to(page: Page, start: tuple[float, float], end: tuple[float, float]) -> None:
+    page.mouse.move(*start)
+    page.mouse.down()
+    page.mouse.move((start[0] + end[0]) / 2, (start[1] + end[1]) / 2, steps=4)
+    page.mouse.move(*end, steps=4)
+    page.mouse.up()
+
+
+def test_parts_are_placed_turned_moved_cut_and_linked_by_hand(
+    page: Page, base_url: str, browser_errors: list[str]
+) -> None:
+    """D-374: R2 dragged from the tray onto the board finishes the Rangemaster; turned along
+    a strip it shorts two nets, the copper red; with shorts off the same turn is refused;
+    moved by dragging; a cut made and mended, a link laid; each an undo step."""
+    board = load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml")
+    del board["parts"]["R2"]
+    open_with_board(page, base_url, board)
+    show_board(page)
+    tray_r2 = page.locator("#board-tray-body li[data-ref='R2']")
+    expect(tray_r2).to_be_visible()
+    box = tray_r2.bounding_box()
+    assert box
+    drag_to(page, (box["x"] + 20, box["y"] + box["height"] / 2), hole_point(page, 9, 5))  # J6
+    r2 = page.locator("#board .board-part[data-ref='R2']")
+    expect(r2).to_have_count(1)
+    warnings = page.locator("#board-warnings-body")
+    expect(warnings).to_have_text("The board matches the circuit.")
+    expect(page.locator("#dirty")).to_be_visible()
+    page.keyboard.press("Control+z")
+    expect(r2).to_have_count(0)
+    page.keyboard.press("Control+Shift+z")
+    expect(r2).to_have_count(1)
+    # turned along strip 6 (the input's): a short, red
+    page.mouse.click(*hole_point(page, 9, 5))
+    page.keyboard.press(" ")
+    expect(page.locator("#board .strip.shorted")).not_to_have_count(0)
+    expect(page.locator("#board-nets-body .net-shorted").first).to_be_visible()
+    page.keyboard.press("Control+z")
+    expect(page.locator("#board .strip.shorted")).to_have_count(0)
+    # shorts off: the same turn refused, saying why
+    page.locator("#board-settings > summary").click()
+    page.locator("#board-settings-body input[data-setting='shorts']").uncheck()
+    page.mouse.click(*hole_point(page, 9, 5))
+    page.keyboard.press(" ")
+    expect(page.locator("#refusal")).to_be_visible()
+    expect(page.locator("#refusal .refusal-text")).to_contain_text("Shorts are off in Settings.")
+    page.locator("#board-settings-body input[data-setting='shorts']").check()
+    # moved by dragging its body: J to L
+    drag_to(page, hole_point(page, 9, 5), hole_point(page, 11, 5))
+    expect(r2.locator(".leg").first).to_have_attribute("cx", "110")
+    expect(warnings).to_have_text("The board matches the circuit.")
+    # a cut made and mended with the Cuts tool, a link laid with the Links tool
+    page.keyboard.press("c")
+    page.mouse.click(*hole_point(page, 9, 4))
+    expect(page.locator("#board .cut[data-hole='J5']")).to_have_count(1)
+    page.mouse.click(*hole_point(page, 9, 4))
+    expect(page.locator("#board .cut[data-hole='J5']")).to_have_count(0)
+    page.keyboard.press("k")
+    drag_to(page, hole_point(page, 9, 1), hole_point(page, 9, 7))  # J2 to J8, both GND
+    expect(page.locator("#board .board-link")).to_have_count(3)
+    expect(warnings).to_have_text("The board matches the circuit.")
+    page.keyboard.press("Escape")
+    expect(page.locator("#board-tools button[data-tool='parts']")).to_have_attribute(
+        "aria-pressed", "true"
+    )
+    browser_errors[:] = [e for e in browser_errors if "status of 422" not in e]  # the refusal
+    page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")

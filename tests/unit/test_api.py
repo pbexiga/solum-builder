@@ -867,3 +867,30 @@ def test_stripboard_reports_the_open_circuit_s_board(monkeypatch: pytest.MonkeyP
     assert json.dumps(done)  # plain JSON all through
     bad = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": {"size": [0, 1]}}})
     assert bad.status_code == 422 and "one column" in bad.text
+
+
+def test_stripboard_size_changes_the_open_circuit_s_board(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-372: a line inserted, taken out or the board trimmed, as the board's new plain
+    form; a change that can't be made says why. An empty board starts sized from its parts."""
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    assert c.post("/api/stripboard", json={"circuit": data}).json()["start_size"] == [11, 8]
+    none = c.post("/api/stripboard/size", json={"circuit": data, "change": "trim"})
+    assert none.status_code == 422 and "Place something" in none.json()["message"]
+    board = {**data, "stripboard": load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")}
+    trimmed = c.post("/api/stripboard/size", json={"circuit": board, "change": "trim"}).json()
+    assert trimmed["stripboard"]["size"] == [11, 9]
+    grown = c.post(
+        "/api/stripboard/size",
+        json={"circuit": board, "change": "insert", "axis": "column", "at": 0},
+    )
+    assert grown.json()["stripboard"]["parts"]["Q1"] == {"E": "F3", "B": "F4", "C": "F5"}
+    refused = c.post(
+        "/api/stripboard/size",
+        json={"circuit": board, "change": "remove", "axis": "column", "at": 0},
+    )
+    assert (
+        refused.status_code == 422
+        and refused.json()["message"] == "Column A isn't empty: the pad at A1 is on it."
+    )

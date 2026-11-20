@@ -6,7 +6,7 @@
  */
 
 import { fitView, panBy, viewBoxText, zoomAt, resizeView } from "../schematic/viewport.js";
-import { STEP, holeName, holeXY, labelAt, partShapes, shownHoles, valueOf } from "./board-logic.js";
+import { STEP, columnName, holeName, holeXY, labelAt, partShapes, shownHoles, valueOf } from "./board-logic.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 const FIT_PAD = STEP; // board units round the shown holes when fitting
@@ -28,7 +28,9 @@ function el(tag, attrs = {}, parent) {
  * @typedef {{
  *   onPart: (ref: string) => void,
  *   onEmpty: () => void,
+ *   onLine: (axis: "column" | "strip", line: number, x: number, y: number) => void,
  * }} CanvasApp
+ *   `onLine`: a ruler's mark clicked (a column's letter, a strip's number), at (x, y) in the window
  * @typedef {import("./board-logic.js").Board} Board
  * @typedef {import("./board-logic.js").Footprint} Footprint
  */
@@ -68,8 +70,8 @@ export function boardCanvas(svg, app) {
   function fit() {
     if (!holes) return;
     const { width, height } = size();
-    vb = fitView({
-      minX: holes.c0 * STEP - FIT_PAD, minY: holes.s0 * STEP - FIT_PAD,
+    vb = fitView({ // the rulers sit a hole outside the margin
+      minX: (holes.c0 - 1) * STEP - FIT_PAD, minY: (holes.s0 - 1) * STEP - FIT_PAD,
       maxX: holes.c1 * STEP + FIT_PAD, maxY: holes.s1 * STEP + FIT_PAD,
     }, width, height);
     const minW = width / MAX_FIT_SCALE;
@@ -80,12 +82,15 @@ export function boardCanvas(svg, app) {
   /**
    * Draw a board. `fit`: fit the view to it (the first time it's shown).
    * @param {Board} board @param {Record<string, Footprint>} footprints @param {any} circuit
-   * @param {{fit?: boolean, values?: boolean}} [opts] `values`: label parts with their values too
+   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean}} [opts]
+   *   `values`: label parts with their values too; `rulers`: the columns' letters and the
+   *   strips' numbers, each a menu of size changes (a board that's started); `fixed`: auto-grow
+   *   off, the margin greyed (D-372)
    */
-  function draw(board, footprints, circuit, { fit: fitting = false, values = true } = {}) {
+  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false } = {}) {
     holes = shownHoles(board);
     svg.replaceChildren();
-    const root = el("g", { class: "board" }, svg);
+    const root = el("g", { class: fixed ? "board board-fixed" : "board" }, svg);
     const { c0, s0, c1, s1 } = holes;
     const half = STEP / 2;
     // the margin's holes, faint; the board itself, its strips and holes
@@ -125,6 +130,17 @@ export function boardCanvas(svg, app) {
       const g = el("g", { class: "pad", "data-hole": holeName(pad.hole) }, pads);
       el("circle", { cx: x, cy: y, r: STEP * 0.3, class: "pad-ring" }, g);
       el("title", {}, g).textContent = `${holeName(pad.hole)}: ${pad.ends.join(", ")}`;
+    }
+    if (rulers) {
+      const ruled = el("g", { class: "rulers" }, root);
+      const mark = (/** @type {"column" | "strip"} */ axis, /** @type {number} */ line, /** @type {number} */ x, /** @type {number} */ y, /** @type {string} */ text) => {
+        const g = el("g", { class: "ruler", "data-axis": axis, "data-line": line }, ruled);
+        el("rect", { x: x - half, y: y - half, width: STEP, height: STEP, class: "ruler-hit" }, g);
+        el("text", { x, y, "text-anchor": "middle", "dominant-baseline": "central" }, g).textContent = text;
+        el("title", {}, g).textContent = `${axis === "column" ? "Column" : "Strip"} ${text}: insert or remove`;
+      };
+      for (let c = 0; c < board.columns; c++) mark("column", c, c * STEP, (s0 - 1) * STEP, columnName(c));
+      for (let s = 0; s < board.strips; s++) mark("strip", s, (c0 - 1) * STEP, s * STEP, String(s + 1));
     }
     const parts = el("g", { class: "board-parts" }, root);
     const labels = el("g", { class: "board-labels" }, root); // over every body
@@ -192,6 +208,8 @@ export function boardCanvas(svg, app) {
       window.removeEventListener("pointermove", onMove);
       svg.classList.remove("panning");
       if (moved) return;
+      const ruler = target.closest(".ruler");
+      if (ruler) return app.onLine(/** @type {"column" | "strip"} */ (ruler.getAttribute("data-axis")), Number(ruler.getAttribute("data-line")), e.clientX, e.clientY);
       const ref = target.closest(".board-part")?.getAttribute("data-ref");
       if (ref) app.onPart(ref);
       else app.onEmpty();

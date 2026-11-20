@@ -351,7 +351,8 @@ const board = boardView($("canvas-body"), {
   select: (selection) => select(selection),
   resting: () => outputSelection(),
   shown: () => updateButtons(),
-  removeBoard: () => removeBoard(),
+  editBoard: (stripboard, label) => editBoard(stripboard, label),
+  showError: (message) => showError(message),
 });
 const menus = appMenus($("canvas-body"), schematic, {
   pinFrequency: (net) => tools.view.pin(net),
@@ -696,10 +697,15 @@ async function useAsOpening() {
   if (message) showError(message);
 }
 
-/** Settings' *Remove board* (D-370): the circuit without its board, one undo step; the view stays on the empty board. */
-async function removeBoard() {
-  const { stripboard: _gone, ...rest } = state.circuit;
-  const message = await tryEdit(rest, "Remove board");
+/**
+ * The circuit with its board changed (a size change, D-372), or without it (Settings'
+ * *Remove board*, D-370: the view stays on the empty board), one undo step.
+ * @param {any} stripboard the board's new plain form; null: none
+ * @param {string} label
+ */
+async function editBoard(stripboard, label) {
+  const { stripboard: _old, ...rest } = state.circuit;
+  const message = await tryEdit(stripboard ? { ...rest, stripboard } : rest, label);
   if (message) showError(message);
 }
 

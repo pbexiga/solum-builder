@@ -96,6 +96,40 @@ export function shownHoles(board) {
 }
 
 /**
+ * The board as drawn: an empty one (nothing placed, nothing saved) at the size it starts
+ * at, worked out from the tray (`/api/stripboard`'s `start_size`, D-372), so there's room
+ * to start; only what's placed counts.
+ * @param {Board} board @param {[number, number] | undefined} start
+ * @returns {Board}
+ */
+export function drawnBoard(board, start) {
+  if (board.columns && board.strips) return board;
+  const [columns, strips] = start ?? [0, 0];
+  return { ...board, columns, strips };
+}
+
+/**
+ * @typedef {{label: string, change: "insert" | "remove", axis: "column" | "strip", at: number}} LineChange
+ *   a size change `/api/stripboard/size` makes (D-372)
+ */
+
+/**
+ * The changes offered on a column's or strip's ruler mark: a line inserted either side
+ * of it (at an edge, that adds one), or it taken out (the server refuses it when it isn't
+ * empty, saying what's on it).
+ * @param {"column" | "strip"} axis @param {number} line from 0 @returns {LineChange[]}
+ */
+export function lineChanges(axis, line) {
+  const name = axis === "column" ? columnName(line) : String(line + 1);
+  const [before, after] = axis === "column" ? ["left of", "right of"] : ["above", "below"];
+  return [
+    { label: `Insert a ${axis} ${before} ${name}`, change: "insert", axis, at: line },
+    { label: `Insert a ${axis} ${after} ${name}`, change: "insert", axis, at: line + 1 },
+    { label: `Remove ${axis} ${name}`, change: "remove", axis, at: line },
+  ];
+}
+
+/**
  * The board's header line: "12 × 9, 1 cut, 2 links"; an empty board says so.
  * @param {Board} board
  */
@@ -172,7 +206,7 @@ export function boardRefOf(footprints, ref) {
  * @typedef {{to_place: string[], pads_to_place: string[], off_board: OffBoardPart[], stock: string[],
  *   unplaceable: string[], nets: NetProgress[],
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
- *   done: boolean, nets_done: number, footprints: Record<string, Footprint>}} Progress
+ *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number]}} Progress
  *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints)
  */
 
@@ -241,7 +275,7 @@ export const BOARD_SETTINGS = /** @type {const} */ ([
   { key: "values", label: "Show values", on: true, acts: true, title: "Label each part with its value as well as its ref" },
   { key: "next", label: "What to place next", on: true, acts: false, title: "Suggest the part to place next" },
   { key: "shorts", label: "Allow shorts while editing, shown red", on: true, acts: false, title: "Off: a move that makes a short is refused" },
-  { key: "grow", label: "Auto-grow", on: true, acts: false, title: "The board grows as parts are placed near its edge" },
+  { key: "grow", label: "Auto-grow", on: true, acts: true, title: "The board grows to take in what's placed by its edge, and shrinks back. Off: it stays its size (the margin greyed); add or remove lines on the rulers" },
   { key: "seeThrough", label: "See-through", on: false, acts: false, title: "The copper side faint under the parts" },
 ]);
 

@@ -17,10 +17,10 @@ Hole = tuple[int, int]  # (column, strip), from 0
 
 
 def column_name(column: int) -> str:
-    """0 → A, 25 → Z, 26 → AA."""
+    """0 → A, 25 → Z, 26 → AA; "" off the board's left (a hole in the margin)."""
     name = ""
     column += 1
-    while column:
+    while column > 0:
         column, rest = divmod(column - 1, 26)
         name = ascii_uppercase[rest] + name
     return name

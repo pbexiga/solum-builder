@@ -11,13 +11,14 @@
  */
 
 import { postJson } from "../api.js";
+import { openMenu } from "../menus.js";
 import { h } from "../panels.js";
 import { reorderable } from "../panes.js";
 import { Schematic } from "../schematic/render.js";
 import { latestOnly } from "../state.js";
 import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
-import { BOARD_SETTINGS, boardRefOf, netWords, netsLine, offBoardRows, partsOnNet, readBoard, readSettings, sizeLine, trayGroups, trayRows } from "./board-logic.js";
+import { BOARD_SETTINGS, boardRefOf, drawnBoard, lineChanges, netWords, netsLine, offBoardRows, partsOnNet, readBoard, readSettings, sizeLine, trayGroups, trayRows } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -30,11 +31,13 @@ import { BOARD_SETTINGS, boardRefOf, netWords, netsLine, offBoardRows, partsOnNe
  *   select: (selection: Selection | null) => void,
  *   resting: () => Selection | null,
  *   shown: (board: boolean) => void,
- *   removeBoard: () => void,
+ *   editBoard: (stripboard: any, label: string) => void,
+ *   showError: (message: string) => void,
  * }} BoardApp
  *   `resting`: what's selected when the empty canvas is clicked (the root's own choice);
  *   `shown`: told when the view changes, so the root sets its hint (`hint`) and buttons;
- *   `removeBoard`: Settings' *Remove board*, one undo step (D-370)
+ *   `editBoard`: the circuit with this board (its plain form; null: none, Settings' *Remove
+ *   board*, D-370), one undo step
  */
 
 const BUTTON_TITLE = "Lay out a stripboard for this circuit";
@@ -51,6 +54,8 @@ export function boardView(host, app) {
   const tray = $("board-tray");
   const results = /** @type {HTMLElement} */ (document.querySelector(".panels"));
   const sizeNote = $("board-size");
+  const sizeText = $("board-size-text");
+  const trimButton = /** @type {HTMLButtonElement} */ ($("board-trim"));
   const button = $("board-button");
   let active = false;
   let fitted = false;
@@ -67,7 +72,24 @@ export function boardView(host, app) {
   const canvas = boardCanvas(svg, {
     onPart: (ref) => selectPart(ref),
     onEmpty: () => app.select(app.resting()),
+    onLine: (axis, line, x, y) => openMenu(x, y, lineChanges(axis, line).map((c) => ({ label: c.label, run: () => void resize(c.change, c.label, c.axis, c.at) }))),
   });
+  trimButton.addEventListener("click", () => void resize("trim", "Trim the board"));
+
+  /**
+   * A size change from the server (D-372), applied as an edit; one that can't be made
+   * says why.
+   * @param {"insert" | "remove" | "trim"} change @param {string} label
+   * @param {"column" | "strip"} [axis] @param {number} [at]
+   */
+  async function resize(change, label, axis = "column", at = 0) {
+    try {
+      const { stripboard } = await postJson("api/stripboard/size", { circuit: app.circuit(), change, axis, at });
+      app.editBoard(stripboard, label);
+    } catch (err) {
+      app.showError(/** @type {Error} */ (err).message);
+    }
+  }
   /** Select a board part (a chip: its units) or a circuit part on both drawings. @param {string} ref */
   function selectPart(ref) {
     const refs = progress?.footprints[ref]?.refs ?? [ref];
@@ -124,9 +146,12 @@ export function boardView(host, app) {
   function draw() {
     const circuit = app.circuit();
     const board = readBoard(circuit?.stripboard);
-    canvas.draw(board, progress?.footprints ?? {}, circuit, { fit: !fitted, values: settings.values });
-    fitted = true;
-    sizeNote.textContent = sizeLine(board);
+    const started = Boolean(board.columns);
+    const drawn = drawnBoard(board, progress?.start_size);
+    canvas.draw(drawn, progress?.footprints ?? {}, circuit, { fit: !fitted, values: settings.values, rulers: started, fixed: !settings.grow });
+    fitted ||= Boolean(drawn.columns); // an empty board's size comes with the first check
+    sizeText.textContent = sizeLine(board);
+    trimButton.hidden = !started;
     light(app.selection());
   }
 
@@ -216,7 +241,7 @@ export function boardView(host, app) {
     });
     const remove = h("button", { type: "button", id: "remove-board", class: "remove-board" }, ["Remove board"]);
     remove.title = "Take every part, cut, link and wire off the board (Undo brings them back)";
-    remove.addEventListener("click", () => app.removeBoard());
+    remove.addEventListener("click", () => app.editBoard(null, "Remove board"));
     $("board-settings-body").replaceChildren(...boxes, ...(app.circuit()?.stripboard ? [remove] : []));
   }
 

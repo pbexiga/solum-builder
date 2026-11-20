@@ -44,7 +44,7 @@ def test_the_board_view_shows_the_board_and_its_own_panes(page: Page, base_url: 
     expect(page.locator("#palette")).to_be_hidden()
     expect(page.locator("#board-panels")).to_be_visible()
     assert page.locator("#board .board-part").count() == 8
-    expect(page.locator("#board-size")).to_have_text("12 × 9, 1 cut, 2 links")
+    expect(page.locator("#board-size-text")).to_have_text("12 × 9, 1 cut, 2 links")
     expect(page.locator("#board .cut")).to_have_count(1)
     expect(page.locator("#board .link")).to_have_count(2)
     # every part placed, every net joined: the progress check says so
@@ -82,7 +82,7 @@ def test_the_board_view_shows_the_board_and_its_own_panes(page: Page, base_url: 
 def test_a_circuit_without_a_board_shows_its_parts_to_place(page: Page, base_url: str) -> None:
     open_with_board(page, base_url, None)
     page.locator("#board-button").click()
-    expect(page.locator("#board-size")).to_have_text("Empty board")
+    expect(page.locator("#board-size-text")).to_have_text("Empty board")
     # the Tray on the left (D-371): the 8 board parts by kind; off the board VR1, the
     # guitar's and amp's jacks, the stock footswitch and status LED (D-370)
     expect(page.locator("#board-tray")).to_be_visible()
@@ -129,7 +129,7 @@ def test_visiting_the_board_changes_nothing_until_placed(page: Page, base_url: s
     expect(button).to_have_attribute("aria-pressed", "false")
     button.click()
     expect(button).to_have_attribute("aria-pressed", "true")
-    expect(page.locator("#board-size")).to_have_text("Empty board")
+    expect(page.locator("#board-size-text")).to_have_text("Empty board")
     expect(page.locator("#remove-board")).to_have_count(0)
     button.click()
     expect(button).to_have_attribute("aria-pressed", "false")
@@ -150,7 +150,7 @@ def test_a_board_marks_the_button_and_can_be_removed(page: Page, base_url: str) 
     page.locator("#board-settings summary").click()
     page.locator("#remove-board").click()
     # one undo step: the view stays on the empty board, the button quiet, Not saved
-    expect(page.locator("#board-size")).to_have_text("Empty board")
+    expect(page.locator("#board-size-text")).to_have_text("Empty board")
     expect(page.locator("#board .board-part")).to_have_count(0)
     expect(button).not_to_have_class("board-button marked")
     expect(button).to_have_attribute("aria-pressed", "true")
@@ -170,7 +170,7 @@ def test_show_values_is_a_setting_remembered(page: Page, base_url: str) -> None:
     page.locator("#board-settings > summary").click()
     box = page.locator("#board-settings-body input[data-setting='values']")
     expect(box).to_be_checked()
-    expect(page.locator("#board-settings-body input[data-setting='grow']")).to_be_disabled()
+    expect(page.locator("#board-settings-body input[data-setting='next']")).to_be_disabled()
     box.uncheck()
     expect(label.locator(".value")).to_have_count(0)
     expect(label.locator(".ref")).to_have_text("R1")
@@ -180,4 +180,34 @@ def test_show_values_is_a_setting_remembered(page: Page, base_url: str) -> None:
     expect(page.locator("#board-settings")).to_have_attribute("open", "")  # kept open too
     page.locator("#board-settings-body input[data-setting='values']").check()
     expect(page.locator("#board .board-label[data-ref='R1'] .value")).to_have_count(1)
+    page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
+
+
+def test_the_board_size_changes_by_hand(
+    page: Page, base_url: str, browser_errors: list[str]
+) -> None:
+    """D-372: a column added on its ruler mark, one that isn't empty refused with what's on
+    it, Trim takes the empty edges off; each an undo step. Auto-grow off greys the margin."""
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    show_board(page)
+    size = page.locator("#board-size-text")
+    page.locator("#board .ruler[data-axis='column'][data-line='0']").click()
+    page.get_by_text("Insert a column left of A").click()
+    expect(size).to_have_text("13 × 9, 1 cut, 2 links")
+    expect(page.locator("#dirty")).to_be_visible()
+    page.locator("#board .ruler[data-axis='column'][data-line='1']").click()
+    page.get_by_text("Remove column B").click()
+    expect(page.locator("#error")).to_have_text("Column B isn't empty: the pad at B1 is on it.")
+    browser_errors[:] = [e for e in browser_errors if "status of 422" not in e]  # the refusal
+    page.locator("#board-trim").click()
+    expect(size).to_have_text("11 × 9, 1 cut, 2 links")
+    page.keyboard.press("Control+z")
+    expect(size).to_have_text("13 × 9, 1 cut, 2 links")
+    page.keyboard.press("Control+z")
+    expect(size).to_have_text("12 × 9, 1 cut, 2 links")
+    # auto-grow off: the margin greyed
+    page.locator("#board-settings > summary").click()
+    page.locator("#board-settings-body input[data-setting='grow']").uncheck()
+    expect(page.locator("#board g.board")).to_have_class("board board-fixed")
+    page.locator("#board-settings-body input[data-setting='grow']").check()
     page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")

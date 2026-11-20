@@ -306,6 +306,8 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 .zoom #fit-button { font-size: 12px; }
 /* Schematic / Board (D-368): two views of the circuit on the one canvas */
 .board-size { position: absolute; left: 12px; bottom: 12px; margin: 0; font: 12px var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text-2); pointer-events: none; }
+.board-size[hidden], .board-trim[hidden] { display: none; }
+.board-trim { pointer-events: auto; margin-left: 8px; padding: 1px 8px; font: 12px var(--font-ui); }
 body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-show="board"] .panels { display: none; }
 /* the Tray: the palette's place in the Board view (D-371) */
 .board-tray { width: 232px; flex: none; overflow-y: auto; background: var(--surface-1); border-right: 1px solid var(--border); padding: 6px 10px 16px; font-size: 13px; }
@@ -338,6 +340,11 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board .strip { fill: var(--board-copper); }
 #board .hole { fill: var(--board-hole); }
 #board .hole.off { fill: var(--grid-dot); opacity: 0.45; }
+#board .board-fixed .hole.off { opacity: 0.18; } /* auto-grow off: the margin greyed (D-372) */
+#board .ruler { cursor: pointer; }
+#board .ruler-hit { fill: transparent; }
+#board .ruler text { font: 4px var(--font-mono); fill: var(--text-3); }
+#board .ruler:hover text { fill: var(--accent-hi); }
 #board .cut { stroke: var(--error); stroke-width: 1.5; vector-effect: non-scaling-stroke; fill: none; }
 #board .link { stroke: var(--sch-line); stroke-width: 1.2; }
 #board .link-end { fill: var(--sch-line); }

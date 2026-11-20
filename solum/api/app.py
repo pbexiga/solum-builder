@@ -131,9 +131,10 @@ from solum.simulate import (
     simulator_from_settings,
 )
 from solum.store import CircuitStore, StoreError, blank_circuit, split_id
-from solum.stripboard.board import Layout, layout_from_data
+from solum.stripboard.board import Layout, layout_data, layout_from_data
 from solum.stripboard.check import progress
 from solum.stripboard.footprints import board_parts, drawing_data
+from solum.stripboard.size import Axis, SizeError, insert_line, remove_line, start_size, trim
 from solum.units import parse_value
 from solum.view import circuit_view
 from solum.wiring import wiring_page
@@ -179,6 +180,16 @@ class PartRequest(BaseModel):
 
 class CircuitRequest(BaseModel):
     circuit: dict[str, Any]
+
+
+class BoardSizeRequest(BaseModel):
+    """A change to the open circuit's board size (D-372): `insert` a line before `at`,
+    `remove` line `at`, or `trim` the empty edges."""
+
+    circuit: dict[str, Any]
+    change: Literal["insert", "remove", "trim"]
+    axis: Axis = "column"
+    at: int = 0
 
 
 def check_tone(tone: float) -> None:
@@ -1069,14 +1080,39 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def stripboard(req: CircuitRequest) -> dict[str, Any]:
         """The Board view's progress check (D-368) of the open circuit's board (none yet:
         an empty one): what's left to place, each net, each leg, what's wrong now; with
-        each board part's footprint to draw it by (`footprints`)."""
+        each board part's footprint to draw it by (`footprints`), and the size an empty
+        board starts at (`start_size`, D-372)."""
         circuit = parse_circuit(req.circuit)
         board = circuit.stripboard
         layout = layout_from_data(board.model_dump()) if board else Layout(0, 0, ())
         table = footprint_table(settings.library_dir)
         found = progress(layout, circuit, models, table)
-        footprints = drawing_data(board_parts(circuit, models, table)[0])
-        return {**asdict(found), "nets_done": found.nets_done, "footprints": footprints}
+        parts = board_parts(circuit, models, table)[0]
+        return {**asdict(found), "nets_done": found.nets_done, "footprints": drawing_data(parts),
+                "start_size": list(start_size(parts))}  # fmt: skip
+
+    @app.post("/api/stripboard/size")
+    def stripboard_size(req: BoardSizeRequest) -> dict[str, Any]:
+        """The open circuit's board with a line inserted or taken out, or trimmed (D-372):
+        its new plain form, for the page to apply as an edit; a change that can't be made
+        is a 422 saying why."""
+        circuit = parse_circuit(req.circuit)
+        if circuit.stripboard is None:
+            raise HTTPException(
+                422, "Place something on the board first: an empty board has no size yet."
+            )
+        layout = layout_from_data(circuit.stripboard.model_dump())
+        parts = board_parts(circuit, models, footprint_table(settings.library_dir))[0]
+        try:
+            if req.change == "trim":
+                changed = trim(layout, parts)
+            elif req.change == "insert":
+                changed = insert_line(layout, parts, req.axis, req.at)
+            else:
+                changed = remove_line(layout, parts, req.axis, req.at)
+        except SizeError as err:
+            raise HTTPException(422, str(err)) from None
+        return {"stripboard": layout_data(changed)}
 
     @app.post("/api/part")
     def part(req: PartRequest) -> dict[str, Any]:

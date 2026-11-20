@@ -1023,3 +1023,27 @@ def test_the_board_tray_and_settings(js: Page) -> None:
     assert got["none"] == {"values": True, "next": True, "shorts": True, "grow": True,
                            "seeThrough": False}  # fmt: skip
     assert got["some"] == {**got["none"], "values": False}  # a garbled one at its default
+
+
+def test_the_board_size_offers_and_the_empty_board(js: Page) -> None:
+    """D-372: a ruler mark's size changes; an empty board drawn at its starting size."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const empty = b.readBoard(null);
+        return {
+          column: b.lineChanges('column', 5),
+          strip: b.lineChanges('strip', 0).map((c) => c.label),
+          empty: [b.drawnBoard(empty, [11, 8]).columns, b.drawnBoard(empty, [11, 8]).strips],
+          kept: b.drawnBoard(b.readBoard({ size: [12, 9] }), [11, 8]).columns,
+        };
+        """,
+    )
+    assert got["column"] == [
+        {"label": "Insert a column left of F", "change": "insert", "axis": "column", "at": 5},
+        {"label": "Insert a column right of F", "change": "insert", "axis": "column", "at": 6},
+        {"label": "Remove column F", "change": "remove", "axis": "column", "at": 5},
+    ]
+    assert got["strip"] == ["Insert a strip above 1", "Insert a strip below 1", "Remove strip 1"]
+    assert got["empty"] == [11, 8] and got["kept"] == 12

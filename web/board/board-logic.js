@@ -414,70 +414,229 @@ export function wireLine(wire, lugs) {
   return { ...start, x2: from.x, y2: from.y + LOOSE_DROP, loose: true, hole: false };
 }
 
-const LANE = STEP * 0.5; // the gap between wires running side by side round the board (the user, 2026-11-20: room between them)
-const STUB = STEP * 0.6; // how far a wire drops from its lug before it turns
 const CORNER = STEP * 0.25; // a bend's rounding
 export const HOP = STEP * 0.3; // a hop's radius, where a wire crosses another
-const GAP_LINES = [0, -2, 2, -3.5, 3.5]; // the lines a wire may run along in a gap, tenths of a hole from its middle (holes fill ±1.4 of 5)
+const GRID = STEP / 2; // wires run on a half-hole grid: on the board, along the gaps between holes
+const ON_BOARD = 3; // a step over the board costs this many beside it: wires keep to the board's side
+const BEND = 4; // a bend costs this many steps
+const CROSS = 6; // crossing another wire
+const ON_TOP = 200; // lying along another wire, or through its bend: only when there's no other way
 
 /**
- * The off-board wires' routes, as points with square corners (D-379): each leaves its lug
- * downward, runs round the board's edge on the lug's side in a lane of its own, and comes
- * in to its hole along the gap between two strips (from the left or right) or two columns
- * (from above or below), turning into the hole at the end; a wire from below goes round
- * its own part's body first; wires sharing a gap are spread apart in it. Lug to lug: down
- * from each and across beneath (beneath the board if it's in the way). Loose: its
- * short drop. No two drawn on top of each other (`untangle`). Drawing only: a wire is still lug + hole (D-375).
- * @param {Array<WireLine | null>} lines @param {{columns: number, strips: number}} board
- * @returns {Array<Array<[number, number]> | null>}
+ * @typedef {{boxes: Box[], lines: Array<[number, number, number, number]>}} Obstacles what a
+ *   wire keeps off (D-379): parts' bodies (board parts and off-board parts) and the leads of
+ *   board parts, in board units
  */
-export function wireRoutes(lines, board) {
+
+/**
+ * What the wires keep off: each placed part's body and leads (`partShapes`), and each
+ * off-board part's body beside the board (`itemShape`).
+ * @param {Board} board @param {Record<string, Footprint>} footprints
+ * @param {Array<{item: OffItem, at: Hole}>} items @returns {Obstacles}
+ */
+export function wireObstacles(board, footprints, items) {
+  /** @type {Obstacles} */
+  const found = { boxes: items.map(({ item, at }) => itemShape(item, at).body), lines: [] };
+  for (const placed of board.parts) {
+    const fp = footprints[placed.ref];
+    if (!fp) continue;
+    const order = new Map(fp.legs.map((leg, i) => [leg, i]));
+    const legs = [...placed.legs].sort((a, b) => (order.get(a[0]) ?? 0) - (order.get(b[0]) ?? 0));
+    for (const s of partShapes(fp, legs, placed.standing)) {
+      if (s.kind === "lead") found.lines.push([s.x1, s.y1, s.x2, s.y2]);
+      else if (s.kind === "circle") found.boxes.push({ x: s.cx - s.r, y: s.cy - s.r, w: 2 * s.r, h: 2 * s.r });
+      else if (s.kind === "rect") found.boxes.push(turnedBox(s.cx, s.cy, s.w, s.h, s.angle));
+      else if (s.kind === "path" && s.cls === "body") found.boxes.push(turnedBox(s.cx, s.cy, fp.length * MM, Math.max(fp.width * MM, STEP * 0.5), s.angle));
+    }
+  }
+  return found;
+}
+
+/** The upright box round a w × h rectangle about (cx, cy) turned by `angle` degrees. @returns {Box} */
+function turnedBox(/** @type {number} */ cx, /** @type {number} */ cy, /** @type {number} */ w, /** @type {number} */ h, /** @type {number} */ angle) {
+  const t = (angle * Math.PI) / 180;
+  const [c, s] = [Math.abs(Math.cos(t)), Math.abs(Math.sin(t))];
+  const [bw, bh] = [w * c + h * s, w * s + h * c];
+  return { x: cx - bw / 2, y: cy - bh / 2, w: bw, h: bh };
+}
+
+/** @type {{key: string, routes: Array<Array<[number, number]> | null>} | null} */
+let routed = null; // the last routes, kept while only a dragged run changes (D-380)
+
+/**
+ * The off-board wires' routes, as points with square corners (D-379): each found by a
+ * search on a half-hole grid from its lug (leaving it downward) to its hole, or up into
+ * its other lug. Parts' bodies and leads are walls; over the board a wire keeps to the
+ * gaps between holes and each step costs more than beside it, so wires run round the
+ * board's side and come in near their hole; bends and crossings cost a little, lying
+ * along another wire a lot. Wires are routed in order, each keeping off those before it.
+ * Loose: its short drop. The runs moved by hand (`runs`, D-380) are then put where they
+ * were moved. Drawing only: a wire is still lug + hole (D-375).
+ * @param {Array<WireLine | null>} lines @param {{columns: number, strips: number}} board
+ * @param {Obstacles} [obstacles] @returns {Array<Array<[number, number]> | null>}
+ */
+export function wireRoutes(lines, board, obstacles = { boxes: [], lines: [] }) {
+  const key = JSON.stringify([lines.map((l) => l && { ...l, runs: undefined }), board.columns, board.strips, obstacles]);
+  if (routed?.key !== key) routed = { key, routes: searchRoutes(lines, board, obstacles) };
+  return routed.routes.map((r, n) => {
+    if (!r) return null;
+    const route = r.map((p) => /** @type {[number, number]} */ ([...p]));
+    for (const [i, at] of lines[n]?.runs ?? []) {
+      if (i >= 1 && i <= route.length - 3) shiftRun(route, i, at * STEP); // else the route has changed shape: not that run any more
+    }
+    return route;
+  });
+}
+
+/** The routes `wireRoutes` gives before any run moved by hand. @param {Array<WireLine | null>} lines @param {{columns: number, strips: number}} board @param {Obstacles} obstacles */
+function searchRoutes(lines, board, obstacles) {
   const half = STEP / 2;
   const edge = { left: -half, right: board.columns * STEP - half, top: -half, bottom: board.strips * STEP - half };
-  /** @type {Record<string, number>} */
-  const lanes = {};
-  const lane = (/** @type {string} */ side) => (lanes[side] = (lanes[side] ?? 0) + 1);
-  const spread = (/** @type {string} */ gap) => GAP_LINES[(lane(gap) - 1) % GAP_LINES.length] * (STEP / 10);
-  /** @type {Array<Array<[number, number]> | null>} */
-  const routes = lines.map((line) => {
+  const xs = [edge.left, edge.right, ...obstacles.boxes.flatMap((b) => [b.x, b.x + b.w])];
+  const ys = [edge.top, edge.bottom, ...obstacles.boxes.flatMap((b) => [b.y, b.y + b.h])];
+  for (const l of lines) if (l) xs.push(l.x1, l.x2), ys.push(l.y1, l.y2);
+  const pad = 4 * STEP;
+  const x0 = Math.floor((Math.min(...xs) - pad) / GRID) * GRID;
+  const y0 = Math.floor((Math.min(...ys) - pad) / GRID) * GRID;
+  const cols = Math.ceil((Math.max(...xs) + pad - x0) / GRID) + 1;
+  const rows = Math.ceil((Math.max(...ys) + pad - y0) / GRID) + 1;
+  const at = (/** @type {number} */ i, /** @type {number} */ j) => j * cols + i;
+  const xy = (/** @type {number} */ n) => /** @type {[number, number]} */ ([x0 + (n % cols) * GRID, y0 + Math.floor(n / cols) * GRID]);
+  const node = (/** @type {number} */ x, /** @type {number} */ y) => at(Math.round((x - x0) / GRID), Math.round((y - y0) / GRID));
+  // walls: bodies (a little round them), leads, the board's holes; the board's area dearer
+  const wall = new Uint8Array(cols * rows);
+  const dear = new Uint8Array(cols * rows);
+  for (let n = 0; n < cols * rows; n++) {
+    const [x, y] = xy(n);
+    const over = x >= edge.left && x <= edge.right && y >= edge.top && y <= edge.bottom;
+    dear[n] = over ? 1 : 0;
+    if (over && x % STEP === 0 && y % STEP === 0) wall[n] = 1; // a hole: only a wire's own end goes in
+    if (obstacles.boxes.some((b) => x > b.x - 1 && x < b.x + b.w + 1 && y > b.y - 1 && y < b.y + b.h + 1)) wall[n] = 1;
+    if (obstacles.lines.some(([ax, ay, bx, by]) => nearSegment(x, y, ax, ay, bx, by) < 1.5)) wall[n] = 1;
+  }
+  for (const l of lines) if (l) wall[node(l.x1, l.y1)] = 1; // every lug a wall but to its own wires
+  /** which way the wires before use each point: 1 level, 2 upright, 3 both (a bend or a crossing) */
+  const used = new Uint8Array(cols * rows);
+  const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
+  return lines.map((line) => {
     if (!line) return null;
     const { x1, y1, x2, y2 } = line;
     if (line.loose) return [[x1, y1], [x2, y2]];
-    const drop = y1 + STUB;
-    if (!line.hole) {
-      let under = Math.max(y1, y2) + STUB + (lane("lugs") - 1) * LANE;
-      const across = Math.min(x1, x2) < edge.right && Math.max(x1, x2) > edge.left;
-      if (across && under > edge.top - STEP && under < edge.bottom + LANE) under = edge.bottom + lane("bottom") * LANE; // round beneath the board
-      return tidy([[x1, y1], [x1, under], [x2, under], [x2, y2]]);
+    const start = node(x1, y1);
+    const goal = node(x2, y2);
+    const into = line.hole ? -1 : 3; // into another lug: from below
+    const path = search(start, goal, into);
+    if (!path) return tidy([[x1, y1], [x1, y2], [x2, y2]]); // walled in: straight, as before
+    const points = path.map(xy);
+    points[0] = [x1, y1];
+    points[points.length - 1] = [x2, y2];
+    for (let k = 0; k < path.length; k++) {
+      const [a, b] = [path[k - 1], path[k + 1]];
+      for (const m of [a, b]) if (m !== undefined) used[path[k]] |= Math.abs(m - path[k]) === 1 ? 1 : 2;
     }
-    const side = x1 < edge.left ? "left" : x1 > edge.right ? "right" : y1 < edge.top ? "top" : "bottom";
-    const k = lane(side);
-    if (side === "left" || side === "right") {
-      const cx = side === "left" ? edge.left - k * LANE : edge.right + k * LANE;
-      const gap = y2 - half + spread(`s${y2}`); // the gap above the hole's strip
-      return tidy([[x1, y1], [x1, drop], [cx, drop], [cx, gap], [x2, gap], [x2, y2]]);
-    }
-    const gap = x2 - half + spread(`c${x2}`); // the gap left of the hole's column
-    if (side === "top") {
-      const cy = Math.max(edge.top - k * LANE, drop);
-      return tidy([[x1, y1], [x1, cy], [gap, cy], [gap, y2], [x2, y2]]);
-    }
-    const box = line.box ?? { x: x1, y: y1, w: 0, h: 0 };
-    const ex = x2 < box.x + box.w / 2 ? box.x - k * LANE : box.x + box.w + k * LANE; // round the body
-    const cy = Math.min(edge.bottom + k * LANE, box.y - k * LANE);
-    return tidy([[x1, y1], [x1, drop], [ex, drop], [ex, cy], [gap, cy], [gap, y2], [x2, y2]]);
+    return tidy(points);
   });
-  // the runs moved by hand (D-380): where they were put, left there by `untangle`
-  const fixed = routes.map((r, n) => {
-    const moved = new Set();
-    for (const [i, at] of (r && lines[n]?.runs) || []) {
-      if (!r || i < 1 || i > r.length - 3) continue; // the route has changed shape: not that run any more
-      shiftRun(r, i, at * STEP);
-      moved.add(i);
+
+  /**
+   * The cheapest path from `start` (leaving it downward) to `goal` (arriving upward when
+   * `into` is 3), as grid points; null when there's none.
+   * @param {number} start @param {number} goal @param {number} into
+   */
+  function search(start, goal, into) {
+    const [gi, gj] = [goal % cols, Math.floor(goal / cols)];
+    const cost = new Float64Array(cols * rows * 4).fill(Infinity);
+    const from = new Int32Array(cols * rows * 4).fill(-1);
+    const heap = new Heap();
+    const first = start + cols; // down from the lug
+    if (first >= cols * rows || wall[first]) return null;
+    cost[first * 4 + 2] = 1;
+    from[first * 4 + 2] = start * 4 + 2;
+    heap.push(first * 4 + 2, 1 + Math.abs(gi - (first % cols)) + Math.abs(gj - Math.floor(first / cols)));
+    while (heap.size) {
+      const s = heap.pop();
+      const [n, d] = [Math.floor(s / 4), s % 4];
+      if (n === goal) return walkBack(s, from, start);
+      const [i, j] = [n % cols, Math.floor(n / cols)];
+      for (let e = 0; e < 4; e++) {
+        const [di, dj] = DIRS[e];
+        const [ni, nj] = [i + di, j + dj];
+        if (ni < 0 || nj < 0 || ni >= cols || nj >= rows) continue;
+        const m = at(ni, nj);
+        if (m === goal ? into >= 0 && e !== into : wall[m]) continue;
+        const level = e < 2 ? 1 : 2;
+        let step = dear[m] ? ON_BOARD : 1;
+        if (e !== d) step += BEND;
+        if (used[m] & level || (used[m] && e !== d)) step += ON_TOP;
+        else if (used[m]) step += CROSS;
+        const c = cost[s] + step;
+        const t = m * 4 + e;
+        if (c >= cost[t]) continue;
+        cost[t] = c;
+        from[t] = s;
+        heap.push(t, c + Math.abs(gi - ni) + Math.abs(gj - nj));
+      }
     }
-    return moved;
-  });
-  return untangle(routes, edge, fixed);
+    return null;
+  }
+}
+
+/** The grid points from the start to state `s`. @param {number} s @param {Int32Array} from @param {number} start */
+function walkBack(s, from, start) {
+  const path = [];
+  for (let t = s; ; t = from[t]) {
+    path.push(Math.floor(t / 4));
+    if (Math.floor(t / 4) === start) break;
+  }
+  return path.reverse();
+}
+
+/** How far (x, y) is from the segment a–b. */
+function nearSegment(/** @type {number} */ x, /** @type {number} */ y, /** @type {number} */ ax, /** @type {number} */ ay, /** @type {number} */ bx, /** @type {number} */ by) {
+  const [dx, dy] = [bx - ax, by - ay];
+  const t = dx || dy ? Math.max(0, Math.min(1, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy))) : 0;
+  return Math.hypot(x - ax - t * dx, y - ay - t * dy);
+}
+
+/** A small binary heap of states by priority, for the route search. */
+class Heap {
+  constructor() {
+    /** @type {number[]} */ this.items = [];
+    /** @type {number[]} */ this.keys = [];
+  }
+  get size() { return this.items.length; }
+  /** @param {number} item @param {number} key */
+  push(item, key) {
+    const { items, keys } = this;
+    let i = items.length;
+    items.push(item);
+    keys.push(key);
+    while (i > 0) {
+      const p = (i - 1) >> 1;
+      if (keys[p] <= key) break;
+      [items[i], items[p], keys[i], keys[p]] = [items[p], items[i], keys[p], keys[i]];
+      i = p;
+    }
+  }
+  /** @returns {number} */
+  pop() {
+    const { items, keys } = this;
+    const top = items[0];
+    const [item, key] = [/** @type {number} */ (items.pop()), /** @type {number} */ (keys.pop())];
+    if (items.length) {
+      items[0] = item;
+      keys[0] = key;
+      for (let i = 0; ;) {
+        const [l, r] = [2 * i + 1, 2 * i + 2];
+        let m = i;
+        if (l < items.length && keys[l] < keys[m]) m = l;
+        if (r < items.length && keys[r] < keys[m]) m = r;
+        if (m === i) break;
+        [items[i], items[m], keys[i], keys[m]] = [items[m], items[i], keys[m], keys[i]];
+        i = m;
+      }
+    }
+    return top;
+  }
 }
 
 /** Run `i` of route `r` moved to `at` across its length (y for a level run, x for an upright). @param {Array<[number, number]>} r @param {number} i @param {number} at */
@@ -488,8 +647,9 @@ function shiftRun(r, i, at) {
 }
 
 /**
- * Where run `i` of a route goes when dragged to `point`, in holes (D-380): on the board,
- * the nearest line in a gap between holes (never over a row of them); off it, to a tenth of a hole.
+ * Where run `i` of a route goes when dragged to `point`, in holes (D-380): on the half-hole
+ * grid the router uses; over the board, the middle of a gap between holes, never over a
+ * row of them.
  * @param {Array<[number, number]>} route @param {number} i @param {[number, number]} point
  * @param {{columns: number, strips: number}} board @returns {number}
  */
@@ -500,91 +660,8 @@ export function runAt(route, i, point, board) {
   const half = STEP / 2;
   const [size, across] = level ? [board.strips, board.columns] : [board.columns, board.strips];
   const over = hi > -half && lo < across * STEP - half && at > -half && at < size * STEP - half;
-  if (!over) return Math.round(at) / STEP;
-  const centre = Math.floor(at / STEP) * STEP + half;
-  const lines = GAP_LINES.map((g) => centre + g * (STEP / 10));
-  const best = lines.reduce((a, b) => (Math.abs(b - at) < Math.abs(a - at) ? b : a));
-  return best / STEP;
-}
-
-/**
- * @typedef {{route: number, i: number, level: boolean, at: number, lo: number, hi: number}} Run
- *   one straight run of a route: segment `i`, level (y = `at`) or upright (x = `at`), from `lo` to `hi`
- */
-
-/** A route's straight runs. @param {Array<[number, number]>} r @param {number} route @returns {Run[]} */
-function runsOf(r, route) {
-  return r.slice(1).map((q, i) => {
-    const p = r[i];
-    const level = p[1] === q[1];
-    const [a, b] = level ? [p[0], q[0]] : [p[1], q[1]];
-    return { route, i, level, at: level ? p[1] : p[0], lo: Math.min(a, b), hi: Math.max(a, b) };
-  });
-}
-
-const APART = STEP * 0.15; // on the board, runs closer than this side by side are drawn on top of each other (a gap's lines are 0.15 to 0.2 apart)
-const ROOM = LANE * 0.9; // off the board, runs closer than this side by side are too close to read apart
-
-/** Whether two runs lie on top of each other, or closer than `room` side by side. @param {Run} a @param {Run} b @param {number} room */
-const overlaps = (a, b, room) => a.level === b.level && Math.abs(a.at - b.at) < room && Math.min(a.hi, b.hi) - Math.max(a.lo, b.lo) > APART;
-
-/** Whether two runs cross. @param {Run} a @param {Run} b */
-const crosses = (a, b) => a.level !== b.level && b.at > a.lo && b.at < a.hi && a.at > b.lo && a.at < b.hi;
-
-/**
- * No two wires drawn on top of each other, nor closer than most of a lane beside the
- * board (D-379): a middle run lying along another wire's run moves to the nearest free line (round the board, a lane out or in; on the
- * board, another line in its gap, never over a row of holes), the one that makes the
- * fewest crossings. A wire's first and last runs stay: they start at its lug and end in
- * its hole.
- * Runs moved by hand (`fixed`, per route) stay where they were put (D-380).
- * @param {Array<Array<[number, number]> | null>} routes @param {{left: number, right: number, top: number, bottom: number}} edge
- * @param {Array<Set<number>>} fixed
- */
-function untangle(routes, edge, fixed) {
-  const half = STEP / 2;
-  const unit = STEP / 10;
-  /** Whether a run lies over the board (in a gap between holes), not beside it. @param {Run} run */
-  const onBoard = (run) => {
-    const [a, b] = run.level ? [edge.top, edge.bottom] : [edge.left, edge.right];
-    const [c, d] = run.level ? [edge.left, edge.right] : [edge.top, edge.bottom];
-    return run.hi > c && run.lo < d && run.at > a && run.at < b;
-  };
-  /** Too close: on top of each other on the board, or under `ROOM` apart beside it. @param {Run} a @param {Run} b */
-  const tooClose = (a, b) => overlaps(a, b, onBoard(a) || onBoard(b) ? APART : ROOM);
-  for (let pass = 0; pass < 3; pass++) {
-    let moved = false;
-    routes.forEach((r, route) => {
-      if (!r) return;
-      for (let i = 1; i < r.length - 2; i++) {
-        if (fixed[route]?.has(i)) continue;
-        const others = () => routes.flatMap((o, n) => (o && n !== route ? runsOf(o, n) : []));
-        const run = runsOf(r, route)[i];
-        if (!others().some((o) => o.route < route && tooClose(run, o))) continue; // the first wire keeps its line
-        const [a, b] = run.level ? [edge.top, edge.bottom] : [edge.left, edge.right];
-        const [c, d] = run.level ? [edge.left, edge.right] : [edge.top, edge.bottom];
-        const over = run.hi > c && run.lo < d; // along the board, not beside it
-        const centre = Math.floor(run.at / STEP) * STEP + half;
-        const lines = over && run.at > a && run.at < b
-          ? GAP_LINES.map((g) => centre + g * unit)
-          : [1, -1, 2, -2, 3, -3, 4, -4].map((g) => run.at + g * LANE).filter((at) => !over || at <= a || at >= b);
-        let best = null;
-        for (const at of lines) {
-          if (at === run.at) continue;
-          const tried = { ...run, at };
-          const all = others();
-          if (all.some((o) => tooClose(tried, o))) continue;
-          const crossings = all.filter((o) => crosses(tried, o)).length;
-          if (!best || crossings < best.crossings) best = { at, crossings };
-        }
-        if (!best) continue;
-        shiftRun(r, i, best.at);
-        moved = true;
-      }
-    });
-    if (!moved) break;
-  }
-  return routes;
+  const snapped = over ? Math.floor(at / STEP) * STEP + half : Math.round(at / GRID) * GRID;
+  return snapped / STEP;
 }
 
 /** Points without repeats or a middle point on a straight run. @param {Array<[number, number]>} points */

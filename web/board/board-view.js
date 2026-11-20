@@ -38,7 +38,7 @@ import { latestOnly } from "../state.js";
 import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
 import { needsCard } from "./needs.js";
-import { BOARD_SETTINGS, boardRefOf, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, wireLine, wireRoutes } from "./board-logic.js";
+import { BOARD_SETTINGS, boardRefOf, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -417,9 +417,9 @@ export function boardView(host, app) {
    * @param {number} [index] @param {Array<[number, number]>} [runs]
    */
   function routes(index = -1, runs = []) {
-    const { wires } = offBoard();
+    const { wires, items } = offBoard();
     const lines = wires.map((w) => (w.index === index && w.line ? { ...w.line, runs } : w.line));
-    const all = wireRoutes(lines, boardNow());
+    const all = wireRoutes(lines, boardNow(), wireObstacles(boardNow(), progress?.footprints ?? {}, items));
     return { all, at: wires.findIndex((w) => w.index === index) };
   }
 

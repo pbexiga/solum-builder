@@ -10,7 +10,7 @@
  */
 
 import { fitView, panBy, viewBoxText, zoomAt, resizeView } from "../schematic/viewport.js";
-import { STEP, columnName, holeName, holeXY, itemRefs, itemShape, labelAt, legLabel, partShapes, pointAlong, routePath, runRects, shownHoles, valueOf, wireHops, wireRoutes } from "./board-logic.js";
+import { STEP, columnName, holeName, holeXY, itemRefs, itemShape, labelAt, legLabel, partShapes, pointAlong, routePath, runRects, shownHoles, valueOf, wireHops, wireObstacles, wireRoutes } from "./board-logic.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 const FIT_PAD = STEP; // board units round the shown holes when fitting
@@ -277,7 +277,7 @@ export function boardCanvas(svg, app) {
       el("title", {}, g).textContent = `Suggested cut at ${holeName(cut)}: click to cut the strip there`;
     }
     const wires = el("g", { class: "off-wires" }, root); // over the parts: a wire lies on top
-    const routes = wireRoutes(off.wires.map((w) => w.line), board);
+    const routes = wireRoutes(off.wires.map((w) => w.line), board, wireObstacles(board, footprints, off.items));
     const hops = wireHops(routes);
     off.wires.forEach(({ index, line, title, pad }, i) => {
       const route = routes[i] ?? [[line.x1, line.y1], [line.x2, line.y2]];

@@ -6,6 +6,7 @@ solum/circuit/parts.py (the one owner of pin geometry).
 """
 
 import json
+from itertools import pairwise
 from typing import Any
 
 import pytest
@@ -1167,51 +1168,75 @@ def test_off_board_parts_lugs_and_wires_are_drawn_where_they_sit(js: Page) -> No
     assert got["done"] == "All 1 nets done."
 
 
-def test_off_board_wires_are_routed_with_square_corners_and_hop_where_they_cross(js: Page) -> None:
-    """D-379: a wire from a lug left of the board drops, runs up its lane by the board's
-    edge and comes in along the gap above its hole's strip; from above, along the gap left
-    of its hole's column; lug to lug, down and across beneath (beneath the board when it's in
-    the way); a run lying along another wire's moves to a free line; a second wire on a side takes
-    the next lane out; where one wire's level run crosses another's upright it hops."""
+def test_off_board_wires_are_routed_round_the_parts_and_hop_where_they_cross(js: Page) -> None:
+    """D-379: each wire leaves its lug downward and reaches its hole in square runs on the
+    half-hole grid, never through a part's body (a board part's or an off-board part's),
+    going round the board's side rather than across it; two wires never lie along each
+    other; lug to lug ends coming up into the other lug; a crossing hops on its level run.
+    D-380: a run moved by hand stays where it was put; a dragged run snaps to a gap's
+    middle over the board, to the half-hole grid beside it."""
     got = run(
         js,
         """
         const b = await m('board/board-logic.js');
         const board = { columns: 10, strips: 8 };
-        const box = { x: -75, y: 0, w: 50, h: 20 };
-        const left = { x1: -60, y1: 25, x2: 30, y2: 40, loose: false, hole: true, box };
-        const left2 = { ...left, x1: -40, y2: 60 };
-        const top = { x1: 20, y1: -40, x2: 50, y2: 30, loose: false, hole: true, box: { x: 0, y: -65, w: 50, h: 20 } };
-        const lugs = { x1: -60, y1: 25, x2: -40, y2: 25, loose: false, hole: false, box };
-        const across = { x1: -60, y1: 25, x2: 160, y2: 25, loose: false, hole: false, box };
-        const [moved] = b.wireRoutes([{ ...left, runs: [[2, -2], [9, 1]] }, { ...left, x1: -50, runs: [] }], board);
-        const snaps = [b.runAt(left_r(), 3, [0, 47], board), b.runAt(left_r(), 2, [-23.4, 0], board)];
-        function left_r() { return b.wireRoutes([left], board)[0]; }
-        const routes = b.wireRoutes([left, left2, top, lugs, null, across], board);
+        const jack = { x: -75, y: 0, w: 50, h: 20 };
+        const wall = { x: 12, y: 18, w: 16, h: 24 };  // a part's body over D3–C4
+        const obstacles = { boxes: [jack, wall], lines: [] };
+        const left = { x1: -60, y1: 25, x2: 30, y2: 30, loose: false, hole: true, box: jack };
+        const left2 = { x1: -40, y1: 25, x2: 0, y2: 60, loose: false, hole: true, box: jack };
+        const lugs = { x1: -60, y1: 25, x2: -40, y2: 25, loose: false, hole: false, box: jack };
+        const routes = b.wireRoutes([left, left2, lugs, null], board, obstacles);
+        const moved = b.wireRoutes([{ ...left, runs: [[1, 4.5], [9, 1]] }, left2, lugs, null], board, obstacles)[0];
         const cross = b.wireHops([[[0, 0], [100, 0]], [[50, -40], [50, 40]]]);
-        return { routes, cross, moved, snaps, path: b.routePath([[0, 0], [100, 0], [100, 50]], cross[0]), along: b.pointAlong([[0, 0], [10, 0], [10, 10]], 15) };
+        const route = routes[0];
+        return {
+          routes, moved, cross,
+          snaps: [b.runAt([[0, 0], [0, 30], [90, 30], [90, 40]], 1, [0, 47], board), b.runAt([[-60, 0], [-60, 10], [-23, 10], [-23, 40]], 2, [-23.4, 0], board)],
+          path: b.routePath([[0, 0], [100, 0], [100, 50]], cross[0]),
+          along: b.pointAlong([[0, 0], [10, 0], [10, 10]], 15),
+        };
         """,
     )
-    left, left2, top, lugs, missing, across = got["routes"]
-    assert left == [[-60, 25], [-60, 31], [-10, 31], [-10, 35], [30, 35], [30, 40]]
-    assert left2[2][0] == -15  # the next lane out, half a hole further
-    assert (
-        left2[1][1] != 31
-    )  # its run from the lug moved off left's (they'd lie on top of each other)
-    assert left2[1][1] == left2[2][1]  # still a level run
-    assert top == [[20, -40], [20, -10], [45, -10], [45, 30], [50, 30]]
-    assert lugs == [
-        [-60, 25],
-        [-60, 36],
-        [-40, 36],
-        [-40, 25],
-    ]  # a lane below left's run, not on it
+    left, left2, lugs, missing = got["routes"]
     assert missing is None
-    assert across == [[-60, 25], [-60, 80], [160, 80], [160, 25]]  # round beneath the board
-    # D-380: run 2 put by hand at x = -2 holes (run 9 isn't one: ignored), and kept there
-    assert got["moved"][2] == [-20, 31] and got["moved"][3][0] == -20
-    # a level run over the board snaps to a line in its strip gap; off it, to a tenth of a hole
-    assert got["snaps"] == [4.7, -2.3]  # 4.7: in the gap between strips 4 and 5, clear of the holes
+
+    def runs(route: list[list[float]]) -> list[tuple[list[float], list[float]]]:
+        return list(pairwise(route))
+
+    def inside(x: float, y: float, b: dict[str, float]) -> bool:
+        return b["x"] < x < b["x"] + b["w"] and b["y"] < y < b["y"] + b["h"]
+
+    jack = {"x": -75, "y": 0, "w": 50, "h": 20}
+    wall = {"x": 12, "y": 18, "w": 16, "h": 24}
+    for route, end in ((left, [30, 30]), (left2, [0, 60])):
+        assert route[0] == [-60 if route is left else -40, 25] and route[-1] == end
+        assert route[1][0] == route[0][0] and route[1][1] > route[0][1]  # down from the lug
+        for a, b in runs(route):
+            assert a[0] == b[0] or a[1] == b[1]  # square
+            for t in (k / 20 for k in range(21)):
+                x, y = a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t
+                assert not inside(x, y, jack) and not inside(x, y, wall)
+    # beside the board it runs on the half-hole grid; over it, in the gaps between holes
+    for a, _b in runs(left)[1:-1]:
+        assert a[0] % 5 == 0 and a[1] % 5 == 0
+    # no two runs along each other
+    for a, b in runs(left):
+        for c, d in runs(left2):
+            if a[1] == b[1] == c[1] == d[1]:
+                overlap = min(max(a[0], b[0]), max(c[0], d[0])) - max(
+                    min(a[0], b[0]), min(c[0], d[0])
+                )
+                assert overlap <= 0
+    assert lugs[0] == [-60, 25] and lugs[-1] == [-40, 25]
+    assert lugs[-2][0] == -40 and lugs[-2][1] > 25  # up into the other lug
+    assert (
+        got["moved"][1][1] == 45 and got["moved"][2][1] == 45
+    )  # run 1 put at 4.5 holes; run 9 ignored
+    assert got["snaps"] == [
+        4.5,
+        -2.5,
+    ]  # a gap's middle over the board; the half-hole grid beside it
     assert got["cross"] == [[[0, 50]], []]  # the level run hops, the upright doesn't
     assert "A3,3 0 0 1 53,0" in got["path"] and "Q100,0" in got["path"]
     assert got["along"] == [10, 5]

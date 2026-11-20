@@ -414,7 +414,7 @@ export function wireLine(wire, lugs) {
   return { ...start, x2: from.x, y2: from.y + LOOSE_DROP, loose: true, hole: false };
 }
 
-const LANE = STEP * 0.3; // the gap between wires running side by side round the board
+const LANE = STEP * 0.5; // the gap between wires running side by side round the board (the user, 2026-11-20: room between them)
 const STUB = STEP * 0.6; // how far a wire drops from its lug before it turns
 const CORNER = STEP * 0.25; // a bend's rounding
 export const HOP = STEP * 0.3; // a hop's radius, where a wire crosses another
@@ -522,17 +522,18 @@ function runsOf(r, route) {
   });
 }
 
-const APART = STEP * 0.15; // runs closer than this side by side are drawn on top of each other
+const APART = STEP * 0.15; // on the board, runs closer than this side by side are drawn on top of each other (a gap's lines are 0.15 to 0.2 apart)
+const ROOM = LANE * 0.9; // off the board, runs closer than this side by side are too close to read apart
 
-/** Whether two runs lie on top of each other. @param {Run} a @param {Run} b */
-const overlaps = (a, b) => a.level === b.level && Math.abs(a.at - b.at) < APART && Math.min(a.hi, b.hi) - Math.max(a.lo, b.lo) > APART;
+/** Whether two runs lie on top of each other, or closer than `room` side by side. @param {Run} a @param {Run} b @param {number} room */
+const overlaps = (a, b, room) => a.level === b.level && Math.abs(a.at - b.at) < room && Math.min(a.hi, b.hi) - Math.max(a.lo, b.lo) > APART;
 
 /** Whether two runs cross. @param {Run} a @param {Run} b */
 const crosses = (a, b) => a.level !== b.level && b.at > a.lo && b.at < a.hi && a.at > b.lo && a.at < b.hi;
 
 /**
- * No two wires drawn on top of each other (D-379): a middle run lying along another
- * wire's run moves to the nearest free line (round the board, a lane out or in; on the
+ * No two wires drawn on top of each other, nor closer than most of a lane beside the
+ * board (D-379): a middle run lying along another wire's run moves to the nearest free line (round the board, a lane out or in; on the
  * board, another line in its gap, never over a row of holes), the one that makes the
  * fewest crossings. A wire's first and last runs stay: they start at its lug and end in
  * its hole.
@@ -543,6 +544,14 @@ const crosses = (a, b) => a.level !== b.level && b.at > a.lo && b.at < a.hi && a
 function untangle(routes, edge, fixed) {
   const half = STEP / 2;
   const unit = STEP / 10;
+  /** Whether a run lies over the board (in a gap between holes), not beside it. @param {Run} run */
+  const onBoard = (run) => {
+    const [a, b] = run.level ? [edge.top, edge.bottom] : [edge.left, edge.right];
+    const [c, d] = run.level ? [edge.left, edge.right] : [edge.top, edge.bottom];
+    return run.hi > c && run.lo < d && run.at > a && run.at < b;
+  };
+  /** Too close: on top of each other on the board, or under `ROOM` apart beside it. @param {Run} a @param {Run} b */
+  const tooClose = (a, b) => overlaps(a, b, onBoard(a) || onBoard(b) ? APART : ROOM);
   for (let pass = 0; pass < 3; pass++) {
     let moved = false;
     routes.forEach((r, route) => {
@@ -551,7 +560,7 @@ function untangle(routes, edge, fixed) {
         if (fixed[route]?.has(i)) continue;
         const others = () => routes.flatMap((o, n) => (o && n !== route ? runsOf(o, n) : []));
         const run = runsOf(r, route)[i];
-        if (!others().some((o) => o.route < route && overlaps(run, o))) continue; // the first wire keeps its line
+        if (!others().some((o) => o.route < route && tooClose(run, o))) continue; // the first wire keeps its line
         const [a, b] = run.level ? [edge.top, edge.bottom] : [edge.left, edge.right];
         const [c, d] = run.level ? [edge.left, edge.right] : [edge.top, edge.bottom];
         const over = run.hi > c && run.lo < d; // along the board, not beside it
@@ -564,7 +573,7 @@ function untangle(routes, edge, fixed) {
           if (at === run.at) continue;
           const tried = { ...run, at };
           const all = others();
-          if (all.some((o) => overlaps(tried, o))) continue;
+          if (all.some((o) => tooClose(tried, o))) continue;
           const crossings = all.filter((o) => crosses(tried, o)).length;
           if (!best || crossings < best.crossings) best = { at, crossings };
         }

@@ -1193,21 +1193,21 @@ def test_off_board_wires_are_routed_with_square_corners_and_hop_where_they_cross
         """,
     )
     left, left2, top, lugs, missing, across = got["routes"]
-    assert left == [[-60, 25], [-60, 31], [-8, 31], [-8, 35], [30, 35], [30, 40]]
-    assert left2[2][0] == -11  # the next lane out
+    assert left == [[-60, 25], [-60, 31], [-10, 31], [-10, 35], [30, 35], [30, 40]]
+    assert left2[2][0] == -15  # the next lane out, half a hole further
     assert (
         left2[1][1] != 31
     )  # its run from the lug moved off left's (they'd lie on top of each other)
     assert left2[1][1] == left2[2][1]  # still a level run
-    assert top == [[20, -40], [20, -8], [45, -8], [45, 30], [50, 30]]
+    assert top == [[20, -40], [20, -10], [45, -10], [45, 30], [50, 30]]
     assert lugs == [
         [-60, 25],
-        [-60, 34],
-        [-40, 34],
+        [-60, 36],
+        [-40, 36],
         [-40, 25],
     ]  # a lane below left's run, not on it
     assert missing is None
-    assert across == [[-60, 25], [-60, 78], [160, 78], [160, 25]]  # round beneath the board
+    assert across == [[-60, 25], [-60, 80], [160, 80], [160, 25]]  # round beneath the board
     # D-380: run 2 put by hand at x = -2 holes (run 9 isn't one: ignored), and kept there
     assert got["moved"][2] == [-20, 31] and got["moved"][3][0] == -20
     # a level run over the board snaps to a line in its strip gap; off it, to a tenth of a hole

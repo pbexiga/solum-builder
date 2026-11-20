@@ -1171,7 +1171,7 @@ def test_off_board_wires_are_routed_with_square_corners_and_hop_where_they_cross
     """D-379: a wire from a lug left of the board drops, runs up its lane by the board's
     edge and comes in along the gap above its hole's strip; from above, along the gap left
     of its hole's column; lug to lug, down and across beneath (beneath the board when it's in
-    the way); a second wire on a side takes
+    the way); a run lying along another wire's moves to a free line; a second wire on a side takes
     the next lane out; where one wire's level run crosses another's upright it hops."""
     got = run(
         js,
@@ -1184,18 +1184,34 @@ def test_off_board_wires_are_routed_with_square_corners_and_hop_where_they_cross
         const top = { x1: 20, y1: -40, x2: 50, y2: 30, loose: false, hole: true, box: { x: 0, y: -65, w: 50, h: 20 } };
         const lugs = { x1: -60, y1: 25, x2: -40, y2: 25, loose: false, hole: false, box };
         const across = { x1: -60, y1: 25, x2: 160, y2: 25, loose: false, hole: false, box };
+        const [moved] = b.wireRoutes([{ ...left, runs: [[2, -2], [9, 1]] }, { ...left, x1: -50, runs: [] }], board);
+        const snaps = [b.runAt(left_r(), 3, [0, 47], board), b.runAt(left_r(), 2, [-23.4, 0], board)];
+        function left_r() { return b.wireRoutes([left], board)[0]; }
         const routes = b.wireRoutes([left, left2, top, lugs, null, across], board);
         const cross = b.wireHops([[[0, 0], [100, 0]], [[50, -40], [50, 40]]]);
-        return { routes, cross, path: b.routePath([[0, 0], [100, 0], [100, 50]], cross[0]), along: b.pointAlong([[0, 0], [10, 0], [10, 10]], 15) };
+        return { routes, cross, moved, snaps, path: b.routePath([[0, 0], [100, 0], [100, 50]], cross[0]), along: b.pointAlong([[0, 0], [10, 0], [10, 10]], 15) };
         """,
     )
     left, left2, top, lugs, missing, across = got["routes"]
     assert left == [[-60, 25], [-60, 31], [-8, 31], [-8, 35], [30, 35], [30, 40]]
     assert left2[2][0] == -11  # the next lane out
+    assert (
+        left2[1][1] != 31
+    )  # its run from the lug moved off left's (they'd lie on top of each other)
+    assert left2[1][1] == left2[2][1]  # still a level run
     assert top == [[20, -40], [20, -8], [45, -8], [45, 30], [50, 30]]
-    assert lugs == [[-60, 25], [-60, 31], [-40, 31], [-40, 25]]
+    assert lugs == [
+        [-60, 25],
+        [-60, 34],
+        [-40, 34],
+        [-40, 25],
+    ]  # a lane below left's run, not on it
     assert missing is None
     assert across == [[-60, 25], [-60, 78], [160, 78], [160, 25]]  # round beneath the board
+    # D-380: run 2 put by hand at x = -2 holes (run 9 isn't one: ignored), and kept there
+    assert got["moved"][2] == [-20, 31] and got["moved"][3][0] == -20
+    # a level run over the board snaps to a line in its strip gap; off it, to a tenth of a hole
+    assert got["snaps"] == [4.7, -2.3]  # 4.7: in the gap between strips 4 and 5, clear of the holes
     assert got["cross"] == [[[0, 50]], []]  # the level run hops, the upright doesn't
     assert "A3,3 0 0 1 53,0" in got["path"] and "Q100,0" in got["path"]
     assert got["along"] == [10, 5]

@@ -12,7 +12,7 @@
  * @typedef {{size: [number, number], parts?: Record<string, Record<string, string>>,
  *   standing?: string[], cuts?: string[], links?: string[][], wires?: WireData[],
  *   off?: Record<string, [number, number]>}} BoardData
- * @typedef {{from: string, hole?: string, lug?: string}} WireData an off-board wire (D-375):
+ * @typedef {{from: string, hole?: string, lug?: string, runs?: Array<[number, number]>}} WireData an off-board wire (D-375):
  *   from a lug to a hole, to another lug, or loose
  * @typedef {{shape: string, kind: string, legs: string[], steps: number[], flat: number,
  *   stand: number, length: number, width: number, diameter: number, row_holes: number,
@@ -88,7 +88,7 @@ export function readBoard(data) {
     parts,
     cuts: holes(data?.cuts ?? []),
     links: (data?.links ?? []).map((pair) => holes(pair)).filter((pair) => pair.length === 2),
-    wires: (data?.wires ?? []).map((w) => ({ lug: w.from, hole: w.hole ? parseHole(w.hole) : null, to: w.lug ?? null })),
+    wires: (data?.wires ?? []).map((w) => ({ lug: w.from, hole: w.hole ? parseHole(w.hole) : null, to: w.lug ?? null, runs: w.runs ?? [] })),
     spots: /** @type {Record<string, Hole>} */ ({ ...(data?.off ?? {}) }),
   };
 }
@@ -359,8 +359,9 @@ export function offBoardRows(progress, board) {
  * @typedef {{x: number, y: number, w: number, h: number}} Box
  * @typedef {{end: string, label: string, x: number, y: number, box?: Box}} LugAt `box`: its
  *   part's body (to route a wire round it, D-379)
- * @typedef {{x1: number, y1: number, x2: number, y2: number, loose: boolean, hole: boolean, box: Box | null}} WireLine
- *   a wire's ends in board units; `hole`: its far end is in a hole; `box`: its lug's part's body
+ * @typedef {{x1: number, y1: number, x2: number, y2: number, loose: boolean, hole: boolean, box: Box | null, runs?: Array<[number, number]>}} WireLine
+ *   a wire's ends in board units; `hole`: its far end is in a hole; `box`: its lug's part's body;
+ *   `runs`: its route's middle runs moved by hand, [run number, where in holes] (D-380)
  */
 
 /**
@@ -397,13 +398,13 @@ export const LOOSE_DROP = STEP * 1.6; // how far a loose wire hangs below its lu
 /**
  * A wire's line in board units: from its lug to its hole, to its other lug, or hanging
  * loose below its lug; null when its lug isn't drawn.
- * @param {{lug: string, hole: Hole | null, to: string | null}} wire @param {Record<string, LugAt>} lugs
+ * @param {{lug: string, hole: Hole | null, to: string | null, runs?: Array<[number, number]>}} wire @param {Record<string, LugAt>} lugs
  * @returns {WireLine | null}
  */
 export function wireLine(wire, lugs) {
   const from = lugs[wire.lug];
   if (!from) return null;
-  const start = { x1: from.x, y1: from.y, box: from.box ?? null };
+  const start = { x1: from.x, y1: from.y, box: from.box ?? null, runs: wire.runs ?? [] };
   if (wire.hole) {
     const [x2, y2] = holeXY(wire.hole);
     return { ...start, x2, y2, loose: false, hole: true };
@@ -417,6 +418,7 @@ const LANE = STEP * 0.3; // the gap between wires running side by side round the
 const STUB = STEP * 0.6; // how far a wire drops from its lug before it turns
 const CORNER = STEP * 0.25; // a bend's rounding
 export const HOP = STEP * 0.3; // a hop's radius, where a wire crosses another
+const GAP_LINES = [0, -2, 2, -3.5, 3.5]; // the lines a wire may run along in a gap, tenths of a hole from its middle (holes fill ±1.4 of 5)
 
 /**
  * The off-board wires' routes, as points with square corners (D-379): each leaves its lug
@@ -425,7 +427,7 @@ export const HOP = STEP * 0.3; // a hop's radius, where a wire crosses another
  * (from above or below), turning into the hole at the end; a wire from below goes round
  * its own part's body first; wires sharing a gap are spread apart in it. Lug to lug: down
  * from each and across beneath (beneath the board if it's in the way). Loose: its
- * short drop. Drawing only: a wire is still lug + hole (D-375).
+ * short drop. No two drawn on top of each other (`untangle`). Drawing only: a wire is still lug + hole (D-375).
  * @param {Array<WireLine | null>} lines @param {{columns: number, strips: number}} board
  * @returns {Array<Array<[number, number]> | null>}
  */
@@ -435,9 +437,9 @@ export function wireRoutes(lines, board) {
   /** @type {Record<string, number>} */
   const lanes = {};
   const lane = (/** @type {string} */ side) => (lanes[side] = (lanes[side] ?? 0) + 1);
-  const SPREAD = [0, -2, 2, -3.5, 3.5]; // wires sharing a gap, apart within it (holes fill ±1.4 of 5)
-  const spread = (/** @type {string} */ gap) => SPREAD[(lane(gap) - 1) % SPREAD.length] * (STEP / 10);
-  return lines.map((line) => {
+  const spread = (/** @type {string} */ gap) => GAP_LINES[(lane(gap) - 1) % GAP_LINES.length] * (STEP / 10);
+  /** @type {Array<Array<[number, number]> | null>} */
+  const routes = lines.map((line) => {
     if (!line) return null;
     const { x1, y1, x2, y2 } = line;
     if (line.loose) return [[x1, y1], [x2, y2]];
@@ -465,6 +467,115 @@ export function wireRoutes(lines, board) {
     const cy = Math.min(edge.bottom + k * LANE, box.y - k * LANE);
     return tidy([[x1, y1], [x1, drop], [ex, drop], [ex, cy], [gap, cy], [gap, y2], [x2, y2]]);
   });
+  // the runs moved by hand (D-380): where they were put, left there by `untangle`
+  const fixed = routes.map((r, n) => {
+    const moved = new Set();
+    for (const [i, at] of (r && lines[n]?.runs) || []) {
+      if (!r || i < 1 || i > r.length - 3) continue; // the route has changed shape: not that run any more
+      shiftRun(r, i, at * STEP);
+      moved.add(i);
+    }
+    return moved;
+  });
+  return untangle(routes, edge, fixed);
+}
+
+/** Run `i` of route `r` moved to `at` across its length (y for a level run, x for an upright). @param {Array<[number, number]>} r @param {number} i @param {number} at */
+function shiftRun(r, i, at) {
+  const k = r[i][1] === r[i + 1][1] ? 1 : 0;
+  r[i] = /** @type {[number, number]} */ (k ? [r[i][0], at] : [at, r[i][1]]);
+  r[i + 1] = /** @type {[number, number]} */ (k ? [r[i + 1][0], at] : [at, r[i + 1][1]]);
+}
+
+/**
+ * Where run `i` of a route goes when dragged to `point`, in holes (D-380): on the board,
+ * the nearest line in a gap between holes (never over a row of them); off it, to a tenth of a hole.
+ * @param {Array<[number, number]>} route @param {number} i @param {[number, number]} point
+ * @param {{columns: number, strips: number}} board @returns {number}
+ */
+export function runAt(route, i, point, board) {
+  const level = route[i][1] === route[i + 1][1];
+  const at = level ? point[1] : point[0];
+  const [lo, hi] = level ? [route[i][0], route[i + 1][0]].sort((a, b) => a - b) : [route[i][1], route[i + 1][1]].sort((a, b) => a - b);
+  const half = STEP / 2;
+  const [size, across] = level ? [board.strips, board.columns] : [board.columns, board.strips];
+  const over = hi > -half && lo < across * STEP - half && at > -half && at < size * STEP - half;
+  if (!over) return Math.round(at) / STEP;
+  const centre = Math.floor(at / STEP) * STEP + half;
+  const lines = GAP_LINES.map((g) => centre + g * (STEP / 10));
+  const best = lines.reduce((a, b) => (Math.abs(b - at) < Math.abs(a - at) ? b : a));
+  return best / STEP;
+}
+
+/**
+ * @typedef {{route: number, i: number, level: boolean, at: number, lo: number, hi: number}} Run
+ *   one straight run of a route: segment `i`, level (y = `at`) or upright (x = `at`), from `lo` to `hi`
+ */
+
+/** A route's straight runs. @param {Array<[number, number]>} r @param {number} route @returns {Run[]} */
+function runsOf(r, route) {
+  return r.slice(1).map((q, i) => {
+    const p = r[i];
+    const level = p[1] === q[1];
+    const [a, b] = level ? [p[0], q[0]] : [p[1], q[1]];
+    return { route, i, level, at: level ? p[1] : p[0], lo: Math.min(a, b), hi: Math.max(a, b) };
+  });
+}
+
+const APART = STEP * 0.15; // runs closer than this side by side are drawn on top of each other
+
+/** Whether two runs lie on top of each other. @param {Run} a @param {Run} b */
+const overlaps = (a, b) => a.level === b.level && Math.abs(a.at - b.at) < APART && Math.min(a.hi, b.hi) - Math.max(a.lo, b.lo) > APART;
+
+/** Whether two runs cross. @param {Run} a @param {Run} b */
+const crosses = (a, b) => a.level !== b.level && b.at > a.lo && b.at < a.hi && a.at > b.lo && a.at < b.hi;
+
+/**
+ * No two wires drawn on top of each other (D-379): a middle run lying along another
+ * wire's run moves to the nearest free line (round the board, a lane out or in; on the
+ * board, another line in its gap, never over a row of holes), the one that makes the
+ * fewest crossings. A wire's first and last runs stay: they start at its lug and end in
+ * its hole.
+ * Runs moved by hand (`fixed`, per route) stay where they were put (D-380).
+ * @param {Array<Array<[number, number]> | null>} routes @param {{left: number, right: number, top: number, bottom: number}} edge
+ * @param {Array<Set<number>>} fixed
+ */
+function untangle(routes, edge, fixed) {
+  const half = STEP / 2;
+  const unit = STEP / 10;
+  for (let pass = 0; pass < 3; pass++) {
+    let moved = false;
+    routes.forEach((r, route) => {
+      if (!r) return;
+      for (let i = 1; i < r.length - 2; i++) {
+        if (fixed[route]?.has(i)) continue;
+        const others = () => routes.flatMap((o, n) => (o && n !== route ? runsOf(o, n) : []));
+        const run = runsOf(r, route)[i];
+        if (!others().some((o) => o.route < route && overlaps(run, o))) continue; // the first wire keeps its line
+        const [a, b] = run.level ? [edge.top, edge.bottom] : [edge.left, edge.right];
+        const [c, d] = run.level ? [edge.left, edge.right] : [edge.top, edge.bottom];
+        const over = run.hi > c && run.lo < d; // along the board, not beside it
+        const centre = Math.floor(run.at / STEP) * STEP + half;
+        const lines = over && run.at > a && run.at < b
+          ? GAP_LINES.map((g) => centre + g * unit)
+          : [1, -1, 2, -2, 3, -3, 4, -4].map((g) => run.at + g * LANE).filter((at) => !over || at <= a || at >= b);
+        let best = null;
+        for (const at of lines) {
+          if (at === run.at) continue;
+          const tried = { ...run, at };
+          const all = others();
+          if (all.some((o) => overlaps(tried, o))) continue;
+          const crossings = all.filter((o) => crosses(tried, o)).length;
+          if (!best || crossings < best.crossings) best = { at, crossings };
+        }
+        if (!best) continue;
+        shiftRun(r, i, best.at);
+        moved = true;
+      }
+    });
+    if (!moved) break;
+  }
+  return routes;
 }
 
 /** Points without repeats or a middle point on a straight run. @param {Array<[number, number]>} points */

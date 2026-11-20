@@ -265,7 +265,7 @@
     },
     "BoardWire": {
       "additionalProperties": false,
-      "description": "An off-board wire (v36, D-375): `from` a lug (`VR1.2`, `IN.S`, `V+`) to a `hole` on\nthe board, to another `lug`, or loose (neither).",
+      "description": "An off-board wire (v36, D-375): `from` a lug (`VR1.2`, `IN.S`, `V+`) to a `hole` on\nthe board, to another `lug`, or loose (neither). v37 (D-380): `runs`, the middle runs\nof its drawn route moved by hand, each [run number, where in holes]: drawing only.",
       "properties": {
         "from": {
           "title": "From",
@@ -294,6 +294,23 @@
           ],
           "default": null,
           "title": "Lug"
+        },
+        "runs": {
+          "items": {
+            "maxItems": 2,
+            "minItems": 2,
+            "prefixItems": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "number"
+              }
+            ],
+            "type": "array"
+          },
+          "title": "Runs",
+          "type": "array"
         }
       },
       "required": [
@@ -2576,7 +2593,7 @@
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "const": 36,
+      "const": 37,
       "title": "Schema",
       "type": "integer"
     },
@@ -2813,7 +2830,7 @@
     "name",
     "parts"
   ],
-  "title": "Solum Builder circuit, schema v36",
+  "title": "Solum Builder circuit, schema v37",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

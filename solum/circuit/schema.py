@@ -41,7 +41,7 @@ from solum.circuit.switches import (
 from solum.stripboard.board import Layout, layout_from_data
 from solum.units import format_quantity, format_value, parse_value
 
-SCHEMA_VERSION: Final = 36
+SCHEMA_VERSION: Final = 37
 
 Point = tuple[int, int]
 Rotation = Literal[0, 90, 180, 270]
@@ -713,11 +713,13 @@ class Enclosure(_Model):
 
 class BoardWire(_Model):
     """An off-board wire (v36, D-375): `from` a lug (`VR1.2`, `IN.S`, `V+`) to a `hole` on
-    the board, to another `lug`, or loose (neither)."""
+    the board, to another `lug`, or loose (neither). v37 (D-380): `runs`, the middle runs
+    of its drawn route moved by hand, each [run number, where in holes]: drawing only."""
 
     from_: str = Field(alias="from")
     hole: str | None = None
     lug: str | None = None
+    runs: list[tuple[int, float]] = Field(default_factory=list)
 
 
 class Stripboard(_Model):
@@ -747,7 +749,7 @@ class Stripboard(_Model):
 
 
 class Circuit(_Model):
-    schema_: Literal[36] = Field(alias="schema")
+    schema_: Literal[37] = Field(alias="schema")
     id: str = Field(pattern=ID_PATTERN)
     name: str
     description: str = ""

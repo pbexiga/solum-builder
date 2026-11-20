@@ -43,10 +43,11 @@ function drawShape(s, parent) {
 /**
  * @typedef {import("./board-logic.js").Hole} Hole
  * @typedef {{ref: string | null, hole: Hole, link: [Hole, Hole] | null, item: string | null,
- *   lug: string | null, wire: {index: number, end: "lug" | "far"} | null,
+ *   lug: string | null, wire: {index: number, end: "lug" | "far" | "run", run: number} | null,
  *   suggest: {kind: "cut" | "link", holes: Hole[]} | null, point: [number, number]}} Spot
  *   what's under the pointer: a board part's ref, the nearest hole, a link's ends; an
- *   off-board part's ref, a lug's end, a wire's number and which end (D-375); a suggested
+ *   off-board part's ref, a lug's end, a wire's number and which end (D-375) or which of
+ *   its middle runs (`end` "run", D-380); a suggested
  *   cut or link (D-377); the point in board units
  * @typedef {{
  *   onClick: (spot: Spot) => void,
@@ -65,9 +66,10 @@ function drawShape(s, parent) {
  *   `onMenu`: a right-click, true when the view showed a menu for it
  * @typedef {{part?: {fp: Footprint, legs: Array<[string, Hole]>, standing: boolean}, link?: [Hole, Hole], hole?: Hole,
  *   item?: {item: OffItem, at: Hole}, wire?: {x1: number, y1: number, x2: number, y2: number},
- *   marks?: Hole[]}} Ghost
+ *   route?: Array<[number, number]>, marks?: Hole[]}} Ghost
  *   what the view is about to do, drawn faint over the board; `marks`: the holes where a
- *   carried part's legs would join their nets (D-377)
+ *   carried part's legs would join their nets (D-377); `route`: a wire's route as a run of
+ *   it is dragged (D-380)
  * @typedef {{rats: Array<{net: string, a: Hole, b: Hole}>, cuts: Hole[], links: Array<[Hole, Hole]>}} Guide
  *   the guidance drawn on the board (D-377): the ratsnest, the suggested cuts and links
  * @typedef {import("./board-logic.js").OffItem} OffItem
@@ -281,6 +283,10 @@ export function boardCanvas(svg, app) {
       const route = routes[i] ?? [[line.x1, line.y1], [line.x2, line.y2]];
       const g = el("g", { class: ["off-wire", line.loose ? "loose" : "", pad ? "pad" : ""].filter(Boolean).join(" "), "data-wire": index }, wires);
       el("path", { d: routePath(route, hops[i]), class: "wire" }, g);
+      for (let run = 1; run < route.length - 2; run++) { // its middle runs, each moved by dragging (D-380)
+        const [[ax, ay], [bx, by]] = [route[run], route[run + 1]];
+        el("line", { x1: ax, y1: ay, x2: bx, y2: by, class: `wire-run ${ay === by ? "level" : "upright"}`, "data-end": "run", "data-run": run }, g);
+      }
       const [gx, gy] = pointAlong(route, STEP * 0.5); // the lug end's grip, a little way along
       el("circle", { cx: gx, cy: gy, r: STEP * 0.16, class: "wire-end lug-end", "data-end": "lug" }, g);
       el("circle", { cx: line.x2, cy: line.y2, r: STEP * 0.22, class: "wire-end far-end", "data-end": "far" }, g);
@@ -383,6 +389,7 @@ export function boardCanvas(svg, app) {
     }
     if (what?.item) drawItem(what.item.item, what.item.at, layer, false, "off-item");
     if (what?.wire) el("line", { ...what.wire, class: "wire" }, layer);
+    if (what?.route) el("path", { d: routePath(what.route), class: "wire" }, layer);
   }
 
   /**
@@ -426,7 +433,7 @@ export function boardCanvas(svg, app) {
       link: /** @type {[Hole, Hole] | null} */ (ends),
       item: at.closest(".off-items .off-item")?.getAttribute("data-item") ?? null,
       lug: at.closest(".off-items .lug")?.getAttribute("data-lug") ?? null,
-      wire: wire && end ? { index: Number(wire.getAttribute("data-wire")), end: end === "lug" ? "lug" : "far" } : null,
+      wire: wire && end ? { index: Number(wire.getAttribute("data-wire")), end: end === "lug" || end === "run" ? end : "far", run: Number(at.closest("[data-run]")?.getAttribute("data-run") ?? -1) } : null,
       suggest: suggested ? { kind: suggested.getAttribute("data-suggest") === "link" ? "link" : "cut", holes } : null,
       point: /** @type {[number, number]} */ (toBoard(clientX, clientY)),
     };

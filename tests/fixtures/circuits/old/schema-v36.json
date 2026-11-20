@@ -1,0 +1,60 @@
+{
+  "schema": 36,
+  "id": "v35",
+  "name": "v35",
+  "parts": [
+    {
+      "ref": "IN",
+      "pos": [
+        0,
+        0
+      ],
+      "type": "guitar"
+    },
+    {
+      "ref": "R1",
+      "pos": [
+        100,
+        0
+      ],
+      "type": "resistor",
+      "value": "10k"
+    },
+    {
+      "ref": "OUT",
+      "pos": [
+        200,
+        0
+      ],
+      "type": "amp"
+    }
+  ],
+  "wires": [],
+  "labels": [],
+  "stripboard": {
+    "size": [
+      4,
+      3
+    ],
+    "parts": {
+      "R1": {
+        "1": "B1",
+        "2": "B3"
+      }
+    },
+    "wires": [
+      {
+        "from": "IN.out",
+        "hole": "A1"
+      },
+      {
+        "from": "OUT.in",
+        "hole": "A3"
+      },
+      {
+        "from": "GND",
+        "hole": "A3"
+      }
+    ]
+  }
+}

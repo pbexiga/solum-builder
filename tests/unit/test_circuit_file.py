@@ -231,10 +231,10 @@ def test_schema_v1_file_loads_as_current(repo: Path) -> None:
     (and dropped provenance), v6 text blocks (and dropped the power mode); a v1 file
     loads unchanged and saves as v6 at v1.0."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v1.json")
-    assert c.schema_ == SCHEMA_VERSION == 36
+    assert c.schema_ == SCHEMA_VERSION == 37
     assert c.tags == [] and c.texts == []
     assert [p.ref for p in c.parts] == ["R1", "R2"]
-    assert circuit_to_dict(c)["schema"] == 36
+    assert circuit_to_dict(c)["schema"] == 37
     assert (str(c.version), c.final) == ("v1.0", False)
 
 
@@ -766,3 +766,13 @@ def test_a_v35_board_s_pads_become_wires(repo: Path) -> None:
         {"from": "GND", "hole": "A3"},
     ]  # fmt: skip
     assert c.stripboard is not None and c.stripboard.layout().pads == [(0, 0), (0, 2), (0, 2)]
+
+
+def test_a_v36_wire_is_routed_automatically(repo: Path) -> None:
+    """v37 (D-380) added a wire's `runs` (its route moved by hand); a v36 wire has none, and
+    a wire without any saves none."""
+    c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v36.json")
+    assert c.schema_ == SCHEMA_VERSION
+    assert c.stripboard is not None
+    assert [w.runs for w in c.stripboard.wires] == [[], [], []]
+    assert all("runs" not in w for w in circuit_to_dict(c)["stripboard"]["wires"])

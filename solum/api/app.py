@@ -208,7 +208,8 @@ class BoardEditRequest(BaseModel):
     standing: bool = False
     holes: list[tuple[int, int]] = []
     to: str | None = None  # a wire's other lug (D-375)
-    index: int = -1  # the wire `unwire` and `rewire` act on
+    index: int = -1  # the wire `unwire`, `rewire` and `route` act on
+    runs: list[tuple[int, float]] = []  # `route`: the wire's moved runs (D-380)
     grow: bool = True
     shorts: bool = True
 
@@ -1168,7 +1169,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 raise HTTPException(422, str(err)) from None
             return {"stripboard": layout_data(layout), "shift": [0, 0]}
         edit = BoardEdit(req.kind, req.ref, tuple(req.legs.items()), req.standing,
-                         tuple(req.holes), req.to, req.index)  # fmt: skip
+                         tuple(req.holes), req.to, req.index, tuple(req.runs))  # fmt: skip
         try:
             edited = edit_layout(layout, edit, parts, started=kept is not None, grow=req.grow,
                                  items=items, known=board_refs(circuit))  # fmt: skip

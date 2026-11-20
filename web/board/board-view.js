@@ -38,7 +38,7 @@ import { latestOnly } from "../state.js";
 import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
 import { needsCard } from "./needs.js";
-import { BOARD_SETTINGS, boardRefOf, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, markedHoles, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, wireLine } from "./board-logic.js";
+import { BOARD_SETTINGS, boardRefOf, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, wireLine, wireRoutes } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -72,7 +72,7 @@ import { BOARD_SETTINGS, boardRefOf, drawnBoard, firstPose, holeName, isOut, ite
 
 const BUTTON_TITLE = "Lay out a stripboard for this circuit";
 const SETTINGS_KEY = "solum.board"; // the editor's settings, kept by the server (D-311)
-const HINT = "Drag a part from the tray onto the board: Space turns it, F flips it, S stands it up. C makes cuts, K lays links. Drag from a pot's or jack's lug to a hole to wire it; right-click for more.";
+const HINT = "Drag a part from the tray onto the board: Space turns it, F flips it, S stands it up. C makes cuts, K lays links. Drag from a pot's or jack's lug to a hole to wire it, a wire's middle to move it; right-click for more.";
 const POSE_MOVES = /** @type {PoseMove[]} */ (["turn", "flip", "stand", "longer", "shorter"]);
 const MOVE_KEYS = { turn: "Space", flip: "F", stand: "S", longer: "+", shorter: "−" };
 
@@ -123,6 +123,8 @@ export function boardView(host, app) {
   let pressedItem = null;
   /** @type {Wiring | null} */
   let wiring = null;
+  /** @type {{index: number, run: number, at: number | null} | null} a wire's middle run being dragged (D-380) */
+  let bending = null;
 
   const canvas = boardCanvas(svg, {
     onClick: (spot) => {
@@ -135,6 +137,10 @@ export function boardView(host, app) {
     onPress: (spot) => {
       if (carry || carryItem) return true; // picked up from the tray: this press puts it down
       if (spot.suggest) return false; // a click makes it
+      if (tool === "parts" && spot.wire?.end === "run") {
+        bending = { index: spot.wire.index, run: spot.wire.run, at: null };
+        return true;
+      }
       if (tool === "parts" && spot.wire) {
         const w = boardNow().wires[spot.wire.index];
         if (w) wiring = { lug: w.lug, index: spot.wire.index, end: spot.wire.end };
@@ -153,6 +159,7 @@ export function boardView(host, app) {
     },
     onDrag: (hole, point) => {
       aim = hole;
+      if (bending) return showBending(point);
       if (wiring) return showWiring(point);
       if (pressedItem && !carryItem) pickItem(pressedItem.ref, pressedItem.hole);
       if (carryItem) return showCarriedItem();
@@ -165,6 +172,7 @@ export function boardView(host, app) {
       pressedPart = null;
       const item = pressedItem;
       pressedItem = null;
+      if (bending) return void endBending(moved);
       if (wiring) return void endWiring(hole, moved, spot);
       if (carryItem) return void putItem(hole);
       if (item && !moved) return selectItem(item.ref);
@@ -404,12 +412,48 @@ export function boardView(host, app) {
     await boardEdit({ kind: "rewire", index: w.index, ref: spot.lug, ...far }, `Move a wire to ${lugWords(spot.lug)}`);
   }
 
-  /** A wire's menu: take it off, or leave its end loose. @param {number} index @param {number} x @param {number} y */
+  /**
+   * The wires' routes as drawn, with wire `index`'s runs as `runs` when given (D-380).
+   * @param {number} [index] @param {Array<[number, number]>} [runs]
+   */
+  function routes(index = -1, runs = []) {
+    const { wires } = offBoard();
+    const lines = wires.map((w) => (w.index === index && w.line ? { ...w.line, runs } : w.line));
+    const all = wireRoutes(lines, boardNow());
+    return { all, at: wires.findIndex((w) => w.index === index) };
+  }
+
+  /** Wire `index`'s run moved with the pointer, shown faint. @param {[number, number]} point */
+  function showBending(point) {
+    if (!bending) return;
+    const { index, run } = bending;
+    const kept = (boardNow().wires[index]?.runs ?? []).filter(([i]) => i !== run);
+    const now = routes(index, kept);
+    const route = now.all[now.at];
+    if (!route || run > route.length - 3) return;
+    bending.at = runAt(route, run, point, boardNow());
+    const moved = routes(index, [...kept, [run, bending.at]]);
+    canvas.ghost({ route: moved.all[moved.at] ?? undefined });
+  }
+
+  /** A run let go: kept where it was put, one undo step. @param {boolean} moved */
+  async function endBending(moved) {
+    const bent = bending;
+    bending = null;
+    canvas.ghost(null);
+    const wire = bent ? boardNow().wires[bent.index] : null;
+    if (!bent || !wire || !moved || bent.at === null) return;
+    const runs = [...(wire.runs ?? []).filter(([i]) => i !== bent.run), [bent.run, bent.at]];
+    await boardEdit({ kind: "route", index: bent.index, runs }, `Move the wire from ${lugWords(wire.lug)}`);
+  }
+
+  /** A wire's menu: route it for me again, leave its end loose, or take it off. @param {number} index @param {number} x @param {number} y */
   function wireMenu(index, x, y) {
     const wire = boardNow().wires[index];
     if (!wire) return;
     const words = lugWords(wire.lug);
     openMenu(x, y, [
+      ...(wire.runs?.length ? [{ label: "Route it for me", run: () => void boardEdit({ kind: "route", index, runs: [] }, `Route the wire from ${words} again`) }] : []),
       ...(wire.hole || wire.to ? [{ label: "Leave its end loose", run: () => void boardEdit({ kind: "rewire", index, ref: wire.lug }, `Loosen the wire from ${words}`) }] : []),
       { label: "Take the wire off", run: () => void boardEdit({ kind: "unwire", index }, `Take off the wire from ${words}`) },
     ]);
@@ -441,6 +485,7 @@ export function boardView(host, app) {
     carryItem = null;
     pressedItem = null;
     wiring = null;
+    bending = null;
     linkStart = null;
     svg.classList.remove("carrying");
     canvas.ghost(null);

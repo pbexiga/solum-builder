@@ -937,7 +937,8 @@ def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.M
 
 def test_stripboard_edit_puts_off_board_parts_and_wires(monkeypatch: pytest.MonkeyPatch) -> None:
     """D-375: an off-board part put beside the board, a wire drawn to a hole, moved to a
-    lug, taken off; the part back to the tray takes its wires; refusals say why."""
+    lug, its route moved by hand (D-380), taken off; the part back to the tray takes its
+    wires; refusals say why."""
     repo = Path(__file__).resolve().parents[2]
     data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
     board = {**data, "stripboard": load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")}
@@ -962,6 +963,14 @@ def test_stripboard_edit_puts_off_board_parts_and_wires(monkeypatch: pytest.Monk
     assert shared.status_code == 422 and "share hole E3" in shared.json()["message"]
     twice = edit(kind="wire", ref="VR1.1", holes=[[3, 0]])
     assert twice.json()["message"] == "There's a wire there already."
+    routed = edit(kind="route", index=i, runs=[[2, -1.234], [1, 3.5], [2, -1.5]]).json()
+    assert routed["stripboard"]["wires"][i]["runs"] == [[1, 3.5], [2, -1.5]]  # D-380
+    on_routed = {**board, "stripboard": routed["stripboard"]}
+    again = c.post("/api/stripboard/edit", json={"circuit": on_routed, "kind": "rewire",
+                   "index": i, "ref": "VR1.2", "holes": [[6, 6]]}).json()["stripboard"]  # fmt: skip
+    assert "runs" not in again["wires"][i]  # an end moved: routed automatically again
+    end_run = edit(kind="route", index=i, runs=[[0, 2.0]])
+    assert end_run.status_code == 422 and "middle runs" in end_run.json()["message"]
     off = edit(kind="unwire", index=i).json()["stripboard"]
     assert len(off["wires"]) == len(wires) - 1
     back = {**board, "stripboard": spot}

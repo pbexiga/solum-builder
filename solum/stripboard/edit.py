@@ -19,7 +19,7 @@ from solum.stripboard.footprints import BoardPart, leg_problem
 from solum.stripboard.size import crop, fit_box, used_holes
 
 EditKind = Literal["place", "remove", "cut", "uncut", "link", "unlink", "spot", "unspot",
-                   "wire", "unwire", "rewire", "clear"]  # fmt: skip
+                   "wire", "unwire", "rewire", "route", "clear"]  # fmt: skip
 
 
 class EditError(ValueError):
@@ -35,8 +35,10 @@ class BoardEdit:
     puts off-board part `ref` with its drawing's corner at `holes[0]` (anywhere), `unspot`
     takes it back to the tray with its wires; `wire` draws a wire from lug `ref` to
     `holes[0]`, to lug `to`, or loose (neither); `rewire` puts wire number `index` so
-    instead, `unwire` takes it off. `clear` takes off everything of parts the circuit no
-    longer has (D-376): placed parts, off-board parts beside the board, wires to their lugs."""
+    instead (its route automatic again), `unwire` takes it off; `route` sets wire `index`'s
+    middle runs moved by hand to `runs` (none: routed automatically, D-380). `clear` takes
+    off everything of parts the circuit no longer has (D-376): placed parts, off-board parts
+    beside the board, wires to their lugs."""
 
     kind: EditKind
     ref: str = ""
@@ -45,6 +47,7 @@ class BoardEdit:
     holes: tuple[Hole, ...] = ()
     to: str | None = None
     index: int = -1
+    runs: tuple[tuple[int, float], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -170,6 +173,16 @@ def _new_wire(layout: Layout, edit: BoardEdit, lugs: set[str], skip: int = -1) -
     return wire
 
 
+def _runs(runs: tuple[tuple[int, float], ...]) -> tuple[tuple[int, float], ...]:
+    """A wire's moved runs, one per run number (the last given kept), in order, where to a
+    hundredth of a hole."""
+    if any(i < 1 for i, _ in runs):
+        raise EditError(
+            "Only a wire's middle runs can be moved: its ends stay at its lug and hole."
+        )
+    return tuple(sorted({i: round(at, 2) for i, at in runs}.items()))
+
+
 def _wire_at(layout: Layout, index: int) -> int:
     if not 0 <= index < len(layout.wires):
         raise EditError("There's no such wire.")
@@ -211,6 +224,10 @@ def _applied(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
         case "rewire":
             i = _wire_at(layout, edit.index)
             wire = _new_wire(layout, edit, lugs, skip=i)
+            return replace(layout, wires=(*layout.wires[:i], wire, *layout.wires[i + 1 :]))
+        case "route":
+            i = _wire_at(layout, edit.index)
+            wire = replace(layout.wires[i], runs=_runs(edit.runs))
             return replace(layout, wires=(*layout.wires[:i], wire, *layout.wires[i + 1 :]))
 
 

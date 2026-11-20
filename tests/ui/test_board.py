@@ -392,6 +392,51 @@ def test_an_off_board_part_is_put_beside_the_board_and_wired(
     page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
 
 
+def test_a_wire_is_moved_by_its_middle_and_routed_for_me_again(page: Page, base_url: str) -> None:
+    """D-380: a wire's upright run dragged sideways stays where it's put (one undo step);
+    the wire's menu's Route it for me puts it back where the router draws it."""
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    show_board(page)
+    wire = page.locator("#board .off-wire:has(.wire-run.upright)").first.get_attribute("data-wire")
+    run = f"#board .off-wire[data-wire='{wire}'] .wire-run.upright"
+
+    def middle() -> tuple[float, float]:
+        """A point on the run with nothing else on top (not where another wire crosses)."""
+        box = page.evaluate(
+            "(sel) => document.querySelector(sel).getBoundingClientRect().toJSON()", run
+        )
+        x = box["x"] + box["width"] / 2
+        for f in (0.25, 0.75, 0.1, 0.9, 0.5):
+            y = box["y"] + box["height"] * f
+            on = page.evaluate(
+                "([x, y, sel]) => document.elementFromPoint(x, y) === document.querySelector(sel)",
+                [x, y, run],
+            )
+            if on:
+                return x, y
+        raise AssertionError("the run is covered all along")
+
+    def wait_at(test: str, x: float) -> None:
+        page.wait_for_function(
+            f"""([sel, x]) => {{ const b = document.querySelector(sel)?.getBoundingClientRect();
+                 return b && ({test}); }}""",
+            arg=[run, x],
+        )
+
+    x, y = middle()
+    drag_to(page, (x, y), (x - 40, y))
+    wait_at("b.x + b.width / 2 < x - 20", x)
+    moved = middle()[0]
+    page.keyboard.press("Control+z")
+    wait_at("Math.abs(b.x + b.width / 2 - x) < 1", x)
+    page.keyboard.press("Control+Shift+z")
+    wait_at("Math.abs(b.x + b.width / 2 - x) < 1", moved)
+    page.mouse.click(*middle(), button="right")  # the run's hit line is see-through
+    page.get_by_role("menuitem", name="Route it for me").click()
+    wait_at("Math.abs(b.x + b.width / 2 - x) < 1", x)
+    page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
+
+
 def test_a_part_deleted_from_the_schematic_is_flagged_and_cleared(
     page: Page, base_url: str
 ) -> None:

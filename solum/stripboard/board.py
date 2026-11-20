@@ -84,11 +84,13 @@ class Link:
 class Wire:
     """An off-board wire from `lug` (an off-board part's lug: `VR1.1`, `IN.out`, `IN.S`, or
     a supply, `V+`, `GND`) to a hole on the board (`hole`, its pad), to another lug (`to`),
-    or loose (neither)."""
+    or loose (neither). `runs`: its drawn route's middle runs moved by hand, each (run
+    number, where in holes), drawing only (D-380)."""
 
     lug: str
     hole: Hole | None = None
     to: str | None = None
+    runs: tuple[tuple[int, float], ...] = ()
 
 
 @dataclass(frozen=True)
@@ -162,17 +164,21 @@ def _wire(data: Mapping[str, Any]) -> Wire:
     hole, to = data.get("hole"), data.get("lug")
     if hole is not None and to is not None:
         raise BoardError("A wire goes from its lug to a hole or to another lug, not both.")
+    runs = tuple((int(i), float(at)) for i, at in data.get("runs", ()))
     return Wire(str(data["from"]), parse_hole(hole) if hole is not None else None,
-                str(to) if to is not None else None)  # fmt: skip
+                str(to) if to is not None else None, runs)  # fmt: skip
 
 
-def wire_data(wire: Wire) -> dict[str, str]:
-    """A wire's plain form: `{from: VR1.1, hole: A1}`, `{from: .., lug: ..}`, `{from: ..}`."""
-    found = {"from": wire.lug}
+def wire_data(wire: Wire) -> dict[str, Any]:
+    """A wire's plain form: `{from: VR1.1, hole: A1}`, `{from: .., lug: ..}`, `{from: ..}`;
+    `runs: [[2, -1.3]]` when its route was moved by hand (D-380)."""
+    found: dict[str, Any] = {"from": wire.lug}
     if wire.hole is not None:
         found["hole"] = hole_name(wire.hole)
     if wire.to is not None:
         found["lug"] = wire.to
+    if wire.runs:
+        found["runs"] = [[i, at] for i, at in wire.runs]
     return found
 
 

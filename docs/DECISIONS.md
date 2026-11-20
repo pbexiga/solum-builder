@@ -2219,7 +2219,7 @@ Calculators → *Filter* (`filterCalculator` in `web/tools.js`, `GET /api/tools/
 - **Kept as `runs` on the wire** (`BoardWire.runs`, v37, a no-op migration): `[[run number, where in holes]]`, run numbers as the router counts them, where across the run in holes (to a hundredth). Holes, not the page's drawing units, so the file doesn't depend on the drawing. Drawing only, like the route (D-379): the check never reads it.
 - **Where a dragged run lands** (`runAt`): over the board, the middle of the gap between holes it's in, never over a row of holes; beside the board, the half-hole grid the router uses.
 - **When the route changes shape** (a part moved to another side of the board), a stored run number past the route's middle runs is ignored, not refused. **Moving either end** of the wire (`rewire`) clears its runs: the old ones belonged to the old route.
-- Runs moved by hand are put back after the routing; the other wires are routed without knowing them (a moved run may lie along another wire: the user's choice).
+- **Wires moved by hand take precedence** (the user, 2026-11-20): they're routed first, their moved runs put where they were moved and marked taken, so the automatic wires go round them; and they're drawn on top, so where two wires are close a press grabs the one moved by hand. (First version, the same day: put back after the routing, the others not knowing them, so an automatic wire could lie along a moved run.)
 *Alternatives:* explicit corner points saved per wire (they break as soon as a part or end moves); a waypoint the route must pass through (harder to drag precisely, two bends to guess); offsets from the automatic position (they jump when another wire changes the lanes).
 
 **D-381 — Highlight rails: the supply's copper rose, ground's grey; labels with a thick dark edge** (2026-11-20) `build` `editor`
@@ -2227,3 +2227,7 @@ Calculators → *Filter* (`filterCalculator` in `web/tools.js`, `GET /api/tools/
 - **The server says which copper** (`Progress.rails`, by net, as runs like `shorted`): a joined group whose terminals all want one rail net; copper carrying another net too is a short's, not a rail's. The page only tints (no second copy of connectivity in the browser).
 - **Part labels readable over colour bands** (the user: "the fonts on the resistors make it hard to read the values"): a thick dark edge (1.5 units, round joins) under each label, semi-bold, the value in the main text colour, not the dimmer one.
 *Alternatives:* every net its own colour (the user: too much); the rails red (clashes with a short); a pill behind each label (needs measuring the text in the page; the edge reads as well).
+
+**D-382 — See-through on the toolbar and T, a little less faint** (2026-11-20) `build` `editor`
+- The user, 2026-11-20: parts semi-transparent "to see the holes they cover", not gone. See-through (D-378) was only in Settings: now also a **See-through** button beside *Copper side* (pressed while on) and the key **T**, all three the one setting, remembered per viewer. The bodies at 40 % (25 % before), their outlines, colour bands and labels kept.
+*Alternatives:* see-through only while a key is held (handy for a glance, but the user asked for a toggle and holding a key while dragging a part is awkward); a part's body faint only when hovered (hides the hole you're about to drop on as you move away).

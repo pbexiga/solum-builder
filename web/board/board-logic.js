@@ -470,25 +470,18 @@ let routed = null; // the last routes, kept while only a dragged run changes (D-
  * gaps between holes and each step costs more than beside it, so wires run round the
  * board's side and come in near their hole; bends and crossings cost a little, lying
  * along another wire a lot. Wires are routed in order, each keeping off those before it.
- * Loose: its short drop. The runs moved by hand (`runs`, D-380) are then put where they
- * were moved. Drawing only: a wire is still lug + hole (D-375).
+ * Loose: its short drop. The wires with runs moved by hand (`runs`, D-380) are routed
+ * first, those runs put where they were moved, so the others keep off them. Drawing only: a wire is still lug + hole (D-375).
  * @param {Array<WireLine | null>} lines @param {{columns: number, strips: number}} board
  * @param {Obstacles} [obstacles] @returns {Array<Array<[number, number]> | null>}
  */
 export function wireRoutes(lines, board, obstacles = { boxes: [], lines: [] }) {
-  const key = JSON.stringify([lines.map((l) => l && { ...l, runs: undefined }), board.columns, board.strips, obstacles]);
+  const key = JSON.stringify([lines, board.columns, board.strips, obstacles]);
   if (routed?.key !== key) routed = { key, routes: searchRoutes(lines, board, obstacles) };
-  return routed.routes.map((r, n) => {
-    if (!r) return null;
-    const route = r.map((p) => /** @type {[number, number]} */ ([...p]));
-    for (const [i, at] of lines[n]?.runs ?? []) {
-      if (i >= 1 && i <= route.length - 3) shiftRun(route, i, at * STEP); // else the route has changed shape: not that run any more
-    }
-    return route;
-  });
+  return routed.routes.map((r) => r && r.map((p) => /** @type {[number, number]} */ ([...p])));
 }
 
-/** The routes `wireRoutes` gives before any run moved by hand. @param {Array<WireLine | null>} lines @param {{columns: number, strips: number}} board @param {Obstacles} obstacles */
+/** The routes `wireRoutes` gives (uncached). @param {Array<WireLine | null>} lines @param {{columns: number, strips: number}} board @param {Obstacles} obstacles */
 function searchRoutes(lines, board, obstacles) {
   const half = STEP / 2;
   const edge = { left: -half, right: board.columns * STEP - half, top: -half, bottom: board.strips * STEP - half };
@@ -518,24 +511,42 @@ function searchRoutes(lines, board, obstacles) {
   /** which way the wires before use each point: 1 level, 2 upright, 3 both (a bend or a crossing) */
   const used = new Uint8Array(cols * rows);
   const DIRS = [[1, 0], [-1, 0], [0, 1], [0, -1]];
-  return lines.map((line) => {
+  // the wires moved by hand first, so the rest go round them (the user, 2026-11-20: they take precedence)
+  const order = lines.map((_, n) => n).sort((a, b) => Number(!lines[a]?.runs?.length) - Number(!lines[b]?.runs?.length));
+  /** @type {Array<Array<[number, number]> | null>} */
+  const found = lines.map(() => null);
+  for (const n of order) found[n] = routeOne(lines[n]);
+  return found;
+
+  /** One wire's route, its runs moved by hand put where they were moved, marked as taken. @param {WireLine | null} line */
+  function routeOne(line) {
     if (!line) return null;
     const { x1, y1, x2, y2 } = line;
-    if (line.loose) return [[x1, y1], [x2, y2]];
-    const start = node(x1, y1);
-    const goal = node(x2, y2);
+    if (line.loose) return /** @type {Array<[number, number]>} */ ([[x1, y1], [x2, y2]]);
     const into = line.hole ? -1 : 3; // into another lug: from below
-    const path = search(start, goal, into);
-    if (!path) return tidy([[x1, y1], [x1, y2], [x2, y2]]); // walled in: straight, as before
-    const points = path.map(xy);
+    const path = search(node(x1, y1), node(x2, y2), into);
+    /** @type {Array<[number, number]>} */
+    let points = path ? path.map(xy) : [[x1, y1], [x1, y2], [x2, y2]]; // walled in: straight, as before
     points[0] = [x1, y1];
     points[points.length - 1] = [x2, y2];
-    for (let k = 0; k < path.length; k++) {
-      const [a, b] = [path[k - 1], path[k + 1]];
-      for (const m of [a, b]) if (m !== undefined) used[path[k]] |= Math.abs(m - path[k]) === 1 ? 1 : 2;
+    points = tidy(points);
+    for (const [i, at] of line.runs ?? []) {
+      if (i >= 1 && i <= points.length - 3) shiftRun(points, i, at * STEP); // else the route has changed shape: not that run any more
     }
-    return tidy(points);
-  });
+    for (let k = 1; k < points.length; k++) take(points[k - 1], points[k]);
+    return points;
+  }
+
+  /** Mark the grid points from a to b (a level or upright run) as taken that way. @param {[number, number]} a @param {[number, number]} b */
+  function take(a, b) {
+    const level = a[1] === b[1];
+    const steps = Math.round(Math.abs(level ? b[0] - a[0] : b[1] - a[1]) / GRID);
+    for (let k = 0; k <= steps; k++) {
+      const t = steps ? k / steps : 0;
+      const n = node(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t);
+      if (n >= 0 && n < used.length) used[n] |= level ? 1 : 2;
+    }
+  }
 
   /**
    * The cheapest path from `start` (leaving it downward) to `goal` (arriving upward when

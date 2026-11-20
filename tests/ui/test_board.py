@@ -211,6 +211,23 @@ def test_highlight_rails_tints_the_supply_and_ground_copper(page: Page, base_url
     page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
 
 
+def test_see_through_from_its_button_or_t(page: Page, base_url: str) -> None:
+    """See-through (D-378) from the toolbar's button or T as well as Settings: the parts
+    faint, their outlines and labels kept; the button shows whether it's on."""
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    show_board(page)
+    button = page.locator("#board-see")
+    expect(button).to_have_attribute("aria-pressed", "false")
+    button.click()
+    expect(page.locator("#board .board.see-through")).to_have_count(1)
+    expect(button).to_have_attribute("aria-pressed", "true")
+    expect(page.locator("#board .board-label[data-ref='R1']")).to_be_visible()
+    page.keyboard.press("t")
+    expect(page.locator("#board .board.see-through")).to_have_count(0)
+    expect(button).to_have_attribute("aria-pressed", "false")
+    page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
+
+
 def test_the_board_size_changes_by_hand(
     page: Page, base_url: str, browser_errors: list[str]
 ) -> None:

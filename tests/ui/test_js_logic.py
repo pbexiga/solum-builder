@@ -1189,9 +1189,14 @@ def test_off_board_wires_are_routed_round_the_parts_and_hop_where_they_cross(js:
         const routes = b.wireRoutes([left, left2, lugs, null], board, obstacles);
         const moved = b.wireRoutes([{ ...left, runs: [[1, 4.5], [9, 1]] }, left2, lugs, null], board, obstacles)[0];
         const cross = b.wireHops([[[0, 0], [100, 0]], [[50, -40], [50, 40]]]);
-        const route = routes[0];
+        // a wire's level middle run moved by hand onto left's level run: left goes elsewhere
+        const level = (r) => r.findIndex((p, i) => i >= 1 && i <= r.length - 3 && p[1] === r[i + 1][1]);
+        const far = { x1: -40, y1: 25, x2: 80, y2: 30, loose: false, hole: true, box: jack };
+        const k = level(b.wireRoutes([left, far], board, obstacles)[1]);
+        const onto = routes[0][level(routes[0])][1];
+        const yielded = b.wireRoutes([left, { ...far, runs: [[k, onto / 10]] }], board, obstacles);
         return {
-          routes, moved, cross,
+          routes, moved, cross, yielded, k, onto,
           snaps: [b.runAt([[0, 0], [0, 30], [90, 30], [90, 40]], 1, [0, 47], board), b.runAt([[-60, 0], [-60, 10], [-23, 10], [-23, 40]], 2, [-23.4, 0], board)],
           path: b.routePath([[0, 0], [100, 0], [100, 50]], cross[0]),
           along: b.pointAlong([[0, 0], [10, 0], [10, 10]], 15),
@@ -1233,6 +1238,14 @@ def test_off_board_wires_are_routed_round_the_parts_and_hop_where_they_cross(js:
     assert (
         got["moved"][1][1] == 45 and got["moved"][2][1] == 45
     )  # run 1 put at 4.5 holes; run 9 ignored
+    # a wire moved by hand takes precedence: the automatic one keeps off its moved run
+    mine = got["yielded"][1]
+    k, onto = got["k"], got["onto"]
+    assert k >= 1 and mine[k][1] == mine[k + 1][1] == onto
+    lo, hi = sorted((mine[k][0], mine[k + 1][0]))
+    for a, b in runs(got["yielded"][0]):
+        if a[1] == b[1] == onto:
+            assert min(hi, max(a[0], b[0])) - max(lo, min(a[0], b[0])) <= 0
     assert got["snaps"] == [
         4.5,
         -2.5,

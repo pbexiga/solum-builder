@@ -70,6 +70,7 @@ export function boardActionFor(press) {
     case "c": return { action: "cuts" };
     case "k": return { action: "links" };
     case "p": return { action: "parts" };
+    case "t": return { action: "seeThrough" };
   }
   return null;
 }
@@ -126,6 +127,7 @@ export function hotkeyGroups() {
       { keys: "+ / −", does: "Longer or shorter legs" },
       { keys: "Del or Backspace", does: "Take the selected part back to the tray" },
       { keys: "P / C / K", does: "Place parts, make cuts, lay links" },
+      { keys: "T", does: "See-through: the parts faint, the holes under them showing" },
       { keys: "Esc", does: "Drop what's carried; back to placing parts" },
     ] },
     { title: "Elsewhere", rows: [

@@ -202,6 +202,12 @@ export function boardView(host, app) {
   trimButton.addEventListener("click", () => void resize("trim", "Trim the board"));
   wireButton.addEventListener("click", () => void wireForMe());
   acceptButton.addEventListener("click", () => void boardEdit({ kind: "suggested" }, acceptButton.textContent ?? "Make the suggested cuts and links"));
+  const seeButton = $("board-see");
+  seeButton.setAttribute("aria-pressed", String(settings.seeThrough));
+  seeButton.addEventListener("click", (e) => {
+    setSetting("seeThrough", !settings.seeThrough);
+    if (e.detail) seeButton.blur(); // clicked: the board's keys act again
+  });
   const flipButton = $("board-flip");
   flipButton.addEventListener("click", (e) => {
     canvas.flip((copper) => flipButton.setAttribute("aria-pressed", String(copper)));
@@ -810,18 +816,25 @@ export function boardView(host, app) {
     return h("div", { class: "board-stale" }, [h("span", {}, [text]), " ", clear]);
   }
 
+  /**
+   * A setting changed (its box, or See-through's button and T): remembered, the board drawn again.
+   * @param {keyof import("./board-logic.js").BoardSettings} key @param {boolean} on
+   */
+  function setSetting(key, on) {
+    settings = { ...settings, [key]: on };
+    remember(SETTINGS_KEY, settings);
+    seeButton.setAttribute("aria-pressed", String(settings.seeThrough));
+    draw();
+    fillPanes();
+  }
+
   /** Settings: the editor's settings, remembered per viewer; *Remove board* at the bottom once one is started. */
   function fillSettings() {
     const boxes = BOARD_SETTINGS.map((setting) => {
       const box = /** @type {HTMLInputElement} */ (h("input", { type: "checkbox", "data-setting": setting.key }));
       box.checked = settings[setting.key];
       box.disabled = !setting.acts;
-      box.addEventListener("change", () => {
-        settings = { ...settings, [setting.key]: box.checked };
-        remember(SETTINGS_KEY, settings);
-        draw();
-        fillPanes();
-      });
+      box.addEventListener("change", () => setSetting(setting.key, box.checked));
       const label = h("label", { class: setting.acts ? "board-setting" : "board-setting later" }, [box, " ", setting.label]);
       label.title = setting.acts ? setting.title : `${setting.title}. Comes with placing parts.`;
       return label;
@@ -865,6 +878,7 @@ export function boardView(host, app) {
         return true;
       }
       if (action === "parts" || action === "cuts" || action === "links") return setTool(action), true;
+      if (action === "seeThrough") return setSetting("seeThrough", !settings.seeThrough), true;
       if (action === "remove") {
         const ref = carry?.from === "board" ? carry.ref : selectedPlaced();
         if (!ref) return false;

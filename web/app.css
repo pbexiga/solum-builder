@@ -408,7 +408,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board .leg-name { display: none; font: 2.6px var(--font-mono); fill: var(--accent-hi); pointer-events: none; }
 #board .board-part:hover .leg-name { display: inline; }
 /* see-through: the bodies faint, the copper and cuts under them showing */
-#board .see-through .board-part .body, #board .see-through .band, #board .see-through .stripe { fill-opacity: 0.25; }
+#board .see-through .board-part .body, #board .see-through .band, #board .see-through .stripe { fill-opacity: 0.4; } /* faint, not gone: the outline and label stay (the user, 2026-11-20) */
 /* the copper side (D-378), mirrored: strips, cuts ✕ and each solder joint; nothing on the parts side */
 #board .copper .board-parts .body, #board .copper .board-parts .lead, #board .copper .board-parts .band,
 #board .copper .board-parts .stripe, #board .copper .board-parts .notch, #board .copper .board-parts .dot,
@@ -417,6 +417,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board .copper .strip { fill: color-mix(in srgb, var(--picked) 30%, transparent); }
 #board .copper .leg, #board .copper .link-end, #board .copper .far-end { fill: var(--silver); }
 .board-tools .board-flip { margin-left: 8px; border-radius: 4px; }
+.board-tools .board-see { margin-left: 4px; border-radius: 4px; }
 /* editing (D-374): the tools, a part carried, a link being laid, shorted copper */
 .board-tools { position: absolute; left: 12px; top: 12px; display: flex; gap: 0; }
 .board-tools[hidden] { display: none; }

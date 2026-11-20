@@ -284,9 +284,12 @@ export function boardCanvas(svg, app) {
     const wires = el("g", { class: "off-wires" }, root); // over the parts: a wire lies on top
     const routes = wireRoutes(off.wires.map((w) => w.line), board, wireObstacles(board, footprints, off.items));
     const hops = wireHops(routes);
-    off.wires.forEach(({ index, line, title, pad }, i) => {
+    const byHand = (/** @type {number} */ i) => Number(Boolean(off.wires[i].line.runs?.length));
+    const order = off.wires.map((_, i) => i).sort((a, b) => byHand(a) - byHand(b)); // moved by hand on top: pressed first (D-380)
+    for (const i of order) {
+      const { index, line, title, pad } = off.wires[i];
       const route = routes[i] ?? [[line.x1, line.y1], [line.x2, line.y2]];
-      const g = el("g", { class: ["off-wire", line.loose ? "loose" : "", pad ? "pad" : ""].filter(Boolean).join(" "), "data-wire": index }, wires);
+      const g = el("g", { class: ["off-wire", line.loose ? "loose" : "", pad ? "pad" : "", byHand(i) ? "by-hand" : ""].filter(Boolean).join(" "), "data-wire": index }, wires);
       el("path", { d: routePath(route, hops[i]), class: "wire" }, g);
       for (let run = 1; run < route.length - 2; run++) { // its middle runs, each moved by dragging (D-380)
         const [[ax, ay], [bx, by]] = [route[run], route[run + 1]];
@@ -296,7 +299,7 @@ export function boardCanvas(svg, app) {
       el("circle", { cx: gx, cy: gy, r: STEP * 0.16, class: "wire-end lug-end", "data-end": "lug" }, g);
       el("circle", { cx: line.x2, cy: line.y2, r: STEP * 0.22, class: "wire-end far-end", "data-end": "far" }, g);
       el("title", {}, g).textContent = title;
-    });
+    }
     el("g", { class: "ghost" }, root);
     if (fitting || !shown) fit();
     else apply();

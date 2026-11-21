@@ -264,6 +264,7 @@ export function boardCanvas(svg, app) {
       const [x1, y1] = holeXY(a);
       const [x2, y2] = holeXY(b);
       el("line", { x1, y1, x2, y2, class: "rat", "data-net": net }, guiding);
+      for (const [cx, cy] of [[x1, y1], [x2, y2]]) el("circle", { cx, cy, r: 0.9, class: "rat rat-end", "data-net": net }, guiding);
     }
     for (const [a, b] of guide.links) {
       const [x1, y1] = holeXY(a);

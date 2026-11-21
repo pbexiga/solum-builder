@@ -81,6 +81,7 @@
   --board-copper: color-mix(in srgb, var(--picked) 16%, transparent);
   --board-rail-supply: color-mix(in srgb, var(--sch-supply) 50%, transparent);  /* V+ / V- copper, Highlight rails (D-381): the supply's rose, apart from a short's red */
   --board-rail-ground: color-mix(in srgb, var(--text-3) 50%, transparent);      /* GND copper */
+  --board-rat: var(--sch-impedance);  /* the ratsnest: steel blue, apart from the copper, the green marks and the red cuts (D-377) */
   --board-hole: var(--surface-0);
   --scrim: rgba(18, 18, 16, 0.6);     /* behind a modal question (the save prompt) */
 

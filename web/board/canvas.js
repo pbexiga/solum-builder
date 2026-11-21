@@ -221,7 +221,8 @@ export function boardCanvas(svg, app) {
       for (const [x, y] of [[x1, y1], [x2, y2]]) el("circle", { cx: x, cy: y, r: STEP * 0.18, class: "link-end" }, g);
     }
     const items = el("g", { class: "off-items" }, root);
-    for (const { item, at } of off.items) drawItem(item, at, items, values, chosen[item.ref] ? "off-item chosen" : undefined, chosen[item.ref]);
+    const itemNames = el("g", { class: "off-labels" }); // a switch's name above it: over the wires, put in after them
+    for (const { item, at } of off.items) drawItem(item, at, items, values, chosen[item.ref] ? "off-item chosen" : undefined, chosen[item.ref], itemNames);
     if (rulers) {
       const ruled = el("g", { class: "rulers" }, root);
       const mark = (/** @type {"column" | "strip"} */ axis, /** @type {number} */ line, /** @type {number} */ x, /** @type {number} */ y, /** @type {string} */ text) => {
@@ -304,6 +305,7 @@ export function boardCanvas(svg, app) {
       el("circle", { cx: line.x2, cy: line.y2, r: STEP * 0.22, class: "wire-end far-end", "data-end": "far" }, g);
       el("title", {}, g).textContent = title;
     }
+    root.append(itemNames);
     el("g", { class: "ghost" }, root);
     if (fitting || !shown) fit();
     else apply();
@@ -325,8 +327,10 @@ export function boardCanvas(svg, app) {
    * the name above and each lug's label beside it.
    * @param {OffItem} item @param {Hole} at @param {Element} parent @param {boolean} values @param {string} [cls]
    * @param {string} [mark] why it's off the board when that's the builder's choice (D-385)
+   * @param {Element} [names] where a name drawn above the body goes (a layer over the wires,
+   *   so none crosses it); else with the part
    */
-  function drawItem(item, at, parent, values, cls = "off-item", mark = "") {
+  function drawItem(item, at, parent, values, cls = "off-item", mark = "", names) {
     const { body, lugs, wall } = itemShape(item, at);
     const g = el("g", { class: `${cls} off-${item.kind} off-shape-${item.shape}`, "data-item": item.ref, "data-refs": itemRefs(item).join(" ") }, parent);
     if (item.shape === "rotary") el("circle", { cx: body.x + body.w / 2, cy: body.y + body.h / 2, r: body.w / 2, class: "off-body" }, g);
@@ -338,7 +342,7 @@ export function boardCanvas(svg, app) {
       el("tspan", { x: body.x + body.w / 2, dy: value ? "-0.15em" : "0.35em", class: "ref" }, text).textContent = name;
       if (value) el("tspan", { x: body.x + body.w / 2, dy: "1.05em", class: "value" }, text).textContent = value;
     } else {
-      const text = el("text", { x: body.x + body.w / 2, y: body.y - STEP * 0.3, class: "off-label", "text-anchor": "middle" }, g);
+      const text = el("text", { x: body.x + body.w / 2, y: body.y - STEP * 0.3, class: "off-label", "text-anchor": "middle", "data-item": item.ref }, names ?? g);
       el("tspan", { class: "ref" }, text).textContent = name;
       if (value) el("tspan", { dx: "0.5em", class: "value" }, text).textContent = value;
     }

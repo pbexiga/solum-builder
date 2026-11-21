@@ -382,6 +382,8 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-drawing .off-item.selected .off-body { stroke: var(--sch-selected); stroke-width: 2.2; }
 .board-drawing .off-label { font: 3.2px var(--font-ui); fill: var(--text); pointer-events: none; }
 .board-drawing .off-label .value { font-family: var(--font-mono); fill: var(--text-2); }
+.board-drawing .off-labels .off-label { paint-order: stroke; stroke: var(--surface-0); stroke-width: 1.5px; stroke-linejoin: round; } /* a switch's name over the wires, edged */
+.board-drawing .copper .off-labels { display: none; }
 .board-drawing .lug { cursor: crosshair; }
 .board-drawing .lug-ring { fill: var(--board-base); stroke: var(--brass); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
 .board-drawing .lug:hover .lug-ring { stroke: var(--accent-hi); stroke-width: 2; }

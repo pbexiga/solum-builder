@@ -30,6 +30,7 @@
  */
 
 import { postJson } from "../api.js";
+import { ask } from "../editor/form.js";
 import { openMenu } from "../menus.js";
 import { h } from "../panels.js";
 import { reorderable } from "../panes.js";
@@ -38,7 +39,7 @@ import { latestOnly } from "../state.js";
 import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
 import { needsCard } from "./needs.js";
-import { BOARD_SETTINGS, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
+import { BOARD_SETTINGS, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, placedRows, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -72,6 +73,7 @@ import { BOARD_SETTINGS, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstP
 
 const BUTTON_TITLE = "Lay out a stripboard for this circuit";
 const SETTINGS_KEY = "solum.board"; // the editor's settings, kept by the server (D-311)
+const PLACED_KEY = "solum.boardPlaced"; // the tray shows the placed parts (kept by the server, D-311)
 const HINT = "Drag a part from the tray onto the board: Space turns it, F flips it, S stands it up. C makes cuts, K lays links. Drag from a pot's or jack's lug to a hole to wire it, a wire's middle to move it; right-click for more.";
 const POSE_MOVES = /** @type {PoseMove[]} */ (["turn", "flip", "stand", "longer", "shorter"]);
 const MOVE_KEYS = { turn: "Space", flip: "F", stand: "S", longer: "+", shorter: "−" };
@@ -89,6 +91,7 @@ export function boardView(host, app) {
   const sizeText = $("board-size-text");
   const trimButton = /** @type {HTMLButtonElement} */ ($("board-trim"));
   const wireButton = /** @type {HTMLButtonElement} */ ($("board-wire"));
+  const startButton = /** @type {HTMLButtonElement} */ ($("board-start"));
   const acceptButton = /** @type {HTMLButtonElement} */ ($("board-accept"));
   const needs = needsCard($("board-needs"));
   const button = $("board-button");
@@ -103,6 +106,7 @@ export function boardView(host, app) {
   let checked = null;
   const requests = latestOnly();
   let settings = readSettings(remembered(SETTINGS_KEY));
+  let showPlaced = remembered(PLACED_KEY) === true; // the tray's placed parts shown
 
   const tools = $("board-tools");
   /** @type {"parts" | "cuts" | "links"} */
@@ -201,6 +205,7 @@ export function boardView(host, app) {
   });
   trimButton.addEventListener("click", () => void resize("trim", "Trim the board"));
   wireButton.addEventListener("click", () => void wireForMe());
+  startButton.addEventListener("click", () => void startForMe());
   acceptButton.addEventListener("click", () => void boardEdit({ kind: "suggested" }, acceptButton.textContent ?? "Make the suggested cuts and links"));
   const seeButton = $("board-see");
   seeButton.setAttribute("aria-pressed", String(settings.seeThrough));
@@ -645,6 +650,33 @@ export function boardView(host, app) {
     }
   }
 
+  /**
+   * *Start for me* (D-387): an empty board laid out at once; one with parts on it asks
+   * first, Fill the rest or Start over. One undo step; what Fill the rest couldn't join is
+   * said on the bar.
+   */
+  async function startForMe() {
+    const placed = readBoard(app.circuit()?.stripboard).parts.length > 0;
+    const choice = !placed ? "over" : await ask({
+      title: "Start for me",
+      text: "Fill the rest keeps what you've placed and lays out the parts still in the tray below it. Start over lays out the whole board afresh, in place of what's on it now. Either is one step to undo.",
+      cancel: "cancel",
+      buttons: [
+        { label: "Start over", value: "over", kind: "aside" },
+        { label: "Cancel", value: "cancel" },
+        { label: "Fill the rest", value: "fill", kind: "primary" },
+      ],
+    });
+    if (choice === "cancel") return;
+    try {
+      const { stripboard, left } = await postJson("api/stripboard/start", { circuit: app.circuit(), fill: choice === "fill" });
+      app.editBoard(stripboard, choice === "fill" ? "Fill the rest" : "Start for me");
+      if (left.length) app.refuse(left.join(" "));
+    } catch (err) {
+      app.refuse(/** @type {Error} */ (err).message);
+    }
+  }
+
   /** Select a board part (a chip: its units) or a circuit part on both drawings. @param {string} ref */
   function selectPart(ref) {
     const refs = progress?.footprints[ref]?.refs ?? [ref];
@@ -717,6 +749,7 @@ export function boardView(host, app) {
     fitted ||= Boolean(drawn.columns && progress); // an empty board's size and the off-board parts come with the first check
     sizeText.textContent = sizeLine(board);
     trimButton.hidden = !started;
+    startButton.hidden = started && (!progress || (!progress.to_place.length && !progress.faults.length && progress.nets.every((n) => n.state === "done")));
     wireButton.hidden = !started || !progress || (!progress.wires_to_go.length && !progress.loose && progress.items.every((i) => isOut(i, board)));
     const suggestions = guide ? suggestionsLine(guide) : "";
     acceptButton.textContent = suggestions;
@@ -811,8 +844,10 @@ export function boardView(host, app) {
     const list = (where, title, count, body) => h("section", { class: "tray-section", "data-where": where }, [
       h("h3", {}, [title, " ", h("span", { class: "count" }, [String(count)])]), ...body,
     ]);
+    const placed = placedRows(progress, circuit, readBoard(circuit?.stripboard));
     $("board-tray-body").replaceChildren(
       ...(next ? [nextNote(next)] : []),
+      ...placedList(placed),
       list("board", "On the board", on, on
         ? groups.flatMap((g) => [h("p", { class: "board-subhead" }, [g.title]), h("ul", { class: "board-list" }, g.rows.map(row))])
         : [h("p", { class: "empty done" }, ["✓ Every part is on the board."])]),
@@ -841,6 +876,40 @@ export function boardView(host, app) {
     );
     fillSettings();
     if (next) $("board-tray-body").querySelector(`.board-list li[data-ref="${CSS.escape(next.ref)}"]`)?.classList.add("next");
+  }
+
+  /**
+   * The parts already placed, above the tray's lists, under a toggle remembered per
+   * viewer (hidden at first): those on the board by kind with the holes of their first
+   * and last legs, those off the board with how many lugs are wired; greyed, a click selects
+   * one on both drawings.
+   * @param {{on: import("./board-logic.js").TrayRow[], off: import("./board-logic.js").TrayRow[]}} placed
+   */
+  function placedList(placed) {
+    const count = placed.on.length + placed.off.length;
+    if (!count) return [];
+    const toggle = h("button", { type: "button", class: "placed-toggle", "aria-expanded": String(showPlaced) },
+      [`${showPlaced ? "▾ Hide" : "▸ Show"} placed (${count})`]);
+    toggle.addEventListener("click", () => {
+      showPlaced = !showPlaced;
+      remember(PLACED_KEY, showPlaced);
+      fillPanes();
+    });
+    if (!showPlaced) return [toggle];
+    const item = (/** @type {import("./board-logic.js").TrayRow} */ r) => {
+      const li = h("li", { class: "placed", "data-ref": r.item ?? r.ref }, [
+        h("span", { class: "ref" }, [r.ref]), " ", ...(r.value ? [h("span", { class: "value" }, [r.value]), " "] : []), h("span", { class: "at" }, [r.at ?? ""]),
+      ]);
+      const ref = r.item ? r.select : r.ref;
+      if (ref) {
+        li.title = "Click to select it";
+        li.addEventListener("click", () => (r.item ? app.select({ kind: "part", id: ref }) : selectPart(ref)));
+      }
+      return li;
+    };
+    const on = trayGroups(placed.on).flatMap((g) => [h("p", { class: "board-subhead" }, [g.title]), h("ul", { class: "board-list" }, g.rows.map(item))]);
+    const off = placed.off.length ? [h("p", { class: "board-subhead" }, ["Off the board"]), h("ul", { class: "board-list" }, placed.off.map(item))] : [];
+    return [toggle, h("section", { class: "tray-placed" }, [...on, ...off])];
   }
 
   /** *What to place next* (D-377): the part and why; a click picks it up. @param {{ref: string, why: string}} next */

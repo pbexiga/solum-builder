@@ -331,6 +331,13 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-tray .board-list { list-style: none; margin: 0; padding: 0; }
 .board-tray .board-list li { padding: 3px 2px; color: var(--text-2); border-radius: 3px; }
 .board-tray .board-list li.pickable { cursor: pointer; }
+.board-tray .tray-start { display: block; width: 100%; margin: 2px 0 8px; padding: 4px 8px; font: 12px var(--font-ui); }
+.board-tray .tray-start[hidden] { display: none; }
+.board-tray .placed-toggle { display: block; margin: 4px 0 2px; padding: 0 2px; background: none; border: none; color: var(--text-3); font: 12px var(--font-ui); cursor: pointer; }
+.board-tray .placed-toggle:hover { color: var(--text-2); }
+.board-tray .board-list li.placed { color: var(--text-3); cursor: pointer; }
+.board-tray .board-list li.placed .at { color: var(--text-3); }
+.board-tray .tray-placed { padding-bottom: 6px; border-bottom: 1px solid var(--border); }
 .board-tray .board-list li.pickable:hover { background: var(--surface-2); }
 .board-tray .board-list .ref { font-family: var(--font-mono); color: var(--text); margin-right: 6px; }
 .board-tray .board-list .value { font-family: var(--font-mono); margin-right: 6px; }

@@ -937,6 +937,26 @@ def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.M
     assert nothing.status_code == 422 and nothing.json()["message"].startswith("Nothing to suggest")
 
 
+def test_stripboard_start_lays_out_or_fills_the_board(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-387: Start over on an empty board, Fill the rest on one with parts; nothing to
+    fill is a 422 in words."""
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    over = c.post("/api/stripboard/start", json={"circuit": data}).json()
+    assert over["left"] == [] and set(over["stripboard"]["parts"]) >= {"Q1", "R1", "C4"}
+    started = {**data, "stripboard": over["stripboard"]}
+    assert c.post("/api/stripboard", json={"circuit": started}).json()["done"] is True
+    good = load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")
+    part = {**good, "parts": {k: v for k, v in good["parts"].items() if k != "R2"}}
+    body = {"circuit": {**data, "stripboard": part}, "fill": True}
+    filled = c.post("/api/stripboard/start", json=body).json()
+    assert filled["left"] == [] and filled["stripboard"]["parts"]["Q1"] == good["parts"]["Q1"]
+    full = c.post("/api/stripboard/start",
+                  json={"circuit": {**data, "stripboard": good}, "fill": True})  # fmt: skip
+    assert full.status_code == 422 and "Nothing to fill" in full.json()["message"]
+
+
 def test_stripboard_edit_puts_off_board_parts_and_wires(monkeypatch: pytest.MonkeyPatch) -> None:
     """D-375: an off-board part put beside the board, a wire drawn to a hole, moved to a
     lug, its route moved by hand (D-380), taken off; the part back to the tray takes its

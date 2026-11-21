@@ -705,3 +705,27 @@ def test_the_kept_board_is_exported_drawn_by_the_board_canvas(page: Page, base_u
         sheet.locator("#export-package").click()
     with zipfile.ZipFile(got.value.path()) as z:
         assert any(n.endswith("/stripboard.pdf") for n in z.namelist())
+
+
+def test_start_for_me_sits_in_the_tray_and_the_placed_parts_show_on_request(
+    page: Page, base_url: str
+) -> None:
+    """D-387: *Start for me* at the top of the tray lays an empty board out; the tray then
+    lists the placed parts (on the board and beside it) under *Show placed*, above its
+    lists; a click selects one."""
+    open_with_board(page, base_url, None)
+    page.locator("#board-button").click()
+    start = page.locator("#board-tray #board-start")
+    expect(start).to_be_visible()
+    start.click()
+    expect(page.locator("#board .board-part").first).to_be_visible()
+    expect(start).to_be_hidden()  # the board passes: nothing left to do
+    toggle = page.locator("#board-tray .placed-toggle")
+    expect(toggle).to_have_text("▸ Show placed (12)")  # 8 on the board, 4 beside it
+    expect(page.locator("#board-tray li.placed")).to_have_count(0)
+    toggle.click()
+    expect(page.locator("#board-tray li.placed")).to_have_count(12)
+    on_list = page.locator("#board-tray .tray-section[data-where='board']")
+    assert toggle.bounding_box()["y"] < on_list.bounding_box()["y"]  # above the lists
+    page.locator("#board-tray li.placed[data-ref='R1']").click()
+    expect(page.locator("#board .board-part[data-ref='R1']")).to_have_class(re.compile("selected"))

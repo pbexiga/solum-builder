@@ -140,6 +140,7 @@ from solum.stripboard.guidance import guidance
 from solum.stripboard.offboard import off_board_items
 from solum.stripboard.sheet import Drawings, lists_for, packaged_board, stripboard_page
 from solum.stripboard.size import Axis, SizeError, insert_line, remove_line, start_size, trim
+from solum.stripboard.start import StartError, start_for_me
 from solum.stripboard.wiring import WiringError, wire_for_me
 from solum.units import parse_value
 from solum.view import circuit_view
@@ -186,6 +187,14 @@ class PartRequest(BaseModel):
 
 class CircuitRequest(BaseModel):
     circuit: dict[str, Any]
+
+
+class BoardStartRequest(BaseModel):
+    """*Start for me* (D-387): `fill` keeps what's on the board and lays out the rest;
+    otherwise the whole board is laid out afresh."""
+
+    circuit: dict[str, Any]
+    fill: bool = False
 
 
 class BoardSizeRequest(BaseModel):
@@ -1215,6 +1224,21 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except WiringError as err:
             raise HTTPException(422, str(err)) from None
         return {"stripboard": layout_data(wired)}
+
+    @app.post("/api/stripboard/start")
+    def stripboard_start(req: BoardStartRequest) -> dict[str, Any]:
+        """*Start for me* (D-387): the open circuit's board laid out (Fill the rest or
+        Start over) and wired, and `left`: what Fill the rest couldn't join, in sentences
+        (none: the board passes the check). Nothing to do is a 422 saying why."""
+        circuit = parse_circuit(req.circuit)
+        table = footprint_table(settings.library_dir)
+        kept = circuit.stripboard
+        try:
+            made = start_for_me(kept.layout() if kept else None, circuit, models, table,
+                                fill=req.fill)  # fmt: skip
+        except StartError as err:
+            raise HTTPException(422, str(err)) from None
+        return {"stripboard": layout_data(made.layout), "left": list(made.left)}
 
     @app.post("/api/part")
     def part(req: PartRequest) -> dict[str, Any]:

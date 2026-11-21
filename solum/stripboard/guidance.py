@@ -342,7 +342,7 @@ def _why_stuck(r: Reading, k: _Linking, net: str, ga: list[int], gb: list[int],
             f"{hole_name(a)} to {hole_name(b)}, by {who}. {move}, {wire}")  # fmt: skip
 
 
-def _signal_order(circuit: Circuit, r: Reading) -> dict[str, int]:
+def signal_order(circuit: Circuit, r: Reading) -> dict[str, int]:
     """Each net's distance from the input along the signal path (unreached: none)."""
     start = r.ends.get("IN.out")
     return distances(start, signal_edges(circuit, r.nets)) if start else {}
@@ -360,7 +360,7 @@ def next_part(circuit: Circuit, r: Reading) -> Next | None:
     on_board: dict[str, list[Terminal]] = defaultdict(list)
     for t in sorted(holes, key=lambda t: (holes[t][1], holes[t][0])):
         on_board[r.expected[t]].append(t)
-    order = _signal_order(circuit, r)
+    order = signal_order(circuit, r)
     far = len(order) + 1
     rank = {"dip": 0, "sil": 0, "inline": 1}
 

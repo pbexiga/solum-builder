@@ -1028,6 +1028,39 @@ def test_the_board_tray_and_settings(js: Page) -> None:
     assert got["some"] == {**got["none"], "values": False}  # a garbled one at its default
 
 
+def test_the_tray_s_placed_parts(js: Page) -> None:
+    """The tray's placed parts, shown on request: each on the board with its value and the
+    holes of its first and last legs (a part gone from the circuit left out); each off-board
+    part beside the board with its lugs wired (a loose wire doesn't count)."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const progress = {
+          to_place: [],
+          items: [
+            { ref: 'VR1', name: 'VR1 (Gain)', kind: 'pot', value: 'B100k', details: 'linear (B)', lugs: [{ end: 'VR1.1' }, { end: 'VR1.2' }, { end: 'VR1.3' }] },
+            { ref: 'SW1', name: 'SW1', kind: 'switch', value: 'SPDT', details: '', lugs: [{ end: 'SW1.1' }] },
+          ],
+          footprints: {
+            R1: { shape: 'axial', kind: 'resistor', legs: ['1', '2'], refs: ['R1'] },
+            IC1: { shape: 'dip', kind: 'chip', legs: ['1','2','3','4','5','6','7','8'], refs: ['IC1A'] },
+          },
+        };
+        const circuit = { parts: [{ ref: 'R1', value: '4k7' }, { ref: 'IC1A', model: 'TL072' }] };
+        const board = b.readBoard({ size: [10, 10], parts: {
+          R1: { 1: 'C4', 2: 'C8' },
+          IC1: { 1: 'E2', 2: 'E3', 3: 'E4', 4: 'E5', 5: 'H5', 6: 'H4', 7: 'H3', 8: 'H2' },
+          R9: { 1: 'A1', 2: 'A5' },
+        }, wires: [{ from: 'VR1.2', hole: 'B1' }, { from: 'VR1.3' }] });
+        const rows = b.placedRows(progress, circuit, board);
+        return { on: rows.on.map(({ ref, value, at }) => [ref, value, at]), off: rows.off.map(({ ref, at, select }) => [ref, at, select]) };
+        """,
+    )
+    assert got["on"] == [["R1", "4k7", "C4–C8"], ["IC1", "TL072", "E2–H2"]]
+    assert got["off"] == [["VR1 (Gain)", "1 of 3 wired", "VR1"]]  # SW1 not out yet
+
+
 def test_the_board_size_offers_and_the_empty_board(js: Page) -> None:
     """D-372: a ruler mark's size changes; an empty board drawn at its starting size; the
     header line with the size in mm (D-373)."""

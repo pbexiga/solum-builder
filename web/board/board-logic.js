@@ -312,10 +312,10 @@ export function choiceMark(choice) {
 const SHAPE_WORDS = /** @type {Record<string, string>} */ ({ axial: "axial", radial: "radial", inline: "in a line", dip: "DIP", sil: "SIL" });
 
 /**
- * @typedef {{ref: string, value: string, shape: string, mark?: string, kind?: string, select?: string, item?: string}} TrayRow
+ * @typedef {{ref: string, value: string, shape: string, mark?: string, kind?: string, select?: string, item?: string, at?: string}} TrayRow
  *   `mark`: the footprint's shape, for the little drawing beside it; `select`: the
  *   circuit part a click selects; `item`: the off-board part
- *   it is, dragged out beside the board (D-375)
+ *   it is, dragged out beside the board (D-375); `at`: where a placed part sits
  */
 
 /**
@@ -323,12 +323,37 @@ const SHAPE_WORDS = /** @type {Record<string, string>} */ ({ axial: "axial", rad
  * @param {Progress} progress @param {any} circuit @returns {TrayRow[]}
  */
 export function trayRows(progress, circuit) {
-  return progress.to_place.map((ref) => {
-    const fp = progress.footprints[ref];
-    const pins = fp?.legs.length ?? 0;
-    const shape = fp ? (fp.shape === "dip" ? `DIP-${pins}` : SHAPE_WORDS[fp.shape] ?? fp.shape) : "";
-    return { ref, value: valueOf(circuit, ref, fp?.refs ?? [ref]), shape, mark: fp?.shape ?? "", kind: fp?.kind ?? "", select: ref };
+  return progress.to_place.map((ref) => trayRow(progress, circuit, ref));
+}
+
+/** @param {Progress} progress @param {any} circuit @param {string} ref @returns {TrayRow} */
+function trayRow(progress, circuit, ref) {
+  const fp = progress.footprints[ref];
+  const pins = fp?.legs.length ?? 0;
+  const shape = fp ? (fp.shape === "dip" ? `DIP-${pins}` : SHAPE_WORDS[fp.shape] ?? fp.shape) : "";
+  return { ref, value: valueOf(circuit, ref, fp?.refs ?? [ref]), shape, mark: fp?.shape ?? "", kind: fp?.kind ?? "", select: ref };
+}
+
+/**
+ * The tray's placed rows, shown on request: `on`, each part on the board (one gone from
+ * the circuit left out), its value and `at`, the holes of its first and last legs
+ * ("C4–C8"); `off`, each off-board part put out (beside the board), `at` how many of its lugs are
+ * wired.
+ * @param {Progress} progress @param {any} circuit @param {ReturnType<typeof readBoard>} board
+ * @returns {{on: TrayRow[], off: TrayRow[]}}
+ */
+export function placedRows(progress, circuit, board) {
+  const on = board.parts.filter((p) => progress.footprints[p.ref]).map((p) => {
+    const legs = progress.footprints[p.ref].legs.map((leg) => p.legs.find(([name]) => name === leg)?.[1]).filter(Boolean);
+    const ends = [legs[0], legs[legs.length - 1]].filter(Boolean).map((h) => holeName(/** @type {Hole} */ (h)));
+    return { ...trayRow(progress, circuit, p.ref), at: [...new Set(ends)].join("–") };
   });
+  const wired = new Set(board.wires.flatMap((w) => (w.hole || w.to ? [w.lug, ...(w.to ? [w.to] : [])] : [])));
+  const off = progress.items.filter((i) => isOut(i, board)).map((i) => {
+    const done = i.lugs.filter((l) => wired.has(l.end)).length;
+    return { ref: i.name, value: i.value, shape: i.details || i.kind, select: itemRefs(i)[0], item: i.ref, at: `${done} of ${i.lugs.length} wired` };
+  });
+  return { on, off };
 }
 
 /** The tray's groups, in the parts list's order (export.py's `ORDER`), each kind's heading. */

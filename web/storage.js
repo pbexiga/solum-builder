@@ -14,7 +14,7 @@
 import { request } from "./api.js";
 
 /** The keys the server keeps; `solum/settings_file.py` has the same list. */
-export const SERVER_KEYS = ["solum.theme", "solum.large", "solum.autorun", "solum.panes", "solum.panes.open", "solum.boardPanes", "solum.boardPanes.open", "solum.board"];
+export const SERVER_KEYS = ["solum.theme", "solum.large", "solum.autorun", "solum.panes", "solum.panes.open", "solum.boardPanes", "solum.boardPanes.open", "solum.board", "solum.boardPlaced"];
 
 /** @param {Storage | null} [storage] undefined: the browser's own */
 const storeOf = (storage) => (storage === undefined ? globalThis.localStorage : storage);

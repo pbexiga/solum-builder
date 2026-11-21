@@ -448,6 +448,48 @@ export function wireLine(wire, lugs) {
   return { ...start, x2: from.x, y2: from.y + LOOSE_DROP, loose: true, hole: false };
 }
 
+/**
+ * An off-board lug in words: "VR1 lug 2", "IN T", "Power V+".
+ * @param {Progress | null} progress @param {string} end @returns {string}
+ */
+export function lugWords(progress, end) {
+  const item = progress?.items.find((i) => i.lugs.some((l) => l.end === end));
+  const lug = item?.lugs.find((l) => l.end === end);
+  if (!item || !lug) return end;
+  const name = item.kind === "power" ? "Power" : item.ref;
+  return /^\d/.test(lug.label) ? `${name} lug ${lug.label}` : `${name} ${lug.label}`;
+}
+
+/**
+ * Each part moved on or off the board by choice, its mark's words (D-385).
+ * @param {Progress | null} progress @returns {Record<string, string>}
+ */
+export function chosenMarks(progress) {
+  /** @type {Record<string, string>} */
+  const marks = {};
+  for (const [ref, choice] of Object.entries(progress?.choices ?? {})) if (choice.moved) marks[ref] = choiceMark(choice);
+  return marks;
+}
+
+/**
+ * The off-board parts beside the board and their wires, as the canvas draws them (D-375):
+ * each part at its spot (the board's, else the server's default), each drawn wire with
+ * its title.
+ * @param {Progress | null} progress @param {Board} board
+ * @returns {{items: Array<{item: OffItem, at: Hole}>, wires: Array<{index: number, line: WireLine, title: string, pad: boolean}>}}
+ */
+export function offBoardDrawing(progress, board) {
+  if (!progress) return { items: [], wires: [] };
+  const lugs = lugPlaces(progress, board);
+  const shown = progress.items.filter((i) => isOut(i, board));
+  const wires = board.wires.flatMap((wire, index) => {
+    const line = wireLine(wire, lugs);
+    const far = wire.hole ? holeName(wire.hole) : wire.to ? lugWords(progress, wire.to) : "loose";
+    return line ? [{ index, line, title: `${lugWords(progress, wire.lug)} to ${far}: drag either end to move it`, pad: Boolean(wire.hole) }] : [];
+  });
+  return { items: shown.map((item) => ({ item, at: board.spots[item.ref] ?? progress.spots[item.ref] ?? /** @type {Hole} */ ([0, 0]) })), wires };
+}
+
 const CORNER = STEP * 0.25; // a bend's rounding
 export const HOP = STEP * 0.3; // a hop's radius, where a wire crosses another
 const GRID = STEP / 2; // wires run on a half-hole grid: on the board, along the gaps between holes

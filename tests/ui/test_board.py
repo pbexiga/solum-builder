@@ -5,6 +5,7 @@ Board button (D-370)."""
 
 import itertools
 import re
+import zipfile
 from typing import Any
 
 import pytest
@@ -677,3 +678,30 @@ def test_a_part_is_moved_between_the_tray_s_lists_by_choice(page: Page, base_url
     pot.hover()
     pot.locator(".where-move").click(force=True)  # greyed, yet a click says why
     expect(page.locator("#refusal")).to_contain_text("There's no board footprint for a pot yet.")
+
+
+def test_the_kept_board_is_exported_drawn_by_the_board_canvas(page: Page, base_url: str) -> None:
+    """P6e (D-386): File → Export's *Stripboard (PDF)* and the package carry the kept board,
+    drawn here on paper (parts side with the off-board parts, the board alone, the copper
+    side mirrored) with the column letters, without the guidance or grips."""
+    from tests.ui.test_editor import menu
+
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    target = page.evaluate("() => ({kind: 'circuit', id: location.hash.split('/').pop()})")
+    drawn = page.evaluate("async (t) => (await import('/export.js')).boardSvgs(t)", target)
+    board = drawn["board"]
+    assert set(board) == {"parts", "bare", "copper"}
+    for side in board.values():
+        assert 'class="' not in side and "viewBox=" in side and ">F<" in side  # a column letter
+        assert "Suggested" not in side and "drag either end" not in side
+    assert "VR1" in board["parts"] and "VR1" not in board["bare"]
+    assert ">R1<" in board["parts"] and ">R1<" not in board["copper"]  # labels on the parts side
+    menu(page, "file-menu", "menu-export")
+    sheet = page.locator("#export")
+    with page.expect_download() as got:
+        sheet.locator("#export-stripboard-pdf").click()
+    assert got.value.suggested_filename.endswith("stripboard.pdf")
+    with page.expect_download() as got:
+        sheet.locator("#export-package").click()
+    with zipfile.ZipFile(got.value.path()) as z:
+        assert any(n.endswith("/stripboard.pdf") for n in z.namelist())

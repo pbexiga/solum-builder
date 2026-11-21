@@ -273,4 +273,14 @@
   --sch-line: var(--ink);
   --sch-supply: #A0305A;
   --sch-type: var(--brass);
+  /* the board on paper (D-386): a white board with copper strips, as the light theme */
+  --surface-1: #FFFFFF;
+  --surface-2: #FFFFFF;
+  --border: var(--slate);
+  --accent: #2F6DB5;
+  --error: #B3402F;
+  --picked: #A65410;
+  --board-base: #FFFFFF;
+  --board-copper: color-mix(in srgb, #A65410 30%, transparent);
+  --board-hole: #FFFFFF;
 }

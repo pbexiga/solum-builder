@@ -38,7 +38,7 @@ import { latestOnly } from "../state.js";
 import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
 import { needsCard } from "./needs.js";
-import { BOARD_SETTINGS, boardRefOf, choiceMark, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
+import { BOARD_SETTINGS, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -339,14 +339,8 @@ export function boardView(host, app) {
     return progress ? lugPlaces(progress, boardNow()) : {};
   }
 
-  /** An off-board lug in words: "VR1 lug 2", "IN T", "Power V+". @param {string} end */
-  function lugWords(end) {
-    const item = progress?.items.find((i) => i.lugs.some((l) => l.end === end));
-    const lug = item?.lugs.find((l) => l.end === end);
-    if (!item || !lug) return end;
-    const name = item.kind === "power" ? "Power" : item.ref;
-    return /^\d/.test(lug.label) ? `${name} lug ${lug.label}` : `${name} ${lug.label}`;
-  }
+  /** An off-board lug in words. @param {string} end */
+  const lugWords = (end) => lugWordsOf(progress, end);
 
   /** Pick an off-board part up off the canvas, held where it was pressed. @param {string} ref @param {Hole} hole */
   function pickItem(ref, hole) {
@@ -458,7 +452,7 @@ export function boardView(host, app) {
    * @param {number} [index] @param {Array<[number, number]>} [runs]
    */
   function routes(index = -1, runs = []) {
-    const { wires, items } = offBoard();
+    const { wires, items } = offBoardDrawing(progress, boardNow());
     const lines = wires.map((w) => (w.index === index && w.line ? { ...w.line, runs } : w.line));
     const all = wireRoutes(lines, boardNow(), wireObstacles(boardNow(), progress?.footprints ?? {}, items));
     return { all, at: wires.findIndex((w) => w.index === index) };
@@ -515,28 +509,6 @@ export function boardView(host, app) {
     if (!move) return;
     if (move.why) return void app.refuse(move.why);
     void boardEdit({ kind: "where", ref, to: move.to }, move.edit);
-  }
-
-  /** Each part moved on or off the board by choice, its mark's words (D-385). */
-  function chosenMarks() {
-    /** @type {Record<string, string>} */
-    const marks = {};
-    for (const [ref, choice] of Object.entries(progress?.choices ?? {})) if (choice.moved) marks[ref] = choiceMark(choice);
-    return marks;
-  }
-
-  /** The off-board parts beside the board and their wires, as the canvas draws them. */
-  function offBoard() {
-    if (!progress) return { items: [], wires: [] };
-    const board = boardNow();
-    const lugs = lugPlaces(progress, board);
-    const shown = progress.items.filter((i) => isOut(i, board));
-    const wires = board.wires.flatMap((wire, index) => {
-      const line = wireLine(wire, lugs);
-      const far = wire.hole ? holeName(wire.hole) : wire.to ? lugWords(wire.to) : "loose";
-      return line ? [{ index, line, title: `${lugWords(wire.lug)} to ${far}: drag either end to move it`, pad: Boolean(wire.hole) }] : [];
-    });
-    return { items: shown.map((item) => ({ item, at: board.spots[item.ref] ?? progress?.spots[item.ref] ?? /** @type {Hole} */ ([0, 0]) })), wires };
   }
 
   /** Nothing carried any more. */
@@ -739,7 +711,7 @@ export function boardView(host, app) {
     const guide = guidanceNow();
     svg.dataset.rats = settings.rats ? "all" : "focus";
     canvas.draw(drawn, progress?.footprints ?? {}, circuit, {
-      fit: !fitted, values: settings.values, rulers: started, fixed: !settings.grow, shorted: checked === circuit ? progress?.shorted ?? [] : [], rails: settings.rails && checked === circuit ? progress?.rails ?? {} : {}, off: offBoard(), seeThrough: settings.seeThrough, chosen: chosenMarks(),
+      fit: !fitted, values: settings.values, rulers: started, fixed: !settings.grow, shorted: checked === circuit ? progress?.shorted ?? [] : [], rails: settings.rails && checked === circuit ? progress?.rails ?? {} : {}, off: offBoardDrawing(progress, board), seeThrough: settings.seeThrough, chosen: chosenMarks(progress),
       guide: guide ? { rats: guide.ratsnest, cuts: guide.cuts, links: guide.links } : undefined,
     });
     fitted ||= Boolean(drawn.columns && progress); // an empty board's size and the off-board parts come with the first check

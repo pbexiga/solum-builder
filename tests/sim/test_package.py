@@ -54,7 +54,7 @@ def test_the_tone_bender_package_holds_every_output(client: TestClient) -> None:
 def test_a_drawing_that_isnt_one_is_refused(client: TestClient) -> None:
     got = client.post("/api/export/starter/ts808/package.zip", json={"svg": "<svg>no size</svg>"})
     assert got.status_code == 422, got.text
-    assert "schematic drawing" in got.json()["message"]
+    assert "drawing of the circuit" in got.json()["message"]
 
 
 STARTERS = sorted((Path(__file__).resolve().parents[2] / "library" / "starters").glob("*.json"))
@@ -67,3 +67,55 @@ def test_every_starter_makes_a_whole_package(client: TestClient, path: Path) -> 
     assert got.status_code == 200, got.text
     names = {n.split("/", 1)[1] for n in zipfile.ZipFile(io.BytesIO(got.content)).namelist()}
     assert {"index.html", "circuit.json", "bias-sheet.pdf", "netlists/op.cir"} <= names
+
+
+REPO = Path(__file__).resolve().parents[2]
+BOARD = {"parts": SVG, "bare": SVG, "copper": SVG}
+
+
+def saved_with_board(client: TestClient, drop: str = "") -> str:
+    """The Rangemaster saved with P6a's hand-made board; `drop`: a part taken out of the
+    circuit afterwards, so the board is stale. Its id."""
+    from solum.stripboard.board import layout_data, layout_from_data
+    from solum.yamlio import load_yaml
+
+    circuit = json.loads((REPO / "library" / "starters" / "dallas-rangemaster.json").read_text())
+    board = load_yaml(REPO / "tests" / "fixtures" / "stripboard" / "rangemaster.yaml")
+    circuit["stripboard"] = layout_data(layout_from_data(board))
+    if drop:
+        circuit["parts"] = [p for p in circuit["parts"] if p["ref"] != drop]
+        circuit["wires"] = []
+    got = client.post("/api/circuits", json={"circuit": circuit, "name": f"Board {drop}"})
+    assert got.status_code == 200, got.text
+    return str(got.json()["circuit"]["id"])
+
+
+def package_names(client: TestClient, url: str) -> tuple[set[str], str]:
+    got = client.post(url, json={"svg": SVG, "board": BOARD})
+    assert got.status_code == 200, got.text
+    z = zipfile.ZipFile(io.BytesIO(got.content))
+    names = {n.split("/", 1)[1]: n for n in z.namelist()}
+    return set(names), z.read(names["index.html"]).decode()
+
+
+def test_a_kept_board_goes_in_the_package_and_a_stale_one_is_said(client: TestClient) -> None:
+    """P6e (D-386): the board re-checked against the circuit as saved."""
+    good = saved_with_board(client)
+    names, index = package_names(client, f"/api/export/circuit/{good}/package.zip")
+    assert "stripboard.pdf" in names and '<a href="stripboard.pdf">' in index
+    alone = client.post(f"/api/export/circuit/{good}/stripboard.pdf", json=BOARD)
+    assert alone.status_code == 200 and alone.content.startswith(b"%PDF")
+    stale = saved_with_board(client, drop="R2")
+    names, index = package_names(client, f"/api/export/circuit/{stale}/package.zip")
+    assert "stripboard.pdf" not in names
+    assert "<strong>Note</strong>: The stripboard layout doesn&#x27;t match the circuit" in index
+    refused = client.post(f"/api/export/circuit/{stale}/stripboard.pdf", json=BOARD)
+    assert refused.status_code == 422 and "R2" in refused.json()["message"]
+
+
+def test_no_board_kept_is_a_note_in_the_package(client: TestClient) -> None:
+    names, index = package_names(client, "/api/export/starter/ts808/package.zip")
+    assert "stripboard.pdf" not in names
+    assert "<strong>Note</strong>: No stripboard layout kept." in index
+    got = client.post("/api/export/starter/ts808/stripboard.pdf", json=BOARD)
+    assert got.status_code == 422 and got.json()["message"] == "No stripboard layout kept."

@@ -594,30 +594,46 @@ TEXT_MIN_MM = 2.0  # smaller than this (about 6 pt) is hard to read: go up a she
 TEXT_MAX_MM = 3.5  # a small circuit grows only until its text is this big
 
 
-def _view_box(svg: str) -> tuple[float, float]:
+def view_box(svg: str) -> tuple[float, float]:
+    """A drawing's width and height from its viewBox; ValueError when it has none."""
     found = re.search(r'viewBox="[-\d.e]+ [-\d.e]+ ([\d.e]+) ([\d.e]+)"', svg)
     if not found:
         raise ValueError("The drawing has no viewBox.")
     return float(found[1]), float(found[2])
 
 
-def schematic_sheet(width: float, height: float) -> tuple[str, float, float, float]:
-    """The sheet a drawing `width` by `height` (schematic units) goes on, its page size and
-    the scale (mm per unit): the smallest sheet where filling it keeps the text readable;
-    the largest when none does. Always one sheet: wires followed across pages are worse
-    than a larger sheet."""
-    for name, w, h in SHEETS:
-        room_w, room_h = w - 2 * SHEET_MARGIN, h - 2 * SHEET_MARGIN - TITLE_SPACE
-        scale = min(room_w / width, room_h / height, TEXT_MAX_MM / TEXT_UNITS)
-        if scale * TEXT_UNITS >= TEXT_MIN_MM or name == SHEETS[-1][0]:
-            return name, w, h, scale
+def fill_sheet(width: float, height: float, text_units: float, turns: tuple[bool, ...] = (False,),
+               title_space: float = TITLE_SPACE) -> tuple[str, float, float, float]:  # fmt: skip
+    """The sheet a drawing `width` by `height` (its own units, text `text_units` high) goes
+    on, its page size in mm and the scale (mm per unit): the smallest sheet where filling
+    it keeps the text at least `TEXT_MIN_MM`, growing no more than `TEXT_MAX_MM`; the
+    largest when none does. Each size is tried landscape, and portrait too when `turns`
+    has True, the way that fills it most. Always one sheet: a drawing followed across pages
+    is worse than a larger sheet (D-205, D-386)."""
+    for name, long, short in SHEETS:
+        best: tuple[float, float, float] | None = None
+        for portrait in turns:
+            w, h = (short, long) if portrait else (long, short)
+            room_w, room_h = w - 2 * SHEET_MARGIN, h - 2 * SHEET_MARGIN - title_space
+            scale = min(room_w / width, room_h / height, TEXT_MAX_MM / text_units)
+            if best is None or scale > best[2]:
+                best = (w, h, scale)
+        assert best is not None
+        if best[2] * text_units >= TEXT_MIN_MM or name == SHEETS[-1][0]:
+            return name, *best
     raise AssertionError("unreachable")
+
+
+def schematic_sheet(width: float, height: float) -> tuple[str, float, float, float]:
+    """The landscape sheet a schematic `width` by `height` (schematic units) goes on, its
+    page size and the scale (`fill_sheet`)."""
+    return fill_sheet(width, height, TEXT_UNITS)
 
 
 def schematic_page(circuit: Circuit, svg: str) -> str:
     """The schematic (the browser's drawing, D-205) filling one landscape sheet, with its
     title."""
-    width, height = _view_box(svg)
+    width, height = view_box(svg)
     sheet, page_w, page_h, scale = schematic_sheet(width, height)
     data = base64.b64encode(svg.encode("utf-8")).decode("ascii")
     size = f"width: {width * scale:.1f}mm; height: {height * scale:.1f}mm"

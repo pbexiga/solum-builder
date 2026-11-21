@@ -138,6 +138,7 @@ from solum.stripboard.edit import BoardEdit, EditError, EditKind, edit_layout
 from solum.stripboard.footprints import board_parts, board_refs, drawing_data
 from solum.stripboard.guidance import guidance
 from solum.stripboard.offboard import off_board_items
+from solum.stripboard.sheet import Drawings, lists_for, packaged_board, stripboard_page
 from solum.stripboard.size import Axis, SizeError, insert_line, remove_line, start_size, trim
 from solum.stripboard.wiring import WiringError, wire_for_me
 from solum.units import parse_value
@@ -370,11 +371,21 @@ class ReadyRowRequest(BaseModel):
     text: str = Limit(max_length=2000)
 
 
+class BoardDrawing(BaseModel):
+    """The kept board as the browser drew it of the last save (D-386): the parts side with
+    the off-board parts, without them (`bare`, for real size), the copper side."""
+
+    parts: str = Limit(max_length=SCHEMATIC_MAX)
+    bare: str = Limit(max_length=SCHEMATIC_MAX)
+    copper: str = Limit(max_length=SCHEMATIC_MAX)
+
+
 class PackageRequest(BaseModel):
-    """The build package (D-210): the schematic the browser drew of the last save, and the
-    Ready to build rows it showed."""
+    """The build package (D-210): the schematic the browser drew of the last save, its kept
+    board's drawings when it has one (D-386), and the Ready to build rows it showed."""
 
     svg: str = Limit(max_length=SCHEMATIC_MAX)
+    board: BoardDrawing | None = None
     ready: list[ReadyRowRequest] = Limit(default_factory=list, max_length=500)
     dismissed: int = Limit(0, ge=0)
 
@@ -1410,6 +1421,34 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(422, "That isn't a schematic drawing; export it again.") from None
         return pdf_download(drawn, f"{c.name} schematic.pdf")
 
+    def board_sheet(c: Circuit, drawn: BoardDrawing | None) -> tuple[str | None, str]:
+        """The kept board's page for the package (D-386), re-checked against the circuit as
+        saved, or why there's none (plain English). Raises ValueError for a drawing that
+        isn't one."""
+        table = footprint_table(settings.library_dir)
+        kept = packaged_board(c, models, table)
+        if kept.layout is None:
+            return None, kept.why
+        if drawn is None:
+            return None, "The stripboard's drawing didn't come with the export: export again."
+        lists = lists_for(kept.layout, c, models, table)
+        return stripboard_page(
+            c, Drawings(drawn.parts, drawn.bare, drawn.copper), lists, kept.nets
+        ), ""
+
+    @app.post("/api/export/{kind}/{cid}/stripboard.pdf")
+    def export_stripboard_pdf(kind: str, cid: str, drawn: BoardDrawing) -> Response:
+        """The kept board as PDF, from the browser's drawings of the last save (D-386); a
+        board that isn't kept or doesn't match the circuit is a 422 saying why."""
+        c = saved_circuit(kind, cid)
+        try:
+            made, why = board_sheet(c, drawn)
+        except ValueError:
+            raise HTTPException(422, "That isn't a board drawing; export it again.") from None
+        if made is None:
+            raise HTTPException(422, why)
+        return pdf_download(made, f"{c.name} stripboard.pdf")
+
     @app.get("/api/export/{kind}/{cid}/netlists.zip")
     def export_netlist_zip(kind: str, cid: str) -> Response:
         """The ngspice netlists (op, ac, tran) with models.txt and each model's .lib (D-206)."""
@@ -1482,9 +1521,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         ready = [ReadyRow(r.severity, r.text) for r in req.ready]
         dirs = (settings.web_dir, settings.library_dir / "wiring")
         try:
-            files = build_package(c, models, req.svg, simulated, ready, req.dismissed, dirs)
+            board = board_sheet(c, req.board)
+            files = build_package(c, models, req.svg, simulated, ready, req.dismissed, dirs,
+                                  board)  # fmt: skip
         except ValueError:
-            raise HTTPException(422, "That isn't a schematic drawing; export it again.") from None
+            raise HTTPException(
+                422, "That isn't a drawing of the circuit; export it again."
+            ) from None
         name = safe_file_name(f"{c.name} build package")
         return attachment(zip_files(files, folder=name), "application/zip", f"{name}.zip")
 

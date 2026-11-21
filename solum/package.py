@@ -47,6 +47,11 @@ CONTENTS = (
     ("schematic.svg", "The schematic as a drawing, to open in a browser or Inkscape."),
     ("bias-sheet.pdf", "What to set and measure: the trimmers, the DC on every pin, the current."),
     ("notes.pdf", "The description, the knobs and switches, the notes on the sheet."),
+    (
+        "stripboard.pdf",
+        "The stripboard layout, checked: the cuts, links and numbered off-board "
+        "wires, then both sides at real size.",
+    ),
     ("wiring.pdf", "Generic wiring: the footswitch, the jacks, the DC jack."),
     ("netlists/", "ngspice netlists (DC, frequency response, waveform) and every model's card."),
 )
@@ -59,9 +64,11 @@ def package_files(
     simulated: Simulated,
     web_dir: Path,
     wiring_dir: Path,
+    board_page: str | None = None,
 ) -> list[OutFile | tuple[str, bytes]]:
-    """Every file but the index: the circuit file, the PDFs, the CSV, the SVG, the netlists.
-    Raises ValueError for a drawing that isn't one (`schematic_page`)."""
+    """Every file but the index: the circuit file, the PDFs, the CSV, the SVG, the netlists;
+    `stripboard.pdf` from `board_page` when the kept board goes in (D-386). Raises
+    ValueError for a drawing that isn't one (`schematic_page`)."""
     lines = bom(circuit, models)
     files: list[OutFile | tuple[str, bytes]] = [
         OutFile("circuit.json", circuit_to_json(circuit)),
@@ -73,6 +80,8 @@ def package_files(
     if simulated.bias is not None:
         files.append(("bias-sheet.pdf", pdf(bias_page(circuit, simulated.bias), web_dir)))
     files.append(("notes.pdf", pdf(notes_page(circuit), web_dir)))
+    if board_page is not None:
+        files.append(("stripboard.pdf", pdf(board_page, web_dir)))
     files.append(("wiring.pdf", pdf(wiring_page(circuit, wiring_dir), web_dir)))
     files += [OutFile(f"netlists/{f.name}", f.text) for f in simulated.netlists]
     return files
@@ -122,10 +131,15 @@ def build_package(
     ready: list[ReadyRow],
     dismissed: int,
     dirs: tuple[Path, Path],
+    board: tuple[str | None, str] = (None, ""),
 ) -> list[OutFile | tuple[str, bytes]]:
     """The package's files, the index first. `dirs`: the web folder (fonts) and the wiring
-    drawings' folder."""
+    drawings' folder. `board`: the stripboard's page, or why there's none, a note under
+    Ready to build (D-386)."""
     web_dir, wiring_dir = dirs
-    files = package_files(circuit, models, svg, simulated, web_dir, wiring_dir)
-    index = index_page(circuit, [_name(f) for f in files], ready, dismissed, simulated.why_not)
+    board_page, board_why = board
+    files = package_files(circuit, models, svg, simulated, web_dir, wiring_dir, board_page)
+    notes = [ReadyRow("info", board_why)] if board_why else []
+    index = index_page(circuit, [_name(f) for f in files], [*ready, *notes], dismissed,
+                       simulated.why_not)  # fmt: skip
     return [OutFile("index.html", index), *files]

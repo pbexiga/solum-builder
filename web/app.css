@@ -361,75 +361,75 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board { flex: 1; width: 100%; min-height: 0; background-color: var(--surface-0); touch-action: none; user-select: none; cursor: default; }
 #board[hidden] { display: none; }
 #board.panning { cursor: grabbing; }
-#board .board-margin { fill: none; }
-#board .board-base { fill: var(--board-base); stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
-#board .strip { fill: var(--board-copper); }
-#board .hole { fill: var(--board-hole); }
-#board .hole.off { fill: var(--grid-dot); opacity: 0.45; }
-#board .board-fixed .hole.off { opacity: 0.18; } /* auto-grow off: the margin greyed (D-372) */
-#board .ruler { cursor: pointer; }
-#board .ruler-hit { fill: transparent; }
-#board .ruler text { font: 4px var(--font-mono); fill: var(--text-3); }
-#board .ruler:hover text { fill: var(--accent-hi); }
-#board .cut { stroke: var(--error); stroke-width: 1.5; vector-effect: non-scaling-stroke; fill: none; }
-#board .link { stroke: var(--sch-line); stroke-width: 1.2; }
-#board .link-end { fill: var(--sch-line); }
+.board-drawing .board-margin { fill: none; }
+.board-drawing .board-base { fill: var(--board-base); stroke: var(--border); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.board-drawing .strip { fill: var(--board-copper); }
+.board-drawing .hole { fill: var(--board-hole); }
+.board-drawing .hole.off { fill: var(--grid-dot); opacity: 0.45; }
+.board-drawing .board-fixed .hole.off { opacity: 0.18; } /* auto-grow off: the margin greyed (D-372) */
+.board-drawing .ruler { cursor: pointer; }
+.board-drawing .ruler-hit { fill: transparent; }
+.board-drawing .ruler text { font: 4px var(--font-mono); fill: var(--text-3); }
+.board-drawing .ruler:hover text { fill: var(--accent-hi); }
+.board-drawing .cut { stroke: var(--error); stroke-width: 1.5; vector-effect: non-scaling-stroke; fill: none; }
+.board-drawing .link { stroke: var(--sch-line); stroke-width: 1.2; }
+.board-drawing .link-end { fill: var(--sch-line); }
 /* off-board parts beside the board and their wires (D-375) */
-#board .off-item { cursor: grab; }
-#board .off-body { fill: var(--surface-1); stroke: var(--sch-line); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-#board .off-power .off-body { stroke-dasharray: 3 2; }
-#board .off-item.chosen .off-body, #board .board-part.chosen .body { stroke: var(--accent); stroke-dasharray: 4 2; }
-#board .off-item.selected .off-body { stroke: var(--sch-selected); stroke-width: 2.2; }
-#board .off-label { font: 3.2px var(--font-ui); fill: var(--text); pointer-events: none; }
-#board .off-label .value { font-family: var(--font-mono); fill: var(--text-2); }
-#board .lug { cursor: crosshair; }
-#board .lug-ring { fill: var(--board-base); stroke: var(--brass); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-#board .lug:hover .lug-ring { stroke: var(--accent-hi); stroke-width: 2; }
-#board .lug-label { font: 2.6px var(--font-mono); fill: var(--text-2); pointer-events: none; }
-#board .off-wire .wire { fill: none; stroke: var(--brass); stroke-width: 1.4; stroke-linecap: round; vector-effect: non-scaling-stroke; }
-#board .off-wire.loose .wire { stroke-dasharray: 3 2; }
-#board .off-wire path { pointer-events: none; }
-#board .off-wire .wire-run { stroke: transparent; stroke-width: 6; vector-effect: non-scaling-stroke; pointer-events: stroke; }
-#board .off-wire .wire-run.level { cursor: ns-resize; }
-#board .off-wire .wire-run.upright { cursor: ew-resize; }
-#board .ghost path.wire { fill: none; } /* only its ends are picked up: a press on the line reaches the part under it */
-#board .wire-end { fill: var(--brass); cursor: move; }
-#board .off-wire.loose .far-end { fill: var(--surface-2); stroke: var(--brass); stroke-width: 1; vector-effect: non-scaling-stroke; }
-#board .off-wire:hover .wire { stroke: var(--accent-hi); }
-#board .ghost .wire { stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 2 1.5; vector-effect: non-scaling-stroke; }
-#board .ghost .off-body { stroke: var(--accent); stroke-dasharray: 3 2; }
-#board .board-part { cursor: pointer; }
-#board .board-part .body { fill: var(--surface-2); stroke: var(--sch-line); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
-#board .board-part .lead { stroke: var(--sch-line); stroke-width: 1; }
-#board .board-part .leg { fill: var(--sch-line); }
-#board .board-part.selected .body { stroke: var(--sch-selected); stroke-width: 2.5; }
-#board .board-part.selected .lead, #board .board-part.selected .leg { stroke: var(--sch-selected); fill: var(--sch-selected); }
-#board .board-part.stale .leg { fill: var(--error); }
+.board-drawing .off-item { cursor: grab; }
+.board-drawing .off-body { fill: var(--surface-1); stroke: var(--sch-line); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.board-drawing .off-power .off-body { stroke-dasharray: 3 2; }
+.board-drawing .off-item.chosen .off-body, .board-drawing .board-part.chosen .body { stroke: var(--accent); stroke-dasharray: 4 2; }
+.board-drawing .off-item.selected .off-body { stroke: var(--sch-selected); stroke-width: 2.2; }
+.board-drawing .off-label { font: 3.2px var(--font-ui); fill: var(--text); pointer-events: none; }
+.board-drawing .off-label .value { font-family: var(--font-mono); fill: var(--text-2); }
+.board-drawing .lug { cursor: crosshair; }
+.board-drawing .lug-ring { fill: var(--board-base); stroke: var(--brass); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.board-drawing .lug:hover .lug-ring { stroke: var(--accent-hi); stroke-width: 2; }
+.board-drawing .lug-label { font: 2.6px var(--font-mono); fill: var(--text-2); pointer-events: none; }
+.board-drawing .off-wire .wire { fill: none; stroke: var(--brass); stroke-width: 1.4; stroke-linecap: round; vector-effect: non-scaling-stroke; }
+.board-drawing .off-wire.loose .wire { stroke-dasharray: 3 2; }
+.board-drawing .off-wire path { pointer-events: none; }
+.board-drawing .off-wire .wire-run { stroke: transparent; stroke-width: 6; vector-effect: non-scaling-stroke; pointer-events: stroke; }
+.board-drawing .off-wire .wire-run.level { cursor: ns-resize; }
+.board-drawing .off-wire .wire-run.upright { cursor: ew-resize; }
+.board-drawing .ghost path.wire { fill: none; } /* only its ends are picked up: a press on the line reaches the part under it */
+.board-drawing .wire-end { fill: var(--brass); cursor: move; }
+.board-drawing .off-wire.loose .far-end { fill: var(--surface-2); stroke: var(--brass); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.board-drawing .off-wire:hover .wire { stroke: var(--accent-hi); }
+.board-drawing .ghost .wire { stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 2 1.5; vector-effect: non-scaling-stroke; }
+.board-drawing .ghost .off-body { stroke: var(--accent); stroke-dasharray: 3 2; }
+.board-drawing .board-part { cursor: pointer; }
+.board-drawing .board-part .body { fill: var(--surface-2); stroke: var(--sch-line); stroke-width: 1.5; vector-effect: non-scaling-stroke; }
+.board-drawing .board-part .lead { stroke: var(--sch-line); stroke-width: 1; }
+.board-drawing .board-part .leg { fill: var(--sch-line); }
+.board-drawing .board-part.selected .body { stroke: var(--sch-selected); stroke-width: 2.5; }
+.board-drawing .board-part.selected .lead, .board-drawing .board-part.selected .leg { stroke: var(--sch-selected); fill: var(--sch-selected); }
+.board-drawing .board-part.stale .leg { fill: var(--error); }
 /* the realistic drawing (D-378): a resistor's beige body and colour bands, a diode's band, an
    electrolytic's − stripe, a chip's notch and pin-1 dot; each leg named on hover */
-#board .kind-resistor .body { fill: var(--band-body); }
-#board .band { stroke: none; pointer-events: none; }
-#board .band-black { fill: var(--band-black); } #board .band-brown { fill: var(--band-brown); }
-#board .band-red { fill: var(--band-red); } #board .band-orange { fill: var(--band-orange); }
-#board .band-yellow { fill: var(--band-yellow); } #board .band-green { fill: var(--band-green); }
-#board .band-blue { fill: var(--band-blue); } #board .band-violet { fill: var(--band-violet); }
-#board .band-grey { fill: var(--band-grey); } #board .band-white { fill: var(--band-white); }
-#board .band-gold { fill: var(--band-gold); } #board .band-silver, #board .band-cathode { fill: var(--band-silver); }
-#board .stripe { fill: var(--band-silver); opacity: 0.8; pointer-events: none; }
-#board .notch { fill: none; stroke: var(--sch-line); stroke-width: 1; vector-effect: non-scaling-stroke; }
-#board .dot { fill: var(--sch-line); }
+.board-drawing .kind-resistor .body { fill: var(--band-body); }
+.board-drawing .band { stroke: none; pointer-events: none; }
+.board-drawing .band-black { fill: var(--band-black); } .board-drawing .band-brown { fill: var(--band-brown); }
+.board-drawing .band-red { fill: var(--band-red); } .board-drawing .band-orange { fill: var(--band-orange); }
+.board-drawing .band-yellow { fill: var(--band-yellow); } .board-drawing .band-green { fill: var(--band-green); }
+.board-drawing .band-blue { fill: var(--band-blue); } .board-drawing .band-violet { fill: var(--band-violet); }
+.board-drawing .band-grey { fill: var(--band-grey); } .board-drawing .band-white { fill: var(--band-white); }
+.board-drawing .band-gold { fill: var(--band-gold); } .board-drawing .band-silver, .board-drawing .band-cathode { fill: var(--band-silver); }
+.board-drawing .stripe { fill: var(--band-silver); opacity: 0.8; pointer-events: none; }
+.board-drawing .notch { fill: none; stroke: var(--sch-line); stroke-width: 1; vector-effect: non-scaling-stroke; }
+.board-drawing .dot { fill: var(--sch-line); }
 
-#board .leg-name { display: none; font: 2.6px var(--font-mono); fill: var(--accent-hi); pointer-events: none; }
-#board .board-part:hover .leg-name { display: inline; }
+.board-drawing .leg-name { display: none; font: 2.6px var(--font-mono); fill: var(--accent-hi); pointer-events: none; }
+.board-drawing .board-part:hover .leg-name { display: inline; }
 /* see-through: the bodies faint, the copper and cuts under them showing */
-#board .see-through .board-part .body, #board .see-through .band, #board .see-through .stripe { fill-opacity: 0.4; } /* faint, not gone: the outline and label stay (the user, 2026-11-20) */
+.board-drawing .see-through .board-part .body, .board-drawing .see-through .band, .board-drawing .see-through .stripe { fill-opacity: 0.4; } /* faint, not gone: the outline and label stay (the user, 2026-11-20) */
 /* the copper side (D-378), mirrored: strips, cuts ✕ and each solder joint; nothing on the parts side */
-#board .copper .board-parts .body, #board .copper .board-parts .lead, #board .copper .board-parts .band,
-#board .copper .board-parts .stripe, #board .copper .board-parts .notch, #board .copper .board-parts .dot,
-#board .copper .board-labels, #board .copper .leg-name, #board .copper .links .link, #board .copper .off-items,
-#board .copper .off-wire .wire, #board .copper .wire-run, #board .copper .lug-end, #board .copper .off-wire:not(.pad), #board .copper .guide { display: none; }
-#board .copper .strip { fill: color-mix(in srgb, var(--picked) 30%, transparent); }
-#board .copper .leg, #board .copper .link-end, #board .copper .far-end { fill: var(--silver); }
+.board-drawing .copper .board-parts .body, .board-drawing .copper .board-parts .lead, .board-drawing .copper .board-parts .band,
+.board-drawing .copper .board-parts .stripe, .board-drawing .copper .board-parts .notch, .board-drawing .copper .board-parts .dot,
+.board-drawing .copper .board-labels, .board-drawing .copper .leg-name, .board-drawing .copper .links .link, .board-drawing .copper .off-items,
+.board-drawing .copper .off-wire .wire, .board-drawing .copper .wire-run, .board-drawing .copper .lug-end, .board-drawing .copper .off-wire:not(.pad), .board-drawing .copper .guide { display: none; }
+.board-drawing .copper .strip { fill: color-mix(in srgb, var(--picked) 30%, transparent); }
+.board-drawing .copper .leg, .board-drawing .copper .link-end, .board-drawing .copper .far-end { fill: var(--silver); }
 .board-tools .board-flip { margin-left: 8px; border-radius: 4px; }
 .board-tools .board-see { margin-left: 4px; border-radius: 4px; }
 /* editing (D-374): the tools, a part carried, a link being laid, shorted copper */
@@ -442,34 +442,34 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-tools button[aria-pressed="true"] { background: var(--info-bg); color: var(--text); border-color: var(--accent); position: relative; }
 #board[data-tool="cuts"], #board[data-tool="links"] { cursor: crosshair; }
 #board.carrying { cursor: grabbing; }
-#board .strip.shorted { fill: var(--error); opacity: 0.45; }
-#board .strip.rail-supply { fill: var(--board-rail-supply); }
-#board .strip.rail-ground { fill: var(--board-rail-ground); }
-#board .ghost { pointer-events: none; opacity: 0.6; }
-#board .ghost .body { fill: var(--surface-2); stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
-#board .ghost .lead { stroke: var(--accent); stroke-width: 1; }
-#board .ghost .leg { fill: var(--accent); }
-#board .ghost .link { stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 2 1.5; }
-#board .ghost .aim { fill: none; stroke: var(--accent); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-#board .link-hit { stroke: transparent; stroke-width: 5; }
+.board-drawing .strip.shorted { fill: var(--error); opacity: 0.45; }
+.board-drawing .strip.rail-supply { fill: var(--board-rail-supply); }
+.board-drawing .strip.rail-ground { fill: var(--board-rail-ground); }
+.board-drawing .ghost { pointer-events: none; opacity: 0.6; }
+.board-drawing .ghost .body { fill: var(--surface-2); stroke: var(--accent); stroke-width: 1.5; stroke-dasharray: 3 2; vector-effect: non-scaling-stroke; }
+.board-drawing .ghost .lead { stroke: var(--accent); stroke-width: 1; }
+.board-drawing .ghost .leg { fill: var(--accent); }
+.board-drawing .ghost .link { stroke: var(--accent); stroke-width: 1.4; stroke-dasharray: 2 1.5; }
+.board-drawing .ghost .aim { fill: none; stroke: var(--accent); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.board-drawing .link-hit { stroke: transparent; stroke-width: 5; }
 /* guidance (D-377): the ratsnest, a carried part's marked holes, suggested cuts and links faded */
-#board .rat { stroke: var(--board-rat); stroke-width: 2; stroke-dasharray: 6 4; stroke-linecap: round; vector-effect: non-scaling-stroke; pointer-events: none; }
-#board .rat-end { fill: var(--board-rat); stroke: none; }
-#board .rat.lit { stroke: var(--accent-hi); stroke-width: 3; }
-#board .rat-end.lit { fill: var(--accent-hi); stroke: none; }
+.board-drawing .rat { stroke: var(--board-rat); stroke-width: 2; stroke-dasharray: 6 4; stroke-linecap: round; vector-effect: non-scaling-stroke; pointer-events: none; }
+.board-drawing .rat-end { fill: var(--board-rat); stroke: none; }
+.board-drawing .rat.lit { stroke: var(--accent-hi); stroke-width: 3; }
+.board-drawing .rat-end.lit { fill: var(--accent-hi); stroke: none; }
 #board[data-rats="focus"] .rat:not(.lit) { display: none; } /* Ratsnest lines: all off: only the part in focus's */
-#board .ghost .mark { fill: none; stroke: var(--ok); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
-#board .suggested { cursor: pointer; opacity: 0.4; }
-#board .suggested:hover { opacity: 0.9; }
-#board .suggested-link { stroke: var(--sch-line); stroke-width: 1.2; stroke-dasharray: 2 1.5; }
-#board .suggested-cut { stroke: var(--error); stroke-width: 1.5; vector-effect: non-scaling-stroke; fill: none; }
-#board .suggest-hit { fill: transparent; }
+.board-drawing .ghost .mark { fill: none; stroke: var(--ok); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
+.board-drawing .suggested { cursor: pointer; opacity: 0.4; }
+.board-drawing .suggested:hover { opacity: 0.9; }
+.board-drawing .suggested-link { stroke: var(--sch-line); stroke-width: 1.2; stroke-dasharray: 2 1.5; }
+.board-drawing .suggested-cut { stroke: var(--error); stroke-width: 1.5; vector-effect: non-scaling-stroke; fill: none; }
+.board-drawing .suggest-hit { fill: transparent; }
 #board[data-tool="links"] .board-link { cursor: pointer; }
 #board[data-tool="links"] .board-link:hover .link { stroke: var(--error); }
 .board-tray .board-list li.carriable { cursor: grab; touch-action: none; user-select: none; }
-#board .board-label { font: 600 3.2px var(--font-ui); fill: var(--text); pointer-events: none; paint-order: stroke; stroke: var(--surface-0); stroke-width: 1.5px; stroke-linejoin: round; } /* a thick dark edge: readable over colour bands and light bodies */
-#board .board-label .value { font-family: var(--font-mono); font-weight: 500; fill: var(--text); }
-#board .board-label.selected .ref { fill: var(--sch-selected); }
+.board-drawing .board-label { font: 600 3.2px var(--font-ui); fill: var(--text); pointer-events: none; paint-order: stroke; stroke: var(--surface-0); stroke-width: 1.5px; stroke-linejoin: round; } /* a thick dark edge: readable over colour bands and light bodies */
+.board-drawing .board-label .value { font-family: var(--font-mono); font-weight: 500; fill: var(--text); }
+.board-drawing .board-label.selected .ref { fill: var(--sch-selected); }
 .board-panels .board-progress { margin: 0 0 8px; color: var(--text); }
 .board-panels .board-list { list-style: none; margin: 0; padding: 0; }
 .board-panels .board-list li { padding: 3px 0; border-bottom: 1px solid var(--border); color: var(--text-2); }

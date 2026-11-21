@@ -3,7 +3,8 @@
  * or open. The logic is export-logic.js's; everything is made on the server from the last save.
  */
 
-import { getJson } from "./api.js";
+import { getJson, postJson } from "./api.js";
+import { printableBoard } from "./board/printed.js";
 import { sheet } from "./editor/form.js";
 import { exportTarget, exportUrl, fileName, readyRows, savedUrl } from "./export-logic.js";
 import { h } from "./panels.js";
@@ -61,6 +62,16 @@ export async function exportSheet(open) {
     if (made.ok) save(await made.blob(), fileName(svg.name, "schematic.pdf"));
   });
   links.push(h("li", {}, [schematicPdf, h("span", { class: "hint-text" }, [" \u00b7 A4 landscape"])]));
+  const boardPdf = h("button", { type: "button", class: "link", id: "export-stripboard-pdf" }, ["Stripboard (PDF)"]);
+  const boardNote = h("span", { class: "hint-text", "aria-live": "polite" }, [" \u00b7 the kept board at real size, with its cuts, links and wires"]);
+  boardPdf.addEventListener("click", async () => {
+    const drawn = await boardSvgs(target);
+    if (!drawn.board) return void (boardNote.textContent = " \u00b7 No stripboard layout kept in the last save.");
+    const made = await fetch(`${base}/stripboard.pdf`, { method: "POST", body: JSON.stringify(drawn.board), headers: { "Content-Type": "application/json" } });
+    if (made.ok) save(await made.blob(), fileName(drawn.name, "stripboard.pdf"));
+    else boardNote.textContent = ` \u00b7 ${(await made.json()).message ?? made.statusText}`;
+  });
+  links.push(h("li", {}, [boardPdf, boardNote]));
   const checking = getJson(`${base}/check`).then((check) => ({ check, ...readyRows(check, open) }));
   const pack = h("button", { type: "button", class: "primary", id: "export-package" }, ["Build package (zip)"]);
   const packNote = h("p", { class: "hint-text", "aria-live": "polite" }, ["Everything below in one zip, with an index page and the circuit file."]);
@@ -68,8 +79,8 @@ export async function exportSheet(open) {
     pack.disabled = true;
     packNote.textContent = "Making the package\u2026";
     try {
-      const [svg, { rows, dismissed }] = await Promise.all([schematicSvg(target), checking]);
-      const body = { svg: svg.text, ready: rows.map((r) => ({ severity: r.severity, text: r.text })), dismissed };
+      const [svg, drawn, { rows, dismissed }] = await Promise.all([schematicSvg(target), boardSvgs(target), checking]);
+      const body = { svg: svg.text, board: drawn.board, ready: rows.map((r) => ({ severity: r.severity, text: r.text })), dismissed };
       const made = await fetch(`${base}/package.zip`, { method: "POST", body: JSON.stringify(body), headers: { "Content-Type": "application/json" } });
       if (!made.ok) throw new Error((await made.json()).message ?? made.statusText);
       save(await made.blob(), fileName(svg.name, "build package.zip"));
@@ -121,6 +132,19 @@ export const dismissedNote = (n) => (n ? [h("p", { class: "hint-text" }, [`${n} 
 export async function schematicSvg(target) {
   const saved = await getJson(savedUrl(target));
   return { name: saved.circuit.name, text: printableSvg(saved, savedPositions(saved.circuit), saved.circuit.name) };
+}
+
+/**
+ * The last save's kept board, both sides drawn here with the board canvas (D-386); null
+ * when it keeps none.
+ * @param {{kind: string, id: string}} target
+ * @returns {Promise<{name: string, board: {parts: string, copper: string} | null}>}
+ */
+export async function boardSvgs(target) {
+  const { circuit } = await getJson(savedUrl(target));
+  if (!circuit.stripboard) return { name: circuit.name, board: null };
+  const progress = await postJson("api/stripboard", { circuit });
+  return { name: circuit.name, board: printableBoard(circuit, progress) };
 }
 
 /** Hand a file to the browser to save. @param {Blob} blob @param {string} name */

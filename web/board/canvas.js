@@ -158,18 +158,19 @@ export function boardCanvas(svg, app) {
   /**
    * Draw a board. `fit`: fit the view to it (the first time it's shown).
    * @param {Board} board @param {Record<string, Footprint>} footprints @param {any} circuit
-   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, off?: OffBoard, guide?: Guide, seeThrough?: boolean, chosen?: Record<string, string>}} [opts]
+   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, off?: OffBoard, guide?: Guide, seeThrough?: boolean, chosen?: Record<string, string>, paper?: boolean}} [opts]
    *   `values`: label parts with their values too; `rulers`: the columns' letters and the
    *   strips' numbers, each a menu of size changes (a board that's started); `fixed`: auto-grow
    *   off, the margin greyed (D-372); `shorted`: the copper carrying two nets, red (D-374);
    *   `rails`: the copper carrying only a rail, by net, tinted (Highlight rails, D-381);
    *   `off`: the off-board parts and wires (D-375); `guide`: the guidance (D-377);
    *   `seeThrough`: the parts' bodies faint, the copper and cuts under them showing (D-378);
-   *   `chosen`: the parts moved on or off the board by choice, each its mark's words (D-385)
+   *   `chosen`: the parts moved on or off the board by choice, each its mark's words (D-385);
+   *   `paper`: the board's own holes only, no margin round it (the package's drawing, D-386)
    */
-  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], rails = {}, off = { items: [], wires: [] }, guide = { rats: [], cuts: [], links: [] }, seeThrough = false, chosen = {} } = {}) {
-    drawn = [board, footprints, circuit, { values, rulers, fixed, shorted, rails, off, guide, seeThrough, chosen }];
-    holes = shownHoles(board);
+  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], rails = {}, off = { items: [], wires: [] }, guide = { rats: [], cuts: [], links: [] }, seeThrough = false, chosen = {}, paper = false } = {}) {
+    drawn = [board, footprints, circuit, { values, rulers, fixed, shorted, rails, off, guide, seeThrough, chosen, paper }];
+    holes = paper ? { c0: 0, s0: 0, c1: board.columns - 1, s1: board.strips - 1 } : shownHoles(board);
     beside = null;
     for (const { item, at } of off.items) {
       const { body } = itemShape(item, at);
@@ -510,6 +511,11 @@ export function boardCanvas(svg, app) {
     flip,
     /** Whether the copper side is up (D-378). */
     copper: () => copper,
+    /** Put the copper side up or not at once, no animation (the package's drawing, D-386). @param {boolean} up */
+    side(up) {
+      copper = up;
+      if (drawn) draw(...drawn);
+    },
     light,
     lightNets,
     fit,

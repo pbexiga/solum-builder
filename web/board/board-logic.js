@@ -266,7 +266,9 @@ export function boardRefOf(footprints, ref) {
  * @typedef {{leg: string, hole: string | null, net: string | null, reach: Array<{to: string, joined: boolean}>}} LegProgress
  * @typedef {{end: string, label: string, net: string}} Lug an off-board part's lug: `end` as wires name it
  * @typedef {{ref: string, name: string, kind: string, value: string, details: string, lugs: Lug[],
- *   size: [number, number]}} OffItem an off-board part beside the board (D-375), its drawing `size` in holes
+ *   shape: string, size: [number, number], places: Array<[number, number]>}} OffItem an off-board
+ *   part beside the board (D-375): drawn as `shape` (row, stomp, toggle, rotary, D-384), its
+ *   drawing `size` in holes, each lug's place in it in holes from its top-left hole (offboard.py)
  * @typedef {{to_place: string[], wires_to_go: string[], loose: number, items: OffItem[],
  *   spots: Record<string, Hole>, stock: string[],
  *   unplaceable: string[], nets: NetProgress[],
@@ -365,16 +367,19 @@ export function offBoardRows(progress, board) {
  */
 
 /**
- * An off-board part's drawing with its corner at hole `at`: its body, and its lugs in a
- * row along the bottom, `LUG_GAP` holes apart (offboard.py's `LUG_GAP`), in board units.
- * @param {OffItem} item @param {Hole} at @returns {{body: Box, lugs: LugAt[]}}
+ * An off-board part's drawing with its corner at hole `at`, in board units: its body, and
+ * each lug at its place (the server's `places`, D-384). A row of lugs hangs below its box,
+ * which wires keep off (`wall`); a switch's lugs are inside its outline, which wires may
+ * cross only at a cost, so they can leave a lug in the middle (D-384).
+ * @param {OffItem} item @param {Hole} at @returns {{body: Box, lugs: LugAt[], wall: boolean}}
  */
 export function itemShape(item, at) {
   const [w, h] = item.size;
   const [x0, y0] = holeXY(at);
-  const body = { x: x0 - STEP / 2, y: y0 - STEP / 2, w: w * STEP, h: (h - 1) * STEP };
-  const lugs = item.lugs.map((lug, i) => ({ end: lug.end, label: lug.label, x: x0 + (1 + 2 * i) * STEP, y: y0 + (h - 1) * STEP }));
-  return { body, lugs };
+  const row = item.shape === "row";
+  const body = { x: x0 - STEP / 2, y: y0 - STEP / 2, w: w * STEP, h: (row ? h - 1 : h) * STEP };
+  const lugs = item.lugs.map((lug, i) => ({ end: lug.end, label: lug.label, x: x0 + item.places[i][0] * STEP, y: y0 + item.places[i][1] * STEP }));
+  return { body, lugs, wall: row };
 }
 
 /**
@@ -421,11 +426,13 @@ const ON_BOARD = 3; // a step over the board costs this many beside it: wires ke
 const BEND = 4; // a bend costs this many steps
 const CROSS = 6; // crossing another wire
 const ON_TOP = 200; // lying along another wire, or through its bend: only when there's no other way
+const INSIDE = 6; // a step across a switch's outline costs this many beside it (D-384)
 
 /**
- * @typedef {{boxes: Box[], lines: Array<[number, number, number, number]>}} Obstacles what a
- *   wire keeps off (D-379): parts' bodies (board parts and off-board parts) and the leads of
- *   board parts, in board units
+ * @typedef {{boxes: Box[], lines: Array<[number, number, number, number]>, soft?: Box[]}} Obstacles
+ *   what a wire keeps off (D-379): parts' bodies (board parts and off-board parts) and the
+ *   leads of board parts, in board units; `soft`: switches' outlines, crossed only at a
+ *   cost (D-384)
  */
 
 /**
@@ -435,8 +442,9 @@ const ON_TOP = 200; // lying along another wire, or through its bend: only when 
  * @param {Array<{item: OffItem, at: Hole}>} items @returns {Obstacles}
  */
 export function wireObstacles(board, footprints, items) {
+  const shapes = items.map(({ item, at }) => itemShape(item, at));
   /** @type {Obstacles} */
-  const found = { boxes: items.map(({ item, at }) => itemShape(item, at).body), lines: [] };
+  const found = { boxes: shapes.filter((x) => x.wall).map((x) => x.body), lines: [], soft: shapes.filter((x) => !x.wall).map((x) => x.body) };
   for (const placed of board.parts) {
     const fp = footprints[placed.ref];
     if (!fp) continue;
@@ -485,8 +493,9 @@ export function wireRoutes(lines, board, obstacles = { boxes: [], lines: [] }) {
 function searchRoutes(lines, board, obstacles) {
   const half = STEP / 2;
   const edge = { left: -half, right: board.columns * STEP - half, top: -half, bottom: board.strips * STEP - half };
-  const xs = [edge.left, edge.right, ...obstacles.boxes.flatMap((b) => [b.x, b.x + b.w])];
-  const ys = [edge.top, edge.bottom, ...obstacles.boxes.flatMap((b) => [b.y, b.y + b.h])];
+  const soft = obstacles.soft ?? [];
+  const xs = [edge.left, edge.right, ...[...obstacles.boxes, ...soft].flatMap((b) => [b.x, b.x + b.w])];
+  const ys = [edge.top, edge.bottom, ...[...obstacles.boxes, ...soft].flatMap((b) => [b.y, b.y + b.h])];
   for (const l of lines) if (l) xs.push(l.x1, l.x2), ys.push(l.y1, l.y2);
   const pad = 4 * STEP;
   const x0 = Math.floor((Math.min(...xs) - pad) / GRID) * GRID;
@@ -502,7 +511,7 @@ function searchRoutes(lines, board, obstacles) {
   for (let n = 0; n < cols * rows; n++) {
     const [x, y] = xy(n);
     const over = x >= edge.left && x <= edge.right && y >= edge.top && y <= edge.bottom;
-    dear[n] = over ? 1 : 0;
+    dear[n] = soft.some((b) => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h) ? 2 : over ? 1 : 0;
     if (over && x % STEP === 0 && y % STEP === 0) wall[n] = 1; // a hole: only a wire's own end goes in
     if (obstacles.boxes.some((b) => x > b.x - 1 && x < b.x + b.w + 1 && y > b.y - 1 && y < b.y + b.h + 1)) wall[n] = 1;
     if (obstacles.lines.some(([ax, ay, bx, by]) => nearSegment(x, y, ax, ay, bx, by) < 1.5)) wall[n] = 1;
@@ -523,8 +532,9 @@ function searchRoutes(lines, board, obstacles) {
     if (!line) return null;
     const { x1, y1, x2, y2 } = line;
     if (line.loose) return /** @type {Array<[number, number]>} */ ([[x1, y1], [x2, y2]]);
-    const into = line.hole ? -1 : 3; // into another lug: from below
-    const path = search(node(x1, y1), node(x2, y2), into);
+    const inside = (/** @type {number} */ x, /** @type {number} */ y) => soft.some((b) => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h);
+    const into = line.hole || inside(x2, y2) ? -1 : 3; // into another lug: from below, but a switch's from any side (D-384)
+    const path = search(node(x1, y1), node(x2, y2), into, inside(x1, y1));
     /** @type {Array<[number, number]>} */
     let points = path ? path.map(xy) : [[x1, y1], [x1, y2], [x2, y2]]; // walled in: straight, as before
     points[0] = [x1, y1];
@@ -549,20 +559,27 @@ function searchRoutes(lines, board, obstacles) {
   }
 
   /**
-   * The cheapest path from `start` (leaving it downward) to `goal` (arriving upward when
-   * `into` is 3), as grid points; null when there's none.
-   * @param {number} start @param {number} goal @param {number} into
+   * The cheapest path from `start` (leaving it downward, or any way when `anyWay`: a lug
+   * inside a switch, D-384) to `goal` (arriving upward when `into` is 3), as grid points;
+   * null when there's none.
+   * @param {number} start @param {number} goal @param {number} into @param {boolean} anyWay
    */
-  function search(start, goal, into) {
+  function search(start, goal, into, anyWay) {
     const [gi, gj] = [goal % cols, Math.floor(goal / cols)];
     const cost = new Float64Array(cols * rows * 4).fill(Infinity);
     const from = new Int32Array(cols * rows * 4).fill(-1);
     const heap = new Heap();
-    const first = start + cols; // down from the lug
-    if (first >= cols * rows || wall[first]) return null;
-    cost[first * 4 + 2] = 1;
-    from[first * 4 + 2] = start * 4 + 2;
-    heap.push(first * 4 + 2, 1 + Math.abs(gi - (first % cols)) + Math.abs(gj - Math.floor(first / cols)));
+    const [si, sj] = [start % cols, Math.floor(start / cols)];
+    for (const e of anyWay ? [0, 1, 2, 3] : [2]) { // down from the lug, or any way
+      const [fi, fj] = [si + DIRS[e][0], sj + DIRS[e][1]];
+      if (fi < 0 || fj < 0 || fi >= cols || fj >= rows) continue;
+      const first = at(fi, fj);
+      if (first === goal) return [start, goal];
+      if (wall[first]) continue;
+      cost[first * 4 + e] = 1;
+      from[first * 4 + e] = start * 4 + e;
+      heap.push(first * 4 + e, 1 + Math.abs(gi - fi) + Math.abs(gj - fj));
+    }
     while (heap.size) {
       const s = heap.pop();
       const [n, d] = [Math.floor(s / 4), s % 4];
@@ -575,7 +592,7 @@ function searchRoutes(lines, board, obstacles) {
         const m = at(ni, nj);
         if (m === goal ? into >= 0 && e !== into : wall[m]) continue;
         const level = e < 2 ? 1 : 2;
-        let step = dear[m] ? ON_BOARD : 1;
+        let step = dear[m] === 2 ? INSIDE : dear[m] ? ON_BOARD : 1;
         if (e !== d) step += BEND;
         if (used[m] & level || (used[m] && e !== d)) step += ON_TOP;
         else if (used[m]) step += CROSS;

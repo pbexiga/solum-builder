@@ -13,7 +13,7 @@ from solum.guides import FootprintTable
 from solum.models import ModelLibrary
 from solum.stripboard.board import Hole, Layout, Wire
 from solum.stripboard.check import groups_by_net, joined_groups, read_layout
-from solum.stripboard.offboard import LUG_GAP, OffItem, default_spots
+from solum.stripboard.offboard import OffItem, default_spots
 from solum.stripboard.size import used_holes
 
 
@@ -22,12 +22,12 @@ class WiringError(ValueError):
 
 
 def _lug_holes(items: list[OffItem], spots: dict[str, Hole]) -> dict[str, tuple[float, float]]:
-    """Where each lug is drawn, in holes (offboard's drawing: lugs along the bottom)."""
+    """Where each lug is drawn, in holes (`OffItem.places` from its spot)."""
     found: dict[str, tuple[float, float]] = {}
     for item in items:
         column, strip = spots[item.ref]
-        for i, lug in enumerate(item.lugs):
-            found[lug.end] = (column + 1 + LUG_GAP * i, strip + item.size[1] - 1)
+        for lug, (dx, dy) in zip(item.lugs, item.places, strict=True):
+            found[lug.end] = (column + dx, strip + dy)
     return found
 
 

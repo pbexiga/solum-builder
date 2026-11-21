@@ -1103,7 +1103,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         """The Board view's progress check (D-368) of the open circuit's board (none yet:
         an empty one): what's left to place, each net, each leg, what's wrong now; with
         each board part's footprint to draw it by (`footprints`), each off-board part's
-        drawing's size in holes (`items[].size`, D-375), the size an empty board starts
+        drawing (`items[]`: its `shape`, `size` in holes and each lug's `places`, D-375,
+        D-384), the size an empty board starts
         at (`start_size`, D-372), and the guidance (`guidance`: marked holes, ratsnest,
         suggested cuts and links, what to place next, D-377)."""
         circuit = parse_circuit(req.circuit)
@@ -1112,8 +1113,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         table = footprint_table(settings.library_dir)
         found = progress(layout, circuit, models, table)
         parts = board_parts(circuit, models, table)[0]
-        items = [{**asdict(i), "size": i.size} for i in found.items]
-        return {**asdict(found), "items": items, "nets_done": found.nets_done,
+        return {**asdict(found), "nets_done": found.nets_done,
                 "footprints": drawing_data(parts, circuit),
                 "start_size": list(start_size(parts)),
                 "guidance": asdict(guidance(layout, circuit, models, table))}  # fmt: skip

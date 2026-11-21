@@ -1127,16 +1127,23 @@ def test_off_board_parts_lugs_and_wires_are_drawn_where_they_sit(js: Page) -> No
         js,
         """
         const b = await m('board/board-logic.js');
-        const pot = { ref: 'VR1', name: 'VR1', kind: 'pot', value: '', details: '', size: [7, 3],
+        const pot = { ref: 'VR1', name: 'VR1', kind: 'pot', value: '', details: '', shape: 'row',
+          size: [7, 3], places: [[1, 2], [3, 2], [5, 2]],
           lugs: ['1', '2', '3'].map((n) => ({ end: `VR1.${n}`, label: n, net: n })) };
-        const jack = { ref: 'IN', name: 'IN', kind: 'jack', value: '', details: '', size: [5, 3],
+        const jack = { ref: 'IN', name: 'IN', kind: 'jack', value: '', details: '', shape: 'row',
+          size: [5, 3], places: [[1, 2], [3, 2]],
           lugs: [{ end: 'IN.out', label: 'T', net: 'in' }, { end: 'IN.S', label: 'S', net: 'GND' }] };
+        const stomp = { ref: 'SW1', name: 'SW1', kind: 'switch', value: '', details: '', shape: 'stomp',
+          size: [7, 7], places: [[1, 3], [1, 1], [1, 5]],
+          lugs: ['A2', 'A1', 'A3'].map((n) => ({ end: `SW1A.${n}`, label: n, net: n })) };
         const board = b.readBoard({ size: [4, 4], off: { VR1: [0, -7] },
           wires: [{ from: 'VR1.1', hole: 'B2' }, { from: 'VR1.3', lug: 'IN.S' }, { from: 'VR1.2' }] });
         const progress = { items: [pot, jack], spots: { VR1: [9, 9], IN: [8, 0] } };
         const lugs = b.lugPlaces(progress, board);
         return {
           shape: b.itemShape(pot, [0, -7]),
+          stomp: b.itemShape(stomp, [0, 10]),
+          soft: b.wireObstacles({ parts: [] }, {}, [{ item: stomp, at: [0, 10] }, { item: pot, at: [0, -7] }]),
           lugs: Object.keys(lugs),
           wires: board.wires.map((w) => b.wireLine(w, lugs)),
           spot: b.spotFor(pot, [10, -5]),
@@ -1148,6 +1155,12 @@ def test_off_board_parts_lugs_and_wires_are_drawn_where_they_sit(js: Page) -> No
         """,
     )
     assert got["shape"]["body"] == {"x": -5, "y": -75, "w": 70, "h": 20}
+    # a footswitch (D-384): its lugs inside the whole square, which wires may cross at a cost
+    assert got["stomp"]["body"] == {"x": -5, "y": 95, "w": 70, "h": 70} and not got["stomp"]["wall"]
+    lugs = [(lug["x"], lug["y"]) for lug in got["stomp"]["lugs"]]
+    assert lugs == [(10, 130), (10, 110), (10, 150)]
+    assert got["soft"]["soft"] == [got["stomp"]["body"]]
+    assert got["soft"]["boxes"] == [got["shape"]["body"]]
     assert [(lug["x"], lug["y"]) for lug in got["shape"]["lugs"]] == [
         (10, -50),
         (30, -50),

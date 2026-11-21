@@ -13,6 +13,7 @@ from solum.circuit.build import CircuitBuilder
 from solum.circuit.connectivity import connect
 from solum.circuit.io import load_circuit
 from solum.circuit.schema import Circuit
+from solum.circuit.switches import KINDS
 from solum.guides import footprint_table
 from solum.models import load_models
 from solum.stripboard.board import (
@@ -33,7 +34,7 @@ from solum.stripboard.footprints import (
     drawing_data,
     leg_problem,
 )
-from solum.stripboard.offboard import default_spots, lug_nets, off_board_items
+from solum.stripboard.offboard import default_spots, lug_nets, off_board_items, switch_drawing
 from solum.stripboard.wiring import WiringError, wire_for_me
 from solum.yamlio import load_yaml
 
@@ -194,6 +195,45 @@ def test_a_dual_pot_is_one_off_board_part_with_its_gangs_lugs() -> None:
     assert [lug.end for lug in items["VR1"].lugs] == [
         "VR1A.1", "VR1A.2", "VR1A.3", "VR1B.1", "VR1B.2", "VR1B.3"]  # fmt: skip
     assert [lug.label for lug in items["VR1"].lugs][:2] == ["A1", "A2"]
+
+
+def test_a_footswitch_is_drawn_as_a_square_of_lugs_and_a_toggle_as_a_slim_one() -> None:
+    """D-384: poles across, each pole's lug 1 at the top, the common in the middle, 3 at
+    the bottom, two holes apart; labels as the pins (A1), not the pole twice (AA1)."""
+    klon = load_circuit(LIBRARY / "starters" / "klon-centaur-aion-built.json")
+    board, _ = board_parts(klon, MODELS, TABLE)
+    items = {i.ref: i for i in off_board_items(klon, connect(klon), board, MODELS)}
+    stomp, toggle = items["SW2"], items["SW1"]
+    assert (stomp.shape, stomp.size) == ("stomp", (7, 7))
+    assert (toggle.shape, toggle.size) == ("toggle", (7, 7))
+    places = {lug.label: at for lug, at in zip(stomp.lugs, stomp.places, strict=True)}
+    assert places["A1"] == (1, 1) and places["A2"] == (1, 3) and places["A3"] == (1, 5)
+    assert places["B1"] == (3, 1) and places["C3"] == (5, 5)
+    assert items["VR1"].shape == "row" and items["VR1"].places[:2] == ((1, 2), (3, 2))
+
+
+@pytest.mark.parametrize("kind", [k for k in KINDS.values() if k.group != "DIP"], ids=str)
+def test_every_switch_type_has_its_lugs_apart_inside_its_outline(kind: Any) -> None:
+    shape, (width, height), places = switch_drawing(kind)
+    assert len(places) == kind.poles * len(kind.lugs)
+    at = list(places.values())
+    assert all(1 <= x <= width - 2 and 1 <= y <= height - 2 for x, y in at), at
+    gaps = [abs(a[0] - b[0]) + abs(a[1] - b[1]) for i, a in enumerate(at) for b in at[i + 1 :]]
+    assert min(gaps, default=2) >= 1.5  # room for a wire between two lugs
+    assert (shape == "stomp") == (kind.group == "Footswitch")
+    assert (shape == "rotary") == (kind.look == "rotary")
+    if shape == "stomp":
+        assert width == height
+
+
+def test_footswitches_go_below_the_board_with_the_jacks_down_their_sides() -> None:
+    klon = load_circuit(LIBRARY / "starters" / "klon-centaur-aion-built.json")
+    board, _ = board_parts(klon, MODELS, TABLE)
+    items = off_board_items(klon, connect(klon), board, MODELS)
+    spots = default_spots(items, layout_from_data({**GOOD, "size": [20, 12]}))
+    assert spots["SW2"] == (6, 16)  # under the middle of a 20-column board, past its margin
+    assert spots["SW1"][1] < 0  # a toggle goes on top with the knobs
+    assert spots["IN"] == (24, 9) and spots["OUT"][1] == 9  # beside the board's bottom strips
 
 
 def test_default_spots_put_pots_on_top_input_right_output_left() -> None:

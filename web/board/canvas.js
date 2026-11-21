@@ -316,22 +316,34 @@ export function boardCanvas(svg, app) {
   }
 
   /**
-   * An off-board part: its body with its name, its lugs along the bottom, labelled.
+   * An off-board part: its body with its name, its lugs labelled. A row of lugs hangs
+   * below a box named inside; a switch is drawn as the real one from behind (D-384): a
+   * footswitch's rounded square, a toggle's slim box, a rotary's disc, the lugs inside,
+   * the name above and each lug's label beside it.
    * @param {OffItem} item @param {Hole} at @param {Element} parent @param {boolean} values @param {string} [cls]
    */
   function drawItem(item, at, parent, values, cls = "off-item") {
-    const { body, lugs } = itemShape(item, at);
-    const g = el("g", { class: `${cls} off-${item.kind}`, "data-item": item.ref, "data-refs": itemRefs(item).join(" ") }, parent);
-    el("rect", { x: body.x, y: body.y, width: body.w, height: body.h, rx: 2, class: "off-body" }, g);
-    const text = el("text", { x: body.x + body.w / 2, y: body.y + body.h / 2, class: "off-label", "text-anchor": "middle" }, g);
+    const { body, lugs, wall } = itemShape(item, at);
+    const g = el("g", { class: `${cls} off-${item.kind} off-shape-${item.shape}`, "data-item": item.ref, "data-refs": itemRefs(item).join(" ") }, parent);
+    if (item.shape === "rotary") el("circle", { cx: body.x + body.w / 2, cy: body.y + body.h / 2, r: body.w / 2, class: "off-body" }, g);
+    else el("rect", { x: body.x, y: body.y, width: body.w, height: body.h, rx: item.shape === "stomp" ? STEP * 0.8 : 2, class: "off-body" }, g);
     const value = values && item.value ? item.value : "";
-    el("tspan", { x: body.x + body.w / 2, dy: value ? "-0.15em" : "0.35em", class: "ref" }, text).textContent = item.kind === "power" ? item.name : item.ref;
-    if (value) el("tspan", { x: body.x + body.w / 2, dy: "1.05em", class: "value" }, text).textContent = value;
+    const name = item.kind === "power" ? item.name : item.ref;
+    if (wall) {
+      const text = el("text", { x: body.x + body.w / 2, y: body.y + body.h / 2, class: "off-label", "text-anchor": "middle" }, g);
+      el("tspan", { x: body.x + body.w / 2, dy: value ? "-0.15em" : "0.35em", class: "ref" }, text).textContent = name;
+      if (value) el("tspan", { x: body.x + body.w / 2, dy: "1.05em", class: "value" }, text).textContent = value;
+    } else {
+      const text = el("text", { x: body.x + body.w / 2, y: body.y - STEP * 0.3, class: "off-label", "text-anchor": "middle" }, g);
+      el("tspan", { class: "ref" }, text).textContent = name;
+      if (value) el("tspan", { dx: "0.5em", class: "value" }, text).textContent = value;
+    }
     el("title", {}, g).textContent = item.name;
     for (const lug of lugs) {
       const l = el("g", { class: "lug", "data-lug": lug.end }, g);
       el("circle", { cx: lug.x, cy: lug.y, r: STEP * 0.32, class: "lug-ring" }, l);
-      el("text", { x: lug.x, y: lug.y - STEP * 0.45, class: "lug-label", "text-anchor": "middle" }, l).textContent = lug.label;
+      const label = wall ? { x: lug.x, y: lug.y - STEP * 0.45, "text-anchor": "middle" } : { x: lug.x + STEP * 0.42, y: lug.y - STEP * 0.3, "text-anchor": "start" };
+      el("text", { ...label, class: "lug-label" }, l).textContent = lug.label;
       el("title", {}, l).textContent = `${item.ref} ${lug.label}: drag to a hole or another lug to wire it`;
     }
   }

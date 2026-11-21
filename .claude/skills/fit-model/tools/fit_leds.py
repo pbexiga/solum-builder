@@ -1,8 +1,10 @@
-"""Fit the three Kingbright LEDs (D-156) and write their .lib and .json (validation is
-measured afterwards by add_model.py's update mode). Run from the repo root."""
+"""Fit the Kingbright 5 mm LEDs (D-156) and write their .lib and .json (validation is
+measured afterwards by add_model.py's update mode). Run from the repo root:
+`fit_leds.py [ID ...]` fits only those parts (a fitter rewrites the whole record)."""
 
 import importlib.util
 import json
+import sys
 from pathlib import Path
 
 spec = importlib.util.spec_from_file_location("fit_models", "scripts/fit_models.py")
@@ -77,6 +79,24 @@ QW = [
     (3.4556, 27.3074),
     (3.5053, 30.0193),
 ]
+# WP7113SURDK, Forward Current vs. Forward Voltage (page 3), read from the PDF's vector
+# drawing by tools/plots.py (plot 1, curve 2399); checked against the page's picture.
+SURD = [
+    (1.7, 0.5351),
+    (1.724, 0.7703),
+    (1.749, 1.304),
+    (1.798, 2.911),
+    (1.818, 3.98),
+    (1.837, 5.585),
+    (1.861, 7.993),
+    (1.876, 9.297),
+    (1.891, 10.91),
+    (1.906, 12.79),
+    (1.921, 15.2),
+    (1.946, 20.0),
+    (1.966, 24.77),
+    (1.986, 29.83),
+]
 
 KB = "https://www.kingbrightusa.com/images/catalog/SPEC/"
 LIC = "Our own fit to the maker's datasheet curve (D-156): the values are Solum Builder's"
@@ -117,9 +137,25 @@ LEDS = [
         if_max=30e-3,
         ir=50e-6,
     ),
+    dict(
+        id="WP7113SURDK",
+        colour="red",
+        chem="AlGaInP hyper red",
+        pts=SURD,
+        url=KB + "WP7113SURDK.pdf",
+        sheet="Kingbright WP7113SURDK data sheet, Spec No DSAF1320, Rev. V.8A (03/26/2025)",
+        test=(20e-3, 1.95, 2.5),
+        cjo=None,
+        if_max=30e-3,
+        ir=10e-6,
+        retrieved="2026-11-21",
+    ),
 ]
+WANTED = set(sys.argv[1:])
 
 for led in LEDS:
+    if WANTED and led["id"] not in WANTED:
+        continue
     pts = [(v, ma / 1000) for v, ma in led["pts"] if ma >= 1.0]  # linear plot: below 1 mA is noise
     fitted, held = pts[0::2], pts[1::2]
     f = fm.fit_diode(fitted)
@@ -186,10 +222,11 @@ for led in LEDS:
         "manufacturer": "Kingbright",
         "source": {
             "url": led["url"],
-            "retrieved": "2026-10-29",
+            "retrieved": led.get("retrieved", "2026-10-29"),
             "licence": LIC,
             "original": "Solum Builder fit",
         },
+        "datasheet": led["url"],
         "fixes": [],
         "ratings": {"if_avg": led["if_max"], "vr_max": 5.0},
         "rating_sources": {

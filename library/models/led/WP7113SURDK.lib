@@ -1,0 +1,3 @@
+* Red 5 mm LED, AlGaInP hyper red (our fit to Kingbright WP7113SURDK's sheet)
+* Fitted by Solum Builder to Kingbright WP7113SURDK data sheet, Spec No DSAF1320, Rev. V.8A (03/26/2025), Forward Current vs. Forward Voltage (page 3), read from the PDF's vector drawing (D-156)
+.model WP7113SURDK D(is=3.287e-17 n=2.156 rs=2.318 bv=5 ibv=1e-05)

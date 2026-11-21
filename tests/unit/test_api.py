@@ -280,7 +280,9 @@ def test_models_by_type(monkeypatch: pytest.MonkeyPatch) -> None:
         "1N34A", "1N4001", "1N4148", "1N4738A", "1N4739A", "1N4742A", "1N5817", "1N60", "1N914",
         "1SS133", "BAT41", "BAT42", "BAT46", "BAT48"
     ]  # fmt: skip
-    assert models["led"] == ["APT1608SURCK", "WP7113GD", "WP7113QBC-D", "WP7113QWC-D"]
+    assert models["led"] == [
+        "APT1608SURCK", "WP7113GD", "WP7113QBC-D", "WP7113QWC-D", "WP7113SURDK"
+    ]  # fmt: skip
     assert models["chargepump"] == ["ICL7660", "LT1054", "MAX1044", "TC1044S"]
     assert models["mosfet"] == ["2N7000", "BS170", "LND150"]
     assert models["regulator"] == ["78L12"]

@@ -261,7 +261,7 @@ for i, pole in enumerate("abc"):
 stub("SW2A.A2", "in", -40)
 stub("SW2A.A1", "pcb-in", 40)
 part("LEDR1", R, (1720, 460), value="10k")  # Aion's LEDR
-part("LED1", "led", (1780, 460), model="APT1608SURCK")
+part("LED1", "led", (1780, 460), model="WP7113SURDK")
 label("V+", "LEDR1.1")
 wire("LEDR1.2", "LED1.A")
 wire("LED1.K", (1820, 460), "SW2B.B2")

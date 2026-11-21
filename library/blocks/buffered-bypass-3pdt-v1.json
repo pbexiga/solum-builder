@@ -139,7 +139,7 @@
         160
       ],
       "type": "led",
-      "model": "APT1608SURCK",
+      "model": "WP7113SURDK",
       "label": "Status"
     }
   ],

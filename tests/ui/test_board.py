@@ -607,3 +607,16 @@ def test_the_realistic_drawing_see_through_and_the_copper_side(page: Page, base_
     page.locator("#board-flip").click()
     expect(page.locator("#board-flip")).to_have_attribute("aria-pressed", "false")
     expect(page.locator("#board g.board.copper")).to_have_count(0)
+
+
+def test_a_join_no_link_can_make_is_explained_in_warnings(page: Page, base_url: str) -> None:
+    """The base at C4 and J4 on one strip, C2's leg between them (D-377): Warnings says why
+    no link can join them and what to move."""
+    board = {"size": [12, 9], "cuts": ["D4", "G4", "D8"],
+             "parts": {"R1": {"1": "C8", "2": "C4"}, "R2": {"1": "J4", "2": "J8"},
+                       "C2": {"1": "F4", "2": "F6"}}}  # fmt: skip
+    open_with_board(page, base_url, board)
+    show_board(page)
+    warning = page.locator("#board-warnings-body li.warning")
+    expect(warning).to_contain_text("a link only joins one strip to another")
+    expect(warning).to_contain_text("Move C2 off strip 4")

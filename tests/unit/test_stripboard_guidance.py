@@ -117,3 +117,42 @@ def test_next_follows_the_signal_and_prefers_what_joins_the_board() -> None:
     assert nxt.why.startswith("Next: C1. It joins ") and "(Q1.B)" in nxt.why
     rest = run(only("Q1", "R1", "C1", "C2", "C3", "C4", "R2")).next
     assert rest is not None and rest.ref == "R3"
+
+
+def test_a_net_on_one_strip_either_side_of_another_leg_is_explained() -> None:
+    """The base at C4 and J4, C2's leg at F4 between them, cut either side: no link can
+    join one strip to itself; the sentence says so and what to move."""
+    g = run({"size": [12, 9], "cuts": ["D4", "G4", "D8"],
+             "parts": {"R1": {"1": "C8", "2": "C4"}, "R2": {"1": "J4", "2": "J8"},
+                       "C2": {"1": "F4", "2": "F6"}}})  # fmt: skip
+    assert g.links == []
+    assert g.stuck == [
+        "Q1.B: R1's leg at C4 and R2's leg at J4 are both on strip 4, with C2's leg at F4 "
+        "between them, and a link only joins one strip to another. Move C2 off strip 4, or "
+        "join them with a wire across the top."
+    ]
+
+
+def test_a_piece_with_no_free_hole_is_explained() -> None:
+    """R1's base leg at A4 with the cut at B4 beside it: its copper is that one hole."""
+    g = run({"size": [6, 9], "cuts": ["B4"],
+             "parts": {"R1": {"1": "A8", "2": "A4"}, "R2": {"1": "E2", "2": "E6"}}})  # fmt: skip
+    assert len(g.stuck) == 1
+    assert g.stuck[0].startswith("Q1.B: nothing can join R1's leg at A4 to the rest")
+
+
+def test_a_blocked_link_names_what_is_in_the_way() -> None:
+    """The base on strips 4 and 6 shares columns B to D free; C2 lies across strip 5 between
+    them, its legs at B5 and D5, its body over C5."""
+    g = run({"size": [5, 9],
+             "parts": {"R1": {"1": "A8", "2": "A4"}, "R2": {"1": "E6", "2": "E2"},
+                       "C2": {"1": "B5", "2": "D5"}}})  # fmt: skip
+    assert g.stuck == [
+        "Q1.B: every link that would join R1's leg at A4 and R2's leg at E6 is blocked; the "
+        "shortest, B4 to B6, by C2's leg at B5. Move C2, or join them with a wire across the "
+        "top."
+    ]
+
+
+def test_nothing_is_stuck_when_the_suggestions_join_everything() -> None:
+    assert run({**GOOD, "cuts": [], "links": []}).stuck == []

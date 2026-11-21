@@ -975,9 +975,10 @@ export function linkFrom(from, to) {
 /**
  * @typedef {{net: string, a: Hole, b: Hole}} Strand a ratsnest line: two pieces of `net` not joined yet
  * @typedef {{marks: Record<string, Array<[number, number, number]>>, ratsnest: Strand[], cuts: Hole[],
- *   links: Array<[Hole, Hole]>, next: {ref: string, why: string} | null}} Guidance
+ *   links: Array<[Hole, Hole]>, stuck: string[], next: {ref: string, why: string} | null}} Guidance
  *   what `/api/stripboard` sends to guide the next step (guidance.py, D-377): each net's
- *   free copper as runs, the ratsnest, the suggested cuts and links, what to place next
+ *   free copper as runs, the ratsnest, the suggested cuts and links, a sentence per join no
+ *   suggested link makes (why, what to do), what to place next
  */
 
 /**

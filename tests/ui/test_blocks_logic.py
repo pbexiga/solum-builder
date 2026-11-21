@@ -41,10 +41,29 @@ def same_net_pairs(nets: Nets, pins: list[tuple[str, str]]) -> set[frozenset[tup
             if a < b and nets.net_of(*a) == nets.net_of(*b)}  # fmt: skip
 
 
-def check_paste(host: Circuit, block: Circuit, pasted: Circuit, refs: dict[str, str]) -> None:
+def stayed_put(js: Page, block: dict[str, Any], at: list[int], r: dict[str, Any]) -> bool:
+    """Whether the paste left the block where it was dropped (snapped) rather than moving it
+    to a clear spot: only then may it join the sheet (D-164)."""
+    kept = [p for p in block["parts"] if p["ref"] in r["refs"]]
+    if not kept:
+        return False
+    spot: list[int] = run(
+        js,
+        "const b = await m('editor/blocks.js'); const e = await m('editor/edit.js');"
+        "const a = b.blockAnchor(arg.block); const t = e.snapPoint(arg.at);"
+        "const p = arg.p.pos ?? [0, 0]; return [p[0] - a[0] + t[0], p[1] - a[1] + t[1]];",
+        {"block": {**block, "parts": kept}, "at": at, "p": kept[0]},
+    )
+    landed = next(p for p in r["circuit"]["parts"] if p["ref"] == r["refs"][kept[0]["ref"]])
+    return bool(landed.get("pos", [0, 0]) == spot)
+
+
+def check_paste(host: Circuit, block: Circuit, pasted: Circuit, refs: dict[str, str],
+                may_join: bool = False) -> None:  # fmt: skip
     """The block's nets come through the paste unchanged and touch nothing of the host's
     except by the supplies and GND. A part the host already has its one of (a DC jack
-    pasted twice) is left out, so isn't in `refs`."""
+    pasted twice) is left out, so isn't in `refs`. With `may_join` (the block stayed where
+    it was dropped), a block net may join one host net: a drop made to join (D-164, D-285)."""
     bn, pn, hn = connect(block), connect(pasted), connect(host)
     block_pins = [(r, pin) for r, pin in bn.by_pin if r in refs]
     moved = [(refs[r], pin) for r, pin in block_pins]
@@ -57,7 +76,11 @@ def check_paste(host: Circuit, block: Circuit, pasted: Circuit, refs: dict[str, 
         if bn.net_of(*pin) in GLOBAL:
             assert net == bn.net_of(*pin)
         else:
-            assert not host_pins & set(pn.members[net]), f"{pin} joined a host net {net}"
+            touched = host_pins & set(pn.members[net])
+            if may_join:  # a join, but never of two host nets through the block
+                assert len({hn.net_of(*p) for p in touched}) <= 1, f"{pin} joined host nets"
+            else:
+                assert not touched, f"{pin} joined a host net {net}"
     # the host's own nets are as they were
     for a in host_pins:
         assert pn.net_of(*a) in pn.members
@@ -117,10 +140,30 @@ def test_pasting_again_and_again_never_collides(js: Page, block: str, host: str,
     b = load("blocks", block)
     for i in range(times):
         before = parse_circuit(circuit)
-        r = paste(js, circuit, b, at=[at[0] + 400 * i, at[1]])
+        spot = [at[0] + 400 * i, at[1]]
+        r = paste(js, circuit, b, at=spot)
         assert not set(r["refs"].values()) & {p.ref for p in before.parts}
-        check_paste(before, parse_circuit(b), parse_circuit(r["circuit"]), r["refs"])
+        joins = stayed_put(js, b, spot, r)
+        check_paste(before, parse_circuit(b), parse_circuit(r["circuit"]), r["refs"], joins)
         circuit = r["circuit"]
+
+
+def test_a_pin_dropped_on_a_sheet_wire_joins_it(js: Page) -> None:
+    """D-285's note, found by Hypothesis: the Vref divider dropped a second time on the Klon
+    at (485, 205) has its divider's middle pin land on the Klon's long Vref wire, a T with
+    nothing else under the block. That's a drop made to join (D-164): it stays and joins."""
+    circuit = load("starters", "klon-centaur")
+    b = load("blocks", "vref-divider-v1")
+    first = paste(js, circuit, b, at=[85, 205])
+    check_paste(parse_circuit(circuit), parse_circuit(b), parse_circuit(first["circuit"]),
+                first["refs"])  # fmt: skip
+    second = paste(js, first["circuit"], b, at=[485, 205])
+    assert stayed_put(js, b, [485, 205], second)
+    nets = connect(parse_circuit(second["circuit"]))
+    mid = nets.net_of(second["refs"]["R1"], "2")
+    assert {("R15", "2"), ("R17", "2"), ("R18", "2")} <= set(nets.members[mid])
+    check_paste(parse_circuit(first["circuit"]), parse_circuit(b),
+                parse_circuit(second["circuit"]), second["refs"], may_join=True)  # fmt: skip
 
 
 def test_paste_details(js: Page) -> None:

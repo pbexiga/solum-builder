@@ -67,6 +67,7 @@ from solum.export import (
     export_netlists,
     model_files,
     models_list,
+    movable_where,
     pdf,
     ready_to_build,
     schematic_page,
@@ -132,7 +133,7 @@ from solum.simulate import (
 )
 from solum.store import CircuitStore, StoreError, blank_circuit, split_id
 from solum.stripboard.board import Layout, layout_data
-from solum.stripboard.check import progress, shorts
+from solum.stripboard.check import move_problem, progress, shorts
 from solum.stripboard.edit import BoardEdit, EditError, EditKind, edit_layout
 from solum.stripboard.footprints import board_parts, board_refs, drawing_data
 from solum.stripboard.guidance import guidance
@@ -207,7 +208,7 @@ class BoardEditRequest(BaseModel):
     legs: dict[str, tuple[int, int]] = {}
     standing: bool = False
     holes: list[tuple[int, int]] = []
-    to: str | None = None  # a wire's other lug (D-375)
+    to: str | None = None  # a wire's other lug (D-375); `where`: board or off-board (D-385)
     index: int = -1  # the wire `unwire`, `rewire` and `route` act on
     runs: list[tuple[int, float]] = []  # `route`: the wire's moved runs (D-380)
     grow: bool = True
@@ -1170,9 +1171,15 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return {"stripboard": layout_data(layout), "shift": [0, 0]}
         edit = BoardEdit(req.kind, req.ref, tuple(req.legs.items()), req.standing,
                          tuple(req.holes), req.to, req.index, tuple(req.runs))  # fmt: skip
+        if req.kind == "where" and req.ref in {p.ref for p in circuit.parts}:
+            onto = (req.to or movable_where(circuit).get(req.ref)) == "board"
+            why = move_problem(circuit.part(req.ref), onto, models, table)
+            if why:
+                raise HTTPException(422, why)
         try:
             edited = edit_layout(layout, edit, parts, started=kept is not None, grow=req.grow,
-                                 items=items, known=board_refs(circuit))  # fmt: skip
+                                 items=items, known=board_refs(circuit),
+                                 usual=movable_where(circuit))  # fmt: skip
         except EditError as err:
             raise HTTPException(422, str(err)) from None
         if not req.shorts:

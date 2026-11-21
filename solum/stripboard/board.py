@@ -102,6 +102,7 @@ class Layout:
     links: tuple[Link, ...] = ()
     wires: tuple[Wire, ...] = ()
     spots: tuple[tuple[str, Hole], ...] = ()  # each off-board part put beside the board
+    where: tuple[tuple[str, str], ...] = ()  # a part moved on or off the board by choice
 
     @property
     def pads(self) -> list[Hole]:
@@ -134,7 +135,8 @@ def _holes(data: Iterable[str]) -> list[Hole]:
 def layout_from_data(data: Mapping[str, Any]) -> Layout:
     """A layout from its plain form: `{size: [columns, strips], parts: {R1: {1: B2, 2:
     B6}, ...}, standing: [R2], cuts: [F7], links: [[A1, A4]], wires: [{from: VR1.1, hole:
-    A1}, {from: VR1.3, lug: IN.S}, {from: V+}], off: {VR1: [2, -6]}}`, holes by name but
+    A1}, {from: VR1.3, lug: IN.S}, {from: V+}], off: {VR1: [2, -6]}, where: {R5:
+    off-board}}`, holes by name but
     an off-board part's spot (it may be off the board) as [column, strip] (the form a
     test or the circuit file writes)."""
     try:
@@ -152,8 +154,9 @@ def layout_from_data(data: Mapping[str, Any]) -> Layout:
         wires = tuple(_wire(w) for w in data.get("wires", ()))
         spots = tuple((str(ref), (int(at[0]), int(at[1])))
                       for ref, at in data.get("off", {}).items())  # fmt: skip
+        where = tuple((str(ref), str(at)) for ref, at in data.get("where", {}).items())
         return Layout(columns, strips, parts, frozenset(_holes(data.get("cuts", ()))), links,
-                      wires, spots)  # fmt: skip
+                      wires, spots, where)  # fmt: skip
     except (KeyError, TypeError, ValueError) as err:
         if isinstance(err, BoardError):
             raise
@@ -192,4 +195,5 @@ def layout_data(layout: Layout) -> dict[str, Any]:
         "links": [[hole_name(link.a), hole_name(link.b)] for link in layout.links],
         "wires": [wire_data(w) for w in layout.wires],
         "off": {ref: list(at) for ref, at in layout.spots},
+        "where": dict(layout.where),
     }

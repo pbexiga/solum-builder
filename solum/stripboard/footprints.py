@@ -30,7 +30,7 @@ from solum.circuit.schema import (
     Switch,
     Trimmer,
 )
-from solum.export import built_where
+from solum.export import built_where, chosen_where
 from solum.guides import FootprintTable, InlineSize, RadialSize
 from solum.markings import resistor_bands
 from solum.models import Model, ModelError, ModelLibrary
@@ -212,7 +212,24 @@ def board_ref(part: Part) -> str:
 
 def board_refs(circuit: Circuit) -> set[str]:
     """Every board part the circuit has, placeable now or not (D-376)."""
-    return {board_ref(p) for p in circuit.parts if built_where(p) == "board"}
+    chosen = chosen_where(circuit)
+    return {board_ref(p) for p in circuit.parts if built_where(p, chosen) == "board"}
+
+
+def one_board_part(part: Part, models: ModelLibrary, table: FootprintTable) -> BoardPart:
+    """A part that isn't a chip's unit as it goes on the board; `NoFootprint` or
+    `ModelError` saying why when it can't."""
+    if isinstance(part, ChargePump):
+        return _chip(part.ref, [part], models.get(part.model), table)
+    if isinstance(part, Bjt | Jfet | Mosfet | Regulator):
+        return _three_leg(part, models, table)
+    if isinstance(part, Trimmer):
+        order = ("1", "2", "3")
+        pins = {pin: (part.ref, pin) for pin in order}
+        return BoardPart(part.ref, _inline(table.trimmer, order), pins, kind="trimmer")
+    footprint = two_leg_footprint(part, models, table)
+    pins = {pin: (part.ref, pin) for pin in pin_offsets(part)}
+    return BoardPart(part.ref, footprint, pins, kind=part.type)
 
 
 def board_parts(circuit: Circuit, models: ModelLibrary,
@@ -222,25 +239,15 @@ def board_parts(circuit: Circuit, models: ModelLibrary,
     found: dict[str, BoardPart] = {}
     problems: list[str] = []
     chips: dict[str, list[ChipUnit | PowerUnit]] = {}
+    chosen = chosen_where(circuit)
     for part in circuit.parts:
-        if built_where(part) != "board":
+        if built_where(part, chosen) != "board":
             continue
         try:
             if isinstance(part, (PowerUnit, *CHIP_UNITS)):
                 chips.setdefault(part.chip, []).append(part)
-            elif isinstance(part, ChargePump):
-                found[part.ref] = _chip(part.ref, [part], models.get(part.model), table)
-            elif isinstance(part, Bjt | Jfet | Mosfet | Regulator):
-                found[part.ref] = _three_leg(part, models, table)
-            elif isinstance(part, Trimmer):
-                order = ("1", "2", "3")
-                pins = {pin: (part.ref, pin) for pin in order}
-                found[part.ref] = BoardPart(part.ref, _inline(table.trimmer, order), pins,
-                                            kind="trimmer")  # fmt: skip
             else:
-                footprint = two_leg_footprint(part, models, table)
-                pins = {pin: (part.ref, pin) for pin in pin_offsets(part)}
-                found[part.ref] = BoardPart(part.ref, footprint, pins, kind=part.type)
+                found[part.ref] = one_board_part(part, models, table)
         except (NoFootprint, ModelError) as err:
             if str(err) not in problems:
                 problems.append(str(err))

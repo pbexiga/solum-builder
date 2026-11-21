@@ -112,6 +112,7 @@ header > .title { display: flex; align-items: baseline; gap: 10px; min-width: 0;
 .menu button[aria-checked="true"] .menu-label::before { content: "✓ "; color: var(--accent-hi); }
 .menu button[aria-checked="false"] .menu-label::before { content: "✓ "; visibility: hidden; }
 .menu .menu-hint { color: var(--text-3); font-family: var(--font-mono); font-size: 11px; }
+.menu .menu-note { color: var(--text-3); font-size: 11px; margin: -2px 10px 4px; max-width: 260px; }
 .menu hr { border: none; border-top: 1px solid var(--border); margin: 4px 2px; width: auto; align-self: stretch; }
 .search {
   background: var(--surface-1);
@@ -339,6 +340,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-tray .done { color: var(--text-2); }
 .board-tray .board-next { margin: 4px 0 8px; padding: 4px 6px; border-left: 2px solid var(--accent); background: var(--surface-2); color: var(--text); cursor: pointer; }
 .board-tray .board-list li.next { background: var(--info-bg); color: var(--text); }
+.board-tray .board-list li .choice { color: var(--accent); font-size: 11px; margin-left: 4px; }
 /* a footprint's mark beside its row: axial a bar, radial a circle, in a line three legs, DIP a notched box */
 .board-tray .fp { display: inline-block; width: 14px; height: 8px; margin-right: 6px; vertical-align: middle; border: 1.5px solid var(--text-3); box-sizing: border-box; }
 .board-tray .fp-axial { height: 6px; border-radius: 2px; }
@@ -365,6 +367,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board .off-item { cursor: grab; }
 #board .off-body { fill: var(--surface-1); stroke: var(--sch-line); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
 #board .off-power .off-body { stroke-dasharray: 3 2; }
+#board .off-item.chosen .off-body, #board .board-part.chosen .body { stroke: var(--accent); stroke-dasharray: 4 2; }
 #board .off-item.selected .off-body { stroke: var(--sch-selected); stroke-width: 2.2; }
 #board .off-label { font: 3.2px var(--font-ui); fill: var(--text); pointer-events: none; }
 #board .off-label .value { font-family: var(--font-mono); fill: var(--text-2); }

@@ -274,10 +274,42 @@ export function boardRefOf(footprints, ref) {
  *   unplaceable: string[], nets: NetProgress[],
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
  *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number],
- *   shorted: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, guidance: Guidance}} Progress
+ *   shorted: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, guidance: Guidance,
+ *   choices?: Record<string, Choice>}} Progress
  *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints and the
  *   guidance, D-377)
+ * @typedef {{where: "board" | "off-board", moved: boolean, why: string | null}} Choice where a
+ *   part is built (D-385): `moved` there by the builder's choice, `why` it can't be moved
  */
+
+/**
+ * @typedef {{label: string, to: "board" | "off-board" | null, why: string | null, edit: string}} WhereMove
+ *   a menu item moving a part on or off the board (D-385): `to` none puts it back where the
+ *   parts list has it; `why` it can't be (the item greyed); `edit` the undo step's words
+ */
+
+/**
+ * The menu items that move a part on or off the board by choice (D-385): back to the parts
+ * list's place when it was moved, else to the other side of the board's edge (greyed with
+ * why when it can't go). None for what has no choice (Power, stock hardware).
+ * @param {Choice | undefined} choice @param {string} ref @returns {WhereMove[]}
+ */
+export function whereMoves(choice, ref) {
+  if (!choice) return [];
+  if (choice.moved) return [{ label: "Back to the parts list's place", to: null, why: null, edit: `${ref} back to the parts list's place` }];
+  return choice.where === "board"
+    ? [{ label: "Move off the board", to: "off-board", why: choice.why, edit: `Move ${ref} off the board` }]
+    : [{ label: "Put on the board", to: "board", why: choice.why, edit: `Put ${ref} on the board` }];
+}
+
+/**
+ * The mark on a part moved by choice (D-385), none on one where the parts list has it.
+ * @param {Choice | undefined} choice
+ */
+export function choiceMark(choice) {
+  if (!choice?.moved) return "";
+  return choice.where === "board" ? "on the board: your choice" : "off the board: your choice";
+}
 
 const SHAPE_WORDS = /** @type {Record<string, string>} */ ({ axial: "axial", radial: "radial", inline: "in a line", dip: "DIP", sil: "SIL" });
 

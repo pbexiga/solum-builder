@@ -231,10 +231,10 @@ def test_schema_v1_file_loads_as_current(repo: Path) -> None:
     (and dropped provenance), v6 text blocks (and dropped the power mode); a v1 file
     loads unchanged and saves as v6 at v1.0."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v1.json")
-    assert c.schema_ == SCHEMA_VERSION == 37
+    assert c.schema_ == SCHEMA_VERSION == 38
     assert c.tags == [] and c.texts == []
     assert [p.ref for p in c.parts] == ["R1", "R2"]
-    assert circuit_to_dict(c)["schema"] == 37
+    assert circuit_to_dict(c)["schema"] == 38
     assert (str(c.version), c.final) == ("v1.0", False)
 
 
@@ -776,3 +776,13 @@ def test_a_v36_wire_is_routed_automatically(repo: Path) -> None:
     assert c.stripboard is not None
     assert [w.runs for w in c.stripboard.wires] == [[], [], []]
     assert all("runs" not in w for w in circuit_to_dict(c)["stripboard"]["wires"])
+
+
+def test_a_v37_board_keeps_every_part_where_the_parts_list_puts_it(repo: Path) -> None:
+    """v38 (D-385) added the board's `where` (a part moved on or off the board by choice);
+    a v37 board has none, and a board without any saves none."""
+    c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v37.json")
+    assert c.schema_ == SCHEMA_VERSION
+    assert c.stripboard is not None and c.stripboard.where == {}
+    assert c.stripboard.wires[0].runs == [(1, 2.5)]
+    assert "where" not in circuit_to_dict(c)["stripboard"]

@@ -651,3 +651,29 @@ def test_ratsnest_lines_all_or_only_the_part_in_focus(page: Page, base_url: str)
     showing(False)
     box.check()
     showing(True)
+
+
+def test_a_part_is_moved_off_the_board_and_back_by_choice(page: Page, base_url: str) -> None:
+    """D-385: right-click R2 on the board, Move off the board: it's an off-board part in the
+    tray, marked as the builder's choice; its tray row's menu puts it back; a pot's menu
+    greys Put on the board with why; Ctrl+Z undoes each move."""
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    show_board(page)
+    page.locator("#board .board-part[data-ref='R2'] .body").first.click(button="right")
+    page.get_by_role("menuitem", name="Move off the board").click()
+    expect(page.locator("#board .board-part[data-ref='R2']")).to_have_count(0)
+    row = page.locator("#board-tray-body .off-board li", has_text="R2")
+    expect(row).to_contain_text("off the board: your choice")
+    page.keyboard.press("Control+z")
+    expect(page.locator("#board .board-part[data-ref='R2']")).to_have_count(1)
+    page.keyboard.press("Control+Shift+z")
+    expect(row).to_have_count(1)
+    row.click(button="right")
+    page.get_by_role("menuitem", name="Back to the parts list's place").click()
+    expect(row).to_have_count(0)
+    expect(page.locator("#board-tray-body li[data-ref='R2']")).to_have_count(1)  # to place
+    page.locator("#board .off-item[data-item='VR1'] .off-body").click(button="right")
+    expect(page.get_by_role("menuitem", name="Put on the board")).to_be_disabled()
+    expect(page.locator(".menu .menu-note")).to_have_text(
+        "There's no board footprint for a pot yet."
+    )

@@ -1052,6 +1052,13 @@ def _v36_to_v37(data: Data) -> Data:
     return data
 
 
+def _v37_to_v38(data: Data) -> Data:
+    """v38 (D-385) added the board's `where`, a part moved on or off the board by choice;
+    an older board has none (every part where the parts list puts it), so a v37 file is a
+    valid v38 file."""
+    return data
+
+
 MIGRATIONS: dict[int, Migration] = {
     1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5, 5: _v5_to_v6, 6: _v6_to_v7,
     7: _v7_to_v8, 8: _v8_to_v9, 9: _v9_to_v10,
@@ -1061,7 +1068,7 @@ MIGRATIONS: dict[int, Migration] = {
     23: _v23_to_v24, 24: _v24_to_v25, 25: _v25_to_v26, 26: _v26_to_v27,
     27: _v27_to_v28, 28: _v28_to_v29, 29: _v29_to_v30, 30: _v30_to_v31,
     31: _v31_to_v32, 32: _v32_to_v33, 33: _v33_to_v34, 34: _v34_to_v35,
-    35: _v35_to_v36, 36: _v36_to_v37,
+    35: _v35_to_v36, 36: _v36_to_v37, 37: _v37_to_v38,
 }  # fmt: skip
 
 

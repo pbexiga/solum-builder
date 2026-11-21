@@ -12,7 +12,7 @@ import html
 import io
 import re
 import zipfile
-from collections.abc import Iterable
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal, cast
@@ -72,11 +72,7 @@ def is_status_led(part: Part) -> bool:
     return isinstance(part, Led) and (part.label or "").strip().lower() == STATUS_LED
 
 
-def built_where(part: Part) -> Where | None:
-    """Where `part` is built (D-203): on the board or off it; None for what isn't bought
-    (the guitar, the amp, a test source; a chip's power unit is its chip, on the board).
-    Off: pots, switches but DIP ones (D-238), jacks, the DC jack, the battery and the
-    status LED. The parts list and the stripboard layout (D-367) both ask here."""
+def _usual_where(part: Part) -> Where | None:
     if isinstance(part, OFF_BOARD):
         return "off-board"
     if isinstance(part, Switch):
@@ -86,6 +82,47 @@ def built_where(part: Part) -> Where | None:
     if isinstance(part, ON_BOARD):
         return "board"
     return None
+
+
+def built_where(part: Part, chosen: Mapping[str, Where] | None = None) -> Where | None:
+    """Where `part` is built (D-203): on the board or off it; None for what isn't bought
+    (the guitar, the amp, a test source; a chip's power unit is its chip, on the board).
+    Off: pots, switches but DIP ones (D-238), jacks, the DC jack, the battery and the
+    status LED. `chosen`: the builder's own choice per part, which wins where it may
+    (`chosen_where`, D-385). The parts list and the stripboard layout (D-367) both ask
+    here."""
+    usual = _usual_where(part)
+    if chosen and part.ref in chosen and why_not_moved(part) is None:
+        return chosen[part.ref]
+    return usual
+
+
+def why_not_moved(part: Part) -> str | None:
+    """Why `part` can't be moved on or off the board by the builder's choice (D-385), in a
+    sentence; None when it can: a part with a board footprint that is one part (not a
+    chip's unit)."""
+    if isinstance(part, (*CHIP_UNITS, PowerUnit)):
+        return "A chip stays on the board."
+    if isinstance(part, Switch) and part.switch_kind.group != "DIP":
+        return f"There's no board footprint for a {part.switch_kind.short} switch yet."
+    if isinstance(part, (*OFF_BOARD, Guitar, AmpInput)):
+        noun = {"dcjack": "DC jack", "guitar": "jack", "amp": "jack"}.get(part.type, part.type)
+        return f"There's no board footprint for a {noun} yet."
+    if _usual_where(part) is None:
+        return f"{part.ref} isn't built: it's part of the test bench."
+    return None
+
+
+def movable_where(circuit: Circuit) -> dict[str, Where]:
+    """Where the parts list puts each part the builder may move on or off the board."""
+    return {p.ref: w for p in circuit.parts
+            if why_not_moved(p) is None and (w := _usual_where(p)) is not None}  # fmt: skip
+
+
+def chosen_where(circuit: Circuit) -> dict[str, Where]:
+    """The builder's own choice of where parts are built, kept with the board (D-385): none
+    when the circuit has no board."""
+    return dict(circuit.stripboard.where) if circuit.stripboard else {}
 
 
 @dataclass(frozen=True)
@@ -192,11 +229,11 @@ def _semi_details(part: Diode | Led | Bjt | Jfet | Mosfet, models: ModelLibrary)
     return "; ".join(details)
 
 
-def _item(part: Part, models: ModelLibrary) -> _Item | None:
+def _item(part: Part, models: ModelLibrary, chosen: Mapping[str, Where]) -> _Item | None:
     """What buying `part` takes, or None for what isn't bought (the guitar, the amp, a test
     source, a chip's power unit: the chip's first unit stands for it)."""
     ref = part.ref
-    where = built_where(part)
+    where = built_where(part, chosen)
     if where is None or isinstance(part, PowerUnit):
         return None
 
@@ -299,7 +336,7 @@ CHECKLIST = (
 
 def hardware(circuit: Circuit, models: ModelLibrary) -> list[BomLine]:
     """What a build needs besides its parts (D-204): the enclosure, a knob per pot, a socket
-    per DIP chip, a bezel for the status LED, the battery's clip."""
+    per DIP chip, a bezel for each LED off the board, the battery's clip."""
     lines = []
     box = circuit.enclosure
     if box is None:
@@ -331,8 +368,9 @@ def hardware(circuit: Circuit, models: ModelLibrary) -> list[BomLine]:
     for name, refs_ in sorted(sockets.items()):
         lines.append(BomLine("hardware", "IC socket", name, "so the chip can be swapped",
                              tuple(sorted(refs_, key=ref_key))))  # fmt: skip
+    chosen = chosen_where(circuit)
     for p in circuit.parts:
-        if isinstance(p, Led) and is_status_led(p):
+        if isinstance(p, Led) and built_where(p, chosen) == "off-board":
             lines.append(
                 BomLine("hardware", "LED bezel", "", f"for {p.model}", (_named(p.ref, p.label),))
             )
@@ -345,7 +383,8 @@ def hardware(circuit: Circuit, models: ModelLibrary) -> list[BomLine]:
 def bom(circuit: Circuit, models: ModelLibrary) -> list[BomLine]:
     """The parts list: on the board, then off it, by part type (`ORDER`) then value, each
     line's refs in order; then the hardware."""
-    items = [i for p in circuit.parts if (i := _item(p, models)) is not None]
+    chosen = chosen_where(circuit)
+    items = [i for p in circuit.parts if (i := _item(p, models, chosen)) is not None]
     items += _input_output_jacks(circuit)
     groups: dict[tuple[Where, str, str, str], list[_Item]] = {}
     for i in items:

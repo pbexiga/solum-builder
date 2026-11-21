@@ -25,7 +25,7 @@ from solum.circuit.connectivity import GROUND, Nets
 from solum.circuit.parts import pin_offsets
 from solum.circuit.schema import AmpInput, Battery, Circuit, DcJack, Guitar, Part, Pot, Switch
 from solum.circuit.switches import POLE_LETTERS, SwitchKind, lug_name
-from solum.export import bom, built_where
+from solum.export import bom, built_where, chosen_where
 from solum.models import ModelLibrary
 from solum.stripboard.board import Hole, Layout
 from solum.stripboard.footprints import BoardPart
@@ -160,7 +160,8 @@ def _parts_of(circuit: Circuit, base: str, kind: str) -> list[Part]:
         found: list[Part] = [p for p in circuit.parts if isinstance(p, wanted)]
         if found:
             return found
-    return [p for p in circuit.parts if built_where(p) == "off-board" and (
+    chosen = chosen_where(circuit)
+    return [p for p in circuit.parts if built_where(p, chosen) == "off-board" and (
         p.ref == base or (isinstance(p, Pot) and p.knob == base)
         or (isinstance(p, Switch) and p.switch == base))]  # fmt: skip
 

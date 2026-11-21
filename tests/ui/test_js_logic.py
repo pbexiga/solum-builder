@@ -1312,3 +1312,30 @@ def test_a_board_part_is_drawn_with_its_markings(js: Page) -> None:
     assert got["cap"] == ["lead", "lead", "circle", "stripe"] and got["capAngle"] == 90
     assert got["to92"] == ["lead", "lead", "lead", "body"]
     assert got["chip"] == ["rect", "notch", "dot"] and got["label"] == "pin 3"
+
+
+def test_the_moves_on_and_off_the_board_by_choice(js: Page) -> None:
+    """D-385: a part on the board can be moved off, one off put on (greyed with why when it
+    can't), one moved by choice only put back; its mark says so."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const words = (c, ref) => b.whereMoves(c, ref).map(({ label, to, why, edit }) => [label, to, why, edit]);
+        return {
+          on: words({ where: 'board', moved: false, why: null }, 'R2'),
+          pot: words({ where: 'off-board', moved: false, why: 'No footprint.' }, 'VR1'),
+          moved: words({ where: 'off-board', moved: true, why: null }, 'R2'),
+          none: words(undefined, 'power'),
+          marks: [b.choiceMark({ where: 'off-board', moved: true, why: null }),
+                  b.choiceMark({ where: 'board', moved: true, why: null }),
+                  b.choiceMark({ where: 'board', moved: false, why: null })],
+        };
+        """,
+    )
+    assert got["on"] == [["Move off the board", "off-board", None, "Move R2 off the board"]]
+    assert got["pot"] == [["Put on the board", "board", "No footprint.", "Put VR1 on the board"]]
+    assert got["moved"] == [["Back to the parts list's place", None, None,
+                             "R2 back to the parts list's place"]]  # fmt: skip
+    assert got["none"] == []
+    assert got["marks"] == ["off the board: your choice", "on the board: your choice", ""]

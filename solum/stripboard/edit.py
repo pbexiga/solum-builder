@@ -19,7 +19,7 @@ from solum.stripboard.footprints import BoardPart, leg_problem
 from solum.stripboard.size import crop, fit_box, used_holes
 
 EditKind = Literal["place", "remove", "cut", "uncut", "link", "unlink", "spot", "unspot",
-                   "wire", "unwire", "rewire", "route", "clear"]  # fmt: skip
+                   "wire", "unwire", "rewire", "route", "clear", "where"]  # fmt: skip
 
 
 class EditError(ValueError):
@@ -38,7 +38,9 @@ class BoardEdit:
     instead (its route automatic again), `unwire` takes it off; `route` sets wire `index`'s
     middle runs moved by hand to `runs` (none: routed automatically, D-380). `clear` takes
     off everything of parts the circuit no longer has (D-376): placed parts, off-board parts
-    beside the board, wires to their lugs."""
+    beside the board, wires to their lugs. `where` (D-385) moves part `ref` to `to`, "board"
+    or "off-board" (none: back to where the parts list puts it): off, it leaves the board for
+    the tray's off-board parts; on, it leaves its spot and wires for the tray's board parts."""
 
     kind: EditKind
     ref: str = ""
@@ -154,6 +156,33 @@ def _clear(layout: Layout, keep: AbstractSet[str],
     return cleared
 
 
+def _where(layout: Layout, edit: BoardEdit, usual: Mapping[str, str],
+           items: Mapping[str, tuple[str, ...]]) -> Layout:  # fmt: skip
+    """`edit.ref` moved on or off the board by choice; a choice that's the parts list's own
+    isn't kept."""
+    if edit.ref not in usual:
+        raise EditError(f"{edit.ref} can't be moved on or off the board.")
+    if edit.to not in (None, "board", "off-board"):
+        raise EditError("A part goes on the board or off it.")
+    chosen = dict(layout.where)
+    now = chosen.get(edit.ref, usual[edit.ref])
+    to = edit.to or usual[edit.ref]
+    if to == now:
+        raise EditError(f"{edit.ref} is {'on' if to == 'board' else 'off'} the board already.")
+    chosen.pop(edit.ref, None)
+    if to != usual[edit.ref]:
+        chosen[edit.ref] = to
+    moved = replace(layout, where=tuple(sorted(chosen.items())))
+    if to == "off-board":
+        return replace(moved, parts=tuple(p for p in layout.parts if p.ref != edit.ref))
+    lugs = set(items.get(edit.ref, ()))
+    return replace(
+        moved,
+        spots=tuple((r, at) for r, at in layout.spots if r != edit.ref),
+        wires=tuple(w for w in layout.wires if w.lug not in lugs and w.to not in lugs),
+    )
+
+
 def _new_wire(layout: Layout, edit: BoardEdit, lugs: set[str], skip: int = -1) -> Wire:
     """The wire `edit` draws, refused when a lug isn't one, it runs to itself, or it's
     there already."""
@@ -190,7 +219,8 @@ def _wire_at(layout: Layout, index: int) -> int:
 
 
 def _applied(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
-             items: Mapping[str, tuple[str, ...]], known: AbstractSet[str]) -> Layout:  # fmt: skip
+             items: Mapping[str, tuple[str, ...]], known: AbstractSet[str],
+             usual: Mapping[str, str]) -> Layout:  # fmt: skip
     holes = edit.holes
     lugs = {lug for ends in items.values() for lug in ends}
     if edit.kind in ("cut", "uncut") and len(holes) != 1:
@@ -225,6 +255,8 @@ def _applied(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
             i = _wire_at(layout, edit.index)
             wire = _new_wire(layout, edit, lugs, skip=i)
             return replace(layout, wires=(*layout.wires[:i], wire, *layout.wires[i + 1 :]))
+        case "where":
+            return _where(layout, edit, usual, items)
         case "route":
             i = _wire_at(layout, edit.index)
             wire = replace(layout.wires[i], runs=_runs(edit.runs))
@@ -251,15 +283,18 @@ def _edge(layout: Layout, holes: set[Hole]) -> str | None:
 def edit_layout(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart], *,
                 started: bool, grow: bool,
                 items: Mapping[str, tuple[str, ...]] | None = None,
-                known: AbstractSet[str] = frozenset()) -> Edited:  # fmt: skip
+                known: AbstractSet[str] = frozenset(),
+                usual: Mapping[str, str] | None = None) -> Edited:  # fmt: skip
     """`layout` with `edit` made. `items`: each off-board part's lugs (D-375). `known`: the
-    circuit's board parts that can't be placed now, which `clear` keeps (D-376). `started`:
+    circuit's board parts that can't be placed now, which `clear` keeps (D-376). `usual`:
+    where the parts list puts each part that may be moved on or off the board (D-385).
+    `started`:
     the board has been saved before (an empty one is drawn at its start size and becomes
     just what's on it at the first placement).
     `grow`: auto-grow (D-372): the board fits what's on it; off, an edit past its edge is
     refused. A placement fault the edit brings (two things in a hole, a body over a leg, a
     link over a leg) refuses it, named."""
-    after = _applied(layout, edit, board, items or {}, known)
+    after = _applied(layout, edit, board, items or {}, known, usual or {})
     if not grow:
         edge = _edge(after, set(used_holes(after, board)) - set(used_holes(layout, board)))
         if edge:

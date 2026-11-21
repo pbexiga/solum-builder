@@ -13,21 +13,30 @@ from typing import Literal
 
 from solum.circuit.connectivity import GROUND, Nets, connect
 from solum.circuit.parts import PIN_WORDS
-from solum.circuit.schema import POLARISED, SUPPLY_SIGNS, Capacitor, Circuit, Switch
-from solum.export import built_where, is_status_led
+from solum.circuit.schema import POLARISED, SUPPLY_SIGNS, Capacitor, Circuit, Part, Switch
+from solum.export import built_where, chosen_where, is_status_led, why_not_moved
 from solum.guides import FootprintTable
-from solum.models import ModelLibrary
+from solum.models import ModelError, ModelLibrary
 from solum.stripboard.board import Hole, Layout, Placed, hole_name, segments
 from solum.stripboard.footprints import (
     BoardPart,
+    NoFootprint,
     PinRef,
     board_parts,
     board_refs,
     body_holes,
     leg_problem,
+    one_board_part,
 )
 from solum.stripboard.limits import limit_warnings, placement_limits
-from solum.stripboard.offboard import SLEEVE, OffItem, default_spots, lug_nets, off_board_items
+from solum.stripboard.offboard import (
+    POWER,
+    SLEEVE,
+    OffItem,
+    default_spots,
+    lug_nets,
+    off_board_items,
+)
 
 Terminal = PinRef | str  # a board part's pin, or an off-board lug ("VR1.1", "IN.S", "V+")
 _TWO_PIN_WORDS = {"A": "anode", "K": "cathode"}
@@ -409,7 +418,8 @@ def read_layout(layout: Layout, circuit: Circuit, models: ModelLibrary,
           table: FootprintTable) -> Reading:  # fmt: skip
     nets = connect(circuit)
     board, unboardable = board_parts(circuit, models, table)
-    off_board = {p.ref for p in circuit.parts if built_where(p) != "board"}
+    chosen = chosen_where(circuit)
+    off_board = {p.ref for p in circuit.parts if built_where(p, chosen) != "board"}
     items = off_board_items(circuit, nets, board, models)
     ends = lug_nets(items)
     count: dict[str, int] = defaultdict(int)
@@ -524,6 +534,31 @@ class LegProgress:
 
 
 @dataclass(frozen=True)
+class Choice:
+    """Where a part is built (D-385): `where` on the board or off it, `moved` there by the
+    builder's choice (not the parts list's), `why` it can't be moved, in a sentence (None:
+    it can)."""
+
+    where: str
+    moved: bool
+    why: str | None
+
+
+def move_problem(part: Part, onto: bool, models: ModelLibrary,
+                 table: FootprintTable) -> str | None:  # fmt: skip
+    """Why `part` can't be moved off the board, or `onto` it (D-385), in a sentence; None
+    when it can. Onto the board it needs a footprint."""
+    why = why_not_moved(part)
+    if why is not None or not onto:
+        return why
+    try:
+        one_board_part(part, models, table)
+    except (NoFootprint, ModelError) as err:
+        return str(err)
+    return None
+
+
+@dataclass(frozen=True)
 class Progress:
     """Where a board stands: `to_place` the parts not on it yet and `wires_to_go` the lugs not
     wired yet (not faults), `loose` how many wires have a free end; `items` every off-board
@@ -552,6 +587,7 @@ class Progress:
     done: bool
     shorted: list[tuple[int, int, int]] = field(default_factory=list)
     rails: dict[str, list[tuple[int, int, int]]] = field(default_factory=dict)
+    choices: dict[str, Choice] = field(default_factory=dict)
 
     @property
     def nets_done(self) -> int:
@@ -727,7 +763,30 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
     return Progress(sorted(r.board.keys() - placed), unwired, loose, r.items,
                     {i.ref: spots[i.ref] for i in r.items}, stock_bypass(circuit),
                     r.unboardable, nets, legs, faults, stale, warnings, done,
-                    runs(red), _rails(by_group, copper))  # fmt: skip
+                    runs(red), _rails(by_group, copper),
+                    _choices(r, circuit, models, table))  # fmt: skip
+
+
+def _choices(r: Reading, circuit: Circuit, models: ModelLibrary,
+             table: FootprintTable) -> dict[str, Choice]:  # fmt: skip
+    """Each board part's and off-board part's `Choice`; a chip and an off-board part that
+    stands for several circuit parts (a pot's gangs, a switch's poles) stay where they are."""
+    chosen = chosen_where(circuit)
+    kinds = {p.ref: p for p in circuit.parts}
+    found: dict[str, Choice] = {}
+    for ref in r.board:
+        one = kinds.get(ref)
+        why = why_not_moved(one) if one else "A chip stays on the board."
+        found[ref] = Choice("board", ref in chosen, why)
+    for item in r.items:
+        refs = sorted({lug.end.split(".")[0] for lug in item.lugs} & kinds.keys())
+        if item.ref == POWER or not refs:
+            continue
+        part = kinds[refs[0]]
+        single = len(refs) == 1
+        why = move_problem(part, True, models, table) if single else why_not_moved(part)
+        found[item.ref] = Choice("off-board", single and part.ref in chosen, why)
+    return found
 
 
 def _rails(by_group: dict[int, dict[str, list[Terminal]]],

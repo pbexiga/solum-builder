@@ -916,7 +916,7 @@ def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.M
     ).json()
     assert first == {
         "stripboard": {"size": [1, 5], "parts": {"R2": {"1": "A1", "2": "A5"}}, "standing": [],
-                       "cuts": [], "links": [], "wires": [], "off": {}},
+                       "cuts": [], "links": [], "wires": [], "off": {}, "where": {}},
         "shift": [-3, -2],
     }  # fmt: skip
     board = {**data, "stripboard": load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")}
@@ -997,3 +997,23 @@ def test_stripboard_edit_clears_what_the_circuit_no_longer_has(
     cleared = c.post("/api/stripboard/edit", json={"circuit": board, "kind": "clear"})
     assert "R9" not in cleared.json()["stripboard"]["parts"]
     assert len(cleared.json()["stripboard"]["parts"]) == len(good["parts"])
+
+
+def test_stripboard_edit_moves_a_part_off_the_board_and_refuses_a_pot_on(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """D-385: a part moved off the board by choice; one with no footprint can't go on."""
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
+    good = load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")
+    board = {**data, "stripboard": good}
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    off = {"circuit": board, "kind": "where", "ref": "R2", "to": "off-board"}
+    moved = c.post("/api/stripboard/edit", json=off).json()["stripboard"]
+    assert moved["where"] == {"R2": "off-board"} and "R2" not in moved["parts"]
+    after = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": moved}}).json()
+    assert after["choices"]["R2"] == {"where": "off-board", "moved": True, "why": None}
+    pot = c.post("/api/stripboard/edit",
+                 json={"circuit": board, "kind": "where", "ref": "VR1", "to": "board"})  # fmt: skip
+    assert pot.status_code == 422
+    assert pot.json()["message"] == "There's no board footprint for a pot yet."

@@ -2101,7 +2101,7 @@
     },
     "Stripboard": {
       "additionalProperties": false,
-      "description": "The board laid out in the Board view (v35, D-368): the plain form `board.layout_data`\nwrites, holes by name. Only its form is checked here; whether it matches the circuit\n(a part since deleted, a leg on the wrong net) is the editor's progress check. v36\n(D-375): off-board parts' spots beside the board and their wires, for v35's pads.",
+      "description": "The board laid out in the Board view (v35, D-368): the plain form `board.layout_data`\nwrites, holes by name. Only its form is checked here; whether it matches the circuit\n(a part since deleted, a leg on the wrong net) is the editor's progress check. v36\n(D-375): off-board parts' spots beside the board and their wires, for v35's pads. v38\n(D-385): `where`, the builder's choice of a part on the board or off it, by ref, only\nwhere it differs from the parts list's (`export.chosen_where`).",
       "properties": {
         "size": {
           "maxItems": 2,
@@ -2180,6 +2180,17 @@
             "type": "array"
           },
           "title": "Off",
+          "type": "object"
+        },
+        "where": {
+          "additionalProperties": {
+            "enum": [
+              "board",
+              "off-board"
+            ],
+            "type": "string"
+          },
+          "title": "Where",
           "type": "object"
         }
       },
@@ -2593,7 +2604,7 @@
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "const": 37,
+      "const": 38,
       "title": "Schema",
       "type": "integer"
     },
@@ -2830,7 +2841,7 @@
     "name",
     "parts"
   ],
-  "title": "Solum Builder circuit, schema v37",
+  "title": "Solum Builder circuit, schema v38",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

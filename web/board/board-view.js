@@ -38,7 +38,7 @@ import { latestOnly } from "../state.js";
 import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
 import { needsCard } from "./needs.js";
-import { BOARD_SETTINGS, boardRefOf, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
+import { BOARD_SETTINGS, boardRefOf, choiceMark, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, whereMoves, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -465,10 +465,29 @@ export function boardView(host, app) {
     ]);
   }
 
-  /** An off-board part's menu: back to the tray, with its wires. @param {string} ref @param {number} x @param {number} y */
+  /** An off-board part's menu: put on the board (D-385), back to the tray with its wires. @param {string} ref @param {number} x @param {number} y */
   function itemMenu(ref, x, y) {
     selectItem(ref);
-    openMenu(x, y, [{ label: "Back to the tray, with its wires", run: () => void boardEdit({ kind: "unspot", ref }, `${ref} back to the tray`) }]);
+    openMenu(x, y, [...whereItems(ref), { label: "Back to the tray, with its wires", run: () => void boardEdit({ kind: "unspot", ref }, `${ref} back to the tray`) }]);
+  }
+
+  /**
+   * The menu items moving a part on or off the board by choice (D-385), greyed with why
+   * when it can't go. @param {string} ref @returns {import("../menus.js").MenuItem[]}
+   */
+  function whereItems(ref) {
+    return whereMoves(progress?.choices?.[ref], ref).map((move) => ({
+      label: move.label, disabled: Boolean(move.why), note: move.why ?? undefined,
+      run: () => void boardEdit({ kind: "where", ref, to: move.to }, move.edit),
+    }));
+  }
+
+  /** Each part moved on or off the board by choice, its mark's words (D-385). */
+  function chosenMarks() {
+    /** @type {Record<string, string>} */
+    const marks = {};
+    for (const [ref, choice] of Object.entries(progress?.choices ?? {})) if (choice.moved) marks[ref] = choiceMark(choice);
+    return marks;
   }
 
   /** The off-board parts beside the board and their wires, as the canvas draws them. */
@@ -571,7 +590,7 @@ export function boardView(host, app) {
     selectPart(ref);
     const pose = poseOf(fp, placed.legs, placed.standing) ?? firstPose(fp);
     const items = POSE_MOVES.filter((move) => posed(fp, pose, move)).map((move) => ({ label: `${moveWords(move, pose)}  (${MOVE_KEYS[move]})`, run: () => void repose(move, ref) }));
-    openMenu(x, y, [...items, { label: "Back to the tray  (Del)", run: () => void boardEdit({ kind: "remove", ref }, `${ref} back to the tray`) }]);
+    openMenu(x, y, [...items, { label: "Back to the tray  (Del)", run: () => void boardEdit({ kind: "remove", ref }, `${ref} back to the tray`) }, ...whereItems(ref)]);
   }
 
   /** Cut the strip at a hole, or mend the cut there. @param {Hole} hole */
@@ -685,7 +704,7 @@ export function boardView(host, app) {
     const guide = guidanceNow();
     svg.dataset.rats = settings.rats ? "all" : "focus";
     canvas.draw(drawn, progress?.footprints ?? {}, circuit, {
-      fit: !fitted, values: settings.values, rulers: started, fixed: !settings.grow, shorted: checked === circuit ? progress?.shorted ?? [] : [], rails: settings.rails && checked === circuit ? progress?.rails ?? {} : {}, off: offBoard(), seeThrough: settings.seeThrough,
+      fit: !fitted, values: settings.values, rulers: started, fixed: !settings.grow, shorted: checked === circuit ? progress?.shorted ?? [] : [], rails: settings.rails && checked === circuit ? progress?.rails ?? {} : {}, off: offBoard(), seeThrough: settings.seeThrough, chosen: chosenMarks(),
       guide: guide ? { rats: guide.ratsnest, cuts: guide.cuts, links: guide.links } : undefined,
     });
     fitted ||= Boolean(drawn.columns && progress); // an empty board's size and the off-board parts come with the first check
@@ -728,6 +747,15 @@ export function boardView(host, app) {
         ...(r.mark ? [h("span", { class: `fp fp-${r.mark}`, "aria-hidden": "true" })] : []),
         h("span", { class: "ref" }, [r.ref]), " ", ...(r.value ? [h("span", { class: "value" }, [r.value]), " "] : []), h("span", { class: "shape" }, [r.shape]),
       ]);
+      const key = r.item ?? (progress?.footprints[r.ref] ? r.ref : null);
+      const mark = key ? choiceMark(progress?.choices?.[key]) : "";
+      if (mark) item.append(h("span", { class: "choice" }, [`· ${mark}`]));
+      if (key && whereItems(key).length) {
+        item.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          openMenu(e.clientX, e.clientY, whereItems(key));
+        });
+      }
       const pick = r.select && (progress?.footprints[r.select] || inCircuit.has(r.select)) ? r.select : null;
       if (pick) {
         item.classList.add("pickable");

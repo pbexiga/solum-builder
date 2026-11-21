@@ -158,16 +158,17 @@ export function boardCanvas(svg, app) {
   /**
    * Draw a board. `fit`: fit the view to it (the first time it's shown).
    * @param {Board} board @param {Record<string, Footprint>} footprints @param {any} circuit
-   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, off?: OffBoard, guide?: Guide, seeThrough?: boolean}} [opts]
+   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, off?: OffBoard, guide?: Guide, seeThrough?: boolean, chosen?: Record<string, string>}} [opts]
    *   `values`: label parts with their values too; `rulers`: the columns' letters and the
    *   strips' numbers, each a menu of size changes (a board that's started); `fixed`: auto-grow
    *   off, the margin greyed (D-372); `shorted`: the copper carrying two nets, red (D-374);
    *   `rails`: the copper carrying only a rail, by net, tinted (Highlight rails, D-381);
    *   `off`: the off-board parts and wires (D-375); `guide`: the guidance (D-377);
-   *   `seeThrough`: the parts' bodies faint, the copper and cuts under them showing (D-378)
+   *   `seeThrough`: the parts' bodies faint, the copper and cuts under them showing (D-378);
+   *   `chosen`: the parts moved on or off the board by choice, each its mark's words (D-385)
    */
-  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], rails = {}, off = { items: [], wires: [] }, guide = { rats: [], cuts: [], links: [] }, seeThrough = false } = {}) {
-    drawn = [board, footprints, circuit, { values, rulers, fixed, shorted, rails, off, guide, seeThrough }];
+  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], rails = {}, off = { items: [], wires: [] }, guide = { rats: [], cuts: [], links: [] }, seeThrough = false, chosen = {} } = {}) {
+    drawn = [board, footprints, circuit, { values, rulers, fixed, shorted, rails, off, guide, seeThrough, chosen }];
     holes = shownHoles(board);
     beside = null;
     for (const { item, at } of off.items) {
@@ -219,7 +220,7 @@ export function boardCanvas(svg, app) {
       for (const [x, y] of [[x1, y1], [x2, y2]]) el("circle", { cx: x, cy: y, r: STEP * 0.18, class: "link-end" }, g);
     }
     const items = el("g", { class: "off-items" }, root);
-    for (const { item, at } of off.items) drawItem(item, at, items, values);
+    for (const { item, at } of off.items) drawItem(item, at, items, values, chosen[item.ref] ? "off-item chosen" : undefined, chosen[item.ref]);
     if (rulers) {
       const ruled = el("g", { class: "rulers" }, root);
       const mark = (/** @type {"column" | "strip"} */ axis, /** @type {number} */ line, /** @type {number} */ x, /** @type {number} */ y, /** @type {string} */ text) => {
@@ -237,7 +238,8 @@ export function boardCanvas(svg, app) {
     const labels = el("g", { class: "board-labels" }, root); // over every body
     for (const placed of board.parts) {
       const fp = footprints[placed.ref];
-      const g = el("g", { class: fp ? `board-part kind-${fp.kind}${fp.look?.minus ? " polarised" : ""}` : "board-part stale", "data-ref": placed.ref }, parts);
+      const g = el("g", { class: fp ? `board-part kind-${fp.kind}${fp.look?.minus ? " polarised" : ""}${chosen[placed.ref] ? " chosen" : ""}` : "board-part stale", "data-ref": placed.ref }, parts);
+      if (chosen[placed.ref]) el("title", {}, g).textContent = `${placed.ref}, ${chosen[placed.ref]}`;
       if (!fp) {
         // no longer in the circuit, or no footprint: its legs only, marked
         for (const [, hole] of placed.legs) el("circle", { cx: holeXY(hole)[0], cy: holeXY(hole)[1], r: STEP * 0.3, class: "leg" }, g);
@@ -321,8 +323,9 @@ export function boardCanvas(svg, app) {
    * footswitch's rounded square, a toggle's slim box, a rotary's disc, the lugs inside,
    * the name above and each lug's label beside it.
    * @param {OffItem} item @param {Hole} at @param {Element} parent @param {boolean} values @param {string} [cls]
+   * @param {string} [mark] why it's off the board when that's the builder's choice (D-385)
    */
-  function drawItem(item, at, parent, values, cls = "off-item") {
+  function drawItem(item, at, parent, values, cls = "off-item", mark = "") {
     const { body, lugs, wall } = itemShape(item, at);
     const g = el("g", { class: `${cls} off-${item.kind} off-shape-${item.shape}`, "data-item": item.ref, "data-refs": itemRefs(item).join(" ") }, parent);
     if (item.shape === "rotary") el("circle", { cx: body.x + body.w / 2, cy: body.y + body.h / 2, r: body.w / 2, class: "off-body" }, g);
@@ -338,7 +341,7 @@ export function boardCanvas(svg, app) {
       el("tspan", { class: "ref" }, text).textContent = name;
       if (value) el("tspan", { dx: "0.5em", class: "value" }, text).textContent = value;
     }
-    el("title", {}, g).textContent = item.name;
+    el("title", {}, g).textContent = mark ? `${item.name}, ${mark}` : item.name;
     for (const lug of lugs) {
       const l = el("g", { class: "lug", "data-lug": lug.end }, g);
       el("circle", { cx: lug.x, cy: lug.y, r: STEP * 0.32, class: "lug-ring" }, l);

@@ -620,3 +620,34 @@ def test_a_join_no_link_can_make_is_explained_in_warnings(page: Page, base_url: 
     warning = page.locator("#board-warnings-body li.warning")
     expect(warning).to_contain_text("a link only joins one strip to another")
     expect(warning).to_contain_text("Move C2 off strip 4")
+
+
+def test_ratsnest_lines_all_or_only_the_part_in_focus(page: Page, base_url: str) -> None:
+    """*Ratsnest lines: all* (D-377): on, every strand shows; off, none until a part is
+    selected, then that part's nets' strands, lit."""
+    board = {"size": [12, 9], "cuts": ["D4", "G4", "D8"],
+             "parts": {"R1": {"1": "C8", "2": "C4"}, "R2": {"1": "J4", "2": "J8"},
+                       "C2": {"1": "F4", "2": "F6"}}}  # fmt: skip
+    open_with_board(page, base_url, board)
+    show_board(page)
+    line = page.locator("#board line.rat[data-net='Q1.B']")
+    found = "document.querySelector(\"#board line.rat[data-net='Q1.B']\")"
+
+    def showing(yes: bool) -> None:  # a level line has no height: Playwright calls it hidden
+        page.wait_for_function(
+            f"(l => l && (getComputedStyle(l).display {'!' if yes else '='}== 'none'))({found})"
+        )
+
+    showing(True)
+    page.locator("#board-settings > summary").click()
+    box = page.locator("#board-settings-body input[data-setting='rats']")
+    expect(box).to_be_checked()
+    box.uncheck()
+    showing(False)
+    page.locator("#board .board-part[data-ref='R1']").click()
+    showing(True)
+    expect(line).to_have_class(re.compile(r"\blit\b"))
+    page.mouse.click(*hole_point(page, 10, 1))  # an empty hole: nothing selected
+    showing(False)
+    box.check()
+    showing(True)

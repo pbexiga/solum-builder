@@ -443,6 +443,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 #board .rat-end { fill: var(--board-rat); stroke: none; }
 #board .rat.lit { stroke: var(--accent-hi); stroke-width: 3; }
 #board .rat-end.lit { fill: var(--accent-hi); stroke: none; }
+#board[data-rats="focus"] .rat:not(.lit) { display: none; } /* Ratsnest lines: all off: only the part in focus's */
 #board .ghost .mark { fill: none; stroke: var(--ok); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
 #board .suggested { cursor: pointer; opacity: 0.4; }
 #board .suggested:hover { opacity: 0.9; }

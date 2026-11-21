@@ -683,6 +683,7 @@ export function boardView(host, app) {
     const started = Boolean(board.columns);
     const drawn = drawnBoard(board, progress?.start_size);
     const guide = guidanceNow();
+    svg.dataset.rats = settings.rats ? "all" : "focus";
     canvas.draw(drawn, progress?.footprints ?? {}, circuit, {
       fit: !fitted, values: settings.values, rulers: started, fixed: !settings.grow, shorted: checked === circuit ? progress?.shorted ?? [] : [], rails: settings.rails && checked === circuit ? progress?.rails ?? {} : {}, off: offBoard(), seeThrough: settings.seeThrough,
       guide: guide ? { rats: guide.ratsnest, cuts: guide.cuts, links: guide.links } : undefined,

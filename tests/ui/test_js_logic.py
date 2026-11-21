@@ -1027,7 +1027,7 @@ def test_the_board_tray_and_settings(js: Page) -> None:
     assert got["groups"] == [["Resistors", ["R1"]], ["Chips", ["IC1"]]]
     assert got["wires"] == "1 of 3 placed; a wire from VR1 lug 2"
     assert got["none"] == {"values": True, "next": True, "shorts": True, "grow": True,
-                           "seeThrough": False, "rails": False}  # fmt: skip
+                           "seeThrough": False, "rats": True, "rails": False}  # fmt: skip
     assert got["some"] == {**got["none"], "values": False}  # a garbled one at its default
 
 

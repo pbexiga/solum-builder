@@ -370,10 +370,10 @@ def test_every_starter_but_the_kit_builds_gets_its_footprints() -> None:
         _, problems = board_parts(load_circuit(path), MODELS, TABLE)
         if "aion" not in path.stem:
             assert problems == [], path.stem
-    _, smd = board_parts(load_circuit(LIBRARY / "starters" / "boss-ds1-aion.json"), MODELS, TABLE)
+    _, smd = board_parts(load_circuit(LIBRARY / "starters" / "boss-bd2-aion.json"), MODELS, TABLE)
     assert smd[0] == (
-        "D9's APT1608SURCK is surface-mount (1.6 × 0.8 mm SMD chip (0603)): it can't go on "
-        "a stripboard. Choose a through-hole model for it."
+        "Q1's 2SK209-GR is surface-mount (SC-59 (S-MINI)): it can't go on a stripboard. "
+        "Choose a through-hole model for it."
     )
     path = LIBRARY / "starters" / "marshall-bluesbreaker-aion.json"
     _, dip = board_parts(load_circuit(path), MODELS, TABLE)

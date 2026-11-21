@@ -435,7 +435,7 @@
    "rot": 90,
    "note": "Red LEDs, clipping only with Mode at LEDs: below their 1.8 V the diodes clip first.",
    "type": "led",
-   "model": "APT1608SURCK"
+   "model": "WP710A10SURDK"
   },
   {
    "ref": "D10",
@@ -445,7 +445,7 @@
    ],
    "rot": 270,
    "type": "led",
-   "model": "APT1608SURCK"
+   "model": "WP710A10SURDK"
   },
   {
    "ref": "C9",

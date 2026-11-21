@@ -97,6 +97,36 @@ SURD = [
     (1.966, 24.77),
     (1.986, 29.83),
 ]
+# WP710A10SURDK (3 mm), the same figure on its page 3 (plot 1, curve 1871), checked
+# against the page's picture.
+SURD3 = [
+    (1.7, 0.5326),
+    (1.724, 0.7995),
+    (1.749, 1.333),
+    (1.798, 2.933),
+    (1.818, 4.0),
+    (1.837, 5.6),
+    (1.861, 7.967),
+    (1.876, 9.3),
+    (1.891, 10.91),
+    (1.906, 12.78),
+    (1.921, 15.17),
+    (1.946, 20.0),
+    (1.966, 24.78),
+    (1.986, 29.83),
+]
+
+
+def package(name: str, sheet: str) -> dict:
+    """The record's package: KiCad's pin numbers, the cathode by the sheet's drawing."""
+    return {
+        "name": name,
+        "pins": {"K": 1, "A": 2},
+        "source": f"{sheet}: {name} Solid State Lamp; pins numbered by KiCad's convention, "
+        "1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, "
+        "D-159). The cathode is the short lead, by the flat on the rim",
+    }
+
 
 KB = "https://www.kingbrightusa.com/images/catalog/SPEC/"
 LIC = "Our own fit to the maker's datasheet curve (D-156): the values are Solum Builder's"
@@ -149,6 +179,22 @@ LEDS = [
         if_max=30e-3,
         ir=10e-6,
         retrieved="2026-11-21",
+        package=package("T-1 3/4 (5 mm)", "Kingbright WP7113SURDK data sheet"),
+    ),
+    dict(
+        id="WP710A10SURDK",
+        colour="red",
+        chem="AlGaInP hyper red",
+        size="3 mm",
+        pts=SURD3,
+        url=KB + "WP710A10SURDK.pdf",
+        sheet="Kingbright WP710A10SURDK data sheet, Spec No DSAN6992, Rev. V.6A (03/26/2025)",
+        test=(20e-3, 1.95, 2.5),
+        cjo=None,
+        if_max=30e-3,
+        ir=10e-6,
+        retrieved="2026-11-21",
+        package=package("T-1 (3 mm)", "Kingbright WP710A10SURDK data sheet"),
     ),
 ]
 WANTED = set(sys.argv[1:])
@@ -166,7 +212,8 @@ for led in LEDS:
     card = fm.diode_card(name, f, **extra)
     figure = "Forward Current vs. Forward Voltage (page 3), read from the PDF's vector drawing"
     desc = (
-        f"{led['colour'].capitalize()} 5 mm LED, {led['chem']} (our fit to Kingbright "
+        f"{led['colour'].capitalize()} {led.get('size', '5 mm')} LED, {led['chem']} "
+        f"(our fit to Kingbright "
         f"{led['id'].replace('-', '/')}'s sheet)"
     )
     folder = Path("library/models/led")
@@ -258,6 +305,7 @@ for led in LEDS:
             "equation's, not the "
             "sheet's",
         },
+        **({"package": led["package"]} if "package" in led else {}),
         "validation": validation,
     }
     (folder / f"{led['id']}.json").write_text(json.dumps(rec, indent=2, ensure_ascii=False) + "\n")

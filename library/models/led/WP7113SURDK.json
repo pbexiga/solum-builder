@@ -61,7 +61,7 @@
       "K": 1,
       "A": 2
     },
-    "source": "Kingbright WP7113SURDK data sheet: T-1 3/4 (5mm) Solid State Lamp; pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The cathode is the short lead, by the flat on the rim"
+    "source": "Kingbright WP7113SURDK data sheet: T-1 3/4 (5 mm) Solid State Lamp; pins numbered by KiCad's convention, 1 cathode, 2 anode: the sheet doesn't number the leads (the user, 2026-10-29, D-159). The cathode is the short lead, by the flat on the rim"
   },
   "validation": [
     {

@@ -24,7 +24,8 @@ substitutions:
   - >-
     Q1-Q3 2N5088, Aion's substitute ("Original uses 2SC2248"; ElectroSmash's 2SC2240). IC1
     the NJM3404A, Aion's NJM3404AD (our card from Nisshinbo's sheet, D-252). D1 1N5817 as Aion's (ElectroSmash's 1N4004). D5-D8 and D4 1N914 (the page's
-    1N4148). D9, D10 red LEDs as the APT1608SURCK card.
+    1N4148). D9, D10 WP710A10SURDK, our fit to Kingbright's sheet (D-383): Aion's "LED, 3mm, red
+    diffused".
   - The supply is an ideal 9 V into D1, as the other starters'.
 
 checks:

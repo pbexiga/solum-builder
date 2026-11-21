@@ -281,7 +281,7 @@ def test_models_by_type(monkeypatch: pytest.MonkeyPatch) -> None:
         "1SS133", "BAT41", "BAT42", "BAT46", "BAT48"
     ]  # fmt: skip
     assert models["led"] == [
-        "APT1608SURCK", "WP7113GD", "WP7113QBC-D", "WP7113QWC-D", "WP7113SURDK"
+        "APT1608SURCK", "WP710A10SURDK", "WP7113GD", "WP7113QBC-D", "WP7113QWC-D", "WP7113SURDK"
     ]  # fmt: skip
     assert models["chargepump"] == ["ICL7660", "LT1054", "MAX1044", "TC1044S"]
     assert models["mosfet"] == ["2N7000", "BS170", "LND150"]

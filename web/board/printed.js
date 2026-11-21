@@ -1,6 +1,7 @@
 /**
  * A circuit's kept board as files for the build package (D-386): the board canvas's own
- * drawing on paper colours, both sides, with the column letters and strip numbers the cut
+ * drawing on paper colours, both sides, parts named by ref only (values are in the parts
+ * list), with the column letters and strip numbers the cut
  * and link lists name holes by; the guidance, hover labels and grips taken out. The parts
  * side carries the off-board parts and their wires; the copper side is mirrored as it lies
  * under the iron, cuts ✕ and every solder joint. The PDF is made from them on the server,
@@ -32,7 +33,7 @@ export function printableBoard(circuit, progress) {
     try {
       const canvas = boardCanvas(svg, STILL);
       if (copper) canvas.side(true);
-      canvas.draw(board, progress.footprints, circuit, { rulers: true, paper: true, off: bare ? undefined : offBoardDrawing(progress, board), chosen: chosenMarks(progress) });
+      canvas.draw(board, progress.footprints, circuit, { values: false, rulers: true, paper: true, off: bare ? undefined : offBoardDrawing(progress, board), chosen: chosenMarks(progress) });
       return paperText(svg, DROP, MARGIN, `${circuit.name}: stripboard, ${copper ? "copper side" : "parts side"}`);
     } finally {
       host.remove();

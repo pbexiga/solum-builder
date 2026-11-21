@@ -13,8 +13,8 @@ from typing import Literal
 
 from solum.circuit.connectivity import GROUND, Nets, connect
 from solum.circuit.parts import PIN_WORDS
-from solum.circuit.schema import POLARISED, SUPPLY_SIGNS, Capacitor, Circuit, Part, Switch
-from solum.export import built_where, chosen_where, is_status_led, why_not_moved
+from solum.circuit.schema import POLARISED, SUPPLY_SIGNS, Capacitor, Circuit, Part
+from solum.export import built_where, chosen_where, why_not_moved
 from solum.guides import FootprintTable
 from solum.models import ModelError, ModelLibrary
 from solum.stripboard.board import Hole, Layout, Placed, hole_name, segments
@@ -562,8 +562,7 @@ def move_problem(part: Part, onto: bool, models: ModelLibrary,
 class Progress:
     """Where a board stands: `to_place` the parts not on it yet and `wires_to_go` the lugs not
     wired yet (not faults), `loose` how many wires have a free end; `items` every off-board
-    part (D-375), `spots` where each is drawn (put there, else its default); `stock` the
-    bypass hardware the schematic doesn't draw (`stock_bypass`);
+    part (D-375), `spots` where each is drawn (put there, else its default);
     `unplaceable` a sentence per part that can't go on a board yet (no footprint: it stays in
     the tray, D-370); `nets` each net's progress; `legs` each board part's legs; `faults` what's
     wrong now (placement, pads, a part the wrong way round, a leg on another net's strip);
@@ -577,7 +576,6 @@ class Progress:
     loose: int
     items: list[OffItem]
     spots: dict[str, Hole]
-    stock: list[str]
     unplaceable: list[str]
     nets: list[NetProgress]
     legs: dict[str, list[LegProgress]]
@@ -592,22 +590,6 @@ class Progress:
     @property
     def nets_done(self) -> int:
         return sum(n.state == "done" for n in self.nets)
-
-
-STOCK_FOOTSWITCH = "footswitch"
-STOCK_LED = "status LED"
-
-
-def stock_bypass(circuit: Circuit) -> list[str]:
-    """The stock bypass hardware the Board view offers (D-370): a 3PDT footswitch unless
-    the schematic draws a latching footswitch, a status LED unless it draws one (an LED
-    labelled "status"). Never both a drawn one and the stock one."""
-    stomp = any(
-        isinstance(p, Switch) and p.switch_kind.positions == ("On", "Bypassed")
-        for p in circuit.parts
-    )  # the latching stomps (switches.py's `_stomp`), not a momentary one
-    led = any(is_status_led(p) for p in circuit.parts)
-    return [name for name, drawn in ((STOCK_FOOTSWITCH, stomp), (STOCK_LED, led)) if not drawn]
 
 
 def _terminal_id(t: Terminal, words: _Words) -> str:
@@ -761,7 +743,7 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
     red = {hole for hole, g in copper.items() if g in mixed}
     spots = {**default_spots(r.items, r.layout), **dict(r.layout.spots)}
     return Progress(sorted(r.board.keys() - placed), unwired, loose, r.items,
-                    {i.ref: spots[i.ref] for i in r.items}, stock_bypass(circuit),
+                    {i.ref: spots[i.ref] for i in r.items},
                     r.unboardable, nets, legs, faults, stale, warnings, done,
                     runs(red), _rails(by_group, copper),
                     _choices(r, circuit, models, table))  # fmt: skip

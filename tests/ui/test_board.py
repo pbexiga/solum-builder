@@ -92,17 +92,17 @@ def test_a_circuit_without_a_board_shows_its_parts_to_place(page: Page, base_url
     page.locator("#board-button").click()
     expect(page.locator("#board-size-text")).to_have_text("Empty board")
     # the Tray on the left (D-371): the 8 board parts by kind; off the board VR1, the
-    # guitar's and amp's jacks, Power (D-375), the stock footswitch and status LED (D-370)
+    # guitar's and amp's jacks, Power (D-375); nothing stock (D-385)
     expect(page.locator("#board-tray")).to_be_visible()
-    expect(page.locator("#board-tray-count")).to_have_text("· 14 left")
-    expect(page.locator("#board-tray-body li[data-ref]")).to_have_count(14)
+    expect(page.locator("#board-tray-count")).to_have_text("· 12 left")
+    expect(page.locator("#board-tray-body li[data-ref]")).to_have_count(12)
     kinds = ["Resistors", "Capacitors", "Transistors"]
     expect(page.locator("#board-tray-body .board-subhead")).to_have_text(kinds)
     expect(page.locator("#board-tray-body li[data-ref='Q1']")).to_contain_text("in a line")
     off = page.locator("#board-tray-body .off-board li")
     expect(off).to_have_text([
         "VR1 (Volume) A10k log (A)", 'IN (Input) ¼" jack TS', 'OUT (Output) ¼" jack TS',
-        "Power the supply's wires", "Footswitch 3PDT stock, true bypass", "Status LED stock",
+        "Power the supply's wires",
     ])  # fmt: skip
     # a row selects its part on the small schematic
     page.locator("#board-tray-body li[data-ref='R2']").click()

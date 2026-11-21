@@ -12,7 +12,7 @@ from solum.circuit.schema import Circuit
 from solum.guides import footprint_table
 from solum.models import load_models
 from solum.stripboard.board import layout_from_data, parse_hole
-from solum.stripboard.check import Progress, check_layout, progress, stock_bypass
+from solum.stripboard.check import Progress, check_layout, progress
 from solum.stripboard.footprints import board_parts
 from solum.stripboard.limits import Limit, group_met, limit_warnings, placement_limits
 from solum.yamlio import load_yaml
@@ -234,24 +234,6 @@ def test_a_loose_wire_is_to_do_not_a_fault() -> None:
     p = run(edited(wires=[*wires, {"from": "VR1.2"}]))
     assert p.loose == 1 and p.wires_to_go == ["VR1.2"] and p.faults == [] and not p.done
     assert {n.net: n.wires for n in p.nets}["C2.1"] == ("VR1 lug 2",)
-
-
-def test_stock_bypass_only_when_the_schematic_draws_none() -> None:
-    """D-370: a drawn footswitch or status LED replaces the stock one; never both."""
-    assert stock_bypass(RANGEMASTER) == ["footswitch", "status LED"]
-    klon = load_circuit(LIBRARY / "starters" / "klon-centaur-aion-built.json")
-    assert stock_bypass(klon) == ["status LED"]  # its LED1 isn't labelled "status"
-    data = klon.model_dump(mode="json", exclude_none=True)
-    data["parts"] = [p for p in data["parts"] if p["ref"] not in ("SW2B", "SW2C")]
-    for part in data["parts"]:
-        if part["ref"] == "LED1":
-            part["label"] = "Status"
-        if part["type"] == "switch" and part["kind"] == "footswitch":
-            part["kind"] = "footswitch-momentary"  # a tap-tempo switch is no bypass
-            part.pop("pole", None)
-            part["ref"] = "SW2"
-    data["wires"] = []  # the poles' wires went with them; stock_bypass reads only parts
-    assert stock_bypass(Circuit.model_validate(data)) == ["footswitch"]
 
 
 def test_each_net_names_its_off_board_wires_still_to_land() -> None:

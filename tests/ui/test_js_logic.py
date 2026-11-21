@@ -988,8 +988,8 @@ def test_the_power_chip_follows_the_cable_and_dc_switches(js: Page) -> None:
 
 def test_the_board_tray_and_settings(js: Page) -> None:
     """The Board view's tray: on-board parts with footprint, off-board parts as the parts
-    list names them, then the stock bypass (D-370); the editor's settings read with
-    defaults for anything missing or garbled."""
+    list names them, nothing stock (D-385); the editor's settings read with defaults for
+    anything missing or garbled."""
     got = run(
         js,
         """
@@ -1003,7 +1003,6 @@ def test_the_board_tray_and_settings(js: Page) -> None:
             { ref: 'IN', name: 'IN (Input)', kind: 'jack', value: '¼" jack', details: 'TS', lugs: [{ end: 'IN.out', label: 'T', net: 'in' }], size: [3, 3] },
           ],
           spots: { VR1: [0, -7], SW1: [5, -7], IN: [16, 0] },
-          stock: ['footswitch', 'status LED'],
         };
         const circuit = { parts: [{ ref: 'R1', value: '4k7' }, { ref: 'IC1A', model: 'TL072' }] };
         return {
@@ -1021,8 +1020,6 @@ def test_the_board_tray_and_settings(js: Page) -> None:
     assert got["off"] == [  # IN is wired (a board from pads): beside the board, not in the tray
         {"ref": "VR1 (Gain)", "value": "B100k", "shape": "linear (B)", "item": "VR1"},
         {"ref": "SW1", "value": "SPDT", "shape": "switch", "item": "SW1"},
-        {"ref": "Footswitch", "value": "3PDT", "shape": "stock, true bypass", "item": None},
-        {"ref": "Status LED", "value": "", "shape": "stock", "item": None},
     ]
     assert got["groups"] == [["Resistors", ["R1"]], ["Chips", ["IC1"]]]
     assert got["wires"] == "1 of 3 placed; a wire from VR1 lug 2"

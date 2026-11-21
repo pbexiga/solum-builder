@@ -270,7 +270,7 @@ export function boardRefOf(footprints, ref) {
  *   part beside the board (D-375): drawn as `shape` (row, stomp, toggle, rotary, D-384), its
  *   drawing `size` in holes, each lug's place in it in holes from its top-left hole (offboard.py)
  * @typedef {{to_place: string[], wires_to_go: string[], loose: number, items: OffItem[],
- *   spots: Record<string, Hole>, stock: string[],
+ *   spots: Record<string, Hole>,
  *   unplaceable: string[], nets: NetProgress[],
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
  *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number],
@@ -291,7 +291,7 @@ export function boardRefOf(footprints, ref) {
 /**
  * The menu items that move a part on or off the board by choice (D-385): back to the parts
  * list's place when it was moved, else to the other side of the board's edge (greyed with
- * why when it can't go). None for what has no choice (Power, stock hardware).
+ * why when it can't go). None for what has no choice (Power).
  * @param {Choice | undefined} choice @param {string} ref @returns {WhereMove[]}
  */
 export function whereMoves(choice, ref) {
@@ -316,7 +316,7 @@ const SHAPE_WORDS = /** @type {Record<string, string>} */ ({ axial: "axial", rad
 /**
  * @typedef {{ref: string, value: string, shape: string, mark?: string, kind?: string, select?: string, item?: string}} TrayRow
  *   `mark`: the footprint's shape, for the little drawing beside it; `select`: the
- *   circuit part a click selects (none for stock hardware); `item`: the off-board part
+ *   circuit part a click selects; `item`: the off-board part
  *   it is, dragged out beside the board (D-375)
  */
 
@@ -352,7 +352,7 @@ export function trayGroups(rows) {
   return groups.filter((g) => g.rows.length);
 }
 
-const STOCK_WORDS = /** @type {Record<string, TrayRow>} */ ({
+/** @type {Record<string, TrayRow>} */ ({
   footswitch: { ref: "Footswitch", value: "3PDT", shape: "stock, true bypass" },
   "status LED": { ref: "Status LED", value: "", shape: "stock" },
 });
@@ -380,13 +380,12 @@ export function isOut(item, board) {
 
 /**
  * The tray's off-board rows: each off-board part not yet beside the board, as the parts
- * list names it (its details, else what it is), `item` set so it can be dragged out; then
- * the stock footswitch and status LED the schematic doesn't draw (D-370).
+ * list names it (its details, else what it is), `item` set so it can be dragged out. Only
+ * the circuit's own: no stock footswitch or status LED (D-385).
  * @param {Progress} progress @param {Board} board @returns {TrayRow[]}
  */
 export function offBoardRows(progress, board) {
-  const parts = progress.items.filter((i) => !isOut(i, board)).map((i) => ({ ref: i.name, value: i.value, shape: i.details || i.kind, select: itemRefs(i)[0], item: i.ref }));
-  return [...parts, ...progress.stock.map((id) => STOCK_WORDS[id] ?? { ref: id, value: "", shape: "stock" })];
+  return progress.items.filter((i) => !isOut(i, board)).map((i) => ({ ref: i.name, value: i.value, shape: i.details || i.kind, select: itemRefs(i)[0], item: i.ref }));
 }
 
 /**

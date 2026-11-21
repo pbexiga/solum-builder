@@ -68,6 +68,13 @@ def test_the_lists_name_each_hole_and_number_the_wires_in_the_parts_order() -> N
     assert c.stripboard is not None
     lists = lists_for(c.stripboard.layout(), c, MODELS, TABLE)
     assert lists.size == (12, 9)
+    assert lists.parts == [
+        ("C1", "5n", "Capacitor"), ("C2", "10n", "Capacitor"), ("C3", "47µ", "Capacitor"),
+        ("C4", "47µ", "Capacitor"), ("IN (Input)", '¼" jack', "Jack"),
+        ("OUT (Output)", '¼" jack', "Jack"), ("Q1", "OC44", "Transistor"),
+        ("R1", "470k", "Resistor"), ("R2", "68k", "Resistor"), ("R3", "3k9", "Resistor"),
+        ("VR1 (Volume)", "A10k", "Pot"),
+    ]  # fmt: skip
     assert lists.cuts == ["G8"]
     assert lists.links == ["B1–B8", "K2–K8"]
     assert lists.wires == [
@@ -107,6 +114,7 @@ def test_the_page_says_its_checked_and_has_the_lists_and_both_scales() -> None:
     assert "Every connection on this board matches the circuit (8 nets)." in text
     assert "Stripboard · v1.0 · 12 × 9 holes (30 × 23 mm)" in text
     assert "<li>G8</li>" in text and "<li>B1–B8</li>" in text
+    assert "<h2>Parts (" in text and "<li><strong>Q1</strong>" in text
     assert '<ol class="wires"><li>VR1 (Volume) lug 1 to D1</li>' in text
     assert "@page parts { size: 297mm 210mm" in text  # filled onto A4, landscape
     assert "At real size" in text and "this line is 25.4 mm" in text

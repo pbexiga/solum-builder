@@ -8,10 +8,11 @@ the board. A board that doesn't match the circuit as saved is never packaged;
 
 import base64
 import html
-from dataclasses import dataclass
+from dataclasses import dataclass, field, replace
 
+from solum.circuit.refs import ref_key
 from solum.circuit.schema import Circuit
-from solum.export import SHEET_MARGIN, fill_sheet, page, view_box
+from solum.export import SHEET_MARGIN, bom, fill_sheet, page, view_box
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
 from solum.stripboard.board import Hole, Layout, hole_name
@@ -35,12 +36,15 @@ SHOWN_FAULTS = 3  # a stale board's faults named in the index; the rest counted
 @dataclass(frozen=True)
 class BoardLists:
     """What to do to the board, each a line: the cuts and links by hole, the off-board
-    wires in order (numbered when shown); `size` in holes (columns, strips)."""
+    wires in order (numbered when shown); `size` in holes (columns, strips); `parts` each
+    part by ref, its value and what it is, to read the drawings by (the user: the sheet
+    means nothing without them)."""
 
     size: Hole
     cuts: list[str]
     links: list[str]
     wires: list[str]
+    parts: list[tuple[str, str, str]] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -118,8 +122,17 @@ def board_lists(layout: Layout, items: list[OffItem]) -> BoardLists:
 
 def lists_for(layout: Layout, circuit: Circuit, models: ModelLibrary,
               table: FootprintTable) -> BoardLists:  # fmt: skip
-    """`board_lists` with the circuit's off-board parts."""
-    return board_lists(layout, read_layout(layout, circuit, models, table).items)
+    """`board_lists` with the circuit's off-board parts, and its parts' values."""
+    lists = board_lists(layout, read_layout(layout, circuit, models, table).items)
+    return replace(lists, parts=part_values(circuit, models))
+
+
+def part_values(circuit: Circuit, models: ModelLibrary) -> list[tuple[str, str, str]]:
+    """Each part of the parts list (the hardware aside) by ref, as the parts list names it
+    ("VR1 (Gain)"), with its value and what it is, in ref order (C2 before C10)."""
+    rows = [(ref, line.value, line.part) for line in bom(circuit, models)
+            if line.where != "hardware" for ref in line.refs]  # fmt: skip
+    return sorted(rows, key=lambda row: ref_key(row[0].split(" ")[0]))
 
 
 def size_text(size: Hole) -> str:
@@ -197,6 +210,8 @@ h2 .scale { color: var(--brass); font-size: 10pt; }
 .ruler-mm { width: 25.4mm; border-top: 1pt solid var(--ink); margin: 2pt 0 8pt; }
 ul.holes { columns: 6; padding-left: 0; list-style: none; margin: 0; }
 ol.wires { padding-left: 2.2em; margin: 0; }
+ul.parts { columns: 3; padding-left: 0; list-style: none; margin: 0; }
+ul.parts li { break-inside: avoid; } ul.parts span { color: var(--slate); font-size: 9pt; }
 .scaled { color: var(--brass); }
 .sides.row figure { display: inline-block; vertical-align: top; margin: 0 6mm 0 0; }
 .sides.column figure { margin: 0 0 6mm; }
@@ -205,7 +220,8 @@ figcaption { color: var(--slate); font-size: 9pt; margin-top: 2pt; }
 
 
 def stripboard_page(circuit: Circuit, drawn: Drawings, lists: BoardLists, nets: int) -> str:
-    """The board's page for the package: the checked line and the lists, each side on its
+    """The board's page for the package: the checked line, the parts by ref with their
+    values, the lists, each side on its
     own sheet to read, then the board alone at real size. Raises ValueError for a drawing
     without a viewBox."""
     esc = html.escape
@@ -224,6 +240,11 @@ def stripboard_page(circuit: Circuit, drawn: Drawings, lists: BoardLists, nets: 
             f"<p><strong>Every connection on this board matches the circuit ({nets} nets)."
             "</strong> Holes are named by column letter and strip number, as on the drawings "
             "(F7: column F, strip 7).</p>\n")  # fmt: skip
+    rows = ""
+    for ref, value, part in lists.parts:
+        what = "" if part.lower() in value.lower() else f" <span>{esc(part.lower())}</span>"
+        rows += f"<li><strong>{esc(ref)}</strong> {esc(value)}{what}</li>"
+    body += f'<h2>Parts ({len(lists.parts)})</h2>\n<ul class="parts">{rows}</ul>\n'
     body += listed("Cuts", lists.cuts, "ul", "holes")
     body += listed("Links", lists.links, "ul", "holes")
     body += listed("Off-board wires", lists.wires, "ol", "wires")

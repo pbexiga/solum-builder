@@ -498,6 +498,7 @@ const BEND = 4; // a bend costs this many steps
 const CROSS = 6; // crossing another wire
 const ON_TOP = 200; // lying along another wire, or through its bend: only when there's no other way
 const INSIDE = 6; // a step across a switch's outline costs this many beside it (D-384)
+const OUTLINE = 12; // a step on the outline's own line: crossed once to reach a lug, never run along (D-384)
 
 /**
  * @typedef {{boxes: Box[], lines: Array<[number, number, number, number]>, soft?: Box[]}} Obstacles
@@ -582,7 +583,8 @@ function searchRoutes(lines, board, obstacles) {
   for (let n = 0; n < cols * rows; n++) {
     const [x, y] = xy(n);
     const over = x >= edge.left && x <= edge.right && y >= edge.top && y <= edge.bottom;
-    dear[n] = soft.some((b) => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h) ? 2 : over ? 1 : 0;
+    const onLine = soft.some((b) => x >= b.x - 1 && x <= b.x + b.w + 1 && y >= b.y - 1 && y <= b.y + b.h + 1 && (Math.abs(x - b.x) <= 1 || Math.abs(x - b.x - b.w) <= 1 || Math.abs(y - b.y) <= 1 || Math.abs(y - b.y - b.h) <= 1));
+    dear[n] = onLine ? 3 : soft.some((b) => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h) ? 2 : over ? 1 : 0;
     if (over && x % STEP === 0 && y % STEP === 0) wall[n] = 1; // a hole: only a wire's own end goes in
     if (obstacles.boxes.some((b) => x > b.x - 1 && x < b.x + b.w + 1 && y > b.y - 1 && y < b.y + b.h + 1)) wall[n] = 1;
     if (obstacles.lines.some(([ax, ay, bx, by]) => nearSegment(x, y, ax, ay, bx, by) < 1.5)) wall[n] = 1;
@@ -663,7 +665,7 @@ function searchRoutes(lines, board, obstacles) {
         const m = at(ni, nj);
         if (m === goal ? into >= 0 && e !== into : wall[m]) continue;
         const level = e < 2 ? 1 : 2;
-        let step = dear[m] === 2 ? INSIDE : dear[m] ? ON_BOARD : 1;
+        let step = dear[m] === 3 ? OUTLINE : dear[m] === 2 ? INSIDE : dear[m] ? ON_BOARD : 1;
         if (e !== d) step += BEND;
         if (used[m] & level || (used[m] && e !== d)) step += ON_TOP;
         else if (used[m]) step += CROSS;

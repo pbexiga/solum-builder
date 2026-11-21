@@ -1335,3 +1335,27 @@ def test_the_moves_on_and_off_the_board_by_choice(js: Page) -> None:
     assert got["moved"] == ["↑ On board", "board", None, "Put R2 on the board"]
     assert got["none"] is None
     assert got["marks"] == ["off the board: your choice", "on the board: your choice", ""]
+
+
+def test_a_wire_into_a_switch_crosses_its_outline_once_never_along_it(js: Page) -> None:
+    """D-384 (the user, 2026-11-21: the A1 wire ran along the footswitch's box): a wire from
+    beside the switch to a lug inside it comes in across the outline once, square on."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const board = { columns: 4, strips: 4 };
+        const stomp = { x: -5, y: 95, w: 70, h: 70 };  // lugs at x 10, 30, 50; y 110, 130, 150
+        const jack = { x: 150, y: 60, w: 50, h: 20 };
+        const a1 = { x1: 165, y1: 85, x2: 10, y2: 110, loose: false, hole: false, box: jack };
+        return b.wireRoutes([a1], board, { boxes: [jack], lines: [], soft: [stomp] })[0];
+        """,
+    )
+    on = lambda x, y: (  # noqa: E731
+        (x in (-5, 65) and 95 <= y <= 165) or (y in (95, 165) and -5 <= x <= 65)
+    )
+    assert got[-1] == [10, 110]
+    along = [(a, b) for a, b in pairwise(got) if on(*a) and on(*b)]
+    assert along == []  # no run lies on the outline
+    crossings = [p for p in got if on(*p)]
+    assert len(crossings) <= 1

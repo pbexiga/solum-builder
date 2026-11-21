@@ -112,7 +112,6 @@ header > .title { display: flex; align-items: baseline; gap: 10px; min-width: 0;
 .menu button[aria-checked="true"] .menu-label::before { content: "✓ "; color: var(--accent-hi); }
 .menu button[aria-checked="false"] .menu-label::before { content: "✓ "; visibility: hidden; }
 .menu .menu-hint { color: var(--text-3); font-family: var(--font-mono); font-size: 11px; }
-.menu .menu-note { color: var(--text-3); font-size: 11px; margin: -2px 10px 4px; max-width: 260px; }
 .menu hr { border: none; border-top: 1px solid var(--border); margin: 4px 2px; width: auto; align-self: stretch; }
 .search {
   background: var(--surface-1);
@@ -341,6 +340,18 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-tray .board-next { margin: 4px 0 8px; padding: 4px 6px; border-left: 2px solid var(--accent); background: var(--surface-2); color: var(--text); cursor: pointer; }
 .board-tray .board-list li.next { background: var(--info-bg); color: var(--text); }
 .board-tray .board-list li .choice { color: var(--accent); font-size: 11px; margin-left: 4px; }
+/* the tray's two lists (D-385): each headed by a band that stays in view, the second set
+   off by a rule; a row's move button shows on hover; a list lit as a drag's drop */
+.board-tray .tray-section { border-radius: 4px; padding: 0 2px 6px; }
+.board-tray .tray-section + .tray-section { margin-top: 18px; padding-top: 10px; border-top: 1px solid var(--border); }
+.board-tray .tray-section > h3 { position: sticky; top: -6px; z-index: 1; margin: 0 -2px 6px; padding: 6px 8px; background: var(--surface-2); border: 1px solid var(--border); border-radius: 3px; color: var(--text); }
+.board-tray .tray-section.drop-ok { outline: 2px dashed var(--accent); outline-offset: 1px; background: var(--info-bg); }
+.board-tray .tray-section.drop-no { outline: 2px dashed var(--error); outline-offset: 1px; }
+.board-tray .board-list li { position: relative; }
+.board-tray .where-move { position: absolute; right: 2px; top: 2px; padding: 0 6px; font-size: 11px; line-height: 16px; border: 1px solid var(--border); border-radius: 3px; background: var(--surface-2); color: var(--text-2); opacity: 0; }
+.board-tray .board-list li:hover .where-move, .board-tray .where-move:focus-visible { opacity: 1; }
+.board-tray .where-move[aria-disabled="true"] { color: var(--text-3); cursor: not-allowed; }
+.board-tray .where-move:hover:not([aria-disabled="true"]) { color: var(--text); border-color: var(--accent); }
 /* a footprint's mark beside its row: axial a bar, radial a circle, in a line three legs, DIP a notched box */
 .board-tray .fp { display: inline-block; width: 14px; height: 8px; margin-right: 6px; vertical-align: middle; border: 1.5px solid var(--text-3); box-sizing: border-box; }
 .board-tray .fp-axial { height: 6px; border-radius: 2px; }

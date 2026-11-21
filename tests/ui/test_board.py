@@ -99,10 +99,10 @@ def test_a_circuit_without_a_board_shows_its_parts_to_place(page: Page, base_url
     kinds = ["Resistors", "Capacitors", "Transistors"]
     expect(page.locator("#board-tray-body .board-subhead")).to_have_text(kinds)
     expect(page.locator("#board-tray-body li[data-ref='Q1']")).to_contain_text("in a line")
-    off = page.locator("#board-tray-body .off-board li")
+    off = page.locator("#board-tray-body .off-board li")  # each with its move button (D-385)
     expect(off).to_have_text([
-        "VR1 (Volume) A10k log (A)", 'IN (Input) ¼" jack TS', 'OUT (Output) ¼" jack TS',
-        "Power the supply's wires",
+        "VR1 (Volume) A10k log (A)↑ On board", 'IN (Input) ¼" jack TS↑ On board',
+        'OUT (Output) ¼" jack TS↑ On board', "Power the supply's wires",
     ])  # fmt: skip
     # a row selects its part on the small schematic
     page.locator("#board-tray-body li[data-ref='R2']").click()
@@ -653,27 +653,27 @@ def test_ratsnest_lines_all_or_only_the_part_in_focus(page: Page, base_url: str)
     showing(True)
 
 
-def test_a_part_is_moved_off_the_board_and_back_by_choice(page: Page, base_url: str) -> None:
-    """D-385: right-click R2 on the board, Move off the board: it's an off-board part in the
-    tray, marked as the builder's choice; its tray row's menu puts it back; a pot's menu
-    greys Put on the board with why; Ctrl+Z undoes each move."""
-    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
-    show_board(page)
-    page.locator("#board .board-part[data-ref='R2'] .body").first.click(button="right")
-    page.get_by_role("menuitem", name="Move off the board").click()
-    expect(page.locator("#board .board-part[data-ref='R2']")).to_have_count(0)
-    row = page.locator("#board-tray-body .off-board li", has_text="R2")
-    expect(row).to_contain_text("off the board: your choice")
+def test_a_part_is_moved_between_the_tray_s_lists_by_choice(page: Page, base_url: str) -> None:
+    """D-385: in the tray, R2's button moves it to *Off the board*, marked as the builder's
+    choice; dragged back to *On the board*, the choice is gone; a pot's button refuses with
+    why; Ctrl+Z undoes a move."""
+    open_with_board(page, base_url, {"size": [12, 9]})
+    page.locator("#board-button").click()
+    r2 = page.locator("#board-tray .tray-section[data-where='board'] li[data-ref='R2']")
+    r2.hover()
+    r2.locator(".where-move").click()
+    off = page.locator("#board-tray-body .off-board li", has_text="R2")
+    expect(off).to_contain_text("off the board: your choice")
+    expect(r2).to_have_count(0)
     page.keyboard.press("Control+z")
-    expect(page.locator("#board .board-part[data-ref='R2']")).to_have_count(1)
+    expect(r2).to_have_count(1)
     page.keyboard.press("Control+Shift+z")
-    expect(row).to_have_count(1)
-    row.click(button="right")
-    page.get_by_role("menuitem", name="Back to the parts list's place").click()
-    expect(row).to_have_count(0)
-    expect(page.locator("#board-tray-body li[data-ref='R2']")).to_have_count(1)  # to place
-    page.locator("#board .off-item[data-item='VR1'] .off-body").click(button="right")
-    expect(page.get_by_role("menuitem", name="Put on the board")).to_be_disabled()
-    expect(page.locator(".menu .menu-note")).to_have_text(
-        "There's no board footprint for a pot yet."
-    )
+    expect(off).to_have_count(1)
+    target = page.locator("#board-tray .tray-section[data-where='board'] h3")
+    off.drag_to(target)
+    expect(r2).to_have_count(1)
+    expect(off).to_have_count(0)
+    pot = page.locator("#board-tray-body .off-board li", has_text="VR1")
+    pot.hover()
+    pot.locator(".where-move").click(force=True)  # greyed, yet a click says why
+    expect(page.locator("#refusal")).to_contain_text("There's no board footprint for a pot yet.")

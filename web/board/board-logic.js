@@ -283,23 +283,21 @@ export function boardRefOf(footprints, ref) {
  */
 
 /**
- * @typedef {{label: string, to: "board" | "off-board" | null, why: string | null, edit: string}} WhereMove
- *   a menu item moving a part on or off the board (D-385): `to` none puts it back where the
- *   parts list has it; `why` it can't be (the item greyed); `edit` the undo step's words
+ * @typedef {{label: string, to: "board" | "off-board", why: string | null, edit: string}} WhereMove
+ *   moving a part to the tray's other list (D-385): `why` it can't go (the button greyed, a
+ *   drop refused); `edit` the undo step's words
  */
 
 /**
- * The menu items that move a part on or off the board by choice (D-385): back to the parts
- * list's place when it was moved, else to the other side of the board's edge (greyed with
- * why when it can't go). None for what has no choice (Power).
- * @param {Choice | undefined} choice @param {string} ref @returns {WhereMove[]}
+ * Moving a part in the tray to its other list, on the board or off it, by choice (D-385):
+ * back to its own list clears the choice. None for what has no choice (Power).
+ * @param {Choice | undefined} choice @param {string} ref @returns {WhereMove | null}
  */
-export function whereMoves(choice, ref) {
-  if (!choice) return [];
-  if (choice.moved) return [{ label: "Back to the parts list's place", to: null, why: null, edit: `${ref} back to the parts list's place` }];
+export function whereMove(choice, ref) {
+  if (!choice) return null;
   return choice.where === "board"
-    ? [{ label: "Move off the board", to: "off-board", why: choice.why, edit: `Move ${ref} off the board` }]
-    : [{ label: "Put on the board", to: "board", why: choice.why, edit: `Put ${ref} on the board` }];
+    ? { label: "↓ Off board", to: "off-board", why: choice.why, edit: `Move ${ref} off the board` }
+    : { label: "↑ On board", to: "board", why: choice.why, edit: `Put ${ref} on the board` };
 }
 
 /**

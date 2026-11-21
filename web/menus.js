@@ -2,11 +2,10 @@
  * Drop-down menus (DOM): header menu buttons and menus opened at a point (right-click).
  * Picking an item, a click outside or Escape closes them. Items are rebuilt each time a
  * menu opens, so their labels and disabled states are always current. An item with
- * `items` opens a submenu beside it (on hover or click). A `note` is a quiet line under
- * its item: why it's greyed, say.
+ * `items` opens a submenu beside it (on hover or click).
  *
  * @typedef {{label: string, id?: string, hint?: string, checked?: boolean,
- *   disabled?: boolean, run?: () => void, items?: MenuItem[], note?: string} | "-"} MenuItem
+ *   disabled?: boolean, run?: () => void, items?: MenuItem[]} | "-"} MenuItem
  */
 
 import { h } from "./panels.js";
@@ -117,7 +116,6 @@ function list(items, open) {
       });
     }
     el.append(b);
-    if (item.note) el.append(h("p", { class: "menu-note" }, [item.note]));
   }
   return el;
 }

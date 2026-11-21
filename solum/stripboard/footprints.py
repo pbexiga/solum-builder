@@ -7,6 +7,7 @@ import math
 import re
 from collections.abc import Iterable, Sequence
 from dataclasses import dataclass, field
+from functools import cache
 from itertools import pairwise
 from typing import Literal
 
@@ -375,8 +376,18 @@ def body_holes(part: BoardPart, legs: dict[str, Hole], standing: bool) -> set[Ho
     fp = part.footprint
     if standing or not (fp.diameter or fp.length):
         return set()
-    xs = [h[0] for h in legs.values()]
-    ys = [h[1] for h in legs.values()]
+    x0 = min(h[0] for h in legs.values())
+    y0 = min(h[1] for h in legs.values())
+    shape = _body_shape(fp, frozenset((h[0] - x0, h[1] - y0) for h in legs.values()))
+    return {(x + x0, y + y0) for x, y in shape}
+
+
+@cache
+def _body_shape(fp: Footprint, legs: frozenset[Hole]) -> frozenset[Hole]:
+    """A body's holes for legs placed from (0, 0): the same wherever the part sits, so
+    worked out once per footprint and leg shape (*Tidy up* asks thousands of times)."""
+    xs = [h[0] for h in legs]
+    ys = [h[1] for h in legs]
     cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2
     along_x = max(xs) - min(xs) >= max(ys) - min(ys)
     if fp.shape == "dip":
@@ -394,4 +405,4 @@ def body_holes(part: BoardPart, legs: dict[str, Hole], standing: bool) -> set[Ho
                 inside = abs(dx) < hx / 2 - 1e-6 and abs(dy) < hy / 2 - 1e-6
             if inside:
                 covered.add((x, y))
-    return covered - set(legs.values())
+    return frozenset(covered - legs)

@@ -957,6 +957,31 @@ def test_stripboard_start_lays_out_or_fills_the_board(monkeypatch: pytest.Monkey
     assert full.status_code == 422 and "Nothing to fill" in full.json()["message"]
 
 
+def test_stripboard_tidy_makes_the_board_smaller_or_asks(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-388: Start for me's board tidied (smaller, still done); a part placed wrongly is
+    asked about first, then laid out again with `mend`; no board is a 422 in words."""
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    over = c.post("/api/stripboard/start", json={"circuit": data}).json()["stripboard"]
+    tidied = c.post("/api/stripboard/tidy", json={"circuit": {**data, "stripboard": over}}).json()
+    (w, h), (w0, h0) = tidied["stripboard"]["size"], over["size"]
+    assert w * h < w0 * h0 and tidied["mended"] == []
+    done = {**data, "stripboard": tidied["stripboard"]}
+    assert c.post("/api/stripboard", json={"circuit": done}).json()["done"] is True
+    good = load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")
+    moved = {
+        **data,
+        "stripboard": {**good, "parts": {**good["parts"], "R2": {"1": "J5", "2": "J9"}}},
+    }
+    asked = c.post("/api/stripboard/tidy", json={"circuit": moved}).json()
+    assert asked["refs"] == ["R2"] and "placed wrongly" in asked["ask"]
+    mended = c.post("/api/stripboard/tidy", json={"circuit": moved, "mend": True}).json()
+    assert mended["mended"] == ["R2"]
+    bare = c.post("/api/stripboard/tidy", json={"circuit": data})
+    assert bare.status_code == 422 and "nothing on the board" in bare.json()["message"]
+
+
 def test_stripboard_edit_puts_off_board_parts_and_wires(monkeypatch: pytest.MonkeyPatch) -> None:
     """D-375: an off-board part put beside the board, a wire drawn to a hole, moved to a
     lug, its route moved by hand (D-380), taken off; the part back to the tray takes its

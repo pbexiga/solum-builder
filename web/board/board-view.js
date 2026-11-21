@@ -92,6 +92,7 @@ export function boardView(host, app) {
   const trimButton = /** @type {HTMLButtonElement} */ ($("board-trim"));
   const wireButton = /** @type {HTMLButtonElement} */ ($("board-wire"));
   const startButton = /** @type {HTMLButtonElement} */ ($("board-start"));
+  const tidyButton = /** @type {HTMLButtonElement} */ ($("board-tidy"));
   const acceptButton = /** @type {HTMLButtonElement} */ ($("board-accept"));
   const needs = needsCard($("board-needs"));
   const button = $("board-button");
@@ -206,6 +207,7 @@ export function boardView(host, app) {
   trimButton.addEventListener("click", () => void resize("trim", "Trim the board"));
   wireButton.addEventListener("click", () => void wireForMe());
   startButton.addEventListener("click", () => void startForMe());
+  tidyButton.addEventListener("click", () => void tidyUp());
   acceptButton.addEventListener("click", () => void boardEdit({ kind: "suggested" }, acceptButton.textContent ?? "Make the suggested cuts and links"));
   const seeButton = $("board-see");
   seeButton.setAttribute("aria-pressed", String(settings.seeThrough));
@@ -677,6 +679,38 @@ export function boardView(host, app) {
     }
   }
 
+  /**
+   * *Tidy up* (D-388): the board made smaller and still checked, one undo step. Parts
+   * placed wrongly are named first, and laid out again only when the builder says so.
+   * @param {boolean} [mend]
+   */
+  async function tidyUp(mend = false) {
+    tidyButton.disabled = true;
+    tidyButton.textContent = "Tidying…";
+    try {
+      const made = await postJson("api/stripboard/tidy", { circuit: app.circuit(), mend });
+      if (made.ask) {
+        const choice = await ask({
+          title: "Tidy up",
+          text: `${made.ask} ${made.refs.length > 1 ? "They go" : "It goes"} back to the tray and ${made.refs.length > 1 ? "are" : "is"} laid out again with the rest; the parts placed right stay where they are. One step to undo.`,
+          cancel: "cancel",
+          buttons: [
+            { label: "Cancel", value: "cancel" },
+            { label: "Lay them out again", value: "mend", kind: "primary" },
+          ],
+        });
+        if (choice === "mend") await tidyUp(true);
+        return;
+      }
+      app.editBoard(made.stripboard, "Tidy up");
+    } catch (err) {
+      app.refuse(/** @type {Error} */ (err).message);
+    } finally {
+      tidyButton.disabled = false;
+      tidyButton.textContent = "Tidy up";
+    }
+  }
+
   /** Select a board part (a chip: its units) or a circuit part on both drawings. @param {string} ref */
   function selectPart(ref) {
     const refs = progress?.footprints[ref]?.refs ?? [ref];
@@ -750,6 +784,7 @@ export function boardView(host, app) {
     sizeText.textContent = sizeLine(board);
     trimButton.hidden = !started;
     startButton.hidden = started && (!progress || (!progress.to_place.length && !progress.faults.length && progress.nets.every((n) => n.state === "done")));
+    tidyButton.hidden = !started || !progress || !board.parts.length;
     wireButton.hidden = !started || !progress || (!progress.wires_to_go.length && !progress.loose && progress.items.every((i) => isOut(i, board)));
     const suggestions = guide ? suggestionsLine(guide) : "";
     acceptButton.textContent = suggestions;

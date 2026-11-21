@@ -141,6 +141,7 @@ from solum.stripboard.offboard import off_board_items
 from solum.stripboard.sheet import Drawings, lists_for, packaged_board, stripboard_page
 from solum.stripboard.size import Axis, SizeError, insert_line, remove_line, start_size, trim
 from solum.stripboard.start import StartError, start_for_me
+from solum.stripboard.tidy import MendFirst, TidyError, tidy_up
 from solum.stripboard.wiring import WiringError, wire_for_me
 from solum.units import parse_value
 from solum.view import circuit_view
@@ -187,6 +188,14 @@ class PartRequest(BaseModel):
 
 class CircuitRequest(BaseModel):
     circuit: dict[str, Any]
+
+
+class BoardTidyRequest(BaseModel):
+    """*Tidy up* (D-388): `mend` sends the parts placed wrongly back to the tray and lays
+    them out again first (the page asks)."""
+
+    circuit: dict[str, Any]
+    mend: bool = False
 
 
 class BoardStartRequest(BaseModel):
@@ -1239,6 +1248,24 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except StartError as err:
             raise HTTPException(422, str(err)) from None
         return {"stripboard": layout_data(made.layout), "left": list(made.left)}
+
+    @app.post("/api/stripboard/tidy")
+    def stripboard_tidy(req: BoardTidyRequest) -> dict[str, Any]:
+        """*Tidy up* (D-388): the open circuit's board made smaller, still passing the
+        check, and `mended`, the parts laid out again. Parts placed wrongly and no `mend`:
+        `ask`, the question, and `refs`, nothing changed. Can't tidy: a 422 saying why."""
+        circuit = parse_circuit(req.circuit)
+        kept = circuit.stripboard
+        if kept is None:
+            raise HTTPException(422, "There's nothing on the board to tidy: place the parts first.")
+        try:
+            tidied = tidy_up(kept.layout(), circuit, models, footprint_table(settings.library_dir),
+                             mend=req.mend)  # fmt: skip
+        except MendFirst as err:
+            return {"ask": str(err), "refs": err.refs}
+        except TidyError as err:
+            raise HTTPException(422, str(err)) from None
+        return {"stripboard": layout_data(tidied.layout), "mended": list(tidied.mended)}
 
     @app.post("/api/part")
     def part(req: PartRequest) -> dict[str, Any]:

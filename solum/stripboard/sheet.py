@@ -20,7 +20,7 @@ from solum.stripboard.offboard import OffItem
 
 PITCH_MM = 2.54  # 0.1" between holes
 MM_PER_UNIT = PITCH_MM / 10  # the board drawing: 10 units between holes (board-logic.js STEP)
-TEXT_UNITS = 3.2  # the drawing's part labels, board units (app.css .board-label)
+TEXT_UNITS = 4.6  # the drawing's part labels on paper, board units (app.css .print .board-label)
 HEADING_MM = 14.0  # room for a drawing's heading on its sheet
 # A4 inside 15 mm margins (export.PAGE_STYLE), less a heading: room at real size
 PORTRAIT = (180.0, 267.0 - HEADING_MM)

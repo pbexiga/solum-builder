@@ -470,6 +470,11 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-drawing .board-label { font: 600 3.2px var(--font-ui); fill: var(--text); pointer-events: none; paint-order: stroke; stroke: var(--surface-0); stroke-width: 1.5px; stroke-linejoin: round; } /* a thick dark edge: readable over colour bands and light bodies */
 .board-drawing .board-label .value { font-family: var(--font-mono); font-weight: 500; fill: var(--text); }
 .board-drawing .board-label.selected .ref { fill: var(--sch-selected); }
+/* on paper (the package's stripboard.pdf, D-386): labels larger than on screen, where zoom does it */
+.print .board-label { font-size: 4.6px; stroke-width: 1.6px; }
+.print .off-label { font-size: 5px; }
+.print .lug-label { font-size: 4px; fill: var(--text); }
+.print .ruler text { font-size: 5px; fill: var(--text-2); }
 .board-panels .board-progress { margin: 0 0 8px; color: var(--text); }
 .board-panels .board-list { list-style: none; margin: 0; padding: 0; }
 .board-panels .board-list li { padding: 3px 0; border-bottom: 1px solid var(--border); color: var(--text-2); }

@@ -119,6 +119,19 @@ def test_the_page_says_its_checked_and_has_the_lists_and_both_scales() -> None:
     assert "@page parts { size: 297mm 210mm" in text  # filled onto A4, landscape
     assert "At real size" in text and "this line is 25.4 mm" in text
     assert "width: 33.02mm; height: 25.40mm" in text  # 130 × 100 units at 0.254 mm
+    assert "Copper side, mirrored as under the iron" in text
+    assert "not mirrored" not in text  # no unmirrored drawing sent (a page from before D-390)
+
+
+def test_the_unmirrored_copper_side_gets_its_own_labelled_page() -> None:
+    """D-390: the copper side as seen from the parts side, its page saying it isn't mirrored."""
+    c = with_board(GOOD)
+    assert c.stripboard is not None
+    lists = lists_for(c.stripboard.layout(), c, MODELS, TABLE)
+    drawn = Drawings(svg(250, 200), svg(130, 100), svg(130, 100), svg(130, 100))
+    text = stripboard_page(c, drawn, lists, 8)
+    assert "Copper side, not mirrored: as seen through from the parts side" in text
+    assert "@page unmirrored {" in text and '<section class="sheet unmirrored">' in text
 
 
 def test_a_drawing_without_a_view_box_is_refused() -> None:

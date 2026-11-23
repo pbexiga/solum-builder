@@ -50,11 +50,13 @@ class BoardLists:
 @dataclass(frozen=True)
 class Drawings:
     """The board as the browser drew it (SVG text): the parts side with the off-board parts
-    and wires, the parts side without them (`bare`), the copper side mirrored."""
+    and wires, the parts side without them (`bare`), the copper side mirrored, and the copper
+    side as seen from the parts side (`unmirrored`, D-390; empty: left out)."""
 
     parts: str
     bare: str
     copper: str
+    unmirrored: str = ""
 
 
 @dataclass(frozen=True)
@@ -205,6 +207,7 @@ STYLE = """
 @page wide { size: A4 landscape; }
 section.sheet { break-before: page; } section.wide { page: wide; }
 section.parts { page: parts; } section.copper { page: copper; }
+section.unmirrored { page: unmirrored; }
 section.sheet img { display: block; }
 h2 .scale { color: var(--brass); font-size: 10pt; }
 .ruler-mm { width: 25.4mm; border-top: 1pt solid var(--ink); margin: 2pt 0 8pt; }
@@ -236,6 +239,12 @@ def stripboard_page(circuit: Circuit, drawn: Drawings, lists: BoardLists, nets: 
     )
     copper, copper_rule = _to_read(drawn.copper, "Copper side, mirrored as under the iron (cuts ✕)",
                                    "The board from the copper side", "copper")  # fmt: skip
+    unmirrored = ""
+    if drawn.unmirrored:
+        title = "Copper side, not mirrored: as seen through from the parts side (cuts ✕, links)"
+        alt = "The copper side seen from the parts side"
+        unmirrored, rule = _to_read(drawn.unmirrored, title, alt, "unmirrored")
+        copper_rule += "\n" + rule
     body = (f"<style>{STYLE}{parts_rule}\n{copper_rule}</style>\n"
             f"<p><strong>Every connection on this board matches the circuit ({nets} nets)."
             "</strong> Holes are named by column letter and strip number, as on the drawings "
@@ -248,5 +257,5 @@ def stripboard_page(circuit: Circuit, drawn: Drawings, lists: BoardLists, nets: 
     body += listed("Cuts", lists.cuts, "ul", "holes")
     body += listed("Links", lists.links, "ul", "holes")
     body += listed("Off-board wires", lists.wires, "ol", "wires")
-    body += parts + copper + _real_size(drawn.bare, drawn.copper)
+    body += parts + copper + unmirrored + _real_size(drawn.bare, drawn.copper)
     return page(circuit.name, f"Stripboard · {circuit.version} · {size_text(lists.size)}", body)

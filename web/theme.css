@@ -82,6 +82,7 @@
   --board-rail-supply: color-mix(in srgb, var(--sch-supply) 50%, transparent);  /* V+ / V- copper, Highlight rails (D-381): the supply's rose, apart from a short's red */
   --board-rail-ground: color-mix(in srgb, var(--text-3) 50%, transparent);      /* GND copper */
   --board-rat: var(--sch-impedance);  /* the ratsnest: steel blue, apart from the copper, the green marks and the red cuts (D-377) */
+  --board-link: var(--sch-type);      /* links: lavender, so they stand out from the copper, the cuts and the ratsnest (D-390) */
   --board-hole: var(--surface-0);
   --scrim: rgba(18, 18, 16, 0.6);     /* behind a modal question (the save prompt) */
 
@@ -273,6 +274,7 @@
   --sch-line: var(--ink);
   --sch-supply: #A0305A;
   --sch-type: var(--brass);
+  --board-link: #7A4FA6;  /* the light theme's lavender: links stand out on paper too (D-390) */
   /* the board on paper (D-386): a white board with copper strips, as the light theme */
   --surface-1: #FFFFFF;
   --surface-2: #FFFFFF;

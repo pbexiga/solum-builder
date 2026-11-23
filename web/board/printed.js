@@ -3,7 +3,7 @@
  * drawing on paper colours, both sides, parts named by ref only (values are in the parts
  * list), with the column letters and strip numbers the cut
  * and link lists name holes by; the guidance, hover labels and grips taken out. The parts
- * side carries the off-board parts and their wires; the copper side is mirrored as it lies
+ * side carries the off-board parts and their wires; the copper side is mirrored (and says so, D-390) as it lies
  * under the iron, cuts ✕ and every solder joint. The PDF is made from them on the server,
  * filled to read and at real size (`board-logic.js`'s STEP board units to 0.1"); `bare` is
  * the parts side without the off-board parts, for the real-size page.
@@ -23,21 +23,21 @@ const STILL = { onClick() {}, onLine() {}, onPress: () => false, onDrag() {}, on
  * Both sides of a circuit's kept board as SVG text, ready to send.
  * @param {any} circuit the circuit, its `stripboard` the board
  * @param {import("./board-logic.js").Progress} progress what `/api/stripboard` answered for it
- * @returns {{parts: string, bare: string, copper: string}}
+ * @returns {{parts: string, bare: string, copper: string, unmirrored: string}}
  */
 export function printableBoard(circuit, progress) {
   const board = readBoard(circuit.stripboard);
-  /** @param {boolean} copper @param {boolean} [bare] without the off-board parts */
-  const side = (copper, bare = false) => {
+  /** @param {boolean} copper @param {boolean} [bare] without the off-board parts @param {boolean} [mirror] the copper side turned over */
+  const side = (copper, bare = false, mirror = true) => {
     const { host, svg } = paperSvg("board-drawing");
     try {
       const canvas = boardCanvas(svg, STILL);
-      if (copper) canvas.side(true);
+      if (copper) canvas.side(true, mirror); // labelled mirrored or not (D-390)
       canvas.draw(board, progress.footprints, circuit, { values: false, rulers: true, paper: true, off: bare ? undefined : offBoardDrawing(progress, board), chosen: chosenMarks(progress) });
-      return paperText(svg, DROP, MARGIN, `${circuit.name}: stripboard, ${copper ? "copper side" : "parts side"}`);
+      return paperText(svg, DROP, MARGIN, `${circuit.name}: stripboard, ${copper ? (mirror ? "copper side, mirrored" : "copper side, not mirrored") : "parts side"}`);
     } finally {
       host.remove();
     }
   };
-  return { parts: side(false), bare: side(false, true), copper: side(true) };
+  return { parts: side(false), bare: side(false, true), copper: side(true), unmirrored: side(true, false, false) };
 }

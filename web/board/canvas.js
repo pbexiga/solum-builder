@@ -103,7 +103,9 @@ export function boardCanvas(svg, app) {
   /** @type {Ghost | null} */
   let ghosted = null;
   let pressing = false; // a press on the board is being dragged: no hover then
-  let copper = false; // the copper side up, mirrored (D-378)
+  let copper = false; // the copper side up (Hide parts, D-390)
+  let mirrored = false; // and turned over, as you hold the board to solder (Mirror, D-390)
+  const turned = () => copper && mirrored;
   let flipping = false;
   /** @type {Parameters<typeof draw> | null} the last drawing, drawn again when the board turns over */
   let drawn = null;
@@ -121,7 +123,7 @@ export function boardCanvas(svg, app) {
   const toBoard = (/** @type {number} */ clientX, /** @type {number} */ clientY) => {
     const r = svg.getBoundingClientRect();
     const x = vb.x + ((clientX - r.left) / (r.width || 1)) * vb.w;
-    return [copper ? 2 * middle() - x : x, vb.y + ((clientY - r.top) / (r.height || 1)) * vb.h];
+    return [turned() ? 2 * middle() - x : x, vb.y + ((clientY - r.top) / (r.height || 1)) * vb.h];
   };
   new ResizeObserver(() => {
     if (!shown || svg.getBoundingClientRect().width === 0) return; // hidden: keep the view
@@ -179,7 +181,7 @@ export function boardCanvas(svg, app) {
     }
     svg.replaceChildren();
     const root = el("g", { class: ["board", fixed ? "board-fixed" : "", seeThrough ? "see-through" : "", copper ? "copper" : ""].filter(Boolean).join(" ") }, svg);
-    if (copper) root.setAttribute("transform", `translate(${2 * middle()} 0) scale(-1 1)`);
+    if (turned()) root.setAttribute("transform", `translate(${2 * middle()} 0) scale(-1 1)`);
     const { c0, s0, c1, s1 } = holes;
     const half = STEP / 2;
     // the margin's holes, faint; the board itself, its strips and holes
@@ -230,7 +232,7 @@ export function boardCanvas(svg, app) {
         el("rect", { x: x - half, y: y - half, width: STEP, height: STEP, class: "ruler-hit" }, g);
         const label = el("text", { x, y, "text-anchor": "middle", "dominant-baseline": "central" }, g);
         label.textContent = text;
-        if (copper) label.setAttribute("transform", `translate(${2 * x} 0) scale(-1 1)`); // readable on the mirrored side
+        if (turned()) label.setAttribute("transform", `translate(${2 * x} 0) scale(-1 1)`); // readable on the mirrored side
         el("title", {}, g).textContent = `${axis === "column" ? "Column" : "Strip"} ${text}: insert or remove`;
       };
       for (let c = 0; c < board.columns; c++) mark("column", c, c * STEP, (s0 - 1) * STEP, columnName(c));
@@ -357,33 +359,37 @@ export function boardCanvas(svg, app) {
   }
 
   /**
-   * Turn the board over (D-378): the copper side up, mirrored as it lies under the iron,
-   * cuts ✕ and every solder joint; again, back to the parts side. A short animation,
-   * none when the system asks for less motion. Holes are picked through the mirror.
-   * @param {(copper: boolean) => void} [done] told the side now up
+   * Show the parts side or the copper side (`up`, Hide parts), the copper side mirrored or
+   * not (`mirror`), D-390 (was D-378's one flip, always mirrored). A change of mirroring is a
+   * short animation turning the board over, none when the system asks for less motion; the
+   * rest is at once. Holes are picked through the mirror.
+   * @param {boolean} up @param {boolean} mirror @param {(copper: boolean) => void} [done] told the side now up
    */
-  function flip(done) {
-    if (flipping || !drawn) return;
-    const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
-    const to = !copper;
-    // the drawing may be replaced on the way (edge on, or a fresh check): find it each frame
-    const turn = (/** @type {number} */ scale) => svg.querySelector("g.board")?.setAttribute("transform", `translate(${middle() * (1 - scale)} 0) scale(${scale} 1)`);
+  function show(up, mirror, done) {
+    if (flipping) return;
+    const before = turned();
     const land = () => {
       flipping = false;
-      copper = to;
+      copper = up;
+      mirrored = mirror;
       if (drawn) draw(...drawn);
       done?.(copper);
     };
-    if (still) return land();
+    const still = window.matchMedia?.("(prefers-reduced-motion: reduce)").matches;
+    if (still || !drawn || before === (up && mirror)) return land();
+    const to = up && mirror;
+    // the drawing may be replaced on the way (edge on, or a fresh check): find it each frame
+    const turn = (/** @type {number} */ scale) => svg.querySelector("g.board")?.setAttribute("transform", `translate(${middle() * (1 - scale)} 0) scale(${scale} 1)`);
     flipping = true;
     const start = performance.now();
     let swapped = false;
     const step = (/** @type {number} */ now) => {
       const t = Math.min(1, (now - start) / FLIP_MS);
-      const scale = Math.cos(Math.PI * t) * (to ? 1 : -1); // 1 → −1 to the copper side, −1 → 1 back
+      const scale = Math.cos(Math.PI * t) * (to ? 1 : -1); // 1 → −1 turning over, −1 → 1 back
       if (!swapped && t >= 0.5) { // edge on: the other side's drawing
         swapped = true;
-        copper = to;
+        copper = up;
+        mirrored = mirror;
         if (drawn) draw(...drawn);
       }
       turn(scale);
@@ -512,12 +518,13 @@ export function boardCanvas(svg, app) {
 
   return {
     draw,
-    flip,
-    /** Whether the copper side is up (D-378). */
+    show,
+    /** Whether the copper side is up (D-378, D-390). */
     copper: () => copper,
-    /** Put the copper side up or not at once, no animation (the package's drawing, D-386). @param {boolean} up */
-    side(up) {
+    /** Put the copper side up or not, mirrored or not, at once, no animation (the package's drawing, D-386). @param {boolean} up @param {boolean} [mirror] */
+    side(up, mirror = false) {
       copper = up;
+      mirrored = mirror;
       if (drawn) draw(...drawn);
     },
     light,

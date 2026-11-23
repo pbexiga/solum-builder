@@ -217,9 +217,16 @@ export function boardView(host, app) {
     if (e.detail) seeButton.blur(); // clicked: the board's keys act again
   });
   const flipButton = $("board-flip");
-  flipButton.addEventListener("click", (e) => {
-    canvas.flip((copper) => flipButton.setAttribute("aria-pressed", String(copper)));
+  const mirrorButton = $("board-mirror");
+  mirrorButton.setAttribute("aria-pressed", String(settings.mirror));
+  const sideShown = (/** @type {boolean} */ copper) => flipButton.setAttribute("aria-pressed", String(copper));
+  flipButton.addEventListener("click", (e) => { // Hide parts (D-390)
+    canvas.show(!canvas.copper(), settings.mirror, sideShown);
     if (e.detail) flipButton.blur(); // clicked: the board's keys act again
+  });
+  mirrorButton.addEventListener("click", (e) => {
+    setSetting("mirror", !settings.mirror);
+    if (e.detail) mirrorButton.blur();
   });
   for (const b of tools.querySelectorAll("button[data-tool]")) b.addEventListener("click", () => {
     setTool(/** @type {any} */ (b.getAttribute("data-tool")));
@@ -1007,6 +1014,8 @@ export function boardView(host, app) {
     settings = { ...settings, [key]: on };
     remember(SETTINGS_KEY, settings);
     seeButton.setAttribute("aria-pressed", String(settings.seeThrough));
+    mirrorButton.setAttribute("aria-pressed", String(settings.mirror));
+    if (key === "mirror") canvas.show(on || canvas.copper(), on, sideShown); // on from the parts side: the copper side, mirrored
     draw();
     fillPanes();
   }

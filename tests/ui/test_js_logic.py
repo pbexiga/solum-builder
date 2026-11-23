@@ -1024,7 +1024,7 @@ def test_the_board_tray_and_settings(js: Page) -> None:
     assert got["groups"] == [["Resistors", ["R1"]], ["Chips", ["IC1"]]]
     assert got["wires"] == "1 of 3 placed; a wire from VR1 lug 2"
     assert got["none"] == {"values": True, "next": True, "shorts": True, "grow": True,
-                           "seeThrough": False, "rats": True, "rails": False}  # fmt: skip
+                           "seeThrough": False, "mirror": False, "rats": True, "rails": False}  # fmt: skip
     assert got["some"] == {**got["none"], "values": False}  # a garbled one at its default
 
 
@@ -1451,5 +1451,9 @@ def test_a_wire_never_crosses_another_lug(js: Page) -> None:
 def _distance(c: list[float], p: list[float], q: list[float]) -> float:
     (x, y), (ax, ay), (bx, by) = c, p, q
     dx, dy = bx - ax, by - ay
-    t = max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy))) if dx or dy else 0.0
+    t = (
+        max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy)))
+        if dx or dy
+        else 0.0
+    )
     return float(((x - ax - t * dx) ** 2 + (y - ay - t * dy) ** 2) ** 0.5)

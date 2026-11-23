@@ -138,7 +138,7 @@ export async function schematicSvg(target) {
  * The last save's kept board, both sides drawn here with the board canvas (D-386); null
  * when it keeps none.
  * @param {{kind: string, id: string}} target
- * @returns {Promise<{name: string, board: {parts: string, copper: string} | null}>}
+ * @returns {Promise<{name: string, board: {parts: string, bare: string, copper: string, unmirrored: string} | null}>}
  */
 export async function boardSvgs(target) {
   const { circuit } = await getJson(savedUrl(target));

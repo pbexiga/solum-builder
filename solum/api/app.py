@@ -391,11 +391,13 @@ class ReadyRowRequest(BaseModel):
 
 class BoardDrawing(BaseModel):
     """The kept board as the browser drew it of the last save (D-386): the parts side with
-    the off-board parts, without them (`bare`, for real size), the copper side."""
+    the off-board parts, without them (`bare`, for real size), the copper side mirrored and
+    not (`unmirrored`, D-390; empty from a page loaded before it: that page is left out)."""
 
     parts: str = Limit(max_length=SCHEMATIC_MAX)
     bare: str = Limit(max_length=SCHEMATIC_MAX)
     copper: str = Limit(max_length=SCHEMATIC_MAX)
+    unmirrored: str = Limit(default="", max_length=SCHEMATIC_MAX)
 
 
 class PackageRequest(BaseModel):
@@ -1484,7 +1486,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             return None, "The stripboard's drawing didn't come with the export: export again."
         lists = lists_for(kept.layout, c, models, table)
         return stripboard_page(
-            c, Drawings(drawn.parts, drawn.bare, drawn.copper), lists, kept.nets
+            c, Drawings(drawn.parts, drawn.bare, drawn.copper, drawn.unmirrored), lists, kept.nets
         ), ""
 
     @app.post("/api/export/{kind}/{cid}/stripboard.pdf")

@@ -31,6 +31,7 @@ from solum.stripboard.size import (
     remove_line,
     start_size,
     trim,
+    used_box,
     used_holes,
 )
 from solum.yamlio import load_yaml
@@ -60,6 +61,8 @@ def test_used_holes_are_legs_bodies_cuts_links_and_wires() -> None:
     assert used[parse_hole("A6")] == "the wire at A6"
     assert box(used) == (0, 0, 10, 8)  # A1 to K9: column L is empty
     assert box([]) is None
+    assert used_box(GOOD, BOARD) == box(used)  # the quick box, no sentences
+    assert used_box(Layout(5, 5, ()), BOARD) is None
 
 
 def test_trim_takes_off_the_empty_edge_column() -> None:

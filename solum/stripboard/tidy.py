@@ -200,7 +200,7 @@ def joins(layout: Layout, turnable: frozenset[str] = frozenset()) -> Joins:
     two boards with the same joins and no placement faults pass the check alike. A part in
     `turnable` (two legs, either way round) is named by its ref alone, so turned it joins
     the same."""
-    copper, lugs = joined_groups(layout)
+    copper, lugs = joined_groups(layout, [h for p in layout.parts for _, h in p.legs])
     found: dict[object, list[str]] = {}
     for placed in layout.parts:
         for leg, hole in placed.legs:

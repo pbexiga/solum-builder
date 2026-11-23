@@ -333,6 +333,9 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-tray .board-list li.pickable { cursor: pointer; }
 .board-tray .tray-start { display: block; width: 100%; margin: 2px 0 8px; padding: 4px 8px; font: 12px var(--font-ui); }
 .board-tray .tray-start[hidden] { display: none; }
+/* Start for me and Tidy up at work (a big board takes seconds): no value, so it just moves */
+.board-tray .tray-working { display: block; width: 100%; height: 6px; margin: 0 0 8px; accent-color: var(--accent); }
+.board-tray .tray-working[hidden] { display: none; }
 .board-tray .placed-toggle { display: block; margin: 4px 0 2px; padding: 0 2px; background: none; border: none; color: var(--text-3); font: 12px var(--font-ui); cursor: pointer; }
 .board-tray .placed-toggle:hover { color: var(--text-2); }
 .board-tray .board-list li.placed { color: var(--text-3); cursor: pointer; }

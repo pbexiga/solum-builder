@@ -10,6 +10,7 @@ and are joined to it by wires: from a lug to a hole (its pad), lug to lug, or lo
 """
 
 import re
+from bisect import bisect_left
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from string import ascii_uppercase
@@ -113,18 +114,32 @@ class Layout:
         return 0 <= hole[0] < self.columns and 0 <= hole[1] < self.strips
 
 
-def segments(layout: Layout) -> dict[Hole, int]:
+def segments(layout: Layout, holes: Iterable[Hole] | None = None) -> dict[Hole, int]:
     """Each copper hole's strip segment: the holes of a strip between cuts (and the board's
-    ends) share a number. Cut holes have none."""
+    ends) share a number, counted strip by strip from the top left. Cut holes have none.
+    `holes`: only these (a quick answer on a big board; those off it or cut left out)."""
     found: dict[Hole, int] = {}
-    number = 0
+    if holes is None:
+        number = 0
+        for strip in range(layout.strips):
+            number += 1
+            for column in range(layout.columns):
+                if (column, strip) in layout.cuts:
+                    number += 1
+                    continue
+                found[(column, strip)] = number
+        return found
+    cuts: dict[int, list[int]] = {}
+    for c, s in sorted(layout.cuts):
+        if layout.on_board((c, s)):
+            cuts.setdefault(s, []).append(c)
+    first, number = [], 0  # each strip's first segment's number, as the loop above counts
     for strip in range(layout.strips):
-        number += 1
-        for column in range(layout.columns):
-            if (column, strip) in layout.cuts:
-                number += 1
-                continue
-            found[(column, strip)] = number
+        first.append(number + 1)
+        number += 1 + len(cuts.get(strip, ()))
+    for hole in holes:
+        if layout.on_board(hole) and hole not in layout.cuts:
+            found[hole] = first[hole[1]] + bisect_left(cuts.get(hole[1], ()), hole[0])
     return found
 
 

@@ -46,6 +46,20 @@ def used_holes(layout: Layout, board: Mapping[str, BoardPart]) -> dict[Hole, str
     return used
 
 
+def used_box(layout: Layout, board: Mapping[str, BoardPart]) -> Box | None:
+    """The box round `used_holes` (quicker: no sentences; a link's holes lie between its
+    ends). None when nothing's on the board."""
+    holes: list[Hole] = [*layout.cuts, *layout.pads]
+    holes += (h for link in layout.links for h in (link.a, link.b))
+    for placed in layout.parts:
+        legs = placed.holes
+        part = board.get(placed.ref)
+        holes += legs.values()
+        if part:
+            holes += body_holes(part, legs, placed.standing)
+    return box(holes)
+
+
 def box(holes: Iterable[Hole]) -> Box | None:
     """The box round some holes (a set, or a mapping's keys); None when there are none."""
     found = list(holes)
@@ -84,7 +98,7 @@ def fit_box(before: Layout | None, after: Layout, board: Mapping[str, BoardPart]
     in everything on it, and shrunk at an edge only by the lines this edit emptied, so
     lines added by hand stay. `before` None (the first placement on an empty board): just
     what's on it. None when nothing is left on it (its size kept)."""
-    used = box(used_holes(after, board))
+    used = used_box(after, board)
     if used is None or before is None:
         return used
     was = used_holes(before, board)
@@ -116,7 +130,7 @@ def fit(before: Layout | None, after: Layout, board: Mapping[str, BoardPart]) ->
 def trim(layout: Layout, board: Mapping[str, BoardPart]) -> Layout:
     """The empty columns and strips at the edges taken off (inside ones stay: taking those
     out moves parts, *Tidy up*'s job). An empty board can't be trimmed."""
-    used = box(used_holes(layout, board))
+    used = used_box(layout, board)
     if used is None:
         raise SizeError("There's nothing on the board to trim it to.")
     return crop(layout, used)

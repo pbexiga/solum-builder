@@ -9,7 +9,7 @@ import zipfile
 from typing import Any
 
 import pytest
-from playwright.sync_api import Page, expect
+from playwright.sync_api import Page, Route, expect
 
 from solum.yamlio import load_yaml
 from tests.ui.conftest import REPO, click_part, open_circuit, reload_kept
@@ -710,16 +710,23 @@ def test_the_kept_board_is_exported_drawn_by_the_board_canvas(page: Page, base_u
 def test_start_for_me_sits_in_the_tray_and_the_placed_parts_show_on_request(
     page: Page, base_url: str
 ) -> None:
-    """D-387: *Start for me* at the top of the tray lays an empty board out; the tray then
-    lists the placed parts (on the board and beside it) under *Show placed*, above its
-    lists; a click selects one."""
+    """D-387: *Start for me* at the top of the tray lays an empty board out and tidies it
+    (D-388: 10 columns laid out, 9 tidied), one undo step; the tray then lists the placed
+    parts (on the board and beside it) under *Show placed*, above its lists; a click
+    selects one."""
     open_with_board(page, base_url, None)
     page.locator("#board-button").click()
     start = page.locator("#board-tray #board-start")
     expect(start).to_be_visible()
     start.click()
     expect(page.locator("#board .board-part").first).to_be_visible()
+    expect(page.locator("#board-size-text")).to_contain_text("9 × 9 holes")
+    expect(page.locator("#board-working")).to_be_hidden()
     expect(start).to_be_hidden()  # the board passes: nothing left to do
+    page.keyboard.press("Control+z")  # laying out and tidying: one step
+    expect(page.locator("#board-size-text")).to_have_text("Empty board")
+    page.keyboard.press("Control+Shift+z")
+    expect(page.locator("#board-size-text")).to_contain_text("9 × 9 holes")
     toggle = page.locator("#board-tray .placed-toggle")
     expect(toggle).to_have_text("▸ Show placed (12)")  # 8 on the board, 4 beside it
     expect(page.locator("#board-tray li.placed")).to_have_count(0)
@@ -729,3 +736,21 @@ def test_start_for_me_sits_in_the_tray_and_the_placed_parts_show_on_request(
     assert toggle.bounding_box()["y"] < on_list.bounding_box()["y"]  # above the lists
     page.locator("#board-tray li.placed[data-ref='R1']").click()
     expect(page.locator("#board .board-part[data-ref='R1']")).to_have_class(re.compile("selected"))
+
+
+def test_start_for_me_says_what_its_doing_while_it_works(page: Page, base_url: str) -> None:
+    """A big board takes seconds to tidy (D-388): while it does, the button says so, the
+    working bar shows and neither button can be pressed again."""
+    held: list[Route] = []
+    page.route("**/api/stripboard/tidy", lambda route: held.append(route))
+    open_with_board(page, base_url, None)
+    page.locator("#board-button").click()
+    start = page.locator("#board-tray #board-start")
+    start.click()
+    expect(start).to_have_text("Tidying…")
+    expect(start).to_be_disabled()
+    expect(page.locator("#board-working")).to_be_visible()
+    held[0].continue_()
+    expect(page.locator("#board-size-text")).to_contain_text("9 × 9 holes")
+    expect(page.locator("#board-working")).to_be_hidden()
+    expect(start).to_have_text("Start for me")

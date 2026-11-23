@@ -1,6 +1,6 @@
 """*Tidy up* on the starters' Start for me boards (P6f's *Accept when*, D-388): still
 passing the check, none worse in size, cuts or links, and smaller. The quick ones only:
-the biggest boards (BD-2, Klon, Dyna Comp) take 10–20 s each."""
+the biggest boards (BD-2, Klon, Dyna Comp) take 5–11 s each."""
 
 from pathlib import Path
 

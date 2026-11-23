@@ -93,6 +93,7 @@ export function boardView(host, app) {
   const wireButton = /** @type {HTMLButtonElement} */ ($("board-wire"));
   const startButton = /** @type {HTMLButtonElement} */ ($("board-start"));
   const tidyButton = /** @type {HTMLButtonElement} */ ($("board-tidy"));
+  const workingBar = /** @type {HTMLProgressElement} */ ($("board-working"));
   const acceptButton = /** @type {HTMLButtonElement} */ ($("board-accept"));
   const needs = needsCard($("board-needs"));
   const button = $("board-button");
@@ -653,15 +654,37 @@ export function boardView(host, app) {
   }
 
   /**
+   * Start for me and Tidy up at work: both buttons off, the working bar showing, `button`
+   * saying what's being done (it changes with `say`); put back however `work` ends.
+   * @template T
+   * @param {HTMLButtonElement} button
+   * @param {(say: (words: string) => void) => Promise<T>} work
+   * @returns {Promise<T>}
+   */
+  async function working(button, work) {
+    const words = button.textContent;
+    startButton.disabled = tidyButton.disabled = true;
+    workingBar.hidden = false;
+    try {
+      return await work((said) => (button.textContent = said));
+    } finally {
+      startButton.disabled = tidyButton.disabled = false;
+      workingBar.hidden = true;
+      button.textContent = words;
+    }
+  }
+
+  /**
    * *Start for me* (D-387): an empty board laid out at once; one with parts on it asks
-   * first, Fill the rest or Start over. One undo step; what Fill the rest couldn't join is
-   * said on the bar.
+   * first, Fill the rest or Start over. A fresh layout is tidied too (D-388; nothing
+   * smaller found, it's kept as laid out). One undo step; what Fill the rest couldn't
+   * join is said on the bar.
    */
   async function startForMe() {
     const placed = readBoard(app.circuit()?.stripboard).parts.length > 0;
     const choice = !placed ? "over" : await ask({
       title: "Start for me",
-      text: "Fill the rest keeps what you've placed and lays out the parts still in the tray below it. Start over lays out the whole board afresh, in place of what's on it now. Either is one step to undo.",
+      text: "Fill the rest keeps what you've placed and lays out the parts still in the tray below it. Start over lays out the whole board afresh, in place of what's on it now, and tidies it. Either is one step to undo.",
       cancel: "cancel",
       buttons: [
         { label: "Start over", value: "over", kind: "aside" },
@@ -670,13 +693,22 @@ export function boardView(host, app) {
       ],
     });
     if (choice === "cancel") return;
-    try {
-      const { stripboard, left } = await postJson("api/stripboard/start", { circuit: app.circuit(), fill: choice === "fill" });
-      app.editBoard(stripboard, choice === "fill" ? "Fill the rest" : "Start for me");
-      if (left.length) app.refuse(left.join(" "));
-    } catch (err) {
-      app.refuse(/** @type {Error} */ (err).message);
-    }
+    await working(startButton, async (say) => {
+      try {
+        say("Laying out…");
+        const { stripboard, left } = await postJson("api/stripboard/start", { circuit: app.circuit(), fill: choice === "fill" });
+        let board = stripboard;
+        if (choice === "over") {
+          say("Tidying…");
+          const tidied = await postJson("api/stripboard/tidy", { circuit: { ...app.circuit(), stripboard } }).catch(() => null);
+          if (tidied?.stripboard) board = tidied.stripboard; // else as laid out: nothing smaller, or nothing to tidy
+        }
+        app.editBoard(board, choice === "fill" ? "Fill the rest" : "Start for me");
+        if (left.length) app.refuse(left.join(" "));
+      } catch (err) {
+        app.refuse(/** @type {Error} */ (err).message);
+      }
+    });
   }
 
   /**
@@ -685,30 +717,30 @@ export function boardView(host, app) {
    * @param {boolean} [mend]
    */
   async function tidyUp(mend = false) {
-    tidyButton.disabled = true;
-    tidyButton.textContent = "Tidying…";
-    try {
-      const made = await postJson("api/stripboard/tidy", { circuit: app.circuit(), mend });
-      if (made.ask) {
-        const choice = await ask({
-          title: "Tidy up",
-          text: `${made.ask} ${made.refs.length > 1 ? "They go" : "It goes"} back to the tray and ${made.refs.length > 1 ? "are" : "is"} laid out again with the rest; the parts placed right stay where they are. One step to undo.`,
-          cancel: "cancel",
-          buttons: [
-            { label: "Cancel", value: "cancel" },
-            { label: "Lay them out again", value: "mend", kind: "primary" },
-          ],
-        });
-        if (choice === "mend") await tidyUp(true);
-        return;
+    const made = await working(tidyButton, async (say) => {
+      say("Tidying…");
+      try {
+        return await postJson("api/stripboard/tidy", { circuit: app.circuit(), mend });
+      } catch (err) {
+        app.refuse(/** @type {Error} */ (err).message);
+        return null;
       }
-      app.editBoard(made.stripboard, "Tidy up");
-    } catch (err) {
-      app.refuse(/** @type {Error} */ (err).message);
-    } finally {
-      tidyButton.disabled = false;
-      tidyButton.textContent = "Tidy up";
+    });
+    if (!made) return;
+    if (made.ask) {
+      const choice = await ask({
+        title: "Tidy up",
+        text: `${made.ask} ${made.refs.length > 1 ? "They go" : "It goes"} back to the tray and ${made.refs.length > 1 ? "are" : "is"} laid out again with the rest; the parts placed right stay where they are. One step to undo.`,
+        cancel: "cancel",
+        buttons: [
+          { label: "Cancel", value: "cancel" },
+          { label: "Lay them out again", value: "mend", kind: "primary" },
+        ],
+      });
+      if (choice === "mend") await tidyUp(true);
+      return;
     }
+    app.editBoard(made.stripboard, "Tidy up");
   }
 
   /** Select a board part (a chip: its units) or a circuit part on both drawings. @param {string} ref */

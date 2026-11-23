@@ -8,6 +8,7 @@ plain-English sentence naming the parts and holes; a layout with none is the cir
 """
 
 from collections import defaultdict
+from collections.abc import Iterable
 from dataclasses import dataclass, field, replace
 from typing import Literal
 
@@ -195,9 +196,12 @@ def placement_faults(layout: Layout, board: dict[str, BoardPart],
     return faults
 
 
-def copper_groups(layout: Layout) -> dict[Hole, int]:
-    """Each copper hole's joined group: its strip segment's, with links joining segments."""
-    seg = segments(layout)
+def copper_groups(layout: Layout, holes: Iterable[Hole] | None = None) -> dict[Hole, int]:
+    """Each copper hole's joined group: its strip segment's, with links joining segments.
+    `holes`: only these (`segments`)."""
+    ends = [h for link in layout.links for h in (link.a, link.b)]
+    wanted = None if holes is None else set(holes)
+    seg = segments(layout, None if wanted is None else wanted | set(ends))
     parent: dict[int, int] = {}
 
     def find(a: int) -> int:
@@ -209,14 +213,17 @@ def copper_groups(layout: Layout) -> dict[Hole, int]:
         a, b = seg.get(link.a), seg.get(link.b)
         if a is not None and b is not None:
             parent[max(find(a), find(b))] = min(find(a), find(b))
-    return {hole: find(n) for hole, n in seg.items()}
+    return {hole: find(n) for hole, n in seg.items() if wanted is None or hole in wanted}
 
 
-def joined_groups(layout: Layout) -> tuple[dict[Hole, int], dict[str, int]]:
+def joined_groups(layout: Layout, holes: Iterable[Hole] | None = None,
+                  ) -> tuple[dict[Hole, int], dict[str, int]]:  # fmt: skip
     """Each copper hole's group and each wired lug's, wires joining them (D-375): a lug
     wired to a hole is in that hole's group, lugs wired together share one; a lug only on
-    a loose wire, or wired to a cut hole or one off the board, has none."""
-    copper = copper_groups(layout)
+    a loose wire, or wired to a cut hole or one off the board, has none. `holes`: only
+    these holes' groups (quick on a big board; the lugs all the same)."""
+    wanted = None if holes is None else set(holes)
+    copper = copper_groups(layout, None if wanted is None else wanted | set(layout.pads))
     parent: dict[tuple[str, object], tuple[str, object]] = {}
 
     def find(node: tuple[str, object]) -> tuple[str, object]:
@@ -237,7 +244,7 @@ def joined_groups(layout: Layout) -> tuple[dict[Hole, int], dict[str, int]]:
     members: dict[tuple[str, object], list[tuple[str, object]]] = defaultdict(list)
     for node in list(parent):
         members[find(node)].append(node)
-    fresh = max(copper.values(), default=0) + 1
+    fresh = layout.strips + len(layout.cuts) + 1  # past every segment's number
     number: dict[tuple[str, object], int] = {}
     for root, nodes in sorted(members.items(), key=lambda kv: repr(kv[0])):
         coppers = [int(str(n[1])) for n in [root, *nodes] if n[0] == "copper"]
@@ -245,9 +252,10 @@ def joined_groups(layout: Layout) -> tuple[dict[Hole, int], dict[str, int]]:
             number[root] = min(coppers)
         else:
             number[root], fresh = fresh, fresh + 1
-    holes = {h: number.get(find(("copper", g)), g) for h, g in copper.items()}
+    found = {h: number.get(find(("copper", g)), g) for h, g in copper.items()
+             if wanted is None or h in wanted}  # fmt: skip
     lugs = {str(n[1]): number[find(n)] for n in [*parent, *members] if n[0] == "lug"}
-    return holes, lugs
+    return found, lugs
 
 
 def stripboard_nets(layout: Layout, board: dict[str, BoardPart]) -> dict[Terminal, int]:

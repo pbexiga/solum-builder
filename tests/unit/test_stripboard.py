@@ -26,7 +26,7 @@ from solum.stripboard.board import (
     parse_hole,
     segments,
 )
-from solum.stripboard.check import Checked, check_layout, stripboard_nets
+from solum.stripboard.check import Checked, check_layout, joined_groups, stripboard_nets
 from solum.stripboard.footprints import (
     board_parts,
     body_holes,
@@ -81,6 +81,17 @@ def test_a_cut_splits_its_strip_and_holds_no_copper() -> None:
     assert seg[(0, 0)] != seg[(2, 0)]
     assert seg[(2, 0)] == seg[(3, 0)]
     assert seg[(0, 1)] == seg[(3, 1)] != seg[(0, 0)]
+
+
+def test_segments_and_groups_of_chosen_holes_are_the_whole_boards() -> None:
+    layout = layout_from_data(GOOD)
+    chosen = [(0, 0), (6, 7), (3, 4), (99, 0), *layout.cuts]  # off the board, cut: none
+    full = segments(layout)
+    assert segments(layout, chosen) == {h: full[h] for h in chosen if h in full}
+    holes, lugs = joined_groups(layout)
+    some, same_lugs = joined_groups(layout, chosen)
+    assert some == {h: holes[h] for h in chosen if h in holes}
+    assert same_lugs == lugs
 
 
 def test_layout_data_round_trips() -> None:

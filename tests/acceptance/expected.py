@@ -98,8 +98,9 @@ class Build(_Strict):
 
 class BoardBenchmark(_Strict):
     """A published stripboard layout of the same circuit (P6g, D-391): its link and the
-    counts a person took from the drawing (D-019; the drawing itself is never kept). The
-    starter's kept board must be no bigger (columns × strips), or `known_gap` says why."""
+    counts the agent took from the drawing at the user's request (D-391; the drawing itself
+    is never kept): the benchmark for a better layout (P6h). `known_gap` says why a board
+    of ours may be bigger."""
 
     title: str
     url: str

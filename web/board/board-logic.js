@@ -923,6 +923,60 @@ export const BOARD_SETTINGS = /** @type {const} */ ([
   { key: "rails", label: "Highlight rails", on: false, acts: true, title: "The supply's copper (V+, V-) rose, ground's grey" },
 ]);
 
+/**
+ * The Layout dialog's choices (P6h2), in order, each with a line saying what it does and,
+ * when it can't be chosen, why (`why`): Fill the rest and Tidy up need something placed.
+ * *Start a board* has *Make the board compact* under it (the dialog's own checkbox).
+ * @typedef {"start" | "fill" | "tidy"} LayoutChoice
+ * @param {boolean} placed whether any part is on the board
+ * @returns {Array<{value: LayoutChoice, label: string, text: string, why: string}>}
+ */
+export function layoutChoices(placed) {
+  const none = placed ? "" : "Nothing is placed yet: start a board first.";
+  return [
+    { value: "start", label: "Start a board", text: "A base layout of the whole board, the parts in signal order left to right, for you to edit by hand. On a board with parts on it, it wipes it and starts over.", why: "" },
+    { value: "fill", label: "Fill the rest", text: "Keeps what you've placed and lays out the parts still in the tray below it.", why: none },
+    { value: "tidy", label: "Tidy up", text: "Makes the board smaller by moving parts, links and cuts in small steps, keeping the check passing.", why: none },
+  ];
+}
+
+/**
+ * The choice the Layout dialog opens on: the last one made, when it can be chosen now
+ * (but never Start a board over parts already placed: it wipes them); else Start a board
+ * on an empty board, Fill the rest once parts are placed.
+ * @param {boolean} placed @param {unknown} last the remembered choice
+ * @returns {LayoutChoice}
+ */
+export function layoutDefault(placed, last) {
+  const open = layoutChoices(placed).filter((c) => !c.why && !(placed && c.value === "start")).map((c) => c.value);
+  return open.includes(/** @type {LayoutChoice} */ (last)) ? /** @type {LayoutChoice} */ (last) : placed ? "fill" : "start";
+}
+
+/**
+ * The confirmation after the Layout dialog: what will happen, what's replaced (named by
+ * count), and that it's one step to undo.
+ * @param {LayoutChoice} choice @param {boolean} compact *Make the board compact* ticked
+ * @param {{parts: unknown[], cuts: unknown[], links: unknown[], wires: unknown[]}} board what's on the board now
+ * @param {number} toPlace the parts still in the tray
+ * @returns {{title: string, text: string, label: string}}
+ */
+export function layoutConfirm(choice, compact, board, toPlace) {
+  const count = (/** @type {number} */ n, /** @type {string} */ word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  const undo = "One step to undo.";
+  if (choice === "fill") {
+    const what = toPlace ? `Lays out the ${count(toPlace, "part")} still in the tray below what you've placed` : "Every part is placed: it joins what's still in pieces";
+    return { title: "Fill the rest", text: `${what}; the parts you've placed stay where they are. ${undo}`, label: "Fill the rest" };
+  }
+  if (choice === "tidy") {
+    return { title: "Tidy up", text: `Moves parts, links and cuts a step at a time to make the board smaller, keeping the check passing, so parts may end up away from where you put them. ${undo}`, label: "Tidy up" };
+  }
+  const then = compact ? ", then made compact" : "";
+  if (!board.parts.length) return { title: "Start a board", text: `Lays out the whole board: ${count(toPlace, "part")} in signal order${then}. ${undo}`, label: "Start a board" };
+  const listed = [count(board.parts.length, "part"), ...[[board.cuts.length, "cut"], [board.links.length, "link"], [board.wires.length, "wire"]].filter(([n]) => n).map(([n, w]) => count(/** @type {number} */ (n), /** @type {string} */ (w)))];
+  const named = listed.length > 1 ? `${listed.slice(0, -1).join(", ")} and ${listed[listed.length - 1]}` : listed[0];
+  return { title: "Start a board", text: `This replaces everything on the board: ${named}. A fresh layout takes its place${then}. ${undo}`, label: "Replace the board" };
+}
+
 /** @typedef {Record<(typeof BOARD_SETTINGS)[number]["key"], boolean>} BoardSettings */
 
 /**

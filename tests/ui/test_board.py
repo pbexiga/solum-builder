@@ -762,25 +762,70 @@ def test_the_kept_board_is_exported_drawn_by_the_board_canvas(page: Page, base_u
         assert any(n.endswith("/stripboard.pdf") for n in z.namelist())
 
 
-def test_start_for_me_sits_in_the_tray_and_the_placed_parts_show_on_request(
+def layout(page: Page, choice: str, compact: bool | None = None) -> None:
+    """Open *Layout…* in the board's Settings, pick `choice` (and set *Make the board
+    compact*) and press Continue: the confirmation is then showing."""
+    settings = page.locator("#board-settings")
+    if settings.get_attribute("open") is None:
+        settings.locator("summary").click()
+    page.locator("#board-layout").click()
+    dialog = page.locator("#layout-dialog")
+    dialog.locator(f".layout-choice[data-layout='{choice}'] input").check()
+    if compact is not None:
+        dialog.locator("#layout-compact").set_checked(compact)
+    dialog.locator("button[data-answer='go']").click()
+
+
+def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_step(
     page: Page, base_url: str
 ) -> None:
-    """D-387: *Start for me* at the top of the tray lays an empty board out and tidies it
-    (D-388: 10 columns laid out, 9 tidied), one undo step; the tray then lists the placed
-    parts (on the board and beside it) under *Show placed*, above its lists; a click
-    selects one."""
+    """P6h2: *Layout…* in the board's Settings opens the choices; on an empty board Fill the
+    rest and Tidy up are greyed with the reason and Start a board is chosen. Each choice
+    is confirmed, saying what will happen; each is one undo step. Start a board without
+    *Make the board compact* lays out 10 columns, Tidy up makes them 9 (D-388); Start a
+    board on a board with parts names what it replaces, and Cancel changes nothing."""
     open_with_board(page, base_url, None)
     page.locator("#board-button").click()
-    start = page.locator("#board-tray #board-start")
-    expect(start).to_be_visible()
-    start.click()
-    expect(page.locator("#board .board-part").first).to_be_visible()
-    expect(page.locator("#board-size-text")).to_contain_text("9 × 9 holes")
-    expect(page.locator("#board-working")).to_be_hidden()
-    expect(start).to_be_hidden()  # the board passes: nothing left to do
-    page.keyboard.press("Control+z")  # laying out and tidying: one step
-    expect(page.locator("#board-size-text")).to_have_text("Empty board")
-    page.keyboard.press("Control+Shift+z")
+    page.locator("#board-settings summary").click()
+    page.locator("#board-layout").click()
+    dialog = page.locator("#layout-dialog")
+    for greyed in ("fill", "tidy"):
+        row = dialog.locator(f".layout-choice[data-layout='{greyed}']")
+        expect(row.locator("input")).to_be_disabled()
+        expect(row).to_contain_text("Nothing is placed yet")
+    expect(dialog.locator(".layout-choice[data-layout='start'] input")).to_be_checked()
+    dialog.locator("#layout-compact").set_checked(False)
+    dialog.locator("button[data-answer='go']").click()
+    expect(page.locator(".ask-text")).to_contain_text("Lays out the whole board: 8 parts")
+    page.locator(".ask-buttons button[data-answer='layout']").click()
+    size = page.locator("#board-size-text")
+    expect(size).to_contain_text("10 × 9 holes")
+    layout(page, "tidy")
+    expect(page.locator(".ask-text")).to_contain_text("make the board smaller")
+    page.locator(".ask-buttons button[data-answer='layout']").click()
+    expect(size).to_contain_text("9 × 9 holes")
+    layout(page, "start")
+    expect(page.locator(".ask-text")).to_contain_text(
+        "This replaces everything on the board: 8 parts,"
+    )
+    expect(page.locator(".ask-buttons button[data-answer='layout']")).to_have_text(
+        "Replace the board"
+    )
+    page.locator(".ask-buttons button[data-answer='cancel']").click()
+    expect(size).to_contain_text("9 × 9 holes")
+    page.keyboard.press("Control+z")  # the tidy: one step
+    expect(size).to_contain_text("10 × 9 holes")
+    page.keyboard.press("Control+z")  # the layout: one step
+    expect(size).to_have_text("Empty board")
+
+
+def test_the_tray_shows_the_placed_parts_on_request(page: Page, base_url: str) -> None:
+    """D-387: once laid out, the tray lists the placed parts (on the board and beside it)
+    under *Show placed*, above its lists; a click selects one."""
+    open_with_board(page, base_url, None)
+    page.locator("#board-button").click()
+    layout(page, "start", compact=True)
+    page.locator(".ask-buttons button[data-answer='layout']").click()
     expect(page.locator("#board-size-text")).to_contain_text("9 × 9 holes")
     toggle = page.locator("#board-tray .placed-toggle")
     expect(toggle).to_have_text("▸ Show placed (12)")  # 8 on the board, 4 beside it
@@ -793,19 +838,20 @@ def test_start_for_me_sits_in_the_tray_and_the_placed_parts_show_on_request(
     expect(page.locator("#board .board-part[data-ref='R1']")).to_have_class(re.compile("selected"))
 
 
-def test_start_for_me_says_what_its_doing_while_it_works(page: Page, base_url: str) -> None:
-    """A big board takes seconds to tidy (D-388): while it does, the button says so, the
-    working bar shows and neither button can be pressed again."""
+def test_the_layout_says_what_its_doing_while_it_works(page: Page, base_url: str) -> None:
+    """A big board takes seconds to tidy (D-388): while it does, the Layout button says so
+    and can't be pressed again, and the working bar shows."""
     held: list[Route] = []
     page.route("**/api/stripboard/tidy", lambda route: held.append(route))
     open_with_board(page, base_url, None)
     page.locator("#board-button").click()
-    start = page.locator("#board-tray #board-start")
-    start.click()
-    expect(start).to_have_text("Tidying…")
-    expect(start).to_be_disabled()
+    layout(page, "start", compact=True)
+    page.locator(".ask-buttons button[data-answer='layout']").click()
+    button = page.locator("#board-layout")
+    expect(button).to_have_text("Tidying…")
+    expect(button).to_be_disabled()
     expect(page.locator("#board-working")).to_be_visible()
     held[0].continue_()
     expect(page.locator("#board-size-text")).to_contain_text("9 × 9 holes")
     expect(page.locator("#board-working")).to_be_hidden()
-    expect(start).to_have_text("Start for me")
+    expect(button).to_have_text("Layout…")

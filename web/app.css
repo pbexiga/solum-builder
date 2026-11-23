@@ -331,9 +331,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-tray .board-list { list-style: none; margin: 0; padding: 0; }
 .board-tray .board-list li { padding: 3px 2px; color: var(--text-2); border-radius: 3px; }
 .board-tray .board-list li.pickable { cursor: pointer; }
-.board-tray .tray-start { display: block; width: 100%; margin: 2px 0 8px; padding: 4px 8px; font: 12px var(--font-ui); }
-.board-tray .tray-start[hidden] { display: none; }
-/* Start for me and Tidy up at work (a big board takes seconds): no value, so it just moves */
+/* the Layout dialog's help at work (a big board takes seconds): no value, so it just moves */
 .board-tray .tray-working { display: block; width: 100%; height: 6px; margin: 0 0 8px; accent-color: var(--accent); }
 .board-tray .tray-working[hidden] { display: none; }
 .board-tray .placed-toggle { display: block; margin: 4px 0 2px; padding: 0 2px; background: none; border: none; color: var(--text-3); font: 12px var(--font-ui); cursor: pointer; }
@@ -499,6 +497,17 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-panels .board-list li[data-net]:hover .net { color: var(--accent-hi); }
 .board-panels .board-subhead { margin: 10px 0 4px; font-size: 12px; color: var(--text-3); }
 .board-panels .remove-board { margin-top: 12px; }
+.board-panels .board-layout { display: block; margin: 0 0 8px; padding: 4px 10px; }
+/* the Layout dialog (P6h2): a radio list, each choice's line under its name, greyed with its reason */
+.layout-choices { display: flex; flex-direction: column; gap: 10px; margin: 0 0 16px; }
+.layout-choice { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; cursor: pointer; }
+.layout-choice input { grid-row: span 2; margin: 2px 0 0; accent-color: var(--accent); }
+.layout-choice .layout-name { color: var(--text); font-weight: 600; }
+.layout-choice .layout-text { color: var(--text-2); font-size: 12px; }
+.layout-choice.greyed { cursor: default; }
+.layout-choice.greyed .layout-name, .layout-choice.greyed .layout-text { color: var(--text-3); }
+.layout-compact { margin: -4px 0 0 24px; color: var(--text-2); font-size: 12px; cursor: pointer; }
+.layout-compact:has(input:disabled) { color: var(--text-3); cursor: default; }
 .board-panels .board-stale { margin: 0 0 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 4px; color: var(--text); }
 .board-panels .board-stale .clear-stale { margin-left: 4px; }
 .board-panels .board-subhead:first-child { margin-top: 0; }

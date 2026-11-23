@@ -38,6 +38,7 @@ import { Schematic } from "../schematic/render.js";
 import { latestOnly } from "../state.js";
 import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
+import { chooseLayout } from "./layout-dialog.js";
 import { needsCard } from "./needs.js";
 import { BOARD_SETTINGS, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, placedRows, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
 
@@ -93,8 +94,8 @@ export function boardView(host, app) {
   const sizeText = $("board-size-text");
   const trimButton = /** @type {HTMLButtonElement} */ ($("board-trim"));
   const wireButton = /** @type {HTMLButtonElement} */ ($("board-wire"));
-  const startButton = /** @type {HTMLButtonElement} */ ($("board-start"));
-  const tidyButton = /** @type {HTMLButtonElement} */ ($("board-tidy"));
+  const layoutButton = /** @type {HTMLButtonElement} */ (h("button", { type: "button", id: "board-layout", class: "board-layout" }, ["Layout…"]));
+  layoutButton.title = "Let the app lay the board out: start a board, fill the rest, or tidy up (one undo step)";
   const workingBar = /** @type {HTMLProgressElement} */ ($("board-working"));
   const acceptButton = /** @type {HTMLButtonElement} */ ($("board-accept"));
   const needs = needsCard($("board-needs"));
@@ -209,8 +210,7 @@ export function boardView(host, app) {
   });
   trimButton.addEventListener("click", () => void resize("trim", "Trim the board"));
   wireButton.addEventListener("click", () => void wireForMe());
-  startButton.addEventListener("click", () => void startForMe());
-  tidyButton.addEventListener("click", () => void tidyUp());
+  layoutButton.addEventListener("click", () => void layOut());
   acceptButton.addEventListener("click", () => void boardEdit({ kind: "suggested" }, acceptButton.textContent ?? "Make the suggested cuts and links"));
   const seeButton = $("board-see");
   seeButton.setAttribute("aria-pressed", String(settings.seeThrough));
@@ -680,56 +680,52 @@ export function boardView(host, app) {
   }
 
   /**
-   * Start for me and Tidy up at work: both buttons off, the working bar showing, `button`
-   * saying what's being done (it changes with `say`); put back however `work` ends.
+   * The layout help at work: the Layout button off and saying what's being done (it
+   * changes with `say`), the working bar showing; put back however `work` ends.
    * @template T
-   * @param {HTMLButtonElement} button
    * @param {(say: (words: string) => void) => Promise<T>} work
    * @returns {Promise<T>}
    */
-  async function working(button, work) {
-    const words = button.textContent;
-    startButton.disabled = tidyButton.disabled = true;
+  async function working(work) {
+    const words = layoutButton.textContent;
+    layoutButton.disabled = true;
     workingBar.hidden = false;
     try {
-      return await work((said) => (button.textContent = said));
+      return await work((said) => (layoutButton.textContent = said));
     } finally {
-      startButton.disabled = tidyButton.disabled = false;
+      layoutButton.disabled = false;
       workingBar.hidden = true;
-      button.textContent = words;
+      layoutButton.textContent = words;
     }
   }
 
+  /** *Layout…* (P6h2): the dialog's choice, confirmed, then done as one undo step. */
+  async function layOut() {
+    const board = readBoard(app.circuit()?.stripboard);
+    const chosen = await chooseLayout({ board, toPlace: progress?.to_place.length ?? 0 });
+    if (!chosen) return;
+    if (chosen.choice === "tidy") return void tidyUp();
+    await startBoard(chosen.choice === "fill", chosen.compact);
+  }
+
   /**
-   * *Start for me* (D-387): an empty board laid out at once; one with parts on it asks
-   * first, Fill the rest or Start over. A fresh layout is tidied too (D-388; nothing
-   * smaller found, it's kept as laid out). One undo step; what Fill the rest couldn't
-   * join is said on the bar.
+   * *Start a board* or *Fill the rest* (D-387): the server's layout, made compact after
+   * when asked (Tidy up, D-388; nothing smaller found, it's kept as laid out). One undo
+   * step; what Fill the rest couldn't join is said on the bar.
+   * @param {boolean} fill @param {boolean} compact
    */
-  async function startForMe() {
-    const placed = readBoard(app.circuit()?.stripboard).parts.length > 0;
-    const choice = !placed ? "over" : await ask({
-      title: "Start for me",
-      text: "Fill the rest keeps what you've placed and lays out the parts still in the tray below it. Start over lays out the whole board afresh, in place of what's on it now, and tidies it. Either is one step to undo.",
-      cancel: "cancel",
-      buttons: [
-        { label: "Start over", value: "over", kind: "aside" },
-        { label: "Cancel", value: "cancel" },
-        { label: "Fill the rest", value: "fill", kind: "primary" },
-      ],
-    });
-    if (choice === "cancel") return;
-    await working(startButton, async (say) => {
+  async function startBoard(fill, compact) {
+    await working(async (say) => {
       try {
         say("Laying out…");
-        const { stripboard, left } = await postJson("api/stripboard/start", { circuit: app.circuit(), fill: choice === "fill" });
+        const { stripboard, left } = await postJson("api/stripboard/start", { circuit: app.circuit(), fill });
         let board = stripboard;
-        if (choice === "over") {
+        if (compact) {
           say("Tidying…");
           const tidied = await postJson("api/stripboard/tidy", { circuit: { ...app.circuit(), stripboard } }).catch(() => null);
           if (tidied?.stripboard) board = tidied.stripboard; // else as laid out: nothing smaller, or nothing to tidy
         }
-        app.editBoard(board, choice === "fill" ? "Fill the rest" : "Start for me");
+        app.editBoard(board, fill ? "Fill the rest" : "Start a board");
         if (left.length) app.refuse(left.join(" "));
       } catch (err) {
         app.refuse(/** @type {Error} */ (err).message);
@@ -743,7 +739,7 @@ export function boardView(host, app) {
    * @param {boolean} [mend]
    */
   async function tidyUp(mend = false) {
-    const made = await working(tidyButton, async (say) => {
+    const made = await working(async (say) => {
       say("Tidying…");
       try {
         return await postJson("api/stripboard/tidy", { circuit: app.circuit(), mend });
@@ -841,8 +837,6 @@ export function boardView(host, app) {
     fitted ||= Boolean(drawn.columns && progress); // an empty board's size and the off-board parts come with the first check
     sizeText.textContent = sizeLine(board);
     trimButton.hidden = !started;
-    startButton.hidden = started && (!progress || (!progress.to_place.length && !progress.faults.length && progress.nets.every((n) => n.state === "done")));
-    tidyButton.hidden = !started || !progress || !board.parts.length;
     wireButton.hidden = !started || !progress || (!progress.wires_to_go.length && !progress.loose && progress.items.every((i) => isOut(i, board)));
     const suggestions = guide ? suggestionsLine(guide) : "";
     acceptButton.textContent = suggestions;
@@ -1039,7 +1033,7 @@ export function boardView(host, app) {
     fillPanes();
   }
 
-  /** Settings: the editor's settings, remembered per viewer; *Remove board* at the bottom once one is started. */
+  /** Settings: *Layout…* first, the editor's settings, remembered per viewer; *Remove board* at the bottom once one is started. */
   function fillSettings() {
     const boxes = BOARD_SETTINGS.map((setting) => {
       const box = /** @type {HTMLInputElement} */ (h("input", { type: "checkbox", "data-setting": setting.key }));
@@ -1053,7 +1047,7 @@ export function boardView(host, app) {
     const remove = h("button", { type: "button", id: "remove-board", class: "remove-board" }, ["Remove board"]);
     remove.title = "Take every part, cut, link and wire off the board (Undo brings them back)";
     remove.addEventListener("click", () => app.editBoard(null, "Remove board"));
-    $("board-settings-body").replaceChildren(...boxes, ...(app.circuit()?.stripboard ? [remove] : []));
+    $("board-settings-body").replaceChildren(layoutButton, ...boxes, ...(app.circuit()?.stripboard ? [remove] : []));
   }
 
   /** The button marked once the open circuit has a board. */

@@ -941,15 +941,12 @@ export function layoutChoices(placed) {
 }
 
 /**
- * The choice the Layout dialog opens on: the last one made, when it can be chosen now
- * (but never Start a board over parts already placed: it wipes them); else Start a board
- * on an empty board, Fill the rest once parts are placed.
- * @param {boolean} placed @param {unknown} last the remembered choice
- * @returns {LayoutChoice}
+ * The choice the Layout dialog opens on: Start a board on an empty board; none once parts
+ * are placed, so the builder chooses (Start a board would wipe them).
+ * @param {boolean} placed @returns {LayoutChoice | null}
  */
-export function layoutDefault(placed, last) {
-  const open = layoutChoices(placed).filter((c) => !c.why && !(placed && c.value === "start")).map((c) => c.value);
-  return open.includes(/** @type {LayoutChoice} */ (last)) ? /** @type {LayoutChoice} */ (last) : placed ? "fill" : "start";
+export function layoutDefault(placed) {
+  return placed ? null : "start";
 }
 
 /**

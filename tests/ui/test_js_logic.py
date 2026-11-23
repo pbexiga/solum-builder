@@ -1095,8 +1095,7 @@ def test_the_board_size_offers_and_the_empty_board(js: Page) -> None:
 
 def test_the_layout_dialog_s_choices_default_and_confirmations(js: Page) -> None:
     """P6h2: Fill the rest and Tidy up greyed with the reason on an empty board; the
-    dialog opens on the last choice when it can be made (never Start a board over placed
-    parts), else Start a board (empty) or Fill the rest (parts placed); each confirmation says what happens, naming what Start a
+    dialog opens on Start a board on an empty board, on nothing once parts are placed; each confirmation says what happens, naming what Start a
     board replaces by count, and that it's one step to undo."""
     got = run(
         js,
@@ -1108,9 +1107,7 @@ def test_the_layout_dialog_s_choices_default_and_confirmations(js: Page) -> None
           empty: b.layoutChoices(false).map((c) => [c.value, Boolean(c.why)]),
           placed: b.layoutChoices(true).map((c) => Boolean(c.why)),
           why: b.layoutChoices(false)[1].why,
-          defaults: [b.layoutDefault(false, null), b.layoutDefault(true, null),
-                     b.layoutDefault(false, 'tidy'), b.layoutDefault(true, 'tidy'),
-                     b.layoutDefault(true, 'nonsense'), b.layoutDefault(true, 'start')],
+          defaults: [b.layoutDefault(false), b.layoutDefault(true)],
           fresh: b.layoutConfirm('start', true, empty, 8),
           over: b.layoutConfirm('start', false, placed, 0),
           fill: b.layoutConfirm('fill', false, placed, 1).text,
@@ -1121,7 +1118,7 @@ def test_the_layout_dialog_s_choices_default_and_confirmations(js: Page) -> None
     assert got["empty"] == [["start", False], ["fill", True], ["tidy", True]]
     assert got["placed"] == [False, False, False]
     assert got["why"] == "Nothing is placed yet: start a board first."
-    assert got["defaults"] == ["start", "fill", "start", "tidy", "fill", "fill"]
+    assert got["defaults"] == ["start", None]
     assert got["fresh"] == {
         "title": "Start a board",
         "text": "Lays out the whole board: 8 parts in signal order, then made compact. "

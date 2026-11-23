@@ -781,7 +781,8 @@ def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_s
 ) -> None:
     """P6h2: *Layout…* in the board's Settings opens the choices; on an empty board Fill the
     rest and Tidy up are greyed with the reason and Start a board is chosen. Each choice
-    is confirmed, saying what will happen; each is one undo step. Start a board without
+    is confirmed, saying what will happen; each is one undo step. Once parts are placed
+    nothing is chosen at first and Continue waits for a choice. Start a board without
     *Make the board compact* lays out 10 columns, Tidy up makes them 9 (D-388); Start a
     board on a board with parts names what it replaces, and Cancel changes nothing."""
     open_with_board(page, base_url, None)
@@ -804,7 +805,11 @@ def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_s
     expect(page.locator(".ask-text")).to_contain_text("make the board smaller")
     page.locator(".ask-buttons button[data-answer='layout']").click()
     expect(size).to_contain_text("9 × 9 holes")
-    layout(page, "start")
+    page.locator("#board-layout").click()  # parts placed: nothing chosen, Continue waits
+    expect(dialog.locator("input[name='layout']:checked")).to_have_count(0)
+    expect(dialog.locator("button[data-answer='go']")).to_be_disabled()
+    dialog.locator(".layout-choice[data-layout='start'] input").check()
+    dialog.locator("button[data-answer='go']").click()
     expect(page.locator(".ask-text")).to_contain_text(
         "This replaces everything on the board: 8 parts,"
     )

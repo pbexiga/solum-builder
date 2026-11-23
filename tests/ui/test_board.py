@@ -510,14 +510,14 @@ def test_a_part_placed_finishes_its_nets_and_the_board_is_saved_as_it_was(
     tray_c3 = page.locator("#board-tray-body li[data-ref='C3']")
     box = tray_c3.bounding_box()
     assert box
-    drag_to(page, (box["x"] + 20, box["y"] + box["height"] / 2), hole_point(page, 7, 2))  # H3
+    drag_to(page, (box["x"] + 20, box["y"] + box["height"] / 2), hole_point(page, 6, 2))  # G3
     c3 = page.locator("#board .board-part[data-ref='C3']")
     expect(c3).to_have_count(1)
     expect(progress).to_have_text("All 8 nets done.")
     expect(warnings).to_have_text("The board matches the circuit.")
     # flipped: its legs swap strips, named as it's made
-    # by its leg at H3, under a wire across the board: the wire doesn't take the click
-    page.mouse.click(*hole_point(page, 7, 2))
+    # by its leg at G3, under a wire across the board: the wire doesn't take the click
+    page.mouse.click(*hole_point(page, 6, 2))
     expect(c3).to_have_class(re.compile(r"\bboard-part\b.*\bselected\b"))
     page.keyboard.press("f")
     expect(warnings).to_contain_text("C3 is the wrong way round")

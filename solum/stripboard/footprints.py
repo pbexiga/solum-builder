@@ -425,6 +425,40 @@ def body_holes(part: BoardPart, legs: dict[str, Hole], standing: bool) -> set[Ho
     return {(x + x0, y + y0) for x, y in shape}
 
 
+Outline = tuple[float, float, float, float, float]  # x0, y0, x1, y1 in mm; radius (0: a box)
+
+
+def body_outline(part: BoardPart, legs: dict[str, Hole], standing: bool) -> Outline | None:
+    """The body's real outline in mm (hole (0, 0) at 0, 0), centred as `_body_shape`
+    centres it: a circle's box and radius, or a box (radius 0); None for no body or a
+    standing part (D-394)."""
+    fp = part.footprint
+    if standing or not (fp.diameter or fp.length or fp.width):
+        return None
+    xs, ys = [h[0] for h in legs.values()], [h[1] for h in legs.values()]
+    cx, cy = (min(xs) + max(xs)) / 2 * PITCH, (min(ys) + max(ys)) / 2 * PITCH
+    if fp.diameter:
+        r = fp.diameter / 2
+        return cx - r, cy - r, cx + r, cy + r, r
+    along_x = fp.shape != "dip" and max(xs) - min(xs) >= max(ys) - min(ys)
+    length = fp.length or (len(fp.order) // 2) * PITCH
+    hx, hy = (length / 2, fp.width / 2) if along_x else (fp.width / 2, length / 2)
+    return cx - hx, cy - hy, cx + hx, cy + hy, 0.0
+
+
+def outlines_overlap(a: Outline, b: Outline, slack: float = 0.05) -> bool:
+    """Whether two bodies' outlines overlap by more than `slack` mm."""
+    if a[4] and b[4]:
+        ax, ay, bx, by = (a[0] + a[2]) / 2, (a[1] + a[3]) / 2, (b[0] + b[2]) / 2, (b[1] + b[3]) / 2
+        return math.hypot(ax - bx, ay - by) < a[4] + b[4] - slack
+    if a[4] or b[4]:
+        circle, box = (a, b) if a[4] else (b, a)
+        cx, cy = (circle[0] + circle[2]) / 2, (circle[1] + circle[3]) / 2
+        nx, ny = min(max(cx, box[0]), box[2]), min(max(cy, box[1]), box[3])
+        return math.hypot(cx - nx, cy - ny) < circle[4] - slack
+    return min(a[2], b[2]) - max(a[0], b[0]) > slack and min(a[3], b[3]) - max(a[1], b[1]) > slack
+
+
 @cache
 def _body_shape(fp: Footprint, legs: frozenset[Hole]) -> frozenset[Hole]:
     """A body's holes for legs placed from (0, 0): the same wherever the part sits, so

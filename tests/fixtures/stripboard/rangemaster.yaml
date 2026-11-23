@@ -8,10 +8,10 @@ parts:
   Q1: {E: E3, B: E4, C: E5}
   R1: {1: C8, 2: C4}
   R2: {1: J4, 2: J8}
-  R3: {1: G3, 2: G2}
+  R3: {1: H3, 2: H2}
   C1: {1: F6, 2: F4}
   C2: {1: F7, 2: F9}
-  C3: {1: H2, 2: H3}
+  C3: {1: G2, 2: G3}  # G, R3 standing at H: two 5 mm cans in neighbouring columns collide (D-394)
   C4: {1: I2, 2: I1}
 standing: [R3]
 cuts: [G8]

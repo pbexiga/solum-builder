@@ -13,7 +13,7 @@ from hypothesis import strategies as st
 from solum.circuit.build import CircuitBuilder
 from solum.circuit.connectivity import connect
 from solum.circuit.io import load_circuit
-from solum.circuit.schema import Circuit, Trimmer
+from solum.circuit.schema import Capacitor, Circuit, Trimmer
 from solum.circuit.switches import KINDS
 from solum.guides import footprint_table
 from solum.models import load_models
@@ -21,13 +21,20 @@ from solum.stripboard.board import (
     BoardError,
     Layout,
     Link,
+    Placed,
     hole_name,
     layout_data,
     layout_from_data,
     parse_hole,
     segments,
 )
-from solum.stripboard.check import Checked, check_layout, joined_groups, stripboard_nets
+from solum.stripboard.check import (
+    Checked,
+    check_layout,
+    joined_groups,
+    outline_warnings,
+    stripboard_nets,
+)
 from solum.stripboard.footprints import (
     board_parts,
     body_holes,
@@ -278,7 +285,7 @@ def test_a_leg_one_strip_off_is_refused() -> None:
 def test_a_missing_link_is_refused() -> None:
     result = check(edited(links=[["B1", "B8"]]))
     assert result.faults == [
-        "C3's + leg at H2 and R2's leg at J8 aren't connected on the board, but the circuit "
+        "C3's + leg at G2 and R2's leg at J8 aren't connected on the board, but the circuit "
         "joins them."
     ]
 
@@ -324,8 +331,8 @@ def test_missing_extra_and_off_board_parts_are_named() -> None:
 
 
 def test_two_legs_in_a_hole_or_a_body_over_a_leg_is_refused() -> None:
-    shared = check(edited(parts={"R3": {"1": "H3", "2": "G2"}}))
-    assert "R3 and C3 share hole H3." in shared.faults
+    shared = check(edited(parts={"R3": {"1": "G3", "2": "H2"}}))
+    assert "R3 and C3 share hole G3." in shared.faults
     covered = check(edited(parts={"R2": {"1": "C4", "2": "C8"}, "R1": {"1": "C8", "2": "C4"}}))
     assert any("share hole" in f for f in covered.faults)
     over = check(edited(parts={"Q1": {"E": "C5", "B": "C6", "C": "C7"}}))  # under R1's body
@@ -461,6 +468,32 @@ def test_a_trimmer_is_a_triangle_unless_set_in_line() -> None:
     assert body_holes(triangle, own, False) == {(5, 3), (4, 2), (4, 4)}
     inline = one_board_part(tr.model_copy(update={"style": "inline"}), MODELS, TABLE)
     assert inline.footprint.shape == "inline" and inline.footprint.length == 9.53
+
+
+def test_bodies_touching_between_holes_or_hanging_off_the_edge_are_warned() -> None:
+    """D-394: a triangle trimmer (legs B1, A2, B3; body 6.99 mm across, to 4.77 mm) and a
+    100 µF electrolytic (6.3 mm, legs D1, D2; its edge at 4.47 mm) share no hole, so the
+    board passes, but their outlines touch by 0.3 mm: a warning. A body more than half a
+    hole past the board's edge is warned too; one hole further apart, nothing."""
+    tr = one_board_part(Trimmer(ref="TR1", pos=(0, 0), type="trimmer", value=10e3), MODELS, TABLE)
+    cap = Capacitor(ref="C1", pos=(0, 0), type="capacitor", value=100e-6, kind="electrolytic")
+    c1 = one_board_part(cap, MODELS, TABLE)
+    board = {"TR1": tr, "C1": c1}
+    trimmer = Placed("TR1", tuple(triangle_legs(0, (0, 0)).items()))
+
+    def at(column: int, columns: int) -> list[str]:
+        cap_at = Placed("C1", (("1", (column, 0)), ("2", (column, 1))))
+        return outline_warnings(Layout(columns, 3, (trimmer, cap_at)), board)
+
+    assert at(3, 6) == [
+        "TR1 and C1's bodies touch between the holes: one would have to stand taller. Move "
+        "one a hole further away if you can."
+    ]
+    assert at(4, 6) == []
+    assert at(4, 5) == [  # C1's edge at 13.31 mm, the board's at 4.5 holes, 11.43 mm
+        "C1's body hangs 1.9 mm past the board's edge: check it clears the enclosure, or "
+        "move it in."
+    ]
 
 
 def test_a_surface_mount_transistor_on_an_adapter_takes_the_to92_footprint() -> None:

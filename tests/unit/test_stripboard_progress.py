@@ -91,9 +91,9 @@ def test_a_short_names_the_other_net_and_where() -> None:
 
 
 def test_a_reversed_electrolytic_is_named() -> None:
-    p = run(edited(parts={"C3": {"1": "H3", "2": "H2"}}))
+    p = run(edited(parts={"C3": {"1": "G3", "2": "G2"}}))
     assert p.faults == [
-        "C3 is the wrong way round: C3's + leg at H3 and C3's − leg at H2 are each on the "
+        "C3 is the wrong way round: C3's + leg at G3 and C3's − leg at G2 are each on the "
         "other's strip. Turn it."
     ]
 
@@ -127,7 +127,7 @@ def test_a_part_rewired_in_the_schematic_names_its_leg_and_where_it_should_go() 
     assert p.stale == [] and not p.done
     assert p.faults == [
         "R1's leg at C8 is on the strip of V-, but the circuit puts it on GND: it should join "
-        "C3's + leg at H2, C4's + leg at I2, R3's leg at G2 and 3 more.",
+        "C3's + leg at G2, C4's + leg at I2, R3's leg at H2 and 3 more.",
         "R2's leg at J8 is on the strip of GND, but the circuit puts it on V-: it should join "
         "C4's − leg at I1, the V- supply's wire at A1 and VR1 lug 1's wire at D1.",
     ]

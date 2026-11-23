@@ -20,14 +20,17 @@ from solum.guides import FootprintTable
 from solum.models import ModelError, ModelLibrary
 from solum.stripboard.board import Hole, Layout, Placed, hole_name, segments
 from solum.stripboard.footprints import (
+    PITCH,
     BoardPart,
     NoFootprint,
     PinRef,
     board_parts,
     board_refs,
     body_holes,
+    body_outline,
     leg_problem,
     one_board_part,
+    outlines_overlap,
 )
 from solum.stripboard.limits import limit_warnings, placement_limits
 from solum.stripboard.offboard import (
@@ -146,6 +149,38 @@ def occupants(layout: Layout) -> tuple[dict[Hole, list[str]], list[str]]:
 
 def _cap(text: str) -> str:
     return text[:1].upper() + text[1:]
+
+
+def outline_warnings(layout: Layout, board: dict[str, BoardPart]) -> list[str]:
+    """Bodies by their real outlines (D-394): two touching between holes (a fault only
+    when they share a hole: `placement_faults`), or one hanging more than half a hole past
+    the board's edge. Warnings, not faults: a part can stand a little taller, though it's
+    better not to (the user)."""
+    found: list[tuple[str, tuple[float, float, float, float, float]]] = []
+    for p in layout.parts:
+        part = board.get(p.ref)
+        if part is None or leg_problem(part, p.holes, p.standing):
+            continue
+        outline = body_outline(part, p.holes, p.standing)
+        if outline is not None:
+            found.append((p.ref, outline))
+    warnings = []
+    for i, (a, out_a) in enumerate(found):
+        for b, out_b in found[i + 1 :]:
+            if outlines_overlap(out_a, out_b):
+                warnings.append(
+                    f"{a} and {b}'s bodies touch between the holes: one would have to stand "
+                    "taller. Move one a hole further away if you can."
+                )
+    edge = (-PITCH, -PITCH, layout.columns * PITCH, layout.strips * PITCH)  # half a hole out
+    for ref, (x0, y0, x1, y1, _) in found:
+        past = max(edge[0] - x0, edge[1] - y0, x1 - edge[2], y1 - edge[3])
+        if past > 0.05:
+            warnings.append(
+                f"{ref}'s body hangs {past + PITCH / 2:.1f} mm past the board's edge: "
+                "check it clears the enclosure, or move it in."
+            )
+    return warnings
 
 
 def placement_faults(layout: Layout, board: dict[str, BoardPart],
@@ -774,6 +809,7 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
             rows.append(LegProgress(leg, holes.get((ref, leg)), need, reach))
         legs[ref] = rows
     warnings = limit_warnings(r.layout, placement_limits(circuit, r.nets, r.board))
+    warnings += outline_warnings(r.layout, r.board)
     done = check_layout(layout, circuit, models, table).ok
     mixed = {g for g, here in by_group.items() if len(here) > 1}
     copper = joined_groups(r.layout)[0]

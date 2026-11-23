@@ -82,7 +82,7 @@ def test_a_wrongly_placed_part_is_asked_about_then_laid_out_again() -> None:
 
 
 def test_a_part_the_wrong_way_round_is_a_misfit() -> None:
-    turned = good(parts={**GOOD["parts"], "C3": {"1": "H3", "2": "H2"}})
+    turned = good(parts={**GOOD["parts"], "C3": {"1": "G3", "2": "G2"}})
     assert misfits(turned, RANGEMASTER, MODELS, TABLE) == ["C3"]
     assert misfits(good(), RANGEMASTER, MODELS, TABLE) == []
 

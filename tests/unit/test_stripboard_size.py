@@ -115,7 +115,7 @@ def test_an_empty_column_can_be_taken_out() -> None:
 def test_a_line_that_isnt_empty_names_whats_on_it() -> None:
     with pytest.raises(SizeError, match="Column A isn't empty: the wire at A1 is on it"):
         remove_line(GOOD, BOARD, "column", 0)
-    with pytest.raises(SizeError, match="Column G isn't empty: R3 is on it"):
+    with pytest.raises(SizeError, match="Column G isn't empty: C3 is on it"):
         remove_line(GOOD, BOARD, "column", 6)
     with pytest.raises(SizeError, match="no strip 10"):
         remove_line(GOOD, BOARD, "strip", 9)

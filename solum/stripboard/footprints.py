@@ -36,10 +36,9 @@ from solum.guides import FootprintTable, InlineSize, RadialSize
 from solum.markings import resistor_bands
 from solum.models import Model, ModelError, ModelLibrary
 from solum.rules.checks import DEFAULT_RATING_W
-from solum.stripboard.board import Hole
+from solum.stripboard.board import PITCH, Hole
 from solum.units import parse_value
 
-PITCH = 2.54  # mm between holes
 Shape = Literal["axial", "radial", "inline", "triangle", "dip", "sil"]
 PinRef = tuple[str, str]
 SURFACE_MOUNT = ("SMD", "SC-59", "SC-70", "SOT-", "SOD-")  # in a package's name

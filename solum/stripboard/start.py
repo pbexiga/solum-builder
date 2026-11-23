@@ -27,7 +27,7 @@ from solum.circuit.connectivity import GROUND
 from solum.circuit.schema import Circuit
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
-from solum.stripboard.board import Hole, Layout, Link, Placed
+from solum.stripboard.board import PITCH, Hole, Layout, Link, Placed
 from solum.stripboard.check import (
     Reading,
     check_layout,
@@ -36,7 +36,7 @@ from solum.stripboard.check import (
     occupants,
     read_layout,
 )
-from solum.stripboard.footprints import PITCH, BoardPart, body_holes, dip_legs, triangle_legs
+from solum.stripboard.footprints import BoardPart, body_holes, dip_legs, triangle_legs
 from solum.stripboard.guidance import signal_order
 from solum.stripboard.wiring import WiringError, wire_for_me
 

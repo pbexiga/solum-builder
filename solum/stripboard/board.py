@@ -17,6 +17,7 @@ from string import ascii_uppercase
 from typing import Any
 
 Hole = tuple[int, int]  # (column, strip), from 0
+PITCH = 2.54  # mm between holes (0.1")
 
 
 def column_name(column: int) -> str:

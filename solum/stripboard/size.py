@@ -10,8 +10,8 @@ from collections.abc import Callable, Iterable, Mapping
 from dataclasses import replace
 from typing import Literal
 
-from solum.stripboard.board import Hole, Layout, Link, Placed, column_name, hole_name
-from solum.stripboard.footprints import PITCH, BoardPart, body_holes, leg_problem
+from solum.stripboard.board import PITCH, Hole, Layout, Link, Placed, column_name, hole_name
+from solum.stripboard.footprints import BoardPart, body_holes, leg_problem
 
 Axis = Literal["column", "strip"]
 Box = tuple[int, int, int, int]  # first column, first strip, last column, last strip

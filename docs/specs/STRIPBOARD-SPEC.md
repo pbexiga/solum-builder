@@ -65,6 +65,8 @@ Laying out the whole board automatically was tried first. Small circuits laid ou
 - **On every open and export the board is checked against the circuit as it now is.** A board that doesn't match is never packaged; the package index says why.
 
 ## In the build package (D-386)
+The parts list's Hardware names the kept board: "Stripboard, 13 × 15 holes, cut to 33 × 38 mm, 0.1" pitch" (the board itself stays unsized, D-373; stock sheet sizes later, from makers' listings only).
+
 `stripboard.pdf`: a line saying it's checked ("Every connection on this board matches the circuit (N nets)"); the cut list, the link list, the off-board wires numbered ("VR1 (Gain) lug 1 to F2"); the parts side with the off-board parts and wires, the copper side mirrored with its cuts and the copper side not mirrored, each labelled and filled onto its own sheet (D-390); then both sides of the board alone at real size on one A4 page, with a 25.4 mm line to check the print. Drawn by the browser's board canvas (D-205). No board kept: the package index's Ready to build notes "No stripboard layout kept"; a stale board is left out, the note saying what doesn't match. The generic wiring pages (D-209) stay.
 
 ## The starters (D-391)

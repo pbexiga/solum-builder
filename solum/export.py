@@ -52,6 +52,7 @@ from solum.netlist import Ac, Op, Tran, generate_netlist
 from solum.rules.checks import DEFAULT_RATING_W
 from solum.rules.run import Checker, Problem
 from solum.simulate import LEVELS, MEASURE_CYCLES, STEPS_PER_CYCLE, Simulator
+from solum.stripboard.board import PITCH
 from solum.units import format_quantity, format_value, parse_value
 from solum.view import probe_nets
 
@@ -351,7 +352,8 @@ CHECKLIST = (
 
 
 def hardware(circuit: Circuit, models: ModelLibrary) -> list[BomLine]:
-    """What a build needs besides its parts (D-204): the enclosure, a knob per pot, a socket
+    """What a build needs besides its parts (D-204): the enclosure, the kept stripboard's
+    size to cut (P6h2), a knob per pot, a socket
     per DIP chip, a bezel for each LED off the board, the battery's clip."""
     lines = []
     box = circuit.enclosure
@@ -366,6 +368,11 @@ def hardware(circuit: Circuit, models: ModelLibrary) -> list[BomLine]:
     else:
         dims = f"{box.length:g} \u00d7 {box.width:g} \u00d7 {box.height:g} mm outside"
         lines.append(BomLine("hardware", "Enclosure", "Custom", dims, (), 1))
+    if circuit.stripboard:
+        columns, strips = circuit.stripboard.size
+        mm = f"{round(columns * PITCH):d} \u00d7 {round(strips * PITCH):d} mm"
+        lines.append(BomLine("hardware", "Stripboard", f"{columns} \u00d7 {strips} holes",
+                             f'cut to {mm}, 0.1" pitch', (), 1))  # fmt: skip
     pots = sorted(
         (p for p in circuit.parts if isinstance(p, Pot) and p.gang in (None, "a")),
         key=lambda p: ref_key(p.ref),

@@ -18,9 +18,8 @@ from solum.circuit.schema import POLARISED, SUPPLY_SIGNS, Capacitor, Circuit, Pa
 from solum.export import built_where, chosen_where, why_not_moved
 from solum.guides import FootprintTable
 from solum.models import ModelError, ModelLibrary
-from solum.stripboard.board import Hole, Layout, Placed, hole_name, segments
+from solum.stripboard.board import PITCH, Hole, Layout, Placed, hole_name, segments
 from solum.stripboard.footprints import (
-    PITCH,
     BoardPart,
     NoFootprint,
     PinRef,

@@ -10,7 +10,7 @@ import pytest
 
 from solum.circuit.build import CircuitBuilder
 from solum.circuit.io import load_circuit
-from solum.circuit.schema import Enclosure
+from solum.circuit.schema import Enclosure, Stripboard
 from solum.export import (
     BOM_COLUMNS,
     CHECKLIST,
@@ -256,6 +256,22 @@ def test_hardware_follows_the_parts() -> None:
     chosen = c.build().model_copy(update={"enclosure": Enclosure(size="1590B")})
     box = bom(chosen, MODELS)[-5]
     assert (box.value, box.details) == ("1590B", "112 \u00d7 60.5 \u00d7 31 mm outside")
+
+
+def test_a_kept_board_is_listed_with_the_size_to_cut_it() -> None:
+    """P6h2: a circuit with a board lists the stripboard to cut, after the enclosure: its
+    size in holes and in mm (13 x 2.54 = 33.02, 15 x 2.54 = 38.1), at 0.1" pitch. No
+    board, no line."""
+    c = CircuitBuilder().part("R1", "resistor", "a", "GND", value="1k").build()
+    assert not [x for x in bom(c, MODELS) if x.part == "Stripboard"]
+    kept = c.model_copy(update={"stripboard": Stripboard(size=(13, 15))})
+    lines = [x for x in bom(kept, MODELS) if x.where == "hardware"]
+    assert lines[1].part == "Stripboard"
+    assert (lines[1].value, lines[1].details, lines[1].quantity) == (
+        "13 \u00d7 15 holes",
+        'cut to 33 \u00d7 38 mm, 0.1" pitch',
+        1,
+    )
 
 
 def test_pages_become_pdfs_and_fetch_nothing_from_the_network(

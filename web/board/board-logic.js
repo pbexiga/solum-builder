@@ -926,7 +926,8 @@ export const BOARD_SETTINGS = /** @type {const} */ ([
 /**
  * The Layout dialog's choices (P6h2), in order, each with a line saying what it does and,
  * when it can't be chosen, why (`why`): Fill the rest and Tidy up need something placed.
- * *Start a board* has *Make the board compact* under it (the dialog's own checkbox).
+ * The first is *Start a board* on an empty board, *Start over* once parts are placed; it
+ * has *Make the board compact* under it (the dialog's own checkbox).
  * @typedef {"start" | "fill" | "tidy"} LayoutChoice
  * @param {boolean} placed whether any part is on the board
  * @returns {Array<{value: LayoutChoice, label: string, text: string, why: string}>}
@@ -934,7 +935,9 @@ export const BOARD_SETTINGS = /** @type {const} */ ([
 export function layoutChoices(placed) {
   const none = placed ? "" : "Nothing is placed yet: start a board first.";
   return [
-    { value: "start", label: "Start a board", text: "A base layout of the whole board, the parts in signal order left to right, for you to edit by hand. On a board with parts on it, it wipes it and starts over.", why: "" },
+    placed
+      ? { value: "start", label: "Start over", text: "Wipes the board and lays it all out afresh: a base layout, the parts in signal order left to right, for you to edit by hand.", why: "" }
+      : { value: "start", label: "Start a board", text: "A base layout of the whole board, the parts in signal order left to right, for you to edit by hand.", why: "" },
     { value: "fill", label: "Fill the rest", text: "Keeps what you've placed and lays out the parts still in the tray below it.", why: none },
     { value: "tidy", label: "Tidy up", text: "Makes the board smaller by moving parts, links and cuts in small steps, keeping the check passing.", why: none },
   ];
@@ -971,7 +974,7 @@ export function layoutConfirm(choice, compact, board, toPlace) {
   if (!board.parts.length) return { title: "Start a board", text: `Lays out the whole board: ${count(toPlace, "part")} in signal order${then}. ${undo}`, label: "Start a board" };
   const listed = [count(board.parts.length, "part"), ...[[board.cuts.length, "cut"], [board.links.length, "link"], [board.wires.length, "wire"]].filter(([n]) => n).map(([n, w]) => count(/** @type {number} */ (n), /** @type {string} */ (w)))];
   const named = listed.length > 1 ? `${listed.slice(0, -1).join(", ")} and ${listed[listed.length - 1]}` : listed[0];
-  return { title: "Start a board", text: `This replaces everything on the board: ${named}. A fresh layout takes its place${then}. ${undo}`, label: "Replace the board" };
+  return { title: "Start over", text: `This replaces everything on the board: ${named}. A fresh layout takes its place${then}. ${undo}`, label: "Replace the board" };
 }
 
 /** @typedef {Record<(typeof BOARD_SETTINGS)[number]["key"], boolean>} BoardSettings */

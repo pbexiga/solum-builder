@@ -1095,8 +1095,9 @@ def test_the_board_size_offers_and_the_empty_board(js: Page) -> None:
 
 def test_the_layout_dialog_s_choices_default_and_confirmations(js: Page) -> None:
     """P6h2: Fill the rest and Tidy up greyed with the reason on an empty board; the
-    dialog opens on Start a board on an empty board, on nothing once parts are placed; each confirmation says what happens, naming what Start a
-    board replaces by count, and that it's one step to undo."""
+    dialog opens on Start a board on an empty board, on nothing once parts are placed,
+    when the first choice is called Start over; each confirmation says what happens,
+    naming what Start over replaces by count, and that it's one step to undo."""
     got = run(
         js,
         """
@@ -1105,6 +1106,7 @@ def test_the_layout_dialog_s_choices_default_and_confirmations(js: Page) -> None
         const empty = { parts: [], cuts: [], links: [], wires: [] };
         return {
           empty: b.layoutChoices(false).map((c) => [c.value, Boolean(c.why)]),
+          names: [b.layoutChoices(false)[0].label, b.layoutChoices(true)[0].label],
           placed: b.layoutChoices(true).map((c) => Boolean(c.why)),
           why: b.layoutChoices(false)[1].why,
           defaults: [b.layoutDefault(false), b.layoutDefault(true)],
@@ -1129,7 +1131,8 @@ def test_the_layout_dialog_s_choices_default_and_confirmations(js: Page) -> None
         "This replaces everything on the board: 3 parts, 1 cut and 2 wires. "
         "A fresh layout takes its place. One step to undo."
     )
-    assert got["over"]["label"] == "Replace the board"
+    assert got["over"]["label"] == "Replace the board" and got["over"]["title"] == "Start over"
+    assert got["names"] == ["Start a board", "Start over"]
     assert got["fill"].startswith("Lays out the 1 part still in the tray below")
     assert got["tidy"] == "Tidy up"
 

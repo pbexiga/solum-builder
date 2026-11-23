@@ -808,6 +808,7 @@ def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_s
     page.locator("#board-layout").click()  # parts placed: nothing chosen, Continue waits
     expect(dialog.locator("input[name='layout']:checked")).to_have_count(0)
     expect(dialog.locator("button[data-answer='go']")).to_be_disabled()
+    expect(dialog.locator(".layout-choice[data-layout='start']")).to_contain_text("Start over")
     dialog.locator(".layout-choice[data-layout='start'] input").check()
     dialog.locator("button[data-answer='go']").click()
     expect(page.locator(".ask-text")).to_contain_text(

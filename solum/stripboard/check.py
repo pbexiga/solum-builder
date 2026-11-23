@@ -104,7 +104,7 @@ class _Words:
         part = self.board.get(board_ref)
         kind = part.kind if part else ""
         original = self.kinds.get(ref)
-        if kind == "chip":
+        if kind in ("chip", "switch"):  # a chip's or a DIP switch's (D-397) numbered pins
             return f"{board_ref}'s pin {leg} ({ref} {pin}) at {at}"
         if pin in PIN_WORDS and kind in ("bjt", "jfet", "mosfet"):
             return f"{ref}'s {PIN_WORDS[pin]} at {at}"

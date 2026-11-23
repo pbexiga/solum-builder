@@ -237,6 +237,18 @@ dip:
   width: 6.35
   source: KiCad DIP-8_W7.62mm, DIP-14_W7.62mm, DIP-16_W7.62mm (7.62 mm rows, body outline)
 
+# A DIP switch (D-238) on the board as a chip's DIP (D-397): switch k from pin k to the
+# pin across from it, 1 at the top left; its body runs a pitch per switch plus `extra`.
+dip_switch:
+  row_holes: 3
+  width: 6.20
+  extra: 1.00
+  source: >
+    Same Sky DS04-254 (through hole, 2.54 mm pitch, 1 to 12 positions), "DS04-254 DIP
+    switch" (sameskydevices.com/product/resource/ds04-254.pdf, rev 1.03 of 12/18/2024,
+    read 2026-11-23), page 2: P = 2.54, rows 7.62 apart, body 6.20 wide and
+    L = P × N + 1.00 long (6.08 for 2 positions); the schematic joins 1 to 2 per switch
+
 # A chip in a single row of pins (the M5218AL's SIL-8), one strip per pin.
 sil:
   width: 3.0

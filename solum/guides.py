@@ -184,10 +184,14 @@ class InlineSize(BaseModel):
 
 
 class DipSize(BaseModel):
+    """Pins down two rows `row_holes` apart (a SIL: one row), 0.1" apart along them; the
+    body `width` across and, along, a pitch per pin pair plus `extra` (mm)."""
+
     model_config = ConfigDict(extra="forbid")
 
     row_holes: int = 0  # a SIL has one row
     width: float
+    extra: float = 0.0
     source: str
 
 
@@ -202,6 +206,7 @@ class FootprintTable(BaseModel):
     trimmer: InlineSize
     trimmer_triangle: InlineSize
     dip: DipSize
+    dip_switch: DipSize
     sil: DipSize
 
 

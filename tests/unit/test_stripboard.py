@@ -3,6 +3,7 @@ broken, each broken one refused with a sentence naming its fault."""
 
 import math
 from collections.abc import Callable
+from dataclasses import replace
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +46,7 @@ from solum.stripboard.footprints import (
     triangle_legs,
 )
 from solum.stripboard.offboard import default_spots, lug_nets, off_board_items, switch_drawing
+from solum.stripboard.start import start_for_me
 from solum.stripboard.wiring import WiringError, pad_cost, wire_for_me
 from solum.yamlio import load_yaml
 
@@ -437,9 +439,34 @@ def test_every_starter_but_the_kit_builds_gets_its_footprints() -> None:
         "Q1's 2SK209-GR is surface-mount (SC-59 (S-MINI)): it can't go on a stripboard. "
         "Choose a through-hole model for it, or put it on a TO-92 adapter (its Mounting)."
     ]
+
+
+def test_a_dip_switch_is_one_board_part_like_a_chip() -> None:
+    """D-397: the Bluesbreaker (Aion)'s gain DIP (SW3A, SW3B) goes on as one 4-pin DIP,
+    SW3: switch k from pin k (its lug 1) to the pin across (its lug 2), rows 3 holes apart;
+    the Same Sky DS04-254 body, 6.20 mm across and 2 × 2.54 + 1.00 = 6.08 mm along."""
     path = LIBRARY / "starters" / "marshall-bluesbreaker-aion.json"
-    _, dip = board_parts(load_circuit(path), MODELS, TABLE)
-    assert dip == ["There's no board size for DIP switches (SW3) yet."]  # once, not per pole
+    parts, problems = board_parts(load_circuit(path), MODELS, TABLE)
+    assert problems == []
+    sw3 = parts["SW3"]
+    assert sw3.legs == ("1", "2", "3", "4")
+    assert sw3.pins == {"1": ("SW3A", "A1"), "4": ("SW3A", "A2"),
+                        "2": ("SW3B", "B1"), "3": ("SW3B", "B2")}  # fmt: skip
+    fp = sw3.footprint
+    assert (fp.shape, fp.row_holes) == ("dip", 3)
+    assert fp.width == pytest.approx(6.20)
+    assert fp.length == pytest.approx(6.08)
+    legs = dip_legs(4, (0, 0))
+    assert leg_problem(sw3, legs, standing=False) is None
+    assert body_holes(sw3, legs, standing=False) == {(1, 0), (2, 0), (1, 1), (2, 1)}
+    circuit = load_circuit(path)
+    laid = start_for_me(None, circuit, MODELS, TABLE, fill=False).layout
+    moved = tuple(
+        Placed(p.ref, tuple((leg, (x, y + 1)) for leg, (x, y) in p.legs)) if p.ref == "SW3" else p
+        for p in laid.parts
+    )
+    faults = " ".join(check_layout(replace(laid, parts=moved), circuit, MODELS, TABLE).faults)
+    assert "SW3's pin 1 (SW3A A1)" in faults  # named like a chip's pin
 
 
 def test_a_trimmer_is_a_triangle_unless_set_in_line() -> None:

@@ -17,9 +17,7 @@ LIBRARY = Path(__file__).resolve().parents[2] / "library"
 MODELS = load_models([LIBRARY / "models"])
 TABLE = footprint_table(LIBRARY)
 STARTERS = sorted((LIBRARY / "starters").glob("*.json"))
-NO_BOARD = {  # a part with no through-hole footprint: refused, not laid out
-    "marshall-bluesbreaker-aion": "DIP switches",
-}
+NO_BOARD: dict[str, str] = {}  # starter: why it's refused (a part with no footprint)
 
 pytestmark = pytest.mark.sim
 

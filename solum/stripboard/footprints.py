@@ -31,6 +31,7 @@ from solum.circuit.schema import (
     Switch,
     Trimmer,
 )
+from solum.circuit.switches import POLE_LETTERS, lug_name
 from solum.export import built_where, chosen_where
 from solum.guides import FootprintTable, InlineSize, RadialSize
 from solum.markings import resistor_bands
@@ -174,8 +175,6 @@ def two_leg_footprint(part: Part, models: ModelLibrary, table: FootprintTable) -
         if cap is None:
             raise NoFootprint(f"There's no board size for a {part.kind} as big as {ref} yet.")
         return _radial(cap)
-    if isinstance(part, Switch):
-        raise NoFootprint(f"There's no board size for DIP switches ({part.switch}) yet.")
     raise NoFootprint(f"There's no board size for {part.type}s ({ref}) yet.")
 
 
@@ -219,9 +218,28 @@ def _chip(ref: str, units: Sequence[Part], model: Model, table: FootprintTable) 
     return BoardPart(ref, shape, pins, free, kind="chip")
 
 
+def _dip_switch(ref: str, poles: Sequence[Switch], table: FootprintTable) -> BoardPart:
+    """A DIP switch, its poles together as a chip's DIP (D-397): switch k (pole k) from
+    pin k, its lug 1, to the pin across from it, its lug 2."""
+    kind = poles[0].switch_kind
+    count = 2 * kind.poles
+    pins: dict[str, PinRef] = {}
+    for part in poles:
+        k = POLE_LETTERS.index(part.pole.upper()) + 1 if part.pole else 1
+        pins[str(k)] = (part.ref, lug_name(kind, part.pole, "1"))
+        pins[str(count + 1 - k)] = (part.ref, lug_name(kind, part.pole, "2"))
+    size = table.dip_switch
+    order = tuple(str(n) for n in range(1, count + 1))
+    shape = Footprint("dip", length=kind.poles * PITCH + size.extra, width=size.width,
+                      order=order, row_holes=size.row_holes)  # fmt: skip
+    return BoardPart(ref, shape, pins, kind="switch")
+
+
 def board_ref(part: Part) -> str:
-    """The board part a circuit part is on: a chip unit's chip (`IC1` for `IC1A`), else its
-    own ref."""
+    """The board part a circuit part is on: a chip unit's chip (`IC1` for `IC1A`), a
+    switch pole's switch (`SW3` for `SW3A`), else its own ref."""
+    if isinstance(part, Switch):
+        return part.switch
     return part.chip if isinstance(part, (PowerUnit, *CHIP_UNITS)) else part.ref
 
 
@@ -236,6 +254,10 @@ def one_board_part(part: Part, models: ModelLibrary, table: FootprintTable) -> B
     `ModelError` saying why when it can't."""
     if isinstance(part, ChargePump):
         return _chip(part.ref, [part], models.get(part.model), table)
+    if isinstance(part, Switch):
+        if part.switch_kind.group != "DIP":
+            raise NoFootprint(f"There's no board size for a {part.switch_kind.short} switch yet.")
+        return _dip_switch(part.switch, [part], table)
     if isinstance(part, Bjt | Jfet | Mosfet | Regulator):
         return _three_leg(part, models, table)
     if isinstance(part, Trimmer):
@@ -258,6 +280,7 @@ def board_parts(circuit: Circuit, models: ModelLibrary,
     found: dict[str, BoardPart] = {}
     problems: list[str] = []
     chips: dict[str, list[ChipUnit | PowerUnit]] = {}
+    switches: dict[str, list[Switch]] = {}
     chosen = chosen_where(circuit)
     for part in circuit.parts:
         if built_where(part, chosen) != "board":
@@ -265,6 +288,8 @@ def board_parts(circuit: Circuit, models: ModelLibrary,
         try:
             if isinstance(part, (PowerUnit, *CHIP_UNITS)):
                 chips.setdefault(part.chip, []).append(part)
+            elif isinstance(part, Switch) and part.switch_kind.group == "DIP":
+                switches.setdefault(part.switch, []).append(part)
             else:
                 found[part.ref] = one_board_part(part, models, table)
         except (NoFootprint, ModelError) as err:
@@ -276,6 +301,8 @@ def board_parts(circuit: Circuit, models: ModelLibrary,
             found[chip] = _chip(chip, units, model, table)
         except (NoFootprint, ModelError) as err:
             problems.append(str(err))
+    for ref, poles in switches.items():
+        found[ref] = _dip_switch(ref, poles, table)
     return found, problems
 
 

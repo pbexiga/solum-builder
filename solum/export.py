@@ -101,10 +101,12 @@ def built_where(part: Part, chosen: Mapping[str, Where] | None = None) -> Where 
 def why_not_moved(part: Part) -> str | None:
     """Why `part` can't be moved on or off the board by the builder's choice (D-385), in a
     sentence; None when it can: a part with a board footprint that is one part (not a
-    chip's unit)."""
+    chip's unit or a DIP switch's pole, D-397)."""
     if isinstance(part, (*CHIP_UNITS, PowerUnit)):
         return "A chip stays on the board."
-    if isinstance(part, Switch) and part.switch_kind.group != "DIP":
+    if isinstance(part, Switch) and part.switch_kind.group == "DIP":
+        return "A DIP switch stays on the board."  # its poles are one part (D-397)
+    if isinstance(part, Switch):
         return f"There's no board footprint for a {part.switch_kind.short} switch yet."
     if isinstance(part, (*OFF_BOARD, Guitar, AmpInput)):
         noun = {"dcjack": "DC jack", "guitar": "jack", "amp": "jack"}.get(part.type, part.type)

@@ -30,6 +30,20 @@ function el(tag, attrs = {}, parent) {
 }
 
 /**
+ * A cut drawn as the copper scraped away (D-395): a square of bare board over the strip
+ * at the hole, the hole still showing in it. The square is returned (`cls` its class).
+ * @param {import("./board-logic.js").Hole} hole @param {string} cls @param {Element} parent
+ * @returns {SVGElement}
+ */
+function scraped(hole, cls, parent) {
+  const [x, y] = holeXY(hole);
+  const w = STEP * 0.7;
+  const square = el("rect", { x: x - w / 2, y: y - STEP / 2, width: w, height: STEP, class: cls }, parent);
+  el("circle", { cx: x, cy: y, r: STEP * 0.14, class: "hole cut-hole" }, parent);
+  return square;
+}
+
+/**
  * One of a part's shapes (`partShapes`), leads aside: a body, a band, a marking.
  * @param {import("./board-logic.js").Shape} s @param {Element} parent
  */
@@ -186,7 +200,6 @@ export function boardCanvas(svg, app) {
     const half = STEP / 2;
     // the margin's holes, faint; the board itself, its strips and holes
     el("rect", { x: c0 * STEP - half, y: s0 * STEP - half, width: (c1 - c0 + 1) * STEP, height: (s1 - s0 + 1) * STEP, class: "board-margin" }, root);
-    const cuts = new Set(board.cuts.map(holeName));
     if (board.columns && board.strips) {
       el("rect", { x: -half, y: -half, width: board.columns * STEP, height: board.strips * STEP, class: "board-base" }, root);
       const strips = el("g", { class: "strips" }, root);
@@ -203,16 +216,11 @@ export function boardCanvas(svg, app) {
     for (let s = s0; s <= s1; s++) {
       for (let c = c0; c <= c1; c++) {
         const on = c >= 0 && s >= 0 && c < board.columns && s < board.strips;
-        if (on && cuts.has(holeName([c, s]))) continue;
         el("circle", { cx: c * STEP, cy: s * STEP, r: STEP * 0.14, class: on ? "hole" : "hole off" }, dots);
       }
     }
     const marks = el("g", { class: "cuts" }, root);
-    for (const cut of board.cuts) {
-      const [x, y] = holeXY(cut);
-      const d = STEP * 0.28;
-      el("path", { d: `M${x - d},${y - d} L${x + d},${y + d} M${x - d},${y + d} L${x + d},${y - d}`, class: "cut", "data-hole": holeName(cut) }, marks);
-    }
+    for (const cut of board.cuts) scraped(cut, "cut", marks).setAttribute("data-hole", holeName(cut));
     const links = el("g", { class: "links" }, root);
     for (const [a, b] of board.links) {
       const [x1, y1] = holeXY(a);
@@ -282,10 +290,9 @@ export function boardCanvas(svg, app) {
     }
     for (const cut of guide.cuts) {
       const [x, y] = holeXY(cut);
-      const d = STEP * 0.28;
       const g = el("g", { class: "suggested", "data-suggest": "cut", "data-holes": cut.join(",") }, guiding);
       el("circle", { cx: x, cy: y, r: STEP * 0.45, class: "suggest-hit" }, g);
-      el("path", { d: `M${x - d},${y - d} L${x + d},${y + d} M${x - d},${y + d} L${x + d},${y - d}`, class: "suggested-cut" }, g);
+      scraped(cut, "suggested-cut", g);
       el("title", {}, g).textContent = `Suggested cut at ${holeName(cut)}: click to cut the strip there`;
     }
     const wires = el("g", { class: "off-wires" }, root); // over the parts: a wire lies on top

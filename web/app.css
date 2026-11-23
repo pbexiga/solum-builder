@@ -381,7 +381,8 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-drawing .ruler-hit { fill: transparent; }
 .board-drawing .ruler text { font: 4px var(--font-mono); fill: var(--text-3); }
 .board-drawing .ruler:hover text { fill: var(--accent-hi); }
-.board-drawing .cut { stroke: var(--error); stroke-width: 1.5; vector-effect: non-scaling-stroke; fill: none; }
+.board-drawing .cut { fill: var(--board-base); } /* the copper scraped away (D-395) */
+.board-drawing .cut-hole { pointer-events: none; }
 .board-drawing .link { stroke: var(--board-link); stroke-width: 1.4; }
 .board-drawing .link-end { fill: var(--board-link); }
 /* off-board parts beside the board and their wires (D-375) */
@@ -435,7 +436,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-drawing .board-part:hover .leg-name { display: inline; }
 /* see-through: the bodies faint, the copper and cuts under them showing */
 .board-drawing .see-through .board-part .body, .board-drawing .see-through .band, .board-drawing .see-through .stripe { fill-opacity: 0.4; } /* faint, not gone: the outline and label stay (the user, 2026-11-20) */
-/* the copper side (D-378), mirrored: strips, cuts ✕ and each solder joint; nothing on the parts side */
+/* the copper side (D-378), mirrored: strips, cuts and each solder joint; nothing on the parts side */
 .board-drawing .copper .board-parts .body, .board-drawing .copper .board-parts .lead, .board-drawing .copper .board-parts .band,
 .board-drawing .copper .board-parts .stripe, .board-drawing .copper .board-parts .notch, .board-drawing .copper .board-parts .dot,
 .board-drawing .copper .board-labels, .board-drawing .copper .leg-name, .board-drawing .copper .off-items,
@@ -474,7 +475,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-drawing .suggested { cursor: pointer; opacity: 0.4; }
 .board-drawing .suggested:hover { opacity: 0.9; }
 .board-drawing .suggested-link { stroke: var(--sch-line); stroke-width: 1.2; stroke-dasharray: 2 1.5; }
-.board-drawing .suggested-cut { stroke: var(--error); stroke-width: 1.5; vector-effect: non-scaling-stroke; fill: none; }
+.board-drawing .suggested-cut { fill: var(--board-base); }
 .board-drawing .suggest-hit { fill: transparent; }
 #board[data-tool="links"] .board-link { cursor: pointer; }
 #board[data-tool="links"] .board-link:hover .link { stroke: var(--error); }

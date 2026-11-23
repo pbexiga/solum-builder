@@ -45,7 +45,7 @@ Laying out the whole board automatically was tried first. Small circuits laid ou
 
 ### Drawing (D-378, D-390)
 - Parts drawn as they look: resistor colour bands, an electrolytic's top with its − stripe, a diode's band, a TO-92's flat face, a chip's notch; each labelled by ref (and value while *show values* is on). Hovering a part names its legs.
-- **Hide parts**: the copper side as seen from the parts side, not mirrored: strips, the holes used, cuts ✕ and links. **Mirror** (beside See-through, off by default) turns it over as you hold the board to solder, with a short animation. Links are lavender on both sides.
+- **Hide parts**: the copper side as seen from the parts side, not mirrored: strips, the holes used, cuts (the copper scraped away, D-395) and links. **Mirror** (beside See-through, off by default) turns it over as you hold the board to solder, with a short animation. Links are lavender on both sides.
 
 ### Guidance as you edit (D-377)
 - **A part's needs, leg by leg**: each leg's net and the pins it must reach, joined or not.
@@ -65,7 +65,7 @@ Laying out the whole board automatically was tried first. Small circuits laid ou
 - **On every open and export the board is checked against the circuit as it now is.** A board that doesn't match is never packaged; the package index says why.
 
 ## In the build package (D-386)
-`stripboard.pdf`: a line saying it's checked ("Every connection on this board matches the circuit (N nets)"); the cut list, the link list, the off-board wires numbered ("VR1 (Gain) lug 1 to F2"); the parts side with the off-board parts and wires, the copper side mirrored with cuts ✕ and the copper side not mirrored, each labelled and filled onto its own sheet (D-390); then both sides of the board alone at real size on one A4 page, with a 25.4 mm line to check the print. Drawn by the browser's board canvas (D-205). No board kept: the package index's Ready to build notes "No stripboard layout kept"; a stale board is left out, the note saying what doesn't match. The generic wiring pages (D-209) stay.
+`stripboard.pdf`: a line saying it's checked ("Every connection on this board matches the circuit (N nets)"); the cut list, the link list, the off-board wires numbered ("VR1 (Gain) lug 1 to F2"); the parts side with the off-board parts and wires, the copper side mirrored with its cuts and the copper side not mirrored, each labelled and filled onto its own sheet (D-390); then both sides of the board alone at real size on one A4 page, with a 25.4 mm line to check the print. Drawn by the browser's board canvas (D-205). No board kept: the package index's Ready to build notes "No stripboard layout kept"; a stale board is left out, the note saying what doesn't match. The generic wiring pages (D-209) stay.
 
 ## The starters (D-391)
 **The starters ship without boards for now.** A builder lays one out with *Start for me* (laid out, tidied and wired) or by hand. An offline CP-SAT search tried in P6g made the small and medium starters' boards smaller than the published ones but the big ones larger, and the user chose to ship without them and make a better layout its own feature (in the app, a separate tool or a pure-Python search, decided after a spike). The BD-2 (Aion)'s surface-mount JFETs go on TO-92 adapters, as Aion's kit builds them (D-392), so it can be laid out like the rest; the Bluesbreaker (Aion) can't (a DIP switch with no footprint) and *Start for me* says so.

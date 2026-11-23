@@ -1392,3 +1392,64 @@ def test_a_wire_into_a_switch_crosses_its_outline_once_never_along_it(js: Page) 
     assert along == []  # no run lies on the outline
     crossings = [p for p in got if on(*p)]
     assert len(crossings) <= 1
+
+
+def _beside(a: list[list[float]], b: list[list[float]], gap: float = 5) -> list[Any]:
+    """Runs of two routes that lie side by side `gap` apart for more than one step."""
+    found = []
+    for (p, q), (r, s) in ((x, y) for x in pairwise(a) for y in pairwise(b)):
+        for k in (0, 1):  # k = 1: level runs (same y), compared along x; k = 0: upright
+            if p[k] == q[k] and r[k] == s[k] and abs(p[k] - r[k]) == gap:
+                o = 1 - k
+                lo = max(min(p[o], q[o]), min(r[o], s[o]))
+                hi = min(max(p[o], q[o]), max(r[o], s[o]))
+                if hi - lo > gap:
+                    found.append((p, q, r, s))
+    return found
+
+
+def test_two_wires_never_run_right_beside_each_other(js: Page) -> None:
+    """The user, 2026-11-23 (Power GND and OUT S on the in-guitar boost's board read as one
+    line): a wire keeps a step's gap from another running the same way, where it can."""
+    s, g = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const board = { columns: 10, strips: 8 };
+        const out = { x: -75, y: 30, w: 30, h: 20 }, power = { x: -60, y: 110, w: 20, h: 15 };
+        const s = { x1: -50, y1: 55, x2: 0, y2: 40, loose: false, hole: true, box: out };
+        const g = { x1: -50, y1: 130, x2: 0, y2: 0, loose: false, hole: true, box: power };
+        return b.wireRoutes([s, g], board, { boxes: [out, power], lines: [] });
+        """,
+    )
+    assert _beside(s, g) == []
+
+
+def test_a_wire_never_crosses_another_lug(js: Page) -> None:
+    """The user, 2026-11-23 (SW1 A1's wire ran over A2 and A3): every lug, wired or not,
+    keeps other wires off its ring; a wire leaves its own lug as before."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const board = { columns: 14, strips: 4 };
+        const sw = { x: 85, y: -105, w: 50, h: 70 };  // above the board: A1 (100, -90), A2 (100, -70), A3 (100, -50), B1-B3 at x 120
+        const lugs = [[100, -90], [100, -70], [100, -50], [120, -90], [120, -70], [120, -50]];
+        const wire = (y, hx) => ({ x1: 100, y1: y, x2: hx, y2: 0, loose: false, hole: true, box: sw });
+        return b.wireRoutes([wire(-90, 100), wire(-70, 90), wire(-50, 110)], board, { boxes: [], lines: [], soft: [sw], lugs });
+        """,
+    )
+    lugs = [[100, -90], [100, -70], [100, -50], [120, -90], [120, -70], [120, -50]]
+    for own, route in zip(lugs, got, strict=False):
+        assert route[0] == own and route[-1][1] == 0
+        for lug in lugs:
+            if lug != own:
+                near = min(_distance(lug, p, q) for p, q in pairwise(route))
+                assert near >= 5, (own, lug, route)
+
+
+def _distance(c: list[float], p: list[float], q: list[float]) -> float:
+    (x, y), (ax, ay), (bx, by) = c, p, q
+    dx, dy = bx - ax, by - ay
+    t = max(0.0, min(1.0, ((x - ax) * dx + (y - ay) * dy) / (dx * dx + dy * dy))) if dx or dy else 0.0
+    return float(((x - ax - t * dx) ** 2 + (y - ay - t * dy) ** 2) ** 0.5)

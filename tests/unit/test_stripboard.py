@@ -1,6 +1,7 @@
 """The stripboard board model, footprints and check (D-367): hand-made layouts, good and
 broken, each broken one refused with a sentence naming its fault."""
 
+import math
 from collections.abc import Callable
 from pathlib import Path
 from typing import Any
@@ -35,7 +36,7 @@ from solum.stripboard.footprints import (
     leg_problem,
 )
 from solum.stripboard.offboard import default_spots, lug_nets, off_board_items, switch_drawing
-from solum.stripboard.wiring import WiringError, wire_for_me
+from solum.stripboard.wiring import WiringError, pad_cost, wire_for_me
 from solum.yamlio import load_yaml
 
 REPO = Path(__file__).resolve().parents[2]
@@ -446,6 +447,18 @@ def test_wire_it_for_me_wires_every_lug_to_a_board_that_passes() -> None:
     assert wire_for_me(bare, RANGEMASTER, MODELS, TABLE) == wired
     with pytest.raises(WiringError, match="Nothing to wire"):
         wire_for_me(wired, RANGEMASTER, MODELS, TABLE)
+
+
+def test_a_pad_is_chosen_by_a_wire_s_way_in_not_a_straight_line() -> None:
+    """The user, 2026-11-23 (J1 S's wire ran across the board to a pad inside it): from a
+    lug above a 10 × 8 board at (5, -6), a hole on strip 2 straight below (7 holes away) is
+    dearer than the corner hole A1 (7.8 away): a wire to it goes 5.5 to the edge, then 1.5
+    in at 3 each (10), one to A1 7.4 to the edge and 0.5 in (8.9)."""
+    lug = (5.0, -6.0)
+    assert pad_cost((5, 1), lug, 10, 8) == pytest.approx(5.5 + 3 * 1.5)
+    assert pad_cost((0, 0), lug, 10, 8) == pytest.approx(math.hypot(5, 5.5) + 3 * 0.5)
+    assert pad_cost((0, 0), lug, 10, 8) < pad_cost((5, 1), lug, 10, 8)
+    assert pad_cost((9, 4), (12.0, 4.0), 10, 8) == pytest.approx(2.5 + 3 * 0.5)  # in from the right
 
 
 def test_wire_it_for_me_leaves_a_net_not_on_the_board() -> None:

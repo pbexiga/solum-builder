@@ -20,8 +20,8 @@ SMALLER = {  # Start for me's columns → at most these after Tidy up (measured 
     "dallas-rangemaster": 9,  # 10×9
     "fuzz-face": 15,  # 18×9
     "tone-bender-mk2": 26,  # 28×12
-    "ts808": 45,  # 49×21
-    "proco-rat": 47,  # 60×22
+    "ts808": 46,  # 49×21 (45 until D-389 put the pads on the edge, where Trim can't take them)
+    "proco-rat": 48,  # 60×22 (47 until D-389)
 }
 
 pytestmark = pytest.mark.sim

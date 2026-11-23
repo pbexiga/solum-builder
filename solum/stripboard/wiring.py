@@ -1,6 +1,8 @@
 """*Wire it for me* (spec, *Off-board parts and wires*; D-375): every off-board part not
 yet beside the board put at its default spot, and every lug still to wire given a wire to
-the nearest free hole on a strip that carries its net and no other; a lug whose net isn't
+the free hole on a strip that carries its net and no other that's nearest by a wire's way
+in (`pad_cost`: round the board, in from the edge facing the lug, D-379's dearer steps over
+the board); a lug whose net isn't
 on the board yet is wired to another lug of its net that is (or will be) wired, if any.
 Never moves a part or a wire already there; the same board always wires the same way.
 """
@@ -15,6 +17,18 @@ from solum.stripboard.board import Hole, Layout, Wire
 from solum.stripboard.check import groups_by_net, joined_groups, read_layout
 from solum.stripboard.offboard import OffItem, default_spots
 from solum.stripboard.size import used_holes
+
+ON_BOARD = 3  # a hole's depth from the board's edge counts this many times: as the router's (D-379)
+
+
+def pad_cost(hole: Hole, lug: tuple[float, float], columns: int, strips: int) -> float:
+    """How far a wire from `lug` goes to reach `hole`, in holes: to the board's edge
+    beside the hole on whichever side is cheapest, then in from that edge, dearer."""
+    c, s = hole
+    x, y = lug
+    exits = (((-0.5, s), c + 0.5), ((columns - 0.5, s), columns - 0.5 - c),
+             ((c, -0.5), s + 0.5), ((c, strips - 0.5), strips - 0.5 - s))  # fmt: skip
+    return min(math.hypot(ex - x, ey - y) + ON_BOARD * depth for (ex, ey), depth in exits)
 
 
 class WiringError(ValueError):
@@ -55,7 +69,8 @@ def wire_for_me(layout: Layout, circuit: Circuit, models: ModelLibrary,
             x, y = places[lug.end]
             free = [h for h, g in holes.items() if clean.get(g) == lug.net and h not in taken]
             if free:
-                hole = min(free, key=lambda h: (math.hypot(h[0] - x, h[1] - y), h[1], h[0]))
+                hole = min(free, key=lambda h: (pad_cost(h, (x, y), layout.columns,
+                                                         layout.strips), h[1], h[0]))  # fmt: skip
                 wires.append(Wire(lug.end, hole))
                 taken.add(hole)
             else:

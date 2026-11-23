@@ -155,6 +155,30 @@ def test_measured_transistors_are_bought_separately() -> None:
     assert q[0].details.endswith("picked for hFE 80")
 
 
+def test_a_part_on_an_adapter_and_a_trimmer_s_style_are_listed() -> None:
+    """D-392: the BD-2 (Aion)'s 2SK209s on TO-92 adapters, a line apart from the same part
+    off one, saying so, with where to get the adapter or a J201 ready on one. D-393: a
+    trimmer's line names the board trimmer it is."""
+    lines = lines_of(
+        CircuitBuilder()
+        .part("Q1", "jfet", "a", "b", "GND", model="2SK209-GR", adapter=True)
+        .part("Q2", "jfet", "a", "b", "GND", model="2SK209-GR", adapter=True)
+        .part("Q3", "jfet", "a", "b", "GND", model="2SK209-GR")
+        .part("TR1", "trimmer", "a", "b", "GND", value="10k")
+        .part("TR2", "trimmer", "a", "b", "GND", value="10k", style="inline")
+    )
+    q = [x for x in lines if x.part == "JFET"]
+    assert [x.refs for x in q] == [("Q1", "Q2"), ("Q3",)]
+    assert "on a SOT-23 to TO-92 adapter, legs D-S-G" in q[0].details
+    assert "aionfx.com/project/jfet-adapter" in q[0].details
+    assert "musikding.de" in q[0].details and "adapter" not in q[1].details
+    tr = [x for x in lines if x.part == "Trimmer"]
+    assert [(x.refs, x.details) for x in tr] == [
+        (("TR1",), "linear (B), triangle (Bourns 3362P)"),
+        (("TR2",), "linear (B), in line (Bourns 3296W)"),
+    ]
+
+
 def test_a_model_with_no_package_says_so(tmp_path: Path) -> None:
     """Every library model has a package, so a user's model without one is made here."""
     record = json.loads((LIBRARY / "models" / "chargepump" / "ICL7660.json").read_text())

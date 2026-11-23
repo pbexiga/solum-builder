@@ -209,13 +209,26 @@ inline:
     holes: [1, 2]
     source: *flying
 
-trimmer:  # a board trimmer: three legs in a line, 1, wiper, 3
+trimmer:  # a board trimmer in line (a trimmer's `style: inline`): three legs in a line, 1, wiper, 3
   length: 9.53
   width: 4.83
   holes: [1]
   source: >
     Bourns 3296W (multiturn, top adjust, pins in line 2.54 mm apart), body 9.53 × 4.83 mm:
     KiCad Potentiometer_Bourns_3296W_Vertical, after bourns.com/pdfs/3296.pdf
+
+# The default board trimmer (D-393): legs 1 and 3 two holes apart, the wiper one hole
+# back between them, toward you as you look down on it with 1 on the left. `length` runs
+# along 1 to 3, `width` across.
+trimmer_triangle:
+  length: 6.60
+  width: 6.99
+  holes: [1]
+  source: >
+    Bourns 3362P (1/4" square, single turn, top adjust), "3362 – 1/4˝ Square Trimpot®
+    Trimming Potentiometer" (bourns.com/docs/Product-Datasheets/3362.pdf, read
+    2026-11-23), page 1: body 6.60 (.260) × 6.99 (.275) mm; 3362P pins 2.54 (.100) apart
+    along the row, pin 2 2.54 (.100) back from pins 1 and 3, on the 0.1" grid
 
 # A chip in a DIP across the strips: its pins down two columns `row_holes` apart, one
 # strip per pin pair, pin 1 at the top left or (turned round) the bottom right.

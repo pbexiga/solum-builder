@@ -200,6 +200,7 @@ class FootprintTable(BaseModel):
     radial: dict[str, list[RadialSize]]
     inline: list[InlineSize]
     trimmer: InlineSize
+    trimmer_triangle: InlineSize
     dip: DipSize
     sil: DipSize
 

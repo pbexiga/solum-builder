@@ -131,3 +131,14 @@ build:
     - "Capacitor types aren't given there, so they follow the app's advice: C5 1n NP0/C0G (a small cap in the signal path), C8, C10 and C11 electrolytic, the rest film, C2 and C3 (1µ) too."
     - "Electrolytics rated 16 V: the source gives no rating, so this is the app's own advice for a 9 V circuit (D-203)."
     - "Enclosure 125B, a builder's choice (the MXR has its own case), as the Aion version's."
+
+# A published stripboard layout (P6g, D-391): only its link and a person's counts are kept.
+stripboard:
+  title: Tagboard Effects, "MXR Dyna Comp"
+  url: https://tagboardeffects.blogspot.com/2012/07/mxr-dyna-comp.html
+  columns: 18
+  strips: 15
+  cuts: 17
+  links: 8
+  counted: 2026-11-23
+  note: "the size, cuts and links as printed on the drawing, read by the agent at the user's request (D-391)."

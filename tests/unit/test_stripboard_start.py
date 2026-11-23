@@ -81,7 +81,8 @@ def test_fill_the_rest_names_a_piece_it_can_t_join_and_moves_nothing() -> None:
 
 
 def test_a_part_that_can_t_go_on_a_board_is_named() -> None:
-    bd2 = load_circuit(LIBRARY / "starters" / "boss-bd2-aion.json")
+    """The BD-2 (Aion)'s Q1 off its adapter (D-392): surface-mount, named."""
+    bd2 = load_circuit(LIBRARY / "starters" / "boss-bd2-aion.json").with_part("Q1", adapter=False)
     with pytest.raises(StartError, match="surface-mount"):
         start_for_me(None, bd2, MODELS, TABLE, fill=False)
 

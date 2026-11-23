@@ -180,8 +180,10 @@ export function partShapes(fp, legs, standing) {
   const legAngle = round3((Math.atan2(last[1] - points[0][1], last[0] - points[0][0]) * 180) / Math.PI);
   /** Whether `leg` is the last leg (the far end of the legs' line). @param {string | undefined} leg */
   const atEnd = (leg) => legs.findIndex(([name]) => name === leg) === legs.length - 1;
-  const cx = points.reduce((s, p) => s + p[0], 0) / points.length;
-  const cy = points.reduce((s, p) => s + p[1], 0) / points.length;
+  const box = (/** @type {number} */ k) => (Math.min(...points.map((p) => p[k])) + Math.max(...points.map((p) => p[k]))) / 2;
+  // a triangle trimmer's body sits over its legs' box (D-393), the rest over their mean
+  const cx = fp.shape === "triangle" ? box(0) : points.reduce((s, p) => s + p[0], 0) / points.length;
+  const cy = fp.shape === "triangle" ? box(1) : points.reduce((s, p) => s + p[1], 0) / points.length;
   if (fp.diameter) {
     const r = (fp.diameter * MM) / 2;
     /** @type {Shape[]} */
@@ -1004,11 +1006,13 @@ export function legPattern(fp, pose) {
   if (fp.shape === "dip") {
     const half = n / 2;
     at = fp.legs.map((_, i) => (i < half ? [0, i] : [fp.row_holes, n - 1 - i]));
+  } else if (fp.shape === "triangle") { // a trimmer (D-393): 1 above 3, the wiper a hole back to the left, as footprints.TRIANGLE
+    at = [[1, 0], [0, 1], [1, 2]];
   } else {
     const step = fp.shape === "axial" && pose.standing ? fp.stand : pose.span;
     at = fp.legs.map((_, i) => [0, i * step]);
   }
-  const names = pose.flipped && fp.shape !== "dip" ? [...fp.legs].reverse() : fp.legs;
+  const names = pose.flipped && fp.shape !== "dip" ? [...fp.legs].reverse() : fp.legs; // a triangle's ends 1 and 3 swapped
   const turn = (/** @type {[number, number]} */ [x, y]) => /** @type {[number, number]} */ ([-y, x]);
   return names.map((leg, i) => {
     let p = at[i];

@@ -256,6 +256,7 @@ export function inspectorFields(part, ctx) {
         { ...(t ? targetRotation(part, ctx.bias?.[part.ref]) : untargetedRotation(part, node)), ...(node ? { add: addTarget(t ? { node: t.node, volts: ctx.target?.node === t.node ? ctx.target.volts : null } : node) } : {}) },
         ...(node ? targetFields(t, node) : []),
         text("label", "Label", part.label),
+        trimmerStyle(part),
       );
       break;
     }
@@ -286,17 +287,18 @@ export function inspectorFields(part, ctx) {
       fields.push(...batteryFields(part, ctx.batteries ?? [], ctx.view?.battery_wiring ?? null));
       break;
     case "bjt":
-      fields.push(model(), ...bjtSpecFields(part, ctx.bjts?.[part.model]), atRest(part));
+      fields.push(model(), ...bjtSpecFields(part, ctx.bjts?.[part.model]), atRest(part), ...mounting(part, ctx));
       break;
     case "mosfet":
       fields.push(
         { ...model(), hint: "N-channel.", about: ["Enhancement (2N7000, BS170): off until the gate is about 2 V above the source. Depletion (LND150): on at 0 V, off below about −1.7 V.", "The body diode, drawn from source to drain, is in the model."] },
         ...drainFields(part, ctx),
         atRest(part),
+        ...mounting(part, ctx),
       );
       break;
     case "jfet":
-      fields.push(model(), ...jfetSpecFields(part, ctx.jfets?.[part.model]), ...drainFields(part, ctx), atRest(part));
+      fields.push(model(), ...jfetSpecFields(part, ctx.jfets?.[part.model]), ...drainFields(part, ctx), atRest(part), ...mounting(part, ctx));
       break;
     case "opamp":
     case "inverter":
@@ -624,6 +626,29 @@ function atRest(part) {
 }
 
 /**
+ * The board trimmer a trimmer is (D-393): a triangle, the default, or in line. Also on
+ * the board, a placed trimmer's right-click menu.
+ * @param {any} part @returns {Field}
+ */
+function trimmerStyle(part) {
+  return { ...select("style", "Board trimmer", part.style ?? "triangle", [["triangle", "triangle (Bourns 3362P)"], ["inline", "in line (Bourns 3296W)"]]),
+    hint: "How its legs go on a stripboard.",
+    about: "Triangle: the square single-turn kind, legs 1 and 3 in a row and the wiper set back between them. In line: the tall multi-turn kind, three legs in a row." };
+}
+
+/**
+ * A surface-mount transistor's mounting (D-392): off the board, or soldered to a TO-92
+ * adapter so it goes on a stripboard. Asked only for a surface-mount model.
+ * @param {any} part @param {{models: Record<string, string[]>}} ctx @returns {Field[]}
+ */
+function mounting(part, ctx) {
+  if (!(ctx.models.smd ?? []).includes(part.model)) return [];
+  return [{ ...select("mounting", "Mounting", part.adapter ? "adapter" : "", [["", "surface-mount (no stripboard)"], ["adapter", "on a TO-92 adapter"]]),
+    hint: "On an adapter it goes on a stripboard as a TO-92 part.",
+    about: "A small board that turns a surface-mount transistor into a three-leg TO-92 part. JFET adapters bring the legs out D-S-G, as a J201's (Aion's JFET adapter; Musikding and Stompbox Parts sell the J201 ready on one)." }];
+}
+
+/**
  * A JFET's or MOSFET's drain target and the trimmer solved to reach it (round 3b, D-176).
  * @param {any} part @param {{circuit: any}} ctx @returns {Field[]}
  */
@@ -863,6 +888,8 @@ export function editFrom(part, values, ctx = {}) {
   }
   if ("show_pins" in values) patch.show_pins = v("show_pins") === "on" ? true : null;
   if ("at_rest" in values) patch.off_by_design = v("at_rest") === "off" ? true : null;
+  if ("mounting" in values) patch.adapter = v("mounting") === "adapter" ? true : null;
+  if ("style" in values) patch.style = v("style") === "inline" ? "inline" : null; // a triangle unless set (D-393)
   if ("source" in values) Object.assign(patch, guitarPatch(v, ctx.pickups ?? [], ctx.pickup));
   let drain = null;
   if ("drain_volts" in values) {

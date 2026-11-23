@@ -41,3 +41,14 @@ build:
     - "Capacitor types aren't given there, so they follow the app's advice: C2 and C5 (5µ) electrolytic, the rest film."
     - "Electrolytics rated 16 V: the source gives no rating, so this is the app's own advice for a 9 V circuit (D-203)."
     - "Enclosure 125B, a builder's choice, as the Aion version's."
+
+# A published stripboard layout (P6g, D-391): only its link and a person's counts are kept.
+stripboard:
+  title: Tagboard Effects, "Sola Sound Tone Bender Professional"
+  url: https://tagboardeffects.blogspot.com/2012/02/sola-sound-tone-bender-professional.html
+  columns: 15
+  strips: 9
+  cuts: 4
+  links: 1
+  counted: 2026-11-23
+  note: "The size as printed on the drawing (\"Tonebender MKII - smallest\"); its cuts and links counted from it by the agent at the user's request (D-391). PNP, positive ground, as ours."

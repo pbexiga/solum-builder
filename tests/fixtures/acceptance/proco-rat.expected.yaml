@@ -116,3 +116,14 @@ build:
     - "The supply caps by role, as the main source numbers them (C11 and C12 on 9 V, C13 on 4.5 V): the 100 µF and 1 µF electrolytic, the 100 nF X7R ceramic, as the Helios's \"100n MLCC capacitor, X7R, power supply filter capacitor\"."
     - "Electrolytics rated 16 V: the sources give no rating, so this is the app's own advice for a 9 V circuit (the smallest rating sold with the supply under 80 % of it, D-203)."
     - "Enclosure 125B, as the Helios."
+
+# A published stripboard layout (P6g, D-391): only its link and a person's counts are kept.
+stripboard:
+  title: Tagboard Effects, "ProCo Rat"
+  url: https://tagboardeffects.blogspot.com/2012/01/proco-rat.html
+  columns: 20
+  strips: 11
+  cuts: 15
+  links: 4
+  counted: 2026-11-23
+  note: "the size, cuts and links as printed on the drawing, read by the agent at the user's request (D-391). The drawing is \"Proco Rat - smaller\"."

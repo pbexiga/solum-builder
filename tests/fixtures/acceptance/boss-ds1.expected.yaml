@@ -140,3 +140,14 @@ build:
     - "Capacitor types aren't given there, so they follow the app's advice: C4 250p and C7 100p NP0/C0G (small caps in the signal path), C15 and C23 electrolytic, the rest film, C14 1µ too."
     - "Electrolytics rated 16 V: the source gives no rating, so this is the app's own advice for a 9 V circuit (D-203)."
     - "Enclosure 125B, a builder's choice (the Boss pedal has its own case), as the Aion version's."
+
+# A published stripboard layout (P6g, D-391): only its link and a person's counts are kept.
+stripboard:
+  title: Tagboard Effects, "Boss DS-1 Distortion"
+  url: https://tagboardeffects.blogspot.com/2014/10/boss-ds-1-distortion.html
+  columns: 22
+  strips: 17
+  cuts: 24
+  links: 10
+  counted: 2026-11-23
+  note: "the size, cuts and links as printed on the drawing, read by the agent at the user's request (D-391)."

@@ -253,6 +253,11 @@
           "default": false,
           "title": "Off By Design",
           "type": "boolean"
+        },
+        "adapter": {
+          "default": false,
+          "title": "Adapter",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1222,6 +1227,11 @@
           "default": false,
           "title": "Off By Design",
           "type": "boolean"
+        },
+        "adapter": {
+          "default": false,
+          "title": "Adapter",
+          "type": "boolean"
         }
       },
       "required": [
@@ -1456,6 +1466,11 @@
         "off_by_design": {
           "default": false,
           "title": "Off By Design",
+          "type": "boolean"
+        },
+        "adapter": {
+          "default": false,
+          "title": "Adapter",
           "type": "boolean"
         }
       },
@@ -2462,6 +2477,15 @@
           ],
           "default": null,
           "title": "Label"
+        },
+        "style": {
+          "default": "triangle",
+          "enum": [
+            "triangle",
+            "inline"
+          ],
+          "title": "Style",
+          "type": "string"
         }
       },
       "required": [
@@ -2604,7 +2628,7 @@
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "const": 38,
+      "const": 39,
       "title": "Schema",
       "type": "integer"
     },
@@ -2841,7 +2865,7 @@
     "name",
     "parts"
   ],
-  "title": "Solum Builder circuit, schema v38",
+  "title": "Solum Builder circuit, schema v39",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

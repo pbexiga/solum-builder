@@ -56,3 +56,14 @@ build:
     - "Capacitor types: C5 and C11 electrolytic as GGG marks them (+), C4 47p NP0/C0G, the rest film (the app's advice for the signal path; GGG names no types)."
     - "Electrolytics rated 16 V: GGG gives no rating, so this is the app's own advice for a 9 V circuit (D-203)."
     - "Enclosure 125B, a builder's choice, as the Aion version's."
+
+# A published stripboard layout (P6g, D-391): only its link and a person's counts are kept.
+stripboard:
+  title: Tagboard Effects, "Marshall Bluesbreaker"
+  url: https://tagboardeffects.blogspot.com/2012/02/marshall-bluesbreaker.html
+  columns: 21
+  strips: 10
+  cuts: 19
+  links: 3
+  counted: 2026-11-23
+  note: "the size, cuts and links as printed on the drawing, read by the agent at the user's request (D-391)."

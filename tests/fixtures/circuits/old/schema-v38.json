@@ -1,0 +1,65 @@
+{
+  "schema": 38,
+  "id": "v38",
+  "name": "v38",
+  "parts": [
+    {
+      "ref": "IN",
+      "pos": [
+        0,
+        0
+      ],
+      "type": "guitar"
+    },
+    {
+      "ref": "Q1",
+      "pos": [
+        100,
+        0
+      ],
+      "type": "jfet",
+      "model": "2SK209-GR"
+    },
+    {
+      "ref": "TR1",
+      "pos": [
+        150,
+        0
+      ],
+      "type": "trimmer",
+      "value": "10k"
+    },
+    {
+      "ref": "TR2",
+      "pos": [
+        150,
+        100
+      ],
+      "type": "trimmer",
+      "value": "10k"
+    },
+    {
+      "ref": "OUT",
+      "pos": [
+        200,
+        0
+      ],
+      "type": "amp"
+    }
+  ],
+  "wires": [],
+  "labels": [],
+  "stripboard": {
+    "size": [
+      4,
+      4
+    ],
+    "parts": {
+      "TR1": {
+        "1": "A1",
+        "2": "A2",
+        "3": "A3"
+      }
+    }
+  }
+}

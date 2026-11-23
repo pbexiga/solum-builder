@@ -136,3 +136,14 @@ build:
     - "C2 and C7 (1 µF non-polarised electrolytic in the original) are film, as the Aion Stratus lists them (\"1uF Film capacitor\"); the app has no non-polarised electrolytic kind."
     - "C1, C3, C5, C6, C8 film and C4 (51 pF) C0G, as the Stratus lists the same parts."
     - "Enclosure 125B, as the Stratus."
+
+# A published stripboard layout (P6g, D-391): only its link and a person's counts are kept.
+stripboard:
+  title: Tagboard Effects, "Ibanez TS808"
+  url: https://tagboardeffects.blogspot.com/2012/02/ibanez-ts808.html
+  columns: 20
+  strips: 15
+  cuts: 17
+  links: 7
+  counted: 2026-11-23
+  note: "the size, cuts and links as printed on the drawing, read by the agent at the user's request (D-391). The drawing is \"Ibanez TS808 layout 2\"."

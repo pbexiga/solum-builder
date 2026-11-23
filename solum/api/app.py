@@ -135,7 +135,7 @@ from solum.store import CircuitStore, StoreError, blank_circuit, split_id
 from solum.stripboard.board import Layout, layout_data
 from solum.stripboard.check import move_problem, progress, shorts
 from solum.stripboard.edit import BoardEdit, EditError, EditKind, edit_layout
-from solum.stripboard.footprints import board_parts, board_refs, drawing_data
+from solum.stripboard.footprints import board_parts, board_refs, drawing_data, surface_mount
 from solum.stripboard.guidance import guidance
 from solum.stripboard.offboard import off_board_items
 from solum.stripboard.sheet import Drawings, lists_for, packaged_board, stripboard_page
@@ -736,11 +736,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     def list_models() -> dict[str, list[str]]:
         """Model ids by part type, for the inspector's model dropdown, under `yours` the ids
         the user added (the dropdown lists them first, 9c), and under `zeners` the diodes
-        that are zeners (a diode set to one is named Z)."""
+        that are zeners (a diode set to one is named Z), under `smd` the surface-mount ones
+        (a transistor of one is offered a TO-92 adapter, D-392)."""
         by_type = {t: models.ids(t) for t in get_args(ModelType)}
         return by_type | {
             "yours": [i for i in models.ids() if models.get(i).yours],
             "zeners": [i for i in models.ids("diode") if models.get(i).zener],
+            "smd": [i for i in models.ids() if surface_mount(models.get(i))],
         }
 
     @app.get("/api/models/catalogue")

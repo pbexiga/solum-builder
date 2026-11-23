@@ -289,11 +289,13 @@ def test_models_by_type(monkeypatch: pytest.MonkeyPatch) -> None:
     assert set(models) == {
         "diode", "led", "jfet", "bjt", "mosfet", "opamp", "inverter", "ota", "chargepump",
         "regulator",
-        "yours", "zeners",
+        "yours", "zeners", "smd",
     }  # fmt: skip
     assert models["yours"] == []  # the user's own models' ids (9c), none in a fresh DATA_DIR
     # the diodes whose record checks a zener voltage: a diode set to one is named Z
     assert models["zeners"] == ["1N4738A", "1N4739A", "1N4742A"]
+    # the surface-mount models: a part of one is offered a TO-92 adapter (D-392)
+    assert "2SK209-GR" in models["smd"] and "J201" not in models["smd"]
 
 
 def test_jfet_specs(monkeypatch: pytest.MonkeyPatch) -> None:

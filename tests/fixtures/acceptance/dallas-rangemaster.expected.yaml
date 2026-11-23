@@ -103,3 +103,14 @@ build:
     - "Capacitor types from the main source: the 47 µF is an aluminium electrolytic, the 5 nF and 10 nF are film."
     - "Electrolytics rated 16 V: the sources give no rating, so this is the app's own advice for a 9 V circuit (the smallest rating sold with the supply under 80 % of it, D-203)."
     - "Enclosure 125B, the size Aion FX's kits of the germanium circuits use (the Solaris, the Deimos)."
+
+# A published stripboard layout (P6g, D-391): only its link and a person's counts are kept.
+stripboard:
+  title: Tagboard Effects, "Dallas Rangemaster (PNP, negative ground)"
+  url: https://tagboardeffects.blogspot.com/2014/02/dallas-rangemaster-pnp-negative-ground.html
+  columns: 14
+  strips: 8
+  cuts: 9
+  links: 2
+  counted: 2026-11-23
+  note: "the size, cuts and links as printed on the drawing, read by the agent at the user's request (D-391); it also carries an ICL7660 and its trimmer for the negative-ground supply, which ours doesn't need, so it is bigger than our circuit has to be."

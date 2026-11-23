@@ -18,7 +18,6 @@ MODELS = load_models([LIBRARY / "models"])
 TABLE = footprint_table(LIBRARY)
 STARTERS = sorted((LIBRARY / "starters").glob("*.json"))
 NO_BOARD = {  # a part with no through-hole footprint: refused, not laid out
-    "boss-bd2-aion": "surface-mount",
     "marshall-bluesbreaker-aion": "DIP switches",
 }
 

@@ -1105,6 +1105,7 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
         const r = { shape: 'axial', legs: ['1', '2'], steps: [], flat: 4, stand: 1, refs: ['R1'] };
         const q = { shape: 'inline', legs: ['E', 'B', 'C'], steps: [1, 2], flat: 0, stand: 0, refs: ['Q1'] };
         const ic = { shape: 'dip', legs: ['1','2','3','4','5','6','7','8'], steps: [], flat: 0, stand: 0, row_holes: 3, refs: ['IC1A'] };
+        const tr = { shape: 'triangle', legs: ['1', '2', '3'], steps: [1], flat: 0, stand: 0, length: 6.6, width: 6.99, diameter: 0, refs: ['TR1'] };
         const first = b.firstPose(r);
         const turned = b.posed(r, first, 'turn');
         const standing = b.posed(r, first, 'stand');
@@ -1123,6 +1124,11 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
           chip: b.legsAt(ic, b.firstPose(ic), [4, 4]),
           chipTurn: b.posed(ic, b.firstPose(ic), 'turn').turns,
           chipFlip: b.posed(ic, b.firstPose(ic), 'flip'),
+          tri: b.legsAt(tr, b.firstPose(tr), [5, 5]),
+          triTurned: b.legsAt(tr, b.posed(tr, b.firstPose(tr), 'turn'), [5, 5]),
+          triFlip: b.legsAt(tr, b.posed(tr, b.firstPose(tr), 'flip'), [5, 5]),
+          triPose: b.poseOf(tr, b.legsAt(tr, { turns: 3, flipped: false, standing: false, span: 1 }, [2, 2]), false),
+          triBody: b.partShapes(tr, b.legsAt(tr, b.firstPose(tr), [5, 5]), false).find((s) => s.kind === 'rect'),
           link: b.linkFrom([3, 1], [6, 5]),
           noLink: b.linkFrom([3, 1], [6, 1]),
           red: b.runRects([[7, 0, 11]]),
@@ -1142,6 +1148,13 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
     assert got["poseTurned"]["turns"] == 2 and got["wideQ"] == 2
     assert got["chip"][:2] == [["1", [2, 2]], ["2", [2, 3]]] and got["chip"][7] == ["8", [5, 2]]
     assert got["chipTurn"] == 2 and got["chipFlip"] is None
+    # D-393: a triangle trimmer as footprints.triangle_legs, turned a quarter clockwise, or
+    # flipped (its ends 1 and 3 swapped); its body over its legs' box (column 4.5)
+    assert got["tri"] == [["1", [5, 4]], ["2", [4, 5]], ["3", [5, 6]]]
+    assert got["triTurned"] == [["1", [6, 5]], ["2", [5, 4]], ["3", [4, 5]]]
+    assert got["triFlip"] == [["3", [5, 4]], ["2", [4, 5]], ["1", [5, 6]]]
+    assert got["triPose"]["turns"] == 3
+    assert (got["triBody"]["cx"], got["triBody"]["cy"]) == (4.5 * 10, 5 * 10)
     assert got["link"] == [[3, 1], [3, 5]] and got["noLink"] is None
     assert got["red"] == [{"x": -5, "y": 65, "w": 120, "h": 10}]
     assert got["keys"] == ["turn", "flip", "stand", "longer", "shorter", "remove", "cuts",

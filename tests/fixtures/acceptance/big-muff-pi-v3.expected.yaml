@@ -189,3 +189,14 @@ build:
   parts:
     - "The main source gives no types. From the Aion Halo, by role (its values are another Big Muff version's): the 470 pF Miller caps NP0/C0G (\"470pF MLCC capacitor, NP0/C0G\"); the coupling, feedback and tone caps film (\"Film capacitor\"). The four 1 µF caps, 100 nF in the Halo, are film too: no polarised part where the source doesn't show one."
     - "Enclosure 125B, as the Halo."
+
+# A published stripboard layout (P6g, D-391): only its link and a person's counts are kept.
+stripboard:
+  title: Tagboard Effects, "EHX '73 Ram's Head Big Muff"
+  url: https://tagboardeffects.blogspot.com/2012/06/ehx-73-rams-head-big-muff.html
+  columns: 19
+  strips: 17
+  cuts: 17
+  links: 5
+  counted: 2026-11-23
+  note: "the size, cuts and links as printed on the drawing, read by the agent at the user's request (D-391). It is the '73 Ram's Head: the same topology as our V3 with different values, so the counts compare."

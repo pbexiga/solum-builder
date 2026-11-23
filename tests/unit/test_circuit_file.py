@@ -231,10 +231,10 @@ def test_schema_v1_file_loads_as_current(repo: Path) -> None:
     (and dropped provenance), v6 text blocks (and dropped the power mode); a v1 file
     loads unchanged and saves as v6 at v1.0."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v1.json")
-    assert c.schema_ == SCHEMA_VERSION == 38
+    assert c.schema_ == SCHEMA_VERSION == 39
     assert c.tags == [] and c.texts == []
     assert [p.ref for p in c.parts] == ["R1", "R2"]
-    assert circuit_to_dict(c)["schema"] == 38
+    assert circuit_to_dict(c)["schema"] == 39
     assert (str(c.version), c.final) == ("v1.0", False)
 
 
@@ -786,3 +786,27 @@ def test_a_v37_board_keeps_every_part_where_the_parts_list_puts_it(repo: Path) -
     assert c.stripboard is not None and c.stripboard.where == {}
     assert c.stripboard.wires[0].runs == [(1, 2.5)]
     assert "where" not in circuit_to_dict(c)["stripboard"]
+
+
+def test_a_v38_transistor_is_on_the_board_itself_not_an_adapter(repo: Path) -> None:
+    """v39 (D-392) added a transistor's `adapter`: a surface-mount part soldered to a
+    through-hole adapter; a v38 part has none (on the board itself), and saves none."""
+    c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v38.json")
+    assert c.schema_ == SCHEMA_VERSION
+    q1 = c.part("Q1")
+    assert isinstance(q1, Jfet) and q1.adapter is False
+    assert "adapter" not in next(p for p in circuit_to_dict(c)["parts"] if p["ref"] == "Q1")
+    on = c.with_part("Q1", adapter=True)
+    assert next(p for p in circuit_to_dict(on)["parts"] if p["ref"] == "Q1")["adapter"] is True
+
+
+def test_a_v38_trimmer_on_a_kept_board_stays_in_line(repo: Path) -> None:
+    """v39 (D-393) added a trimmer's `style`, a triangle unless set: a v38 trimmer placed
+    on a kept board (legs A1, A2, A3) is set in line so the board still fits; one not
+    placed takes the triangle, and saves no style."""
+    c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v38.json")
+    tr1, tr2 = c.part("TR1"), c.part("TR2")
+    assert isinstance(tr1, Trimmer) and isinstance(tr2, Trimmer)
+    assert (tr1.style, tr2.style) == ("inline", "triangle")
+    saved = {p["ref"]: p for p in circuit_to_dict(c)["parts"]}
+    assert saved["TR1"]["style"] == "inline" and "style" not in saved["TR2"]

@@ -1001,6 +1001,47 @@ def test_a_transistor_can_be_off_by_design(js: Page) -> None:
     assert r == {"shown": ["", "", ""], "marked": "off", "off": True, "on": None}
 
 
+def test_a_trimmer_is_a_triangle_unless_set_in_line(js: Page) -> None:
+    """D-393: a trimmer's form asks which board trimmer it is, a triangle unless set;
+    picking in line sets `style`, picking the triangle again removes it."""
+    r = run(
+        js,
+        """
+        const f = await m('editor/fields.js');
+        const tr = { ref: 'TR1', type: 'trimmer', value: '10k' };
+        const style = (q) => f.inspectorFields(q, { circuit: { parts: [q] }, models: {} }).find((x) => x.name === 'style')?.value;
+        return {
+          shown: style(tr), inline: style({ ...tr, style: 'inline' }),
+          set: f.editFrom(tr, { ref: 'TR1', value: '10k', style: 'inline' }).patch.style,
+          back: f.editFrom({ ...tr, style: 'inline' }, { ref: 'TR1', value: '10k', style: 'triangle' }).patch.style,
+        };
+        """,
+    )
+    assert r == {"shown": "triangle", "inline": "inline", "set": "inline", "back": None}
+
+
+def test_a_surface_mount_transistor_is_offered_an_adapter(js: Page) -> None:
+    """D-392: a transistor of a surface-mount model gets Mounting (off the board, or on a
+    TO-92 adapter); picking the adapter sets `adapter`, picking back removes it. A
+    through-hole model's form doesn't ask."""
+    r = run(
+        js,
+        """
+        const f = await m('editor/fields.js');
+        const smd = { ref: 'Q1', type: 'jfet', model: '2SK209-GR' };
+        const th = { ref: 'Q2', type: 'jfet', model: 'J201' };
+        const ctx = { circuit: { parts: [smd, th] }, models: { jfet: ['2SK209-GR', 'J201'], smd: ['2SK209-GR'] } };
+        const mounting = (q) => f.inspectorFields(q, ctx).find((x) => x.name === 'mounting');
+        return {
+          smd: mounting(smd)?.value, on: mounting({ ...smd, adapter: true })?.value, th: mounting(th) ?? null,
+          set: f.editFrom(smd, { ref: 'Q1', model: '2SK209-GR', mounting: 'adapter' }).patch.adapter,
+          back: f.editFrom({ ...smd, adapter: true }, { ref: 'Q1', model: '2SK209-GR', mounting: '' }).patch.adapter,
+        };
+        """,
+    )
+    assert r == {"smd": "", "on": "adapter", "th": None, "set": True, "back": None}
+
+
 def test_inspector_fields_for_a_jfet(js: Page) -> None:
     r = run(
         js,
@@ -1777,8 +1818,9 @@ def test_a_targeted_trimmer_shows_where_the_last_run_turned_it(js: Page) -> None
         "bias_node",
         "bias_volts",
         "label",
+        "style",
     ]
-    assert r["shape"]["free"] == ["ref", "value", "taper", "rotation", "label"]
+    assert r["shape"]["free"] == ["ref", "value", "taper", "rotation", "label", "style"]
     assert r["shape"]["node"]["readonly"] and r["shape"]["node"]["value"] == "Q1.D"
     assert r["shape"]["volts"]["remove"]["label"] == "Remove target"
     assert "Drain target in a JFET's form" in r["free"]["hint"]
@@ -1840,7 +1882,16 @@ def test_add_target_on_a_trimmer(js: Page) -> None:
         "tone": None,
         "held": None,
     }
-    assert r["names"] == ["ref", "value", "taper", "rotation", "bias_node", "bias_volts", "label"]
+    assert r["names"] == [
+        "ref",
+        "value",
+        "taper",
+        "rotation",
+        "bias_node",
+        "bias_volts",
+        "label",
+        "style",
+    ]
     assert r["rotation"]["add"] == {
         "label": "Add target",
         "fields": ["bias_node", "bias_volts"],
@@ -1849,7 +1900,7 @@ def test_add_target_on_a_trimmer(js: Page) -> None:
     assert r["rotation"]["hint"] == "Turned by hand. To hold a voltage instead: Add target."
     assert r["node"]["hidden"] and r["node"]["readonly"] and r["node"]["value"] == ""
     assert r["volts"]["hidden"] and r["volts"]["value"] == ""
-    assert r["none"] == ["ref", "value", "taper", "rotation", "label"]
+    assert r["none"] == ["ref", "value", "taper", "rotation", "label", "style"]
     assert "Drain target in a JFET's form" in r["noneHint"]
 
 

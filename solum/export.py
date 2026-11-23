@@ -214,8 +214,21 @@ def _package(models: ModelLibrary, model: str, pinout: bool) -> str:
     return f"{package.name}: {pins}"
 
 
+# Where to get a surface-mount transistor's TO-92 adapter, or the part ready on one (D-392;
+# read 2026-11-23): Aion's JFET adapter board, and the J201 (MMBFJ201) sold ready on one.
+ADAPTER_SOURCES = (
+    "https://aionfx.com/project/jfet-adapter/",
+    "https://www.musikding.de/J201_1",
+    "https://stompboxparts.com/transistors/j201-smt-to-to92/",
+)
+TRIMMER_STYLES = {"triangle": "triangle (Bourns 3362P)", "inline": "in line (Bourns 3296W)"}
+
+
 def _semi_details(part: Diode | Led | Bjt | Jfet | Mosfet, models: ModelLibrary) -> str:
     details = [_package(models, part.model, pinout=True)]
+    if isinstance(part, Bjt | Jfet | Mosfet) and part.adapter:
+        legs = "D-S-G" if isinstance(part, Jfet) else "in its pin order"
+        details.append(f"on a SOT-23 to TO-92 adapter, legs {legs} ({', '.join(ADAPTER_SOURCES)})")
     if isinstance(part, Bjt) and part.measured is not None:
         picked = f"picked for hFE {part.measured.hfe:g}"
         if part.measured.leakage is not None:
@@ -263,7 +276,10 @@ def _item(part: Part, models: ModelLibrary, chosen: Mapping[str, Where]) -> _Ite
         details = f"{TAPERS[part.taper]}, dual gang"
         return _Item(part.type, where, value, details, name, part.knob,
                      parse_value(part.value))  # fmt: skip
-    if isinstance(part, Pot | Trimmer):
+    if isinstance(part, Trimmer):
+        value = f"{part.taper}{format_value(parse_value(part.value))}"
+        return make(value, f"{TAPERS[part.taper]}, {TRIMMER_STYLES[part.style]}", part.label)
+    if isinstance(part, Pot):
         value = f"{part.taper}{format_value(parse_value(part.value))}"
         return make(value, TAPERS[part.taper], part.label)
     if isinstance(part, Switch):

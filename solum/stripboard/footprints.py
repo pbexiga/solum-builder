@@ -40,7 +40,7 @@ from solum.stripboard.board import Hole
 from solum.units import parse_value
 
 PITCH = 2.54  # mm between holes
-Shape = Literal["axial", "radial", "inline", "dip", "sil"]
+Shape = Literal["axial", "radial", "inline", "triangle", "dip", "sil"]
 PinRef = tuple[str, str]
 SURFACE_MOUNT = ("SMD", "SC-59", "SC-70", "SOT-", "SOD-")  # in a package's name
 
@@ -103,17 +103,31 @@ def _inline(size: InlineSize, order: tuple[str, ...]) -> Footprint:
                      diameter=size.diameter, order=order, package=size.package or "")  # fmt: skip
 
 
-def _package(model: Model, ref: str) -> str:
+ADAPTER_PACKAGE = "TO-92"  # what a surface-mount transistor's adapter takes (D-392)
+ADAPTER_ORDER = {"jfet": ("D", "S", "G")}  # Aion's JFET adapter, as the J201; others keep 1-2-3
+
+
+def surface_mount(model: Model) -> bool:
+    """Whether the model's package is surface-mount (its name says so)."""
+    package = model.info.package
+    return package is not None and any(word in package.name for word in SURFACE_MOUNT)
+
+
+def _package(model: Model, ref: str, adapter: bool = False) -> str:
+    """The model's package, or the adapter's when a surface-mount part is on one (D-392)."""
     if model.info.package is None:
         raise NoFootprint(
             f"{ref}'s model {model.info.id} has no package with pin numbers, so its legs "
             "can't be placed. Choose a model that has one."
         )
     package = model.info.package.name
-    if any(word in package for word in SURFACE_MOUNT):
+    if surface_mount(model):
+        if adapter:
+            return ADAPTER_PACKAGE
         raise NoFootprint(
             f"{ref}'s {model.info.id} is surface-mount ({package}): it can't go on a "
-            "stripboard. Choose a through-hole model for it."
+            "stripboard. Choose a through-hole model for it, or put it on a TO-92 adapter "
+            "(its Mounting)."
         )
     return package
 
@@ -169,11 +183,12 @@ def two_leg_footprint(part: Part, models: ModelLibrary, table: FootprintTable) -
 def _three_leg(part: Bjt | Jfet | Mosfet | Regulator, models: ModelLibrary,
                table: FootprintTable) -> BoardPart:  # fmt: skip
     model = models.get(part.model)
-    package = _package(model, part.ref)
+    on_adapter = getattr(part, "adapter", False) and surface_mount(model)
+    package = _package(model, part.ref, on_adapter)
     size = _by_package(table.inline, package)
     if size is None:
         raise NoFootprint(f"There's no board size for {part.ref}'s package ({package}) yet.")
-    order = _pin_order(model)
+    order = ADAPTER_ORDER.get(part.type, _pin_order(model)) if on_adapter else _pin_order(model)
     pins = {pin: (part.ref, pin) for pin in order}
     return BoardPart(part.ref, _inline(size, order), pins, kind=part.type)
 
@@ -227,7 +242,11 @@ def one_board_part(part: Part, models: ModelLibrary, table: FootprintTable) -> B
     if isinstance(part, Trimmer):
         order = ("1", "2", "3")
         pins = {pin: (part.ref, pin) for pin in order}
-        return BoardPart(part.ref, _inline(table.trimmer, order), pins, kind="trimmer")
+        if part.style == "inline":
+            return BoardPart(part.ref, _inline(table.trimmer, order), pins, kind="trimmer")
+        size = table.trimmer_triangle
+        shape = Footprint("triangle", (1,), length=size.length, width=size.width, order=order)
+        return BoardPart(part.ref, shape, pins, kind="trimmer")
     footprint = two_leg_footprint(part, models, table)
     pins = {pin: (part.ref, pin) for pin in pin_offsets(part)}
     return BoardPart(part.ref, footprint, pins, kind=part.type)
@@ -329,6 +348,22 @@ def dip_legs(pins: int, pin1: Hole, turned: bool = False, row_holes: int = 3) ->
     return legs
 
 
+TRIANGLE = {"1": (1, 0), "2": (0, 1), "3": (1, 2)}  # its own way: 1 above 3, the wiper left
+
+
+def triangle_legs(turns: int, at: Hole = (0, 0), swapped: bool = False) -> dict[str, Hole]:
+    """A triangle trimmer's legs (D-393) turned a quarter clockwise `turns` times, the
+    corner of their box at `at`; `swapped`: mirrored, its ends 1 and 3 changed round (it
+    turns the other way to set, which a trimmer doesn't mind: the user)."""
+    legs = dict(TRIANGLE)
+    if swapped:
+        legs["1"], legs["3"] = legs["3"], legs["1"]
+    for _ in range(turns % 4):
+        legs = {leg: (-y, x) for leg, (x, y) in legs.items()}
+    x0, y0 = min(x for x, _ in legs.values()), min(y for _, y in legs.values())
+    return {leg: (x - x0 + at[0], y - y0 + at[1]) for leg, (x, y) in legs.items()}
+
+
 def leg_problem(part: BoardPart, legs: dict[str, Hole], standing: bool) -> str | None:
     """What's wrong with where the legs are, in plain English, or None."""
     fp = part.footprint
@@ -358,6 +393,14 @@ def leg_problem(part: BoardPart, legs: dict[str, Hole], standing: bool) -> str |
             return (
                 f"{part.ref} sits across the strips: pins 1 to {count // 2} down one column, "
                 f"the rest back up the column {fp.row_holes} holes over."
+            )
+        return None
+    if fp.shape == "triangle":
+        x0, y0 = min(x for x, _ in legs.values()), min(y for _, y in legs.values())
+        if all(legs != triangle_legs(t, (x0, y0), m) for t in range(4) for m in (False, True)):
+            return (
+                f"{part.ref}'s legs: 1 and 3 two holes apart in a line, the wiper (2) a hole "
+                "back from the middle of them."
             )
         return None
     step = _line([legs[n] for n in fp.order])

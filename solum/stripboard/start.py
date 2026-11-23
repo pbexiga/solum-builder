@@ -36,7 +36,7 @@ from solum.stripboard.check import (
     occupants,
     read_layout,
 )
-from solum.stripboard.footprints import PITCH, BoardPart, body_holes, dip_legs
+from solum.stripboard.footprints import PITCH, BoardPart, body_holes, dip_legs, triangle_legs
 from solum.stripboard.guidance import signal_order
 from solum.stripboard.wiring import WiringError, wire_for_me
 
@@ -153,6 +153,8 @@ def shapes(part: BoardPart) -> list[_Shape]:
         return [
             _shaped(part, dip_legs(len(fp.order), (0, 0), t, fp.row_holes)) for t in (False, True)
         ]
+    if fp.shape == "triangle":  # 1 and 3 across the strips, either way up (D-393)
+        return [_shaped(part, triangle_legs(t, swapped=m)) for t in (0, 2) for m in (False, True)]
     names = part.legs
     steps = fp.steps
     if fp.shape == "axial":

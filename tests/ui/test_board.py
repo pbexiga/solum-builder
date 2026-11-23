@@ -610,6 +610,27 @@ def test_the_realistic_drawing_see_through_and_the_copper_side(page: Page, base_
     expect(page.locator("#board g.board.copper")).to_have_count(0)
 
 
+def test_a_placed_trimmer_is_made_in_line_from_its_menu(page: Page, base_url: str) -> None:
+    """D-393: the Tone Bender (Mode)'s TR1 placed as a triangle (B1, A2, B3); its menu makes
+    it an in-line trimmer, back in the tray to place again, one undo step; Undo puts it back."""
+    page.goto(base_url)
+    circuit = page.request.get(f"{base_url}api/starters/tone-bender-mk2-mode").json()["circuit"]
+    circuit["stripboard"] = {"size": [6, 6], "parts": {"TR1": {"1": "B1", "2": "A2", "3": "B3"}}}
+    saved = page.request.post(
+        f"{base_url}api/circuits", data={"circuit": circuit, "name": "TB trimmer"}
+    )
+    assert saved.ok, saved.text()
+    open_circuit(page, base_url, "circuit/" + saved.json()["circuit"]["id"])
+    show_board(page)
+    tr1 = page.locator("#board .board-part[data-ref='TR1']")
+    expect(tr1).to_have_count(1)
+    tr1.click(button="right")
+    page.get_by_text("Make it an in-line trimmer").click()
+    expect(tr1).to_have_count(0)
+    page.keyboard.press("Control+z")
+    expect(tr1).to_have_count(1)
+
+
 def test_hide_parts_shows_the_copper_unmirrored_and_mirror_turns_it_over(
     page: Page, base_url: str
 ) -> None:

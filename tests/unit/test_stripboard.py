@@ -13,7 +13,7 @@ from hypothesis import strategies as st
 from solum.circuit.build import CircuitBuilder
 from solum.circuit.connectivity import connect
 from solum.circuit.io import load_circuit
-from solum.circuit.schema import Circuit
+from solum.circuit.schema import Circuit, Trimmer
 from solum.circuit.switches import KINDS
 from solum.guides import footprint_table
 from solum.models import load_models
@@ -34,6 +34,8 @@ from solum.stripboard.footprints import (
     dip_legs,
     drawing_data,
     leg_problem,
+    one_board_part,
+    triangle_legs,
 )
 from solum.stripboard.offboard import default_spots, lug_nets, off_board_items, switch_drawing
 from solum.stripboard.wiring import WiringError, pad_cost, wire_for_me
@@ -422,14 +424,54 @@ def test_every_starter_but_the_kit_builds_gets_its_footprints() -> None:
         _, problems = board_parts(load_circuit(path), MODELS, TABLE)
         if "aion" not in path.stem:
             assert problems == [], path.stem
-    _, smd = board_parts(load_circuit(LIBRARY / "starters" / "boss-bd2-aion.json"), MODELS, TABLE)
-    assert smd[0] == (
+    bd2 = load_circuit(LIBRARY / "starters" / "boss-bd2-aion.json").with_part("Q1", adapter=False)
+    _, smd = board_parts(bd2, MODELS, TABLE)
+    assert smd == [
         "Q1's 2SK209-GR is surface-mount (SC-59 (S-MINI)): it can't go on a stripboard. "
-        "Choose a through-hole model for it."
-    )
+        "Choose a through-hole model for it, or put it on a TO-92 adapter (its Mounting)."
+    ]
     path = LIBRARY / "starters" / "marshall-bluesbreaker-aion.json"
     _, dip = board_parts(load_circuit(path), MODELS, TABLE)
     assert dip == ["There's no board size for DIP switches (SW3) yet."]  # once, not per pole
+
+
+def test_a_trimmer_is_a_triangle_unless_set_in_line() -> None:
+    """D-393: a trimmer is the Bourns 3362P, legs 1 and 3 two holes apart and the wiper a
+    hole back between them, turned any way; its ends may be swapped (the part isn't
+    mirrored, its outer legs just go on the other nets: it turns the other way to set,
+    fine for a trimmer, the user). Its 6.60 × 6.99 mm body covers the hole between 1 and 3
+    and the two beside the wiper. Set `inline` it's the 3296W, three legs in a row."""
+    tr = Trimmer(ref="TR1", pos=(0, 0), type="trimmer", value=10e3)
+    triangle = one_board_part(tr, MODELS, TABLE)
+    assert triangle.footprint.shape == "triangle" and triangle.legs == ("1", "2", "3")
+    own = triangle_legs(0, (4, 2))
+    assert own == {"1": (5, 2), "2": (4, 3), "3": (5, 4)}
+    assert triangle_legs(1) == {"1": (2, 1), "2": (1, 0), "3": (0, 1)}  # a quarter clockwise
+    assert triangle_legs(0, (4, 2), swapped=True) == {"1": (5, 4), "2": (4, 3), "3": (5, 2)}
+    assert all(
+        leg_problem(triangle, triangle_legs(t, (3, 3), m), False) is None
+        for t in range(4)
+        for m in (False, True)
+    )
+    in_line = {"1": (4, 2), "2": (4, 3), "3": (4, 4)}
+    assert leg_problem(triangle, in_line, False) == (
+        "TR1's legs: 1 and 3 two holes apart in a line, the wiper (2) a hole back from the "
+        "middle of them."
+    )
+    assert body_holes(triangle, own, False) == {(5, 3), (4, 2), (4, 4)}
+    inline = one_board_part(tr.model_copy(update={"style": "inline"}), MODELS, TABLE)
+    assert inline.footprint.shape == "inline" and inline.footprint.length == 9.53
+
+
+def test_a_surface_mount_transistor_on_an_adapter_takes_the_to92_footprint() -> None:
+    """D-392: the BD-2 (Aion)'s 2SK209s on TO-92 adapters, as Aion's kit builds them: the
+    table's TO-92, legs D-S-G (Aion's adapter, the J201's)."""
+    bd2 = load_circuit(LIBRARY / "starters" / "boss-bd2-aion.json")
+    found, problems = board_parts(bd2, MODELS, TABLE)
+    q1 = found["Q1"]
+    assert problems == [] and q1.footprint.package == "TO-92"
+    assert q1.legs == ("D", "S", "G")
+    assert q1.pins == {"D": ("Q1", "D"), "S": ("Q1", "S"), "G": ("Q1", "G")}
 
 
 # --- Wire it for me (D-375) ----------------------------------------------------------

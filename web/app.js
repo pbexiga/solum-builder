@@ -356,6 +356,10 @@ const board = boardView($("canvas-body"), {
   resting: () => outputSelection(),
   shown: () => updateButtons(),
   editBoard: (stripboard, label) => editBoard(stripboard, label),
+  editPart: async (ref, patch, stripboard, label) => {
+    const message = await tryEdit(withBoard(updatePart(state.circuit, ref, patch), stripboard), label, "", boardStack);
+    if (message) showError(message);
+  },
   refuse: (message) => refusal.show(message),
 });
 const menus = appMenus($("canvas-body"), schematic, {

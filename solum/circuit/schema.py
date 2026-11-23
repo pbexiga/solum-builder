@@ -41,7 +41,7 @@ from solum.circuit.switches import (
 from solum.stripboard.board import Layout, layout_from_data
 from solum.units import format_quantity, format_value, parse_value
 
-SCHEMA_VERSION: Final = 38
+SCHEMA_VERSION: Final = 39
 
 Point = tuple[int, int]
 Rotation = Literal[0, 90, 180, 270]
@@ -193,6 +193,8 @@ class Trimmer(_Part):
     rotation: Fraction = 0.5
     bias_target: BiasTarget | None = None
     label: str | None = None  # its name (BIAS), v13
+    # the board trimmer it is (v39, D-393): a triangle (Bourns 3362P) or in line (3296W)
+    style: Literal["triangle", "inline"] = "triangle"
 
 
 Pole = Literal["a", "b", "c", "d"]
@@ -339,6 +341,7 @@ class Jfet(_Part):
     model: str
     measured: Measured | None = None
     off_by_design: bool = False  # off at rest on purpose: a switch or rectifier (v29, D-238)
+    adapter: bool = False  # surface-mount, soldered to a TO-92 adapter for the board (v39, D-392)
 
 
 class MeasuredBjt(_Model):
@@ -359,6 +362,7 @@ class Bjt(_Part):
     model: str
     measured: MeasuredBjt | None = None
     off_by_design: bool = False
+    adapter: bool = False  # surface-mount, soldered to a TO-92 adapter for the board (v39, D-392)
 
 
 class Mosfet(_Part):
@@ -368,6 +372,7 @@ class Mosfet(_Part):
     type: Literal["mosfet"]
     model: str
     off_by_design: bool = False  # off at rest on purpose: a switch (v29, D-238)
+    adapter: bool = False  # surface-mount, soldered to a TO-92 adapter for the board (v39, D-392)
 
 
 Half = Literal["a", "b", "c", "d"]  # a dual's a, b; a quad's a to d (v18)
@@ -752,7 +757,7 @@ class Stripboard(_Model):
 
 
 class Circuit(_Model):
-    schema_: Literal[38] = Field(alias="schema")
+    schema_: Literal[39] = Field(alias="schema")
     id: str = Field(pattern=ID_PATTERN)
     name: str
     description: str = ""

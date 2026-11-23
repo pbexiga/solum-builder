@@ -136,3 +136,14 @@ build:
     - "C1 and C2 are electrolytic as before. C3 (10 nF output cap), untyped in the main source, is film: the app's capacitor guide's kind for the signal path (`library/guides/capacitors.yaml`)."
     - "Electrolytics rated 16 V: the sources give no rating, so this is the app's own advice for a 9 V circuit (the smallest rating sold with the supply under 80 % of it, D-203)."
     - "Enclosure 125B, as the Aion Solaris."
+
+# A published stripboard layout (P6g, D-391): only its link and a person's counts are kept.
+stripboard:
+  title: Tagboard Effects, "Fuzz Face PNP (in "A few Veros")"
+  url: https://tagboardeffects.blogspot.com/2010/03/few-veros.html
+  columns: 20
+  strips: 9
+  cuts: 2
+  links: 1
+  counted: 2026-11-23
+  note: "The size as printed on the drawing; its cuts and links counted from it by the agent at the user's request (D-391). PNP, positive ground as ours, with a 10K bias trimmer ours doesn't have."

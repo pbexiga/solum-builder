@@ -169,3 +169,14 @@ build:
     - "Capacitor types aren't given there, so they follow the app's advice: C8 390p and C13 820p NP0/C0G (small caps in the signal path), C2, C15 and C17-C22 electrolytic, the rest film, C9, C10 and C16 too."
     - "Electrolytics rated 16 V, 25 V on VB (about 16 V) and at U2B's output: the source gives no rating, so this is the app's own advice (D-203)."
     - "Enclosure 125B, a builder's choice (the Klon has its own case), as the Aion version's."
+
+# A published stripboard layout (P6g, D-391): only its link and a person's counts are kept.
+stripboard:
+  title: Tagboard Effects, "Klon Centaur"
+  url: https://tagboardeffects.blogspot.com/2012/02/klon-centaur.html
+  columns: 21
+  strips: 26
+  cuts: 32
+  links: 14
+  counted: 2026-11-23
+  note: "the size, cuts and links as printed on the drawing, read by the agent at the user's request (D-391). The drawing is \"Klon Centaur - Smaller\", with an ICL7660 for the 18 V rail (ours has a MAX1044 for it)."

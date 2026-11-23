@@ -10,6 +10,9 @@ pieces). When the parts are placed, every net left in more than one piece gets a
 strip the full width of the board, above the parts (ground's and V-'s below on a new
 board), and the leg that started each piece is linked to it up a column of its part's own.
 So the layout can't fail: a piece's link column is its part's, clear of every other leg.
+A part with two legs on one net (a trimmer as a variable resistor, a buffer's output tied
+to its input) has them on neighbouring strips: the second is joined to the first by a short
+link beside the part, never a bus (the user, 2026-11-23).
 Several heights are tried for the parts' rows; the smallest board is kept.
 
 *Fill the rest* keeps what's on the board and lays out the tray the same way below it,
@@ -213,13 +216,15 @@ def _pieces(r: Reading) -> dict[str, list[int]]:
 @dataclass(frozen=True)
 class _Choice:
     """A part's place in the band: its shape, its top leg's row, the legs that start a
-    piece of their net, the rows cut at its left."""
+    piece of their net, the rows cut at its left, and each leg joined by a short link to
+    another of its own on the same net (`twins`: leg → that leg)."""
 
     ref: str
     shape: _Shape
     row: int
     starts: frozenset[str]
     cuts: frozenset[int]
+    twins: tuple[tuple[str, str], ...] = ()
 
 
 def _choose(r: Reading, todo: list[str], height: int, left: dict[str, int]) -> list[_Choice] | None:
@@ -251,25 +256,33 @@ def _choose(r: Reading, todo: list[str], height: int, left: dict[str, int]) -> l
 
 def _try(r: Reading, part: BoardPart, shape: _Shape, row: int, carried: list[str | None],
          left: dict[str, int]) -> tuple[float, _Choice]:  # fmt: skip
-    """The cost of `part` in `shape` with its top leg on `row`: a piece started 10, a cut
-    3, a net cut off with legs still to come 5 more."""
-    starts, cuts = set(), set()
+    """The cost of `part` in `shape` with its top leg on `row`: a piece started 10, a
+    leg linked to its twin 2, a cut 3, a net cut off with legs still to come 5 more."""
+    starts, cuts, twins = set(), set(), []
     cost = 0.0
+    anchors: dict[tuple[str, bool], str] = {}  # (net, in a chip's first column) → its leg
+    for leg, (x, y) in shape.legs.items():  # the legs joining a strip of their net first
+        if not (shape.left and x > 0) and carried[row + y] == _leg_net(r, part, leg):
+            anchors.setdefault((_leg_net(r, part, leg), leg in shape.left), leg)
     for leg, (x, y) in shape.legs.items():
         net = _leg_net(r, part, leg)
         here = carried[row + y]
-        if shape.left and x > 0:  # behind a chip's middle cut: always a piece of its own
+        behind = bool(shape.left) and x > 0  # behind a chip's middle cut: a piece of its own
+        if here == net and not behind:
+            continue
+        side = (net, leg in shape.left)  # a chip's two columns are linked on their own sides
+        twin = anchors.get(side)
+        if twin is not None and shape.legs[twin][1] != y:
+            twins.append((leg, twin))
+            cost += 2
+        else:
+            anchors.setdefault(side, leg)
             starts.add(leg)
             cost += 10
-            continue
-        if here == net:
-            continue
-        starts.add(leg)
-        cost += 10
-        if here is not None:
+        if not behind and here is not None:
             cuts.add(row + y)
             cost += 3 + 5 * (left.get(here, 0) > 0)
-    return cost, _Choice(part.ref, shape, row, frozenset(starts), frozenset(cuts))
+    return cost, _Choice(part.ref, shape, row, frozenset(starts), frozenset(cuts), tuple(twins))
 
 
 def _band_pieces(r: Reading, choices: list[_Choice]) -> dict[str, int]:
@@ -346,7 +359,8 @@ def _fits(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int
     """`choice` moved `shift` columns right, if it fits: clear of everything placed, each
     row's first leg right of that row's last column (and of a free hole for its cut), a
     free column for each link (a chip's first column's to its left, the rest to its
-    right), a hole kept beside each leg starting a piece wired off the board (`lone`)."""
+    right; a twin's short link nearest), a hole kept beside each leg starting a piece
+    wired off the board (`lone`)."""
     room, part, shape = plan.room, r.board[choice.ref], choice.shape
     legs = {leg: (x + shift, top + choice.row + y) for leg, (x, y) in shape.legs.items()}
     body = body_holes(part, legs, False)
@@ -384,6 +398,19 @@ def _fits(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int
                 return None
             cuts.append(middle)
     taken.used |= set(cuts)
+    right = max(h[0] for h in [*legs.values(), *body]) + 1
+    for leg, twin in choice.twins:  # first, so they're nearest the part
+        (column, row), (other, to) = legs[leg], legs[twin]
+        if leg in shape.left:
+            span = range(max(after[row], after[to]), min(column, other))
+            at = next((c for c in span if room.free(c, row, to, taken)), None)
+            if at is None:
+                return None
+        else:
+            at = right
+            while not room.free(at, row, to, taken):
+                at += 1
+        taken.link(at, row, to)
     nets = {leg: _leg_net(r, part, leg) for leg in legs}
     linked = [leg for leg in part.legs if leg in choice.starts and nets[leg] in bus]
     for leg in (leg for leg in linked if leg in shape.left):
@@ -393,7 +420,6 @@ def _fits(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int
         if at is None:
             return None
         taken.link(at, row, to)
-    right = max(h[0] for h in [*legs.values(), *body]) + 1
     for leg in (leg for leg in linked if leg not in shape.left):
         row, to = legs[leg][1], bus[nets[leg]]
         at = right

@@ -6,6 +6,7 @@ from typing import Any
 
 import pytest
 
+from solum.circuit.build import CircuitBuilder
 from solum.circuit.io import load_circuit
 from solum.guides import footprint_table
 from solum.models import load_models
@@ -103,3 +104,35 @@ def test_shapes_stand_each_part_across_the_strips() -> None:
         flat + 2,
         flat + 3,
     ]
+
+
+def test_a_part_with_two_legs_on_one_net_gets_a_short_link_beside_it() -> None:
+    """A trimmer as a variable resistor (its wiper tied to one end) and two op-amp
+    buffers (out tied to -, on the chip's same side: 1 and 2, 7 and 6): the tied legs'
+    strips are joined by a link right beside the part, not by a long link to a bus (the
+    user, 2026-11-23)."""
+    c = (
+        CircuitBuilder()
+        .rail("V+", 9)
+        .part("IN", "guitar", "in")
+        .part("C1", "capacitor", "in", "a", value="100n", kind="film")
+        .part("TR1", "trimmer", "a", "b", "b", value="10k")
+        .part("IC1A", "opamp", "b", "o", "o", model="TL072", half="a")
+        .part("IC1B", "opamp", "o", "p", "p", model="TL072", half="b")
+        .part("R1", "resistor", "p", "GND", value="10k")
+        .part("OUT", "amp", "p")
+    ).build()
+    made = start_for_me(None, c, MODELS, TABLE, fill=False)
+    assert made.left == () and check_layout(made.layout, c, MODELS, TABLE).ok
+    board = made.layout
+    legs = {p.ref: dict(p.legs) for p in board.parts}
+    for ref, a, b in (("TR1", "2", "3"), ("IC1", "1", "2"), ("IC1", "7", "6")):
+        rows = sorted((legs[ref][a][1], legs[ref][b][1]))
+        columns = [h[0] for h in legs[ref].values()]
+        beside = [
+            link
+            for link in board.links
+            if (link.a[1], link.b[1]) == tuple(rows)
+            and min(columns) - 3 <= link.a[0] <= max(columns) + 3
+        ]
+        assert beside, f"{ref}: no short link beside it in {board.links}"

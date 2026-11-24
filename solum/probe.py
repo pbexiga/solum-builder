@@ -52,6 +52,7 @@ from solum.circuit.schema import (
 )
 from solum.circuit.supply import drawable, no_power, no_power_refs, supply_volts
 from solum.netlist import Dc, input_part
+from solum.sim.engine import SimError
 from solum.simulate import (
     IMPEDANCE_HZ,
     LEVELS,
@@ -901,6 +902,44 @@ def _signal_path(sim: Simulator, circuit: Circuit, tone: float = TONE_HZ) -> _Pa
     ]
     inputs = [signal_entry(ac, circuit, nets, s, f) for s, f in zip(found, feeds, strict=True)]
     return _Path(source, found, gain, ac, tone, inputs)
+
+
+LOUD = 10.0  # a stage's own gain from which its input wiring must be short (D-400)
+_INPUT_PINS = ("B", "G", "+")  # where a stage's signal enters: base, gate, op-amp +
+
+
+def loud_inputs(sim: Simulator, circuit: Circuit) -> list[tuple[str, str]]:
+    """Each high-gain stage's input pin, (device ref, pin), for the placement limits
+    (D-400): a stage on the signal path whose own gain (as the Bias & headroom pane
+    measures it, at the scope's tone) reaches `LOUD` with the pots as set, all turned
+    down or all turned up. None when the circuit doesn't simulate."""
+    pots = [p.ref for p in circuit.parts if isinstance(p, Pot)]
+    turned = [circuit]
+    for rotation in (0.0, 1.0):
+        c = circuit
+        for ref in pots:
+            c = c.with_part(ref, rotation=rotation)
+        turned.append(c)
+    found: dict[tuple[str, str], None] = {}
+    nets = connect(circuit)
+    try:
+        for c in turned if pots else turned[:1]:
+            path = _signal_path(sim, c)
+            if isinstance(path, str):
+                return []
+            for stage, entry in zip(path.found, path.inputs, strict=True):
+                if stage.kind != "stage" or entry is None or stage.inputs:
+                    continue
+                if _tone_gain(path.ac, stage.net) < LOUD * _tone_gain(path.ac, entry):
+                    continue
+                pin = next(((ref, pin) for (ref, pin), net in nets.by_pin.items()
+                            if ref in stage.refs and pin in _INPUT_PINS and net == entry),
+                           None)  # fmt: skip
+                if pin is not None:
+                    found.setdefault(pin)
+    except SimError:
+        return []
+    return list(found)
 
 
 def _tone_gain(ac: AcResult, net: str, tone: float = TONE_HZ) -> float:

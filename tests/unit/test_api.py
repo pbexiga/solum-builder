@@ -12,7 +12,7 @@ from solum.circuit.io import circuit_to_dict, load_circuit, parse_circuit
 from solum.config import load_settings
 from solum.model_import import Added, make_model
 from solum.models import ModelLibrary, ModelType
-from solum.sim.engine import EngineUnavailable, SimResult
+from solum.sim.engine import EngineUnavailable, SimError, SimResult
 from solum.yamlio import load_yaml
 from tests.unit.test_model_import import FILE, fake_measure
 
@@ -23,7 +23,14 @@ class FakeEngine:
     def version(self) -> str:
         return "44.2"
 
-    def run(self, netlist: str) -> SimResult:
+    def run(self, netlist: str, timeout: float | None = None,
+            progress: object = None) -> SimResult:  # fmt: skip
+        raise SimError("These tests don't simulate.")
+
+
+class CrashingEngine(FakeEngine):
+    def run(self, netlist: str, timeout: float | None = None,
+            progress: object = None) -> SimResult:  # fmt: skip
         raise NotImplementedError
 
 
@@ -240,7 +247,7 @@ def test_unknown_part_is_a_plain_404(monkeypatch: pytest.MonkeyPatch) -> None:
 def test_engine_crash_is_a_plain_500_without_traceback(
     monkeypatch: pytest.MonkeyPatch, tmp_path: Path
 ) -> None:
-    monkeypatch.setattr(app_module, "engine_from_settings", lambda _s: FakeEngine())
+    monkeypatch.setattr(app_module, "engine_from_settings", lambda _s: CrashingEngine())
     app = app_module.create_app(load_settings())
     c = TestClient(app, raise_server_exceptions=False)
     circuit = c.get("/api/starters/ts808").json()["circuit"]
@@ -924,9 +931,9 @@ def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.M
     }  # fmt: skip
     board = {**data, "stripboard": load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")}
     refused = c.post(
-        "/api/stripboard/edit", json={"circuit": board, "kind": "cut", "holes": [[9, 3]]}
+        "/api/stripboard/edit", json={"circuit": board, "kind": "cut", "holes": [[8, 3]]}
     )
-    assert refused.status_code == 422 and refused.json()["message"].startswith("R2 is in J4")
+    assert refused.status_code == 422 and refused.json()["message"].startswith("R2 is in I4")
     mend = {"circuit": board, "kind": "uncut", "holes": [[6, 7]]}
     assert c.post("/api/stripboard/edit", json=mend).json()["stripboard"]["cuts"] == []
     short = c.post("/api/stripboard/edit", json={**mend, "shorts": False})
@@ -935,7 +942,7 @@ def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.M
     bare = {**data, "stripboard": {**board["stripboard"], "cuts": [], "links": []}}
     accepted = c.post("/api/stripboard/edit", json={"circuit": bare, "kind": "suggested"}).json()
     assert accepted["stripboard"]["cuts"] == ["D8"]  # every suggestion, one edit (D-377)
-    assert sorted(accepted["stripboard"]["links"]) == [["B1", "B8"], ["K2", "K8"]]
+    assert sorted(accepted["stripboard"]["links"]) == [["B1", "B8"], ["J2", "J8"]]
     nothing = c.post("/api/stripboard/edit", json={"circuit": board, "kind": "suggested"})
     assert nothing.status_code == 422 and nothing.json()["message"].startswith("Nothing to suggest")
 
@@ -1099,3 +1106,80 @@ def test_stripboard_edit_moves_a_part_off_the_board_and_refuses_a_pot_on(
                  json={"circuit": board, "kind": "where", "ref": "VR1", "to": "board"})  # fmt: skip
     assert pot.status_code == 422
     assert pot.json()["message"] == "There's no board footprint for a pot yet."
+
+
+# --- Build a full layout (D-399) -------------------------------------------------------
+
+
+def _compact_lines(c: TestClient, data: dict[str, Any], **ask: Any) -> list[dict[str, Any]]:
+    body = {"circuit": data, "progress": True, **ask}
+    with c.stream("POST", "/api/stripboard/compact", json=body) as r:
+        assert r.status_code == 200
+        return [json.loads(line) for line in r.iter_lines() if line]
+
+
+def test_build_a_full_layout_streams_the_base_progress_and_a_checked_board(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """The Rangemaster (few steps, for speed): the base first, then the steps done of the
+    budget and each new best, then a wired board that passes the check, and the same
+    board again; *Try another* is another seed set."""
+    from solum.stripboard import compact_job
+
+    monkeypatch.setattr(compact_job, "STEPS_PER_PART", 300)
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    lines = _compact_lines(c, data)
+    assert set(lines[0]) == {"base"} and lines[0]["base"]["stripboard"]["parts"]
+    progress = lines[1:-1]
+    assert progress and all(line["of"] == 4 * 300 * 8 for line in progress)  # 8 board parts
+    assert progress[-1]["done"] == progress[-1]["of"]
+    assert any("best" in line for line in progress)
+    result = lines[-1]["result"]
+    assert result["fell_back"] is False and result["stopped"] is False
+    board = {**data, "stripboard": result["stripboard"]}
+    assert c.post("/api/stripboard", json={"circuit": board}).json()["done"] is True
+    assert result["columns"] * result["strips"] < 9 * 12  # the hand-made board's 11 × 9 or so
+    assert _compact_lines(c, data)[-1]["result"] == result
+    other = c.post("/api/stripboard/compact", json={"circuit": data, "attempt": 2}).json()
+    assert {"stripboard", "columns", "fell_back"} <= set(other)
+
+
+def test_stop_s_finish_wires_and_checks_the_best_so_far(monkeypatch: pytest.MonkeyPatch) -> None:
+    """A best board as streamed (not wired) sent back: wired, passing the check; nothing
+    for a board is a 422 in words."""
+    from solum.stripboard import compact_job
+
+    monkeypatch.setattr(compact_job, "STEPS_PER_PART", 300)
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    best = [line["best"] for line in _compact_lines(c, data) if "best" in line][-1]
+    assert best["stripboard"]["wires"] == []
+    done = c.post("/api/stripboard/compact/finish",
+                  json={"circuit": data, "board": best["stripboard"]}).json()  # fmt: skip
+    assert done["stopped"] is True and done["stripboard"]["wires"]
+    board = {**data, "stripboard": done["stripboard"]}
+    assert c.post("/api/stripboard", json={"circuit": board}).json()["done"] is True
+    empty = {**data, "parts": [p for p in data["parts"] if p["type"] in ("guitar", "amp")]}
+    refused = c.post("/api/stripboard/compact/estimate", json={"circuit": empty})
+    assert refused.status_code == 422 and "board" in refused.json()["message"]
+
+
+def test_the_time_estimate_is_this_circuit_s_on_this_machine(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """Half a second of real steps timed: Thorough takes longer than Quick, both more
+    than the workers' start."""
+    from solum.stripboard import compact_job
+
+    monkeypatch.setattr(compact_job, "SAMPLE", 0.1)
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
+    got = (
+        client(monkeypatch, lambda _s: FakeEngine())
+        .post("/api/stripboard/compact/estimate", json={"circuit": data})
+        .json()
+    )
+    assert compact_job.SPAWN < got["quick"] < got["thorough"]

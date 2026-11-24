@@ -441,14 +441,21 @@ def _holes_text(steps: tuple[int, ...]) -> str:
 
 
 def body_holes(part: BoardPart, legs: dict[str, Hole], standing: bool) -> set[Hole]:
-    """The holes the part's body covers, its own legs left out (legs already checked)."""
+    """The holes the part's body covers, its own legs left out (legs already checked); a
+    chip's, the holes between its rows (D-401)."""
     fp = part.footprint
-    if standing or not (fp.diameter or fp.length):
+    if standing or not (fp.diameter or fp.length or fp.shape == "dip"):
         return set()
     x0 = min(h[0] for h in legs.values())
     y0 = min(h[1] for h in legs.values())
     shape = _body_shape(fp, frozenset((h[0] - x0, h[1] - y0) for h in legs.values()))
     return {(x + x0, y + y0) for x, y in shape}
+
+
+def links_under(part: BoardPart, standing: bool) -> bool:
+    """Whether a link may pass under the part's body: a flat resistor's or diode's, or a
+    chip's between its rows (D-401); never a leg or a wire's hole."""
+    return part.footprint.shape == "dip" or (part.footprint.shape == "axial" and not standing)
 
 
 Outline = tuple[float, float, float, float, float]  # x0, y0, x1, y1 in mm; radius (0: a box)

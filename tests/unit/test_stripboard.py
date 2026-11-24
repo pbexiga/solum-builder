@@ -42,6 +42,7 @@ from solum.stripboard.footprints import (
     dip_legs,
     drawing_data,
     leg_problem,
+    links_under,
     one_board_part,
     triangle_legs,
 )
@@ -272,7 +273,7 @@ def test_default_spots_put_pots_on_top_input_right_output_left() -> None:
 def test_a_missed_cut_is_refused() -> None:
     result = check(edited(cuts=[]))
     assert result.faults == [
-        "R1's leg at C8 and R2's leg at J8 are joined on the board, but the circuit doesn't "
+        "R1's leg at C8 and R2's leg at I8 are joined on the board, but the circuit doesn't "
         "connect them."
     ]
 
@@ -287,7 +288,7 @@ def test_a_leg_one_strip_off_is_refused() -> None:
 def test_a_missing_link_is_refused() -> None:
     result = check(edited(links=[["B1", "B8"]]))
     assert result.faults == [
-        "C3's + leg at G2 and R2's leg at J8 aren't connected on the board, but the circuit "
+        "C3's + leg at G2 and R2's leg at I8 aren't connected on the board, but the circuit "
         "joins them."
     ]
 
@@ -410,6 +411,22 @@ def test_drawing_data_names_a_chip_s_units(circuit: Callable[..., CircuitBuilder
 def test_a_missed_cut_under_a_chip_is_named(circuit: Callable[..., CircuitBuilder]) -> None:
     result = check({**CHIP, "cuts": ["F3", "F4", "F6"]}, _two_buffers(circuit))
     assert result.faults == ["The strip under IC1 isn't cut between pins 3 and 6 (strip 5)."]
+
+
+def test_only_a_link_goes_between_a_chip_s_rows(circuit: Callable[..., CircuitBuilder]) -> None:
+    """D-401: the holes between a chip's rows are under its body: no leg or wire there, a
+    link may pass under it, the cuts under it are its own."""
+    c = _two_buffers(circuit)
+    board, _ = board_parts(c, MODELS, TABLE)
+    legs = {leg: parse_hole(name) for leg, name in CHIP["parts"]["IC1"].items()}
+    assert body_holes(board["IC1"], legs, False) == {
+        parse_hole(f"{col}{strip}") for col in "FG" for strip in range(3, 7)
+    }
+    assert links_under(board["IC1"], False) and not links_under(board["C1"], False)
+    moved = check({**CHIP, "parts": {**CHIP["parts"], "R1": {"1": "G5", "2": "G6"}}}, c)
+    assert "IC1's body covers G5, where R1 goes." in moved.faults
+    under = check({**CHIP, "links": [*CHIP["links"], ["G2", "G7"]]}, c)
+    assert not any("runs under" in f for f in under.faults)
 
 
 def test_a_chip_placed_along_a_strip_is_refused(circuit: Callable[..., CircuitBuilder]) -> None:

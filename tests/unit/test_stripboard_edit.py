@@ -91,8 +91,8 @@ def test_legs_as_the_footprint_doesnt_allow_are_refused() -> None:
 
 
 def test_two_legs_in_a_hole_or_a_body_over_a_leg_are_refused() -> None:
-    with pytest.raises(EditError, match="share hole J4"):
-        edit(without("R1"), place("R1", {"1": "J8", "2": "J4"}))
+    with pytest.raises(EditError, match="share hole I4"):
+        edit(without("R1"), place("R1", {"1": "I8", "2": "I4"}))
     with pytest.raises(EditError, match="R1's body covers E3, where Q1 goes"):
         edit(without("R1"), place("R1", {"1": "E2", "2": "E6"}))
 
@@ -139,8 +139,8 @@ def test_cuts_are_made_and_mended_by_hand() -> None:
     board = edit(GOOD, holes_edit("cut", "J5"))
     assert parse_hole("J5") in board.cuts
     assert parse_hole("G8") not in edit(GOOD, holes_edit("uncut", "G8")).cuts
-    with pytest.raises(EditError, match="R2 is in J4: a cut there would take its copper away"):
-        edit(GOOD, holes_edit("cut", "J4"))
+    with pytest.raises(EditError, match="R2 is in I4: a cut there would take its copper away"):
+        edit(GOOD, holes_edit("cut", "I4"))
     with pytest.raises(EditError, match="a cut at G8 already"):
         edit(GOOD, holes_edit("cut", "G8"))
     with pytest.raises(EditError, match="no cut at J5"):

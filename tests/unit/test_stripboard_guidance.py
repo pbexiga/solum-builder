@@ -10,7 +10,7 @@ from solum.models import load_models
 from solum.stripboard.board import hole_name, layout_from_data, parse_hole
 from solum.stripboard.check import check_layout, placement_faults
 from solum.stripboard.footprints import board_parts
-from solum.stripboard.guidance import Guidance, guidance
+from solum.stripboard.guidance import Guidance, Kept, guidance
 from solum.yamlio import load_yaml
 
 REPO = Path(__file__).resolve().parents[2]
@@ -59,21 +59,22 @@ def test_a_shorted_strip_is_marked_for_no_net() -> None:
 
 
 def test_the_ratsnest_joins_each_net_s_pieces_by_their_nearest_holes() -> None:
-    """C3 and C4 on strip 2 (ground) and R2's ground leg at J8 with G8 cut: ground is in
+    """C3 and C4 on strip 2 (ground) and R2's ground leg at I8 with G8 cut: ground is in
     two pieces, one strand between the nearest holes; V- likewise without the B link."""
     g = run(only("R1", "R2", "C3", "C4", "Q1", "R3", cuts=["G8"]))
     strands = {(s.net, hole_name(s.a), hole_name(s.b)) for s in g.ratsnest}
-    assert ("GND", "I2", "J8") in strands
+    assert ("GND", "I2", "I8") in strands
     assert [s.net for s in g.ratsnest].count("GND") == 1
 
 
 def test_suggested_cuts_and_links_are_the_hand_made_board_s() -> None:
     """The good board without its cut and links: a cut on strip 8 between R1's V- leg at C8
-    and R2's ground leg at J8 (the first free hole, D8), and the two links it had."""
+    and R2's ground leg at I8 (the first free hole, D8), and its two links: the ground one
+    in the first free column, J, where the hand-made board has it one column on, at K."""
     g = run({**GOOD, "cuts": [], "links": []})
     assert [hole_name(h) for h in g.cuts] == ["D8"]
     assert sorted((hole_name(a), hole_name(b)) for a, b in g.links) == [("B1", "B8"),
-                                                                        ("K2", "K8")]  # fmt: skip
+                                                                        ("J2", "J8")]  # fmt: skip
     done = layout_from_data({**GOOD, "cuts": ["D8"], "links": linked(g)})
     assert check_layout(done, RANGEMASTER, MODELS, TABLE).ok  # accepted, the board passes
 
@@ -112,7 +113,9 @@ def test_suggested_links_never_pass_over_each_other() -> None:
 def test_next_follows_the_signal_and_prefers_what_joins_the_board() -> None:
     empty = run({"size": [12, 9]}).next
     assert empty is not None and empty.ref == "C1" and "input" in empty.why
-    nxt = run(only("Q1", "R1")).next
+    nxt = run(only("Q1", "R1")).next  # its bypass cap first, kept by its emitter (D-400)
+    assert nxt is not None and nxt.why == "Next: C3, by Q1's emitter: its bypass cap."
+    nxt = run(only("Q1", "R1", "C3")).next
     assert nxt is not None and nxt.ref == "C1"  # joins Q1's base, nearest the input
     assert nxt.why.startswith("Next: C1. It joins ") and "(Q1.B)" in nxt.why
     rest = run(only("Q1", "R1", "C1", "C2", "C3", "C4", "R2")).next
@@ -156,3 +159,47 @@ def test_a_blocked_link_names_what_is_in_the_way() -> None:
 
 def test_nothing_is_stuck_when_the_suggestions_join_everything() -> None:
     assert run({**GOOD, "cuts": [], "links": []}).stuck == []
+
+
+# --- the guidance follows the placement limits (D-400) ---------------------------------
+TS808 = load_circuit(LIBRARY / "starters" / "ts808.json")
+TS808_LOUD = [("IC1B", "+")]  # as `probe.loud_inputs` finds it (it needs ngspice)
+IC1 = {"1": "E3", "2": "E4", "3": "E5", "4": "E6", "8": "H3", "7": "H4", "6": "H5", "5": "H6"}
+UNDER = ["F3", "F4", "F5", "F6"]  # the cuts under the chip
+
+
+def ts808(**data: Any) -> Guidance:
+    board = {"size": [20, 12], "parts": {"IC1": IC1}, "cuts": UNDER, **data}
+    return guidance(layout_from_data(board), TS808, MODELS, TABLE, TS808_LOUD)
+
+
+def holes_of(kept: Kept) -> list[str]:
+    return [hole_name((c, strip)) for strip, c0, c1 in kept.holes for c in range(c0, c1 + 1)]
+
+
+def test_a_part_kept_by_a_placed_pin_is_marked_only_by_that_pin() -> None:
+    """The TS808 with IC1 placed: C4 (on pin 6's net, with D1 and D2: reach 4) is marked
+    on pin 6's own copper only, I5 to L5 (none between the chip's rows: its body, D-401);
+    R11 by pin 2, the chip on its right: C4 and D4."""
+    g = ts808()
+    assert g.kept["C4"] == Kept("1", "IC1B.-", g.kept["C4"].holes, None)
+    assert holes_of(g.kept["C4"]) == ["I5", "J5", "K5", "L5"]
+    assert holes_of(g.kept["R11"]) == ["C4", "D4"]
+    assert "R1" not in g.kept  # kept by no pin
+
+
+def test_no_free_hole_by_the_pin_names_what_is_in_the_way() -> None:
+    g = ts808(cuts=[*UNDER, "D4"])
+    assert g.kept["R11"].holes == []
+    assert g.kept["R11"].blocked == (
+        "No free hole by IC1's pin 2: the cut at D4 and the cut at F4 are in the way. Move "
+        "one, or place R11 elsewhere and it will show as a warning."
+    )
+
+
+def test_place_next_names_a_part_a_placed_pin_keeps_first_saying_why() -> None:
+    g = ts808()
+    assert g.next is not None
+    assert g.next.why == "Next: C2, by IC1's pin 5: the high-gain stage's input."
+    assert guidance(layout_from_data({"size": [20, 12], "parts": {}}), TS808, MODELS, TABLE,
+                    TS808_LOUD).kept == {}  # fmt: skip

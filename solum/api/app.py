@@ -5,11 +5,12 @@ status; anything unexpected is logged here and answered with a plain 500 message
 a traceback (AGENTS.md).
 """
 
+import asyncio
 import json
 import logging
 import queue
 import threading
-from collections.abc import Callable, Iterator
+from collections.abc import AsyncIterator, Callable
 from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Literal, get_args
@@ -113,6 +114,7 @@ from solum.probe import (
     SweepError,
     impedance_view,
     knob_ranges,
+    loud_inputs,
     part_view,
     run_view,
     stage_levels,
@@ -132,8 +134,11 @@ from solum.simulate import (
     simulator_from_settings,
 )
 from solum.store import CircuitStore, StoreError, blank_circuit, split_id
-from solum.stripboard.board import BoardError, Layout, layout_data, note_from_data
+from solum.stripboard import compact_job
+from solum.stripboard.board import BoardError, Layout, layout_data, layout_from_data, note_from_data
 from solum.stripboard.check import kept_dismissals, move_problem, progress, shorts
+from solum.stripboard.compact import board_of, finish, finish_layout
+from solum.stripboard.compact import problem as compact_reading
 from solum.stripboard.edit import BoardEdit, EditError, EditKind, edit_layout
 from solum.stripboard.footprints import board_parts, board_refs, drawing_data, surface_mount
 from solum.stripboard.guidance import guidance
@@ -204,6 +209,24 @@ class BoardStartRequest(BaseModel):
 
     circuit: dict[str, Any]
     fill: bool = False
+
+
+class BoardCompactRequest(BaseModel):
+    """*Build a full layout* (D-399): Quick or `thorough`; `attempt` 1, 2…: *Try
+    another*'s seed set; `progress`: stream the base, the progress and the best so far."""
+
+    circuit: dict[str, Any]
+    thorough: bool = False
+    attempt: int = Limit(1, ge=1, le=10_000)
+    progress: bool = False
+
+
+class BoardFinishRequest(BaseModel):
+    """*Stop and keep the best*: the best board so far, as its streamed `best` line gave it
+    (its plain form), to wire and check."""
+
+    circuit: dict[str, Any]
+    board: dict[str, Any]
 
 
 class BoardSizeRequest(BaseModel):
@@ -591,17 +614,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     async def unexpected(_request: Request, err: Exception) -> JSONResponse:
         return JSONResponse({"message": error_text(err)}, status_code=500)
 
-    def progressing(asked: bool, work: Callable[[Progress], dict[str, Any]]) -> Any:
-        """A search's answer (D-123). Asked for its progress, one JSON line per step
-        (`{"done", "of"}`), then `{"result"}`, or `{"message"}` for an error found on the
-        way; an error before the first step is the usual 422. Otherwise just the result."""
-        if not asked:
-            return work(lambda _done, _of: None)
+    def streamed(work: Callable[[Callable[[dict[str, Any]], None]], dict[str, Any]],
+                 stop: threading.Event | None = None) -> Any:  # fmt: skip
+        """A long job's answer as JSON lines (D-123): each line `work` puts as it goes, then
+        `{"result"}`, or `{"message"}` for an error found on the way; an error before the
+        first line is the usual 422. `stop` is set when the page goes away (D-399)."""
         lines: queue.Queue[dict[str, Any] | BaseException] = queue.Queue()
 
         def run() -> None:
             try:
-                lines.put({"result": work(lambda done, of: lines.put({"done": done, "of": of}))})
+                lines.put({"result": work(lines.put)})
             except Exception as err:  # told to the page as a message line
                 lines.put(err)
 
@@ -610,15 +632,32 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         if isinstance(first, BaseException):
             raise first
 
-        def body() -> Iterator[str]:
+        async def body() -> AsyncIterator[str]:
             item: dict[str, Any] | BaseException = first
-            while not isinstance(item, BaseException) and "result" not in item:
-                yield json.dumps(item) + "\n"
-                item = lines.get()
-            text = {"message": error_text(item)} if isinstance(item, BaseException) else item
-            yield json.dumps(text) + "\n"
+            try:
+                while not isinstance(item, BaseException) and "result" not in item:
+                    yield json.dumps(item) + "\n"
+                    while True:  # waiting here, a page gone away cancels it
+                        try:
+                            item = lines.get_nowait()
+                            break
+                        except queue.Empty:
+                            await asyncio.sleep(0.05)
+                text = {"message": error_text(item)} if isinstance(item, BaseException) else item
+                yield json.dumps(text) + "\n"
+            finally:
+                if stop is not None:
+                    stop.set()
 
         return StreamingResponse(body(), media_type="application/x-ndjson")
+
+    def progressing(asked: bool, work: Callable[[Progress], dict[str, Any]]) -> Any:
+        """A search's answer (D-123). Asked for its progress, one JSON line per step
+        (`{"done", "of"}`), then `{"result"}`, or `{"message"}` for an error found on the
+        way; an error before the first step is the usual 422. Otherwise just the result."""
+        if not asked:
+            return work(lambda _done, _of: None)
+        return streamed(lambda put: work(lambda done, of: put({"done": done, "of": of})))
 
     def searched(
         kind: str, req: FixRequest, s: Simulator, work: Callable[[Progress], dict[str, Any]]
@@ -1134,6 +1173,11 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"problems": [asdict(p) for p in found], "checked_op": checked,
                 "ratings": ratings_to_fill(circuit, checked)}  # fmt: skip
 
+    def loud_of(circuit: Circuit) -> list[tuple[str, str]]:
+        """The high-gain stages' inputs, for the placement limits (D-400; none without a
+        simulator)."""
+        return loud_inputs(sim, circuit) if sim else []
+
     @app.post("/api/stripboard")
     def stripboard(req: CircuitRequest) -> dict[str, Any]:
         """The Board view's progress check (D-368) of the open circuit's board (none yet:
@@ -1147,12 +1191,13 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         board = circuit.stripboard
         layout = board.layout() if board else Layout(0, 0, ())
         table = footprint_table(settings.library_dir)
-        found = progress(layout, circuit, models, table)
+        loud = loud_of(circuit)
+        found = progress(layout, circuit, models, table, loud)
         parts = board_parts(circuit, models, table)[0]
         return {**asdict(found), "nets_done": found.nets_done,
                 "footprints": drawing_data(parts, circuit),
                 "start_size": list(start_size(parts)),
-                "guidance": asdict(guidance(layout, circuit, models, table))}  # fmt: skip
+                "guidance": asdict(guidance(layout, circuit, models, table, loud))}  # fmt: skip
 
     @app.post("/api/stripboard/size")
     def stripboard_size(req: BoardSizeRequest) -> dict[str, Any]:
@@ -1255,7 +1300,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         kept = circuit.stripboard
         try:
             made = start_for_me(kept.layout() if kept else None, circuit, models, table,
-                                fill=req.fill)  # fmt: skip
+                                fill=req.fill, loud=loud_of(circuit))  # fmt: skip
         except StartError as err:
             raise HTTPException(422, str(err)) from None
         parts = board_parts(circuit, models, table)[0]
@@ -1273,7 +1318,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(422, "There's nothing on the board to tidy: place the parts first.")
         table = footprint_table(settings.library_dir)
         try:
-            tidied = tidy_up(kept.layout(), circuit, models, table, mend=req.mend)
+            tidied = tidy_up(kept.layout(), circuit, models, table, mend=req.mend,
+                             loud=loud_of(circuit))  # fmt: skip
         except MendFirst as err:
             return {"ask": str(err), "refs": err.refs}
         except TidyError as err:
@@ -1281,6 +1327,85 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         parts = board_parts(circuit, models, table)[0]
         return {"stripboard": layout_data(kept_dismissals(tidied.layout, parts)),
                 "mended": list(tidied.mended)}  # fmt: skip
+
+    def board_line(layout: Layout) -> dict[str, Any]:
+        """A board as a *Build a full layout* line: its figures and its plain form."""
+        return {"columns": layout.columns, "strips": layout.strips, "cuts": len(layout.cuts),
+                "links": len(layout.links), "stripboard": layout_data(layout)}  # fmt: skip
+
+    def compact_problem(circuit: Circuit) -> tuple[Any, Layout | None, list[tuple[str, str]]]:
+        """The search's reading of the circuit (Start a board's base, D-399), the board it
+        keeps the choices of, and the high-gain inputs; a circuit with nothing for a board
+        is a 422 saying why."""
+        table = footprint_table(settings.library_dir)
+        kept = circuit.stripboard
+        layout, loud = (kept.layout() if kept else None), loud_of(circuit)
+        try:
+            return compact_reading(layout, circuit, models, table, loud), layout, loud
+        except StartError as err:
+            raise HTTPException(422, str(err)) from None
+
+    def built_result(circuit: Circuit, built: Any, stopped: bool) -> dict[str, Any]:
+        parts = board_parts(circuit, models, footprint_table(settings.library_dir))[0]
+        board = kept_dismissals(built.layout, parts)
+        return {**board_line(board), "fell_back": built.fell_back, "stopped": stopped,
+                "note": compact_job.FELL_BACK if built.fell_back else ""}  # fmt: skip
+
+    @app.post("/api/stripboard/compact")
+    def stripboard_compact(req: BoardCompactRequest) -> Any:
+        """*Build a full layout* (D-399): the whole board laid out afresh and made as small
+        as the search can, wired and checked. With `progress`, JSON lines: `{"base"}`
+        (Start a board's board), `{"done", "of", "best"?}` (`best` when it improved: the
+        board not yet wired), then `{"result"}` or `{"message"}`; the workers stop when the
+        page goes away (Stop, Cancel)."""
+        circuit = parse_circuit(req.circuit)
+        table = footprint_table(settings.library_dir)
+        stop = threading.Event()
+
+        def work(put: Callable[[dict[str, Any]], None]) -> dict[str, Any]:
+            pb, layout, loud = compact_problem(circuit)
+            put({"base": board_line(pb.base)})
+
+            def report(done: int, of: int, best: Any) -> None:
+                line: dict[str, Any] = {"done": done, "of": of}
+                if best is not None:
+                    line["best"] = board_line(board_of(pb, best))
+                put(line)
+
+            got = compact_job.run(pb, layout, circuit, loud, req.thorough, req.attempt,
+                                  settings, report, stop)  # fmt: skip
+            return built_result(circuit, finish(pb, got.best, models, table), got.stopped)
+
+        if not req.progress:
+            return work(lambda _line: None)
+        return streamed(work, stop)
+
+    @app.post("/api/stripboard/compact/finish")
+    def stripboard_compact_finish(req: BoardFinishRequest) -> dict[str, Any]:
+        """*Stop and keep the best* (D-399): the best board so far wired and checked; the
+        base when it doesn't pass or is no better."""
+        circuit = parse_circuit(req.circuit)
+        pb, _, _ = compact_problem(circuit)
+        try:
+            board = layout_from_data(req.board)
+        except BoardError as err:
+            raise HTTPException(422, str(err)) from None
+        table = footprint_table(settings.library_dir)
+        return built_result(circuit, finish_layout(pb, board, models, table), True)
+
+    @app.post("/api/stripboard/compact/estimate")
+    def stripboard_compact_estimate(req: CircuitRequest) -> dict[str, Any]:
+        """How long Quick and Thorough take on this circuit on this machine, in seconds
+        (D-399): half a second of real steps timed and scaled."""
+        circuit = parse_circuit(req.circuit)
+        kept = circuit.stripboard
+        try:
+            found = compact_job.estimate(kept.layout() if kept else None, circuit, models,
+                                         footprint_table(settings.library_dir),
+                                         loud_of(circuit))  # fmt: skip
+        except StartError as err:
+            raise HTTPException(422, str(err)) from None
+        return asdict(found)
 
     @app.post("/api/part")
     def part(req: PartRequest) -> dict[str, Any]:

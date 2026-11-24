@@ -3,32 +3,56 @@
  * (with *Make the board compact* under it), Fill the rest and Tidy up, each with a line
  * saying what it does and greyed with the reason when it can't be used; then a
  * confirmation saying what will happen. Nothing is chosen at first once parts are placed:
- * Continue waits for a choice. The tick is remembered per viewer.
+ * Continue waits for a choice. Below a divider, *Build a full layout* (D-399) with Quick and
+ * Thorough under it, each with its time on this machine (asked for as the dialog opens),
+ * and two notes. The tick and Quick / Thorough are remembered per viewer.
  * The view does the work; this only asks.
  */
 
 import { ask, confirmed } from "../editor/form.js";
 import { h } from "../panels.js";
 import { remember, remembered } from "../storage.js";
-import { layoutChoices, layoutConfirm, layoutDefault } from "./board-logic.js";
+import { FULL_NOTES, layoutChoices, layoutConfirm, layoutDefault, timeText } from "./board-logic.js";
 
 /** The dialog's Continue button (there once `ask` has opened it). */
 const go = () => /** @type {HTMLButtonElement} */ (document.querySelector("#layout-dialog button[data-answer='go']"));
 const COMPACT_KEY = "solum.boardCompact"; // Make the board compact, this browser's
+const THOROUGH_KEY = "solum.boardThorough"; // Build a full layout: Thorough, this browser's
 
 /**
  * Ask which layout help to run, then confirm it: null when cancelled at either step.
- * @param {{board: {parts: unknown[], cuts: unknown[], links: unknown[], wires: unknown[]}, toPlace: number}} now
- *   what's on the board and how many parts are still in the tray
- * @returns {Promise<{choice: import("./board-logic.js").LayoutChoice, compact: boolean} | null>}
+ * @param {{board: {parts: unknown[], cuts: unknown[], links: unknown[], wires: unknown[]}, toPlace: number,
+ *   times: Promise<{quick: number, thorough: number} | null>}} now
+ *   what's on the board, how many parts are still in the tray, and *Build a full layout*'s
+ *   times on this machine (null: not known)
+ * @returns {Promise<{choice: import("./board-logic.js").LayoutChoice, compact: boolean, thorough: boolean, seconds: number} | null>}
  */
 export async function chooseLayout(now) {
   const placed = now.board.parts.length > 0;
   let choice = layoutDefault(placed);
   let compact = remembered(COMPACT_KEY) === true;
+  let thorough = remembered(THOROUGH_KEY) === true;
+  /** @type {{quick: number, thorough: number} | null} */
+  let times = null;
   const tick = /** @type {HTMLInputElement} */ (h("input", { type: "checkbox", id: "layout-compact" }));
   tick.checked = compact;
   tick.addEventListener("change", () => (compact = tick.checked));
+  /** Quick or Thorough, with its time once known. @param {boolean} long @param {string} label @param {string} text */
+  const speed = (long, label, text) => {
+    const radio = /** @type {HTMLInputElement} */ (h("input", { type: "radio", name: "layout-speed", value: long ? "thorough" : "quick" }));
+    radio.checked = long === thorough;
+    radio.addEventListener("change", () => (thorough = long));
+    const time = h("span", { class: "layout-time", "data-time": long ? "thorough" : "quick" }, ["Working out the time…"]);
+    return { radio, time, row: h("label", { class: "layout-speed" }, [radio, h("span", { class: "layout-name" }, [label]), " ", time, h("span", { class: "layout-text" }, [text])]) };
+  };
+  const quick = speed(false, "Quick", "Good for most circuits.");
+  const slow = speed(true, "Thorough", "It looks four times as long. Worth it for big circuits (40 parts or more), which keep getting smaller the longer it looks.");
+  void now.times.then((t) => {
+    times = t;
+    quick.time.textContent = t ? `${timeText(t.quick)}.` : "";
+    slow.time.textContent = t ? `${timeText(t.thorough)}.` : "";
+  });
+  const speeds = [quick, slow];
   const rows = layoutChoices(placed).map((c) => {
     const radio = /** @type {HTMLInputElement} */ (h("input", { type: "radio", name: "layout", value: c.value }));
     radio.checked = c.value === choice;
@@ -36,6 +60,7 @@ export async function chooseLayout(now) {
     radio.addEventListener("change", () => {
       choice = c.value;
       tick.disabled = choice !== "start";
+      for (const s of speeds) s.radio.disabled = choice !== "full";
       go().disabled = false;
     });
     const row = h("label", { class: c.why ? "layout-choice greyed" : "layout-choice", "data-layout": c.value }, [
@@ -43,11 +68,16 @@ export async function chooseLayout(now) {
       h("span", { class: "layout-name" }, [c.label]),
       h("span", { class: "layout-text" }, [c.why || c.text]),
     ]);
+    if (c.value === "full") {
+      return [h("hr", { class: "layout-divider" }), row, quick.row, slow.row,
+        ...FULL_NOTES.map((note) => h("p", { class: "layout-note" }, [note]))];
+    }
     if (c.value !== "start") return [row];
     const under = h("label", { class: "layout-compact", title: "Tidy up straight after: smaller, but slower on a big board" }, [tick, " Make the board compact"]);
     return [row, under];
   });
   tick.disabled = choice !== "start";
+  for (const s of speeds) s.radio.disabled = choice !== "full";
   const asked = ask({
     id: "layout-dialog",
     title: "Layout",
@@ -63,7 +93,9 @@ export async function chooseLayout(now) {
   const answer = await asked;
   if (answer !== "go" || choice === null) return null;
   if (choice === "start") remember(COMPACT_KEY, compact);
-  const said = layoutConfirm(choice, choice === "start" && compact, now.board, now.toPlace);
+  if (choice === "full") remember(THOROUGH_KEY, thorough);
+  const seconds = times ? (thorough ? times.thorough : times.quick) : 0;
+  const said = layoutConfirm(choice, choice === "start" && compact, now.board, now.toPlace, seconds);
   if (!(await confirmed(said.title, said.text, said.label, "layout"))) return null;
-  return { choice, compact: choice === "start" && compact };
+  return { choice, compact: choice === "start" && compact, thorough: choice === "full" && thorough, seconds };
 }

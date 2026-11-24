@@ -14,7 +14,13 @@ from solum.models import load_models
 from solum.stripboard.board import layout_from_data, parse_hole
 from solum.stripboard.check import Progress, check_layout, progress
 from solum.stripboard.footprints import board_parts
-from solum.stripboard.limits import Limit, group_met, limit_warnings, placement_limits
+from solum.stripboard.limits import (
+    Limit,
+    broken_limits,
+    group_met,
+    limit_warnings,
+    placement_limits,
+)
 from solum.yamlio import load_yaml
 
 REPO = Path(__file__).resolve().parents[2]
@@ -86,7 +92,7 @@ def test_a_short_names_the_other_net_and_where() -> None:
     shorted = {n.net: n for n in p.nets if n.state == "shorted"}
     assert set(shorted) == {"V-", "GND"}
     assert shorted["V-"].shorts[0].other == "GND"
-    assert "R1's leg at C8 and R2's leg at J8 are joined" in shorted["V-"].shorts[0].words
+    assert "R1's leg at C8 and R2's leg at I8 are joined" in shorted["V-"].shorts[0].words
     assert not p.done
 
 
@@ -128,7 +134,7 @@ def test_a_part_rewired_in_the_schematic_names_its_leg_and_where_it_should_go() 
     assert p.faults == [
         "R1's leg at C8 is on the strip of V-, but the circuit puts it on GND: it should join "
         "C3's + leg at G2, C4's + leg at I2, R3's leg at H2 and 3 more.",
-        "R2's leg at J8 is on the strip of GND, but the circuit puts it on V-: it should join "
+        "R2's leg at I8 is on the strip of GND, but the circuit puts it on V-: it should join "
         "C4's − leg at I1, the V- supply's wire at A1 and VR1 lug 1's wire at D1.",
     ]
 
@@ -197,13 +203,123 @@ def test_a_decoupling_cap_must_sit_by_its_chip_s_supply_pin(
             "5": "H6"}  # fmt: skip
     far = layout_from_data({"size": [14, 8], "parts": {"IC1": chip,
                             "C1": {"1": "L3", "2": "L2"}}})  # fmt: skip
-    assert limit_warnings(far, limits) == [
-        "C1 should sit by IC1's pin 8 at H3 (its decoupling cap): on its strip within 2 "
-        "holes, nothing between."
+    rule = ("C1 should sit by IC1's pin 8 at H3 (its decoupling cap): on its strip within 2 "
+            "holes, nothing between. ")  # fmt: skip
+    assert limit_warnings(far, limits) == [rule + "C1: it's 4 holes away."]
+    up = layout_from_data({"size": [14, 8], "parts": {"IC1": chip,
+                           "C1": {"1": "J2", "2": "J1"}}})  # fmt: skip
+    assert limit_warnings(up, limits) == [rule + "C1: it's on another strip."]
+    cut = layout_from_data({"size": [14, 8], "cuts": ["I3"], "parts": {"IC1": chip,
+                            "C1": {"1": "J3", "2": "J2"}}})  # fmt: skip
+    assert limit_warnings(cut, limits) == [rule + "C1: the cut at I3 is between them."]
+    both = layout_from_data({"size": [14, 8], "cuts": ["I3"], "parts": {"IC1": chip,
+                             "C1": {"1": "L3", "2": "L2"}}})  # fmt: skip
+    assert limit_warnings(both, limits) == [
+        rule + "C1: it's 4 holes away and the cut at I3 is between them."
     ]
     near = layout_from_data({"size": [14, 8], "parts": {"IC1": chip,
                              "C1": {"1": "J3", "2": "J2"}}})  # fmt: skip
     assert limit_warnings(near, limits) == []
+
+
+def test_an_either_way_part_meets_its_limit_by_either_leg(
+    circuit: Callable[..., CircuitBuilder],
+) -> None:
+    """C1 turned round (its leg 2 by pin 8, as the check lets a ceramic cap go): met when
+    it's `turnable`, broken by its leg 1 otherwise."""
+    c = _two_buffers(circuit)
+    limits = placement_limits(c, connect(c), board_parts(c, MODELS, TABLE)[0])
+    chip = {"1": "E3", "2": "E4", "3": "E5", "4": "E6", "8": "H3", "7": "H4", "6": "H5",
+            "5": "H6"}  # fmt: skip
+    turned = layout_from_data({"size": [14, 8], "parts": {"IC1": chip,
+                               "C1": {"1": "J2", "2": "J3"}}})  # fmt: skip
+    assert broken_limits(turned, limits) == [("IC1", "8")]
+    assert broken_limits(turned, limits, frozenset({"C1"})) == []
+
+
+def _kinds(limits: list[Limit]) -> list[tuple[str, str, str, str]]:
+    return [(lim.part, lim.anchor, lim.pin, lim.why) for lim in limits]
+
+
+def test_a_regulator_s_smallest_cap_on_each_side_must_sit_by_its_pin(
+    circuit: Callable[..., CircuitBuilder],
+) -> None:
+    """D-400: the 100 nF by the input, not the 100 µF beside it; the output's own."""
+    c = (
+        circuit()
+        .rail("V+", 18)
+        .part("U1", "regulator", "V+", "o", "0", model="78L12")
+        .part("C1", "capacitor", "V+", "0", value="100u", kind="electrolytic")
+        .part("C2", "capacitor", "V+", "0", value="100n", kind="ceramic")
+        .part("C3", "capacitor", "o", "0", value="330n", kind="film")
+        .part("R1", "resistor", "o", "0", value="10k")
+        .build()
+    )
+    board, _ = board_parts(c, MODELS, TABLE)
+    found = _kinds(placement_limits(c, connect(c), board))
+    assert [(p, w) for p, a, _, w in found if a == "U1"] == [("C2", "regulator"),
+                                                             ("C3", "regulator")]  # fmt: skip
+
+
+def test_an_emitter_bypass_cap_must_sit_by_the_emitter(
+    circuit: Callable[..., CircuitBuilder],
+) -> None:
+    """D-400: Q1's emitter is bypassed; Q2's is grounded, so it has none."""
+    c = (
+        circuit()
+        .rail("V+", 9)
+        .part("Q1", "bjt", "c1", "b1", "e1", model="2N2222A")
+        .part("R1", "resistor", "e1", "0", value="1k")
+        .part("C1", "capacitor", "e1", "0", value="22u", kind="electrolytic")
+        .part("R2", "resistor", "V+", "c1", value="10k")
+        .part("Q2", "bjt", "c2", "c1", "0", model="2N2222A")
+        .part("R3", "resistor", "V+", "c2", value="10k")
+        .build()
+    )
+    board, _ = board_parts(c, MODELS, TABLE)
+    found = _kinds(placement_limits(c, connect(c), board))
+    assert found == [("C1", "Q1", "E", "bypass")]
+
+
+def test_the_parts_on_a_high_gain_stage_s_input_must_sit_by_it(
+    circuit: Callable[..., CircuitBuilder],
+) -> None:
+    """D-400: with Q1 found high gain (`probe.loud_inputs`), every two-leg part on its
+    base's net keeps by the base: its coupling cap and its bias resistors."""
+    c = (
+        circuit()
+        .rail("V+", 9)
+        .part("Q1", "bjt", "c", "b", "0", model="2N2222A")
+        .part("C1", "capacitor", "in", "b", value="100n", kind="film")
+        .part("R1", "resistor", "c", "b", value="470k")
+        .part("R2", "resistor", "V+", "c", value="10k")
+        .part("R3", "resistor", "in", "0", value="1M")
+        .build()
+    )
+    board, _ = board_parts(c, MODELS, TABLE)
+    assert placement_limits(c, connect(c), board) == []
+    found = _kinds(placement_limits(c, connect(c), board, [("Q1", "B")]))
+    assert found == [("C1", "Q1", "B", "input"), ("R1", "Q1", "B", "input")]
+
+
+def test_two_high_gain_inputs_on_one_net_keep_its_parts_by_the_first(
+    circuit: Callable[..., CircuitBuilder],
+) -> None:
+    """The Klon's two U2 inputs share a net: its parts are kept by the first input only, as
+    one part can't sit by two pins on different strips."""
+    c = (
+        circuit()
+        .rail("V+", 9)
+        .part("Q1", "bjt", "c", "b", "0", model="2N2222A")
+        .part("Q2", "bjt", "d", "b", "0", model="2N2222A")
+        .part("C1", "capacitor", "in", "b", value="100n", kind="film")
+        .part("R2", "resistor", "V+", "c", value="10k")
+        .part("R3", "resistor", "V+", "d", value="10k")
+        .build()
+    )
+    board, _ = board_parts(c, MODELS, TABLE)
+    found = _kinds(placement_limits(c, connect(c), board, [("Q1", "B"), ("Q2", "B")]))
+    assert found == [("C1", "Q1", "B", "input")]
 
 
 def test_group_met_counts_holes_from_the_pin_one_more_per_extra_leg() -> None:

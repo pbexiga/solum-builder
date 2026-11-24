@@ -39,6 +39,7 @@ import { latestOnly } from "../state.js";
 import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
 import { chooseLayout } from "./layout-dialog.js";
+import { compactRun } from "./compact-run.js";
 import { boardNotes } from "./board-notes.js";
 import { needsCard } from "./needs.js";
 import { openForm } from "../editor/form.js";
@@ -147,14 +148,16 @@ export function boardView(host, app) {
 
   const canvas = boardCanvas(svg, {
     onClick: (spot) => {
+      if (locked) return;
       if (spot.mark) return openWarning(spot.mark);
       if (spot.suggest) return void acceptOne(spot.suggest);
       if (tool === "cuts") return void toggleCut(spot.hole);
       if (spot.ref) selectPart(spot.ref);
       else app.select(app.resting());
     },
-    onLine: (axis, line, x, y) => openMenu(x, y, lineChanges(axis, line).map((c) => ({ label: c.label, run: () => void resize(c.change, c.label, c.axis, c.at) }))),
+    onLine: (axis, line, x, y) => void (locked || openMenu(x, y, lineChanges(axis, line).map((c) => ({ label: c.label, run: () => void resize(c.change, c.label, c.axis, c.at) })))),
     onPress: (spot) => {
+      if (locked) return false; // pans
       if (carry || carryItem) return true; // picked up from the tray: this press puts it down
       if (spot.suggest) return false; // a click makes it
       if (tool === "parts" && spot.wire?.end === "run") {
@@ -207,17 +210,53 @@ export function boardView(host, app) {
       if (pressed && !moved) selectPart(pressed.ref);
     },
     onHover: (hole) => {
+      if (locked) return;
       aim = hole;
       if (carry) return showCarried();
       if (carryItem) return showCarriedItem();
       canvas.ghost(hole && tool !== "parts" ? { hole } : null);
     },
     onMenu: (spot, x, y) => {
+      if (locked) return true; // no menu
       if (spot.wire) return wireMenu(spot.wire.index, x, y), true;
       if (spot.item) return itemMenu(spot.item, x, y), true;
       if (spot.ref) return partMenu(spot.ref, x, y), true;
       return false;
     },
+  });
+  /** @type {{boards: import("./compact-run.js").Shown[], dim: boolean} | null} boards drawn in place of the circuit's (D-399) */
+  let previewing = null;
+  let previewSize = "";
+  let locked = false; // Build a full layout running or under review: nothing edits the board
+  /** @type {any} the circuit a full layout was built from */
+  let runFrom = null;
+  const beforeSvg = /** @type {SVGSVGElement} */ (/** @type {unknown} */ (document.createElementNS("http://www.w3.org/2000/svg", "svg")));
+  beforeSvg.setAttribute("class", "board-drawing board-before");
+  beforeSvg.setAttribute("role", "img");
+  beforeSvg.setAttribute("aria-label", "Stripboard before");
+  beforeSvg.toggleAttribute("hidden", true);
+  svg.before(beforeSvg);
+  const quiet = { onClick() {}, onLine() {}, onPress: () => false, onDrag() {}, onRelease() {}, onHover() {}, onMenu: () => true };
+  const beforeCanvas = boardCanvas(beforeSvg, quiet);
+  const topTitle = h("p", { class: "compact-title top", hidden: "" }, [""]);
+  const bottomTitle = h("p", { class: "compact-title bottom", hidden: "" }, [""]);
+  host.append(topTitle, bottomTitle);
+  const run = compactRun(host, {
+    circuit: () => app.circuit(),
+    preview(boards, dim) {
+      previewing = boards ? { boards, dim } : null;
+      if (!boards) fitted = false; // the circuit's own board fitted again
+      draw();
+    },
+    lock(on) {
+      locked = on;
+      for (const el of [tray, column, tools, sizeNote, $("board-needs")]) el.inert = on;
+      button.disabled = on;
+      if (on) drop();
+      runFrom = on ? app.circuit() : null;
+    },
+    keep: (stripboard) => app.editBoard(stripboard, "Build a full layout"),
+    refuse: (message) => app.refuse(message),
   });
   trimButton.addEventListener("click", () => void resize("trim", "Trim the board"));
   wireButton.addEventListener("click", () => void wireForMe());
@@ -326,6 +365,8 @@ export function boardView(host, app) {
     carry = { ref, from: "tray", pose: firstPose(fp), grab: [0, 0] };
     svg.classList.add("carrying");
     showCarried();
+    const blocked = guidanceNow()?.kept?.[ref]?.blocked;
+    if (blocked) app.refuse(blocked); // said, never stopped (D-400)
     focus();
   }
 
@@ -718,8 +759,10 @@ export function boardView(host, app) {
   /** *Layout…* (P6h2): the dialog's choice, confirmed, then done as one undo step. */
   async function layOut() {
     const board = readBoard(app.circuit()?.stripboard);
-    const chosen = await chooseLayout({ board, toPlace: progress?.to_place.length ?? 0 });
+    const times = postJson("api/stripboard/compact/estimate", { circuit: app.circuit() }).catch(() => null);
+    const chosen = await chooseLayout({ board, toPlace: progress?.to_place.length ?? 0, times });
     if (!chosen) return;
+    if (chosen.choice === "full") return void run.start({ thorough: chosen.thorough });
     if (chosen.choice === "tidy") return void tidyUp();
     await startBoard(chosen.choice === "fill", chosen.compact);
   }
@@ -839,7 +882,37 @@ export function boardView(host, app) {
     sheet.select(app.selection());
   }
 
+  /** Boards drawn in place of the circuit's, not editable: the best so far, or the review's (D-399). */
+  function drawPreview() {
+    const shown = /** @type {NonNullable<typeof previewing>} */ (previewing);
+    const circuit = app.circuit();
+    const boards = shown.boards.map((b) => readBoard(b.stripboard));
+    const size = boards.map((b) => `${b.columns}x${b.strips}`).join(" ");
+    const fit = size !== previewSize;
+    previewSize = size;
+    const both = boards.length === 2;
+    host.classList.toggle("split", both);
+    beforeSvg.toggleAttribute("hidden", !both);
+    svg.classList.toggle("dimmed", shown.dim);
+    const opts = (/** @type {import("./board-logic.js").Board} */ b) => ({ fit, values: settings.values, rulers: true, off: offBoardDrawing(progress, b), seeThrough: settings.seeThrough });
+    if (both) beforeCanvas.draw(boards[0], progress?.footprints ?? {}, circuit, opts(boards[0]));
+    const main = boards[boards.length - 1];
+    canvas.draw(main, progress?.footprints ?? {}, circuit, opts(main));
+    if (both && fit) requestAnimationFrame(() => { beforeCanvas.fit(); canvas.fit(); }); // the halves' sizes settle first
+    topTitle.textContent = shown.boards[0].title ?? "";
+    bottomTitle.textContent = shown.boards[1]?.title ?? "";
+    topTitle.hidden = bottomTitle.hidden = !both;
+    sizeText.textContent = sizeLine(main);
+    trimButton.hidden = wireButton.hidden = acceptButton.hidden = true;
+  }
+
   function draw() {
+    if (previewing) return drawPreview();
+    previewSize = "";
+    host.classList.remove("split");
+    beforeSvg.toggleAttribute("hidden", true);
+    topTitle.hidden = bottomTitle.hidden = true;
+    svg.classList.remove("dimmed");
     const circuit = app.circuit();
     const board = readBoard(circuit?.stripboard);
     const started = Boolean(board.columns);
@@ -1151,6 +1224,7 @@ export function boardView(host, app) {
      * @param {string} action
      */
     key(action) {
+      if (locked) return true; // the board isn't editable while a full layout runs or is reviewed
       if (action === "cancel") {
         if (carry || carryItem || wiring || linkStart) drop();
         else if (tool !== "parts") setTool("parts");
@@ -1173,6 +1247,7 @@ export function boardView(host, app) {
     show,
     /** The circuit changed or was opened: drawn again, re-checked. */
     changed() {
+      if (run.active() && app.circuit() !== runFrom) run.close(); // undone or opened: the run's board no longer fits
       mark();
       if (!active) return;
       drawSheet();
@@ -1187,6 +1262,7 @@ export function boardView(host, app) {
     },
     /** A circuit opened: the Schematic view again, the next board fitted when shown. */
     opened() {
+      if (run.active()) run.close();
       drop();
       fitted = false;
       progress = null;

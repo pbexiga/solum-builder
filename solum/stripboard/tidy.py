@@ -7,14 +7,15 @@ links of its own columns, then alone) or up, slide a link, a cut or a pad, short
 After each step the board is trimmed to what's on it. A step is kept when the check passes
 and the board's size, cuts and links are each no worse and its measure (size, cuts, links,
 the links' length, then how far everything sits from the top left) is smaller, so the
-search always ends and the same board always tidies the same way. It can't break a board.
+search always ends and the same board always tidies the same way. It can't break a board,
+nor a placement limit it met (D-367, D-400): a part kept by its pin stays there.
 
 Parts placed wrongly (the wrong way round, or a leg on a strip carrying only other nets,
 as the progress check names them) are offered back to the tray first: with `mend` they go
 back and *Fill the rest* lays them out again, then the board is tidied.
 """
 
-from collections.abc import Callable, Iterator
+from collections.abc import Callable, Iterator, Sequence
 from dataclasses import dataclass, replace
 from functools import partial
 
@@ -32,6 +33,7 @@ from solum.stripboard.check import (
     read_layout,
 )
 from solum.stripboard.footprints import BoardPart
+from solum.stripboard.limits import broken_limits, placement_limits
 from solum.stripboard.size import SizeError, remove_line, trim
 from solum.stripboard.start import StartError, start_for_me
 
@@ -212,10 +214,12 @@ def joins(layout: Layout, turnable: frozenset[str] = frozenset()) -> Joins:
 
 
 def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: FootprintTable,
-            mend: bool = False) -> Tidied:  # fmt: skip
-    """*Tidy up* on a board: smaller, still passing the check, the same every run. Parts
-    placed wrongly raise `MendFirst` unless `mend`, which lays them out again first. A
-    board that doesn't pass, or can't be made smaller, raises `TidyError` saying so."""
+            mend: bool = False, loud: Sequence[tuple[str, str]] = ()) -> Tidied:  # fmt: skip
+    """*Tidy up* on a board: smaller, still passing the check, every placement limit it
+    met still met (`loud`: the high-gain stages' inputs, `probe.loud_inputs`), the same
+    every run. Parts placed wrongly raise `MendFirst` unless `mend`, which lays them out
+    again first. A board that doesn't pass, or can't be made smaller, raises `TidyError`
+    saying so."""
     if not layout.parts:
         raise TidyError("There's nothing on the board to tidy: place the parts first.")
     mended = misfits(layout, circuit, models, table)
@@ -224,7 +228,7 @@ def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Footp
     if mended:
         tray = replace(layout, parts=tuple(p for p in layout.parts if p.ref not in mended))
         try:
-            filled = start_for_me(tray, circuit, models, table, fill=True)
+            filled = start_for_me(tray, circuit, models, table, fill=True, loud=loud)
         except StartError as err:
             raise TidyError(str(err)) from None
         if filled.left:
@@ -238,10 +242,13 @@ def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Footp
     turnable = frozenset(ref for ref, part in r.board.items()
                          if len(part.legs) == 2 and either_way(part, kinds.get(ref)))  # fmt: skip
     board, off, same = r.board, r.off_board, joins(layout, turnable)
+    limits = placement_limits(circuit, r.nets, board, loud)
+    broken = set(broken_limits(layout, limits, turnable))
 
     def passes(made: Layout) -> bool:  # quickest first: the holes, the joins, then the check
         return (not occupants(made)[1] and joins(made, turnable) == same
                 and not placement_faults(made, board, off)
+                and set(broken_limits(made, limits, turnable)) <= broken
                 and check_layout(made, circuit, models, table).ok)  # fmt: skip
 
     tidied = tidy_steps(layout, passes, board)

@@ -77,17 +77,20 @@ export const postJson = (url, body, fetchFn, as) =>
 
 /**
  * POST a search and follow its progress (D-123): asked with `progress: true`, the server
- * answers one JSON line per step (`{done, of}`, each passed to `onStep`), then `{result}`
- * (what this resolves to) or `{message}` (an error on the way). An error before the first
- * step, or an answer that isn't a stream, comes as usual.
+ * answers one JSON line per step (`{done, of}`, each passed to `onStep` with the whole
+ * line, which may carry more: *Build a full layout*'s base and best board, D-399), then
+ * `{result}` (what this resolves to) or `{message}` (an error on the way). An error before
+ * the first step, or an answer that isn't a stream, comes as usual. `signal` aborts it
+ * (the server stops its work when the page goes away).
  * @param {string} url @param {Record<string, unknown>} body
- * @param {(done: number, of: number) => void} onStep @param {typeof fetch} [fetchFn]
+ * @param {(done: number, of: number, line: Record<string, any>) => void} onStep @param {typeof fetch} [fetchFn]
+ * @param {AbortSignal} [signal]
  * @returns {Promise<any>}
  */
-export async function postProgress(url, body, onStep, fetchFn = fetch) {
+export async function postProgress(url, body, onStep, fetchFn = fetch, signal = undefined) {
   let response;
   try {
-    response = await fetchFn(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, progress: true }) });
+    response = await fetchFn(url, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ ...body, progress: true }), signal });
   } catch {
     throw new ApiError(errorMessage(0, null), 0);
   }
@@ -117,7 +120,7 @@ export async function postProgress(url, body, onStep, fetchFn = fetch) {
       const item = JSON.parse(line);
       if ("result" in item) return item.result;
       if ("message" in item) throw new ApiError(item.message, 422);
-      onStep(item.done, item.of);
+      onStep(item.done, item.of, item);
     }
     if (chunk.done) throw new ApiError("The search stopped before it finished. Try again.", 0);
   }

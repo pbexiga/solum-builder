@@ -6,11 +6,14 @@ from typing import Any
 
 import pytest
 
+from solum.circuit.connectivity import connect
 from solum.circuit.io import load_circuit
 from solum.guides import footprint_table
 from solum.models import load_models
 from solum.stripboard.board import Layout, layout_from_data
 from solum.stripboard.check import check_layout, misfits, read_layout
+from solum.stripboard.footprints import board_parts
+from solum.stripboard.limits import broken_limits, placement_limits
 from solum.stripboard.size import insert_line
 from solum.stripboard.start import start_for_me
 from solum.stripboard.tidy import MendFirst, TidyError, joins, key, tidy_up
@@ -92,3 +95,17 @@ def test_joins_name_an_either_way_part_by_its_ref() -> None:
     swapped = good(parts={**GOOD["parts"], "R1": {"1": "C4", "2": "C8"}})
     assert joins(swapped) != joins(good())
     assert joins(swapped, frozenset({"R1"})) == joins(good(), frozenset({"R1"}))
+
+
+def test_tidy_up_keeps_every_placement_limit_the_board_met() -> None:
+    """The Rat's Start board meets its limits on three pins (decoupling, feedback, the input on +,
+    its pin given as `probe.loud_inputs` finds it); tidied, it's smaller and still does."""
+    rat, loud = load_circuit(LIBRARY / "starters" / "proco-rat.json"), [("IC1", "+")]
+    limits = placement_limits(rat, connect(rat), board_parts(rat, MODELS, TABLE)[0], loud)
+    started = start_for_me(None, rat, MODELS, TABLE, fill=False, loud=loud).layout
+    assert {(lim.anchor, lim.pin) for lim in limits} == {("IC1", "2"), ("IC1", "3"), ("IC1", "7")}
+    assert broken_limits(started, limits) == []
+    tidied = tidy_up(started, rat, MODELS, TABLE, loud=loud).layout
+    assert tidied.columns * tidied.strips < started.columns * started.strips
+    assert broken_limits(tidied, limits) == []
+    assert check_layout(tidied, rat, MODELS, TABLE).ok

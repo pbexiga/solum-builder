@@ -13,7 +13,13 @@ So the layout can't fail: a piece's link column is its part's, clear of every ot
 A part with two legs on one net (a trimmer as a variable resistor, a buffer's output tied
 to its input) has them on neighbouring strips: the second is joined to the first by a short
 link beside the part, never a bus (the user, 2026-11-23).
-Several heights are tried for the parts' rows; the smallest board is kept.
+Several heights are tried for the parts' rows; the board breaking the fewest placement
+limits, then the smallest, is kept.
+
+Placement limits (D-367, D-400): a part kept by another's pin (a chip's decoupling cap, an
+op-amp's feedback parts, a bypass cap) is laid out with it, its leg on the pin's strip: by
+a chip's first column just before the chip (that strip runs left), otherwise just after;
+the parts before a chip slide right, a column at a time, until they're close enough.
 
 *Fill the rest* keeps what's on the board and lays out the tray the same way below it,
 the buses in between; each piece already on the board of a net with a bus is joined to it
@@ -22,9 +28,10 @@ never forced: the builder's own placements are never moved.
 """
 
 from collections import defaultdict
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from contextlib import suppress
 from dataclasses import dataclass, field, replace
+from functools import lru_cache
 
 from solum.circuit.connectivity import GROUND
 from solum.circuit.schema import Circuit
@@ -39,13 +46,29 @@ from solum.stripboard.check import (
     occupants,
     read_layout,
 )
-from solum.stripboard.footprints import BoardPart, body_holes, dip_legs, triangle_legs
+from solum.stripboard.footprints import (
+    BoardPart,
+    Footprint,
+    body_holes,
+    dip_legs,
+    links_under,
+    triangle_legs,
+)
 from solum.stripboard.guidance import signal_order
+from solum.stripboard.limits import (
+    Limit,
+    broken_limits,
+    group_met,
+    limit_groups,
+    placement_limits,
+)
 from solum.stripboard.wiring import WiringError, wire_for_me
 
 BOTTOM = (GROUND, "V-")  # nets whose bus is a bottom strip (on a new board)
 AXIAL_SPREAD = 3  # holes more than its least a flat resistor or diode may span
 EXTRA_ROWS = 20  # rows beyond the tallest part's tried for the parts' band
+LIMIT_COST = 20  # pass 1: a kept part whose leg can't be on its pin's strip (2 pieces)
+SLIDE = 8  # columns the parts before a chip may slide right to sit by its pin
 
 
 class StartError(ValueError):
@@ -78,7 +101,7 @@ class _Room:
     def body(self, part: BoardPart, legs: dict[str, Hole]) -> None:
         covered = body_holes(part, legs, False)
         self.bodies |= covered
-        if part.footprint.shape != "axial":
+        if not links_under(part, False):
             self.hard |= covered
 
     def free(self, column: int, a: int, b: int, also: "_Room | None" = None) -> bool:
@@ -110,7 +133,7 @@ def _room(layout: Layout, board: dict[str, BoardPart]) -> _Room:
         if part is not None:
             covered = body_holes(part, p.holes, p.standing)
             room.bodies |= covered
-            if not (part.footprint.shape == "axial" and not p.standing):
+            if not links_under(part, p.standing):
                 room.hard |= covered
     for link in layout.links:
         room.over |= set(link.between)
@@ -130,13 +153,14 @@ class _Shape:
     up: int  # body rows above the top leg
     down: int  # rows from the top leg to the lowest hole it takes
     left: frozenset[str] = frozenset()
+    standing: bool = False
 
 
-def _shaped(part: BoardPart, legs: dict[str, Hole]) -> _Shape:
+def _shaped(part: BoardPart, legs: dict[str, Hole], standing: bool = False) -> _Shape:
     xs = min(h[0] for h in legs.values())
     ys = min(h[1] for h in legs.values())
     legs = {leg: (x - xs, y - ys) for leg, (x, y) in legs.items()}
-    taken = body_holes(part, legs, False) | set(legs.values())
+    taken = body_holes(part, legs, standing) | set(legs.values())
     up = max(0, -min(h[1] for h in taken))
     down = max(h[1] for h in taken)
     left = (
@@ -144,29 +168,44 @@ def _shaped(part: BoardPart, legs: dict[str, Hole]) -> _Shape:
         if part.footprint.shape == "dip"
         else frozenset()
     )
-    return _Shape(legs, up, down, left)
+    return _Shape(legs, up, down, left, standing)
 
 
-def shapes(part: BoardPart) -> list[_Shape]:
+def shapes(part: BoardPart, every: bool = False) -> list[_Shape]:
     """Every way `part` stands across the strips: a chip either way up; a line of legs
     top to bottom either way round, at each step its footprint allows (a flat resistor or
-    diode from its least span to a few holes more)."""
-    fp = part.footprint
+    diode from its least span to a few holes more). `every` adds the ways *Build a full
+    layout* also tries (D-399): a line of legs along a strip, a resistor or diode stood
+    up, a trimmer turned a quarter."""
+    return list(_shapes(part.footprint, part.legs, every))
+
+
+@lru_cache(maxsize=512)
+def _shapes(fp: Footprint, names: tuple[str, ...], every: bool) -> tuple[_Shape, ...]:
+    """`shapes`, by what they depend on: the footprint and the legs' names."""
+    part = BoardPart("", fp, {})
     if fp.shape == "dip":
-        return [
+        return tuple(
             _shaped(part, dip_legs(len(fp.order), (0, 0), t, fp.row_holes)) for t in (False, True)
-        ]
+        )
     if fp.shape == "triangle":  # 1 and 3 across the strips, either way up (D-393)
-        return [_shaped(part, triangle_legs(t, swapped=m)) for t in (0, 2) for m in (False, True)]
-    names = part.legs
-    steps = fp.steps
+        turns = range(4) if every else (0, 2)
+        return tuple(
+            _shaped(part, triangle_legs(t, swapped=m)) for t in turns for m in (False, True)
+        )
+    spans = [(step, False) for step in fp.steps]
     if fp.shape == "axial":
-        steps = tuple(range(fp.flat, fp.flat + 1 + AXIAL_SPREAD))
+        spans = [(step, False) for step in range(fp.flat, fp.flat + 1 + AXIAL_SPREAD)]
+        if every and fp.stand:
+            spans.append((fp.stand, True))
+    ways = ((0, 1), (1, 0)) if every else ((0, 1),)
     found = []
-    for step in steps:
+    for step, standing in spans:
         for order in (names, names[::-1]):
-            found.append(_shaped(part, {leg: (0, k * step) for k, leg in enumerate(order)}))
-    return found
+            for dx, dy in ways:
+                legs = {leg: (k * step * dx, k * step * dy) for k, leg in enumerate(order)}
+                found.append(_shaped(part, legs, standing))
+    return tuple(found)
 
 
 def _box(holes: Iterable[Hole]) -> tuple[int, int, int, int]:
@@ -201,6 +240,29 @@ def _order(circuit: Circuit, r: Reading, refs: Iterable[str]) -> list[str]:
     return sorted(refs, key=key)
 
 
+@dataclass(frozen=True)
+class _Block:
+    """A part and the parts its pins keep (their limits), laid out together."""
+
+    anchor: str
+    limits: tuple[Limit, ...]
+
+
+def _units(order: list[str], limits: Sequence[Limit]) -> list[str | _Block]:
+    """`order` with each part kept by another's pin taken into that part's block (the
+    first that keeps it); a part that keeps others isn't taken into another's."""
+    todo = set(order)
+    anchors = {lim.anchor for lim in limits if lim.anchor in todo}
+    owner: dict[str, str] = {}
+    kept: dict[str, list[Limit]] = defaultdict(list)
+    for lim in limits:
+        if lim.anchor in todo and lim.part in todo and lim.part not in anchors | owner.keys():
+            owner[lim.part] = lim.anchor
+            kept[lim.anchor].append(lim)
+    return [_Block(ref, tuple(kept[ref])) if ref in kept else ref
+            for ref in order if ref not in owner]  # fmt: skip
+
+
 def _pieces(r: Reading) -> dict[str, list[int]]:
     """Each net's joined groups on the board that carry it and no other net."""
     found: dict[str, list[int]] = defaultdict(list)
@@ -227,31 +289,125 @@ class _Choice:
     twins: tuple[tuple[str, str], ...] = ()
 
 
-def _choose(r: Reading, todo: list[str], height: int, left: dict[str, int]) -> list[_Choice] | None:
-    """Each part's place in a band `height` rows high, in order (module doc); `left`: each
-    net's legs still to place (a net cut off while it has legs to come costs a piece).
-    None when a part is taller than the band."""
+@dataclass(frozen=True)
+class _Kept:
+    """A block's choices, `start` to `stop` in the band's order, the anchor's at `anchor`."""
+
+    start: int
+    stop: int
+    anchor: int
+    block: _Block
+
+
+def _carry(r: Reading, choice: _Choice, carried: list[str | None], left: dict[str, int]) -> None:
+    """The nets `choice`'s legs carry on along their rows, and its legs no longer to come."""
+    part = r.board[choice.ref]
+    for leg, (_, y) in sorted(choice.shape.legs.items(), key=lambda kv: kv[1][0]):
+        net = _leg_net(r, part, leg)  # a chip's second column last: it carries on
+        carried[choice.row + y] = net
+        left[net] = left.get(net, 1) - 1
+
+
+def _best(r: Reading, ref: str, height: int, carried: list[str | None], left: dict[str, int],
+          want: tuple[str, int, bool] | None = None) -> tuple[float, _Choice] | None:  # fmt: skip
+    """`ref`'s cheapest place in the band (`_try`); `want`: its leg that must be on a row,
+    the rows putting it there only (any row, at `LIMIT_COST` more, when none can), and
+    whether the part comes before its pin (that leg rightmost, else leftmost, as ties go)."""
+    part = r.board[ref]
+    best: tuple[tuple[float, int, int, int], _Choice] | None = None
+    for k, shape in enumerate(shapes(part)):
+        rows = range(shape.up, height - shape.down)
+        if want is not None:
+            row = want[1] - shape.legs[want[0]][1]
+            rows = range(row, row + 1) if row in rows else rows
+        x = 0
+        if want is not None:  # how far the leg is from the part's side facing its pin
+            x = shape.legs[want[0]][0]
+            x = max(h[0] for h in shape.legs.values()) - x if want[2] else x
+        for row in rows:
+            cost, choice = _try(r, part, shape, row, carried, left)
+            if want is not None and row + shape.legs[want[0]][1] != want[1]:
+                cost += LIMIT_COST
+            key = (cost, x, row, k)
+            if best is None or key < best[0]:
+                best = (key, choice)
+    return None if best is None else (best[0][0], best[1])
+
+
+def _block(r: Reading, block: _Block, height: int, carried: list[str | None],
+           left: dict[str, int]) -> tuple[list[_Choice], int] | None:  # fmt: skip
+    """A block's places, cheapest in all: for each way the anchor can stand, the parts by
+    its first column first, then the anchor, then the rest, each kept part's leg on its
+    pin's row; and where the anchor's choice is among them. `carried` and `left` carried
+    on past it; None when nothing fits."""
+    anchor = r.board[block.anchor]
+    best: tuple[tuple[float, int, int], list[_Choice], int, list[str | None],
+                dict[str, int]] | None = None  # fmt: skip
+    for k, shape in enumerate(shapes(anchor)):
+        for row in range(shape.up, height - shape.down):
+            c, lf = list(carried), dict(left)
+            choices: list[_Choice] = []
+
+            def kept(lims: list[Limit], c: list[str | None] = c, lf: dict[str, int] = lf,
+                     row: int = row, shape: _Shape = shape,
+                     choices: list[_Choice] = choices) -> float | None:  # fmt: skip
+                cost = 0.0
+                for lim in lims:
+                    to = (lim.leg, row + shape.legs[lim.pin][1], lim.pin in shape.left)
+                    found = _best(r, lim.part, height, c, lf, to)
+                    if found is None:
+                        return None
+                    _carry(r, found[1], c, lf)
+                    choices.append(found[1])
+                    cost += found[0]
+                return cost
+
+            first = kept([lim for lim in block.limits if lim.pin in shape.left])
+            if first is None:
+                continue
+            cost, made = _try(r, anchor, shape, row, c, lf)
+            _carry(r, made, c, lf)
+            at = len(choices)
+            choices.append(made)
+            rest = kept([lim for lim in block.limits if lim.pin not in shape.left])
+            if rest is None:
+                continue
+            key = (first + cost + rest, row, k)
+            if best is None or key < best[0]:
+                best = (key, choices, at, c, lf)
+    if best is None:
+        return None
+    _, choices, at, c, lf = best
+    carried[:] = c
+    left.clear()
+    left.update(lf)
+    return choices, at
+
+
+def _choose(r: Reading, units: list[str | _Block], height: int,
+            left: dict[str, int]) -> tuple[list[_Choice], list[_Kept]] | None:  # fmt: skip
+    """Each part's place in a band `height` rows high, in order (module doc), and the
+    blocks among them; `left`: each net's legs still to place (a net cut off while it has
+    legs to come costs a piece). None when a part is taller than the band."""
     carried: list[str | None] = [None] * height
     left = dict(left)
-    found = []
-    for ref in todo:
-        part = r.board[ref]
-        best: tuple[tuple[float, int, int], _Choice] | None = None
-        for k, shape in enumerate(shapes(part)):
-            for row in range(shape.up, height - shape.down):
-                cost, choice = _try(r, part, shape, row, carried, left)
-                key = (cost, row, k)
-                if best is None or key < best[0]:
-                    best = (key, choice)
+    found: list[_Choice] = []
+    kept: list[_Kept] = []
+    for unit in units:
+        if isinstance(unit, _Block):
+            made = _block(r, unit, height, carried, left)
+            if made is None:
+                return None
+            choices, at = made
+            kept.append(_Kept(len(found), len(found) + len(choices), len(found) + at, unit))
+            found += choices
+            continue
+        best = _best(r, unit, height, carried, left)
         if best is None:
             return None
-        choice = best[1]
-        for leg, (_, y) in sorted(choice.shape.legs.items(), key=lambda kv: kv[1][0]):
-            net = _leg_net(r, part, leg)  # a chip's second column last: it carries on
-            carried[choice.row + y] = net
-            left[net] = left.get(net, 1) - 1
-        found.append(choice)
-    return found
+        _carry(r, best[1], carried, left)
+        found.append(best[1])
+    return found, kept
 
 
 def _try(r: Reading, part: BoardPart, shape: _Shape, row: int, carried: list[str | None],
@@ -261,11 +417,12 @@ def _try(r: Reading, part: BoardPart, shape: _Shape, row: int, carried: list[str
     starts, cuts, twins = set(), set(), []
     cost = 0.0
     anchors: dict[tuple[str, bool], str] = {}  # (net, in a chip's first column) → its leg
+    nets = {leg: _leg_net(r, part, leg) for leg in shape.legs}
     for leg, (x, y) in shape.legs.items():  # the legs joining a strip of their net first
-        if not (shape.left and x > 0) and carried[row + y] == _leg_net(r, part, leg):
-            anchors.setdefault((_leg_net(r, part, leg), leg in shape.left), leg)
+        if not (shape.left and x > 0) and carried[row + y] == nets[leg]:
+            anchors.setdefault((nets[leg], leg in shape.left), leg)
     for leg, (x, y) in shape.legs.items():
-        net = _leg_net(r, part, leg)
+        net = nets[leg]
         here = carried[row + y]
         behind = bool(shape.left) and x > 0  # behind a chip's middle cut: a piece of its own
         if here == net and not behind:
@@ -310,6 +467,13 @@ class _Plan:
     last: dict[int, int] = field(default_factory=dict)
     left: list[str] = field(default_factory=list)
 
+    def copy(self) -> "_Plan":
+        """A copy to try on (what's in it is frozen: the containers are copied)."""
+        room = self.room
+        return _Plan(_Room(set(room.used), set(room.bodies), set(room.hard), set(room.over),
+                           list(room.links)), list(self.parts), set(self.cuts),
+                     dict(self.last), list(self.left))  # fmt: skip
+
 
 def _join_pieces(r: Reading, plan: _Plan, bus: dict[str, int]) -> None:
     """Each piece already on the board of a net with a bus, joined to it by a link down
@@ -334,6 +498,9 @@ def _join_pieces(r: Reading, plan: _Plan, bus: dict[str, int]) -> None:
             plan.room.link(way[0], way[1], row)
 
 
+_Later = tuple[tuple[Hole, int], ...]  # links put off: (the leg's hole, its bus strip)
+
+
 @dataclass(frozen=True)
 class _Spot:
     """Where a part goes: its legs, the cuts it brings, what it takes (its legs, body,
@@ -343,6 +510,7 @@ class _Spot:
     cuts: list[Hole]
     taken: _Room
     kept: set[Hole]
+    later: _Later = ()
 
 
 def _overhangs(part: BoardPart, legs: dict[str, Hole]) -> bool:
@@ -355,12 +523,14 @@ def _overhangs(part: BoardPart, legs: dict[str, Hole]) -> bool:
 
 
 def _fits(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int],
-          lone: set[str], shift: int) -> _Spot | None:  # fmt: skip
+          lone: set[str], shift: int, way: str = "") -> _Spot | None:  # fmt: skip
     """`choice` moved `shift` columns right, if it fits: clear of everything placed, each
     row's first leg right of that row's last column (and of a free hole for its cut), a
     free column for each link (a chip's first column's to its left, the rest to its
     right; a twin's short link nearest), a hole kept beside each leg starting a piece
-    wired off the board (`lone`)."""
+    wired off the board (`lone`). `way` "left": every link to the part's left (a part
+    before a chip's first column, D-400); "later": the links to its right put off (a
+    chip whose kept parts come after it, `_lay_later`)."""
     room, part, shape = plan.room, r.board[choice.ref], choice.shape
     legs = {leg: (x + shift, top + choice.row + y) for leg, (x, y) in shape.legs.items()}
     body = body_holes(part, legs, False)
@@ -369,7 +539,7 @@ def _fits(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int
     for h in legs.values():
         if h in room.used or h in room.bodies or h in room.over:
             return None
-    hard = part.footprint.shape != "axial"
+    hard = not links_under(part, False)
     for h in body:
         if h in room.used or h in room.bodies or (hard and h in room.over):
             return None
@@ -413,14 +583,17 @@ def _fits(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int
         taken.link(at, row, to)
     nets = {leg: _leg_net(r, part, leg) for leg in legs}
     linked = [leg for leg in part.legs if leg in choice.starts and nets[leg] in bus]
-    for leg in (leg for leg in linked if leg in shape.left):
+    lefts = set(linked) if way == "left" else shape.left
+    for leg in (leg for leg in linked if leg in lefts):
         (column, row), to = legs[leg], bus[nets[leg]]
         found = (c for c in range(after[row], column) if room.free(c, row, to, taken))
         at = next(found, None)
         if at is None:
             return None
         taken.link(at, row, to)
-    for leg in (leg for leg in linked if leg not in shape.left):
+    later = tuple((legs[leg], bus[nets[leg]]) for leg in linked
+                  if leg not in lefts and way == "later")  # fmt: skip
+    for leg in (leg for leg in linked if leg not in lefts and way != "later"):
         row, to = legs[leg][1], bus[nets[leg]]
         at = right
         while not room.free(at, row, to, taken):
@@ -434,15 +607,16 @@ def _fits(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int
                                              room.bodies, room.over)):  # fmt: skip
             hole = (hole[0] + 1, row)
         kept.add(hole)
-    return _Spot(legs, cuts, taken, kept)
+    return _Spot(legs, cuts, taken, kept, later)
 
 
 def _lay(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int],
-         lone: set[str]) -> None:  # fmt: skip
-    """A part put as far left as it fits (`_fits`), and what it takes marked."""
-    shift = max(plan.last.get(top + choice.row + y, -1) + 1 - x
-                for x, y in choice.shape.legs.values())  # fmt: skip
-    while (spot := _fits(r, plan, choice, top, bus, lone, shift)) is None:
+         lone: set[str], slide: int = 0, way: str = "") -> _Later:  # fmt: skip
+    """A part put as far left as it fits (`_fits`), `slide` columns further, and what it
+    takes marked; the links it put off (`way`)."""
+    shift = slide + max(plan.last.get(top + choice.row + y, -1) + 1 - x
+                        for x, y in choice.shape.legs.values())  # fmt: skip
+    while (spot := _fits(r, plan, choice, top, bus, lone, shift, way)) is None:
         shift += 1
     room, taken = plan.room, spot.taken
     room.used |= taken.used | spot.kept
@@ -456,10 +630,67 @@ def _lay(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int]
         plan.last[row] = max(plan.last.get(row, -1), column)
     part = r.board[choice.ref]
     plan.parts.append(Placed(choice.ref, tuple((leg, spot.legs[leg]) for leg in part.legs)))
+    return spot.later
+
+
+def _lay_later(plan: _Plan, later: Iterable[tuple[Hole, int]], cuts: frozenset[Hole]) -> bool:
+    """Each link put off laid from the leg's strip, right of what's on it now and before
+    the next cut; False when one can't be."""
+    for (column, row), to in later:
+        at = max(column, plan.last.get(row, -1)) + 1
+        while not plan.room.free(at, row, to):
+            at += 1
+        if any((c, row) in plan.cuts or (c, row) in cuts for c in range(column, at + 1)):
+            return False
+        plan.room.link(at, row, to)
+        for end in (row, to):
+            plan.last[end] = max(plan.last.get(end, -1), at)
+    return True
+
+
+def _missed(plan: _Plan, block: _Block, cuts: frozenset[Hole]) -> int:
+    """How many of `block`'s pins its parts, as laid in `plan`, don't sit by."""
+    holes = {(p.ref, leg): h for p in plan.parts for leg, h in p.legs}
+
+    def foreign(h: Hole) -> bool:
+        return h in plan.cuts or h in cuts
+
+    return sum(not group_met(holes[key], [holes[(g.part, g.leg)] for g in group], foreign)
+               for key, group in limit_groups(block.limits).items())  # fmt: skip
+
+
+def _lay_block(r: Reading, plan: _Plan, choices: list[_Choice], kept: _Kept, top: int,
+               bus: dict[str, int], lone: set[str], cuts: frozenset[Hole]) -> _Plan:  # fmt: skip
+    """A block laid: the parts before its anchor with their links on their left, slid
+    right a column at a time (up to `SLIDE`); the links on the right of the anchor and
+    the parts after it put off until they're all laid (when they can't be, laid as
+    usual); until every pin keeps its parts, or as near as that gets."""
+    best: tuple[int, int, _Plan] | None = None
+    after = kept.stop > kept.anchor + 1
+    for slide in range(SLIDE + 1 if kept.anchor > kept.start else 1):
+        for put_off in (True, False) if after else (False,):
+            trial = plan.copy()
+            later: list[tuple[Hole, int]] = []
+            for j in range(kept.start, kept.stop):
+                if j < kept.anchor:
+                    _lay(r, trial, choices[j], top, bus, lone, slide, "left")
+                else:
+                    later += _lay(r, trial, choices[j], top, bus, lone, 0,
+                                  "later" if put_off else "")  # fmt: skip
+            if not _lay_later(trial, later, cuts):
+                continue
+            missed = _missed(trial, kept.block, cuts)
+            if best is None or (missed, slide) < best[:2]:
+                best = (missed, slide, trial)
+            if not missed:
+                return trial
+    assert best is not None
+    return best[2]
 
 
 def _laid_out(r: Reading, circuit: Circuit, base: Layout, todo: list[str],
-              choices: list[_Choice], height: int) -> tuple[Layout, list[str]]:  # fmt: skip
+              choices: list[_Choice], kept: list[_Kept],
+              height: int) -> tuple[Layout, list[str]]:  # fmt: skip
     """`base` with the parts placed as chosen below it, the buses between, every net's
     pieces joined (module doc)."""
     fresh = not base.parts
@@ -480,8 +711,16 @@ def _laid_out(r: Reading, circuit: Circuit, base: Layout, todo: list[str],
     plan = _Plan(_room(base, r.board) if not fresh else _Room())
     _join_pieces(r, plan, bus)
     lone = set(r.ends.values()) - bus.keys()
-    for choice in choices:
-        _lay(r, plan, choice, top, bus, lone)
+    blocks = {k.start: k for k in kept}
+    i = 0
+    while i < len(choices):
+        block = blocks.get(i)
+        if block is None:
+            _lay(r, plan, choices[i], top, bus, lone)
+            i += 1
+            continue
+        plan = _lay_block(r, plan, choices, block, top, bus, lone, base.cuts)
+        i = block.stop
     strips = max(floor + len(below) if todo else top, base.strips, 1)
     taken = plan.room.used | plan.room.bodies
     columns = max(max((h[0] for h in taken), default=0) + 1, base.columns, 1)
@@ -501,11 +740,13 @@ def _legs_to_place(r: Reading, todo: list[str]) -> dict[str, int]:
 
 
 def start_for_me(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
-                 table: FootprintTable, fill: bool) -> Started:  # fmt: skip
+                 table: FootprintTable, fill: bool,
+                 loud: Sequence[tuple[str, str]] = ()) -> Started:  # fmt: skip
     """*Fill the rest* (`fill`: what's placed kept, the tray laid out) or *Start over* (the
     whole board laid out afresh; the parts' On / Off the board choices kept), with the
     off-board parts beside it and wired; `StartError` when there's nothing to do or a part
-    can't go on a board."""
+    can't go on a board. `loud`: the high-gain stages' inputs for the placement limits
+    (`probe.loud_inputs`)."""
     old = layout or Layout(0, 0, ())
     kept = replace(Layout(0, 0, ()), where=old.where, notes=old.notes, dismissed=old.dismissed)
     base = old if fill else kept  # Start over keeps the choices and the notes (D-398)
@@ -516,15 +757,18 @@ def start_for_me(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
         raise StartError("Nothing in this circuit goes on a board.")
     placed = {p.ref for p in base.parts}
     todo = _order(circuit, r, sorted(r.board.keys() - placed))
+    limits = placement_limits(circuit, r.nets, r.board, loud)
+    units = _units(todo, limits)
     tallest = max((min(s.up + s.down for s in shapes(r.board[ref])) for ref in todo), default=0)
     remaining = _legs_to_place(r, todo)
-    best: tuple[tuple[int, int, int], Layout, list[str]] | None = None
+    best: tuple[tuple[int, int, int, int], Layout, list[str]] | None = None
     for height in range(tallest + 1, tallest + 2 + EXTRA_ROWS):
-        choices = _choose(r, todo, height, remaining)
-        if choices is None:
+        chosen = _choose(r, units, height, remaining)
+        if chosen is None:
             continue
-        made, left = _laid_out(r, circuit, base, todo, choices, height)
-        key = (len(left), made.columns * made.strips, len(made.links))
+        made, left = _laid_out(r, circuit, base, todo, *chosen, height)
+        broken = len(broken_limits(made, limits))
+        key = (len(left), broken, made.columns * made.strips, len(made.links))
         if best is None or key < best[0]:
             best = (key, made, left)
         if not todo:

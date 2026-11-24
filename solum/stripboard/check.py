@@ -8,7 +8,7 @@ plain-English sentence naming the parts and holes; a layout with none is the cir
 """
 
 from collections import defaultdict
-from collections.abc import Iterable, Mapping
+from collections.abc import Iterable, Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from typing import Literal
 
@@ -36,6 +36,7 @@ from solum.stripboard.footprints import (
     body_holes,
     body_outline,
     leg_problem,
+    links_under,
     one_board_part,
     outline_overlap,
 )
@@ -48,6 +49,7 @@ from solum.stripboard.offboard import (
     lug_nets,
     off_board_items,
 )
+from solum.words import listed
 
 Terminal = PinRef | str  # a board part's pin, or an off-board lug ("VR1.1", "IN.S", "V+")
 _TWO_PIN_WORDS = {"A": "anode", "K": "cathode"}
@@ -285,7 +287,7 @@ def placement_faults(layout: Layout, board: dict[str, BoardPart],
         if problem:
             faults.append(problem)
             continue
-        if part.footprint.shape == "axial" and not p.standing:
+        if links_under(part, p.standing):
             flat.add(p.ref)
         for hole in body_holes(part, p.holes, p.standing):
             bodies[hole].append(p.ref)
@@ -776,7 +778,7 @@ def _misplaced(r: Reading, wanted: dict[str, list[Terminal]],
             continue
         placed = [r.words(m) for m in sorted(mates, key=_key) if m in r.groups]
         unplaced = [m for m in mates if m not in r.groups]
-        goes = _listed(placed[:3] + ([f"{len(placed) - 3} more"] if len(placed) > 3 else []))
+        goes = listed(placed[:3] + ([f"{len(placed) - 3} more"] if len(placed) > 3 else []))
         if not placed:
             many = "s" if len(unplaced) > 1 else ""
             goes = f"{len(unplaced)} terminal{many} not on the board yet"
@@ -819,11 +821,6 @@ def misfits(layout: Layout, circuit: Circuit, models: ModelLibrary,
     return [p.ref for p in r.layout.parts if p.ref in found]
 
 
-def _listed(words: list[str]) -> str:
-    """`a`, `a and b`, `a, b and c`."""
-    return " and ".join([", ".join(words[:-1]), words[-1]] if len(words) > 1 else words)
-
-
 def _gone(r: Reading, circuit: Circuit) -> list[str]:
     """What the board holds of parts the circuit no longer has (D-376): placed board parts
     (one that can't be placed now is still the circuit's: the tray names it), off-board parts
@@ -838,11 +835,12 @@ def _gone(r: Reading, circuit: Circuit) -> list[str]:
     return sorted(gone)
 
 
-def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
-             table: FootprintTable) -> Progress:  # fmt: skip
+def progress(layout: Layout, circuit: Circuit, models: ModelLibrary, table: FootprintTable,
+             loud: Sequence[tuple[str, str]] = ()) -> Progress:  # fmt: skip
     """The editor's check of a board in the making (D-368): what's left to place, each
-    net's progress, each leg's needs, what's wrong now. `check_layout` still decides a
-    board is done."""
+    net's progress, each leg's needs, what's wrong now (`loud`: the high-gain stages'
+    input pins for the placement limits, `probe.loud_inputs`, D-400). `check_layout`
+    still decides a board is done."""
     r = read_layout(layout, circuit, models, table)
     placed = {p.ref for p in r.layout.parts}
     in_circuit = r.board.keys() | r.off_board
@@ -890,7 +888,7 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
             )  # fmt: skip
             rows.append(LegProgress(leg, holes.get((ref, leg)), need, reach))
         legs[ref] = rows
-    warnings = limit_warnings(r.layout, placement_limits(circuit, r.nets, r.board))
+    warnings = limit_warnings(r.layout, placement_limits(circuit, r.nets, r.board, loud))
     touching = outline_overlaps(r.layout, r.board)
     overlaps, dismissed = dismissed_apart(layout, touching)
     done = check_layout(layout, circuit, models, table).ok

@@ -23,6 +23,7 @@ from typing import Literal
 
 from solum.circuit.connectivity import GROUND, ConnectivityError, Nets, connect
 from solum.circuit.schema import AmpInput, Battery, Circuit, Guitar, Jack, Plug
+from solum.words import listed
 
 Role = Literal["input", "output", "ring", "battery"]
 Socket = Jack | Guitar  # a part with a plug in it
@@ -180,8 +181,7 @@ def _why(c: CableOut) -> str:
         parts.append("nothing reaches the amp")
     if "battery" in c.roles:
         parts.append("its battery is cut off")
-    said = parts[0] if len(parts) == 1 else ", ".join(parts[:-1]) + " and " + parts[-1]
-    return f"{c.ref} has no cable in: {said}."
+    return f"{c.ref} has no cable in: {listed(parts)}."
 
 
 def silence(circuit: Circuit) -> str | None:

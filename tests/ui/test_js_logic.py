@@ -1117,8 +1117,8 @@ def test_the_layout_dialog_s_choices_default_and_confirmations(js: Page) -> None
         };
         """,
     )
-    assert got["empty"] == [["start", False], ["fill", True], ["tidy", True]]
-    assert got["placed"] == [False, False, False]
+    assert got["empty"] == [["start", False], ["fill", True], ["tidy", True], ["full", False]]
+    assert got["placed"] == [False, False, False, False]
     assert got["why"] == "Nothing is placed yet: start a board first."
     assert got["defaults"] == ["start", None]
     assert got["fresh"] == {
@@ -1577,3 +1577,64 @@ def test_the_board_s_overlap_marks_and_note_forms(js: Page) -> None:
     assert got["other"] == {"parts": ["C1"], "text": "x"}
     assert got["lines"] == ["C2, R1: Higher.", "Socket it."]
     assert got["parts"] == ["C1"]
+
+
+def test_a_part_a_placed_pin_keeps_is_marked_only_by_that_pin(js: Page) -> None:
+    """D-400: C1's leg 1 kept by IC1's pin 8: its net marked only where the pin keeps it;
+    its other leg's net as usual; with none free (blocked), the net's copper as usual."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const progress = { legs: { C1: [{ leg: '1', net: 'V+' }, { leg: '2', net: 'GND' }] } };
+        const marks = { 'V+': [[2, 0, 9]], GND: [[5, 0, 1]] };
+        const kept = { leg: '1', net: 'V+', holes: [[2, 8, 9]], blocked: null };
+        const as = (holes) => holes.map(([c, s]) => `${c},${s}`);
+        return {
+          kept: as(b.markedHoles(progress, { marks, kept: { C1: kept } }, 'C1')),
+          blocked: as(b.markedHoles(progress, { marks, kept: { C1: { ...kept, holes: [], blocked: 'No free hole' } } }, 'C1')).length,
+          plain: as(b.markedHoles(progress, { marks }, 'C1')).length,
+        };
+        """,
+    )
+    assert got["kept"] == ["8,2", "9,2", "0,5", "1,5"]
+    assert got["blocked"] == got["plain"] == 12
+
+
+def test_build_a_full_layout_s_words(js: Page) -> None:
+    """D-399: the times in words, the confirmation (replacing a board, or an empty one),
+    the figures, the time left, and a try that's the same board as an earlier one."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const placed = { parts: [1, 2, 3], cuts: ['A1'], links: [], wires: [1, 2] };
+        const empty = { parts: [], cuts: [], links: [], wires: [] };
+        const one = { stripboard: { size: [9, 8], parts: { R1: { 1: 'A1', 2: 'A5' } } } };
+        const two = { stripboard: { size: [9, 7], parts: { R1: { 1: 'A1', 2: 'A5' } } } };
+        return {
+          times: [4, 12, 33, 70, 130, 600].map(b.timeText),
+          over: b.layoutConfirm('full', false, placed, 0, 33),
+          fresh: b.layoutConfirm('full', false, empty, 8, 5).text,
+          figures: b.figuresLine({ columns: 21, strips: 14, cuts: 1, links: 13 }),
+          of: b.figuresOf({ size: [9, 8], cuts: ['A1', 'B2'], links: [['C1', 'C4']] }),
+          left: [3, 22, 130].map(b.leftText),
+          same: [b.sameTry([one, two], { stripboard: { ...two.stripboard } }), b.sameTry([one], two)],
+        };
+        """,
+    )
+    assert got["times"] == ["A few seconds", "About 10 seconds", "About 35 seconds",
+                            "About a minute", "About 2 minutes", "About 10 minutes"]  # fmt: skip
+    assert got["over"] == {
+        "title": "Build a full layout",
+        "text": "This replaces everything on the board: 3 parts, its cuts, links and wires. "
+        "It takes about 35 seconds; you can stop early and keep the best board found so far.",
+        "label": "Build it",
+    }
+    assert got["fresh"] == (
+        "It takes a few seconds; you can stop early and keep the best board found so far."
+    )
+    assert got["figures"] == "21 × 14 holes, 1 cut, 13 links"
+    assert got["of"] == {"columns": 9, "strips": 8, "cuts": 2, "links": 1}
+    assert got["left"] == ["Almost done.", "About 25 seconds left.", "About 2 minutes left."]
+    assert got["same"] == [1, -1]

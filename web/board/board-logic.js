@@ -932,8 +932,9 @@ export const BOARD_SETTINGS = /** @type {const} */ ([
  * The Layout dialog's choices (P6h2), in order, each with a line saying what it does and,
  * when it can't be chosen, why (`why`): Fill the rest and Tidy up need something placed.
  * The first is *Start a board* on an empty board, *Start over* once parts are placed; it
- * has *Make the board compact* under it (the dialog's own checkbox).
- * @typedef {"start" | "fill" | "tidy"} LayoutChoice
+ * has *Make the board compact* under it (the dialog's own checkbox). The last, below a
+ * divider, *Build a full layout* (D-399), has Quick and Thorough under it.
+ * @typedef {"start" | "fill" | "tidy" | "full"} LayoutChoice
  * @param {boolean} placed whether any part is on the board
  * @returns {Array<{value: LayoutChoice, label: string, text: string, why: string}>}
  */
@@ -945,7 +946,65 @@ export function layoutChoices(placed) {
       : { value: "start", label: "Start a board", text: "A base layout of the whole board, the parts in signal order left to right, for you to edit by hand.", why: "" },
     { value: "fill", label: "Fill the rest", text: "Keeps what you've placed and lays out the parts still in the tray below it.", why: none },
     { value: "tidy", label: "Tidy up", text: "Makes the board smaller by moving parts, links and cuts in small steps, keeping the check passing.", why: none },
+    { value: "full", label: "Build a full layout", text: "Starts afresh and does everything for you: lays the board out, then keeps making it smaller, wired and checked. Replaces what's on the board.", why: "" },
   ];
+}
+
+/** The notes under *Build a full layout*'s choices (the user, 2026-11-24). */
+export const FULL_NOTES = [
+  "These times are estimates, from the circuit's size and this computer's speed: the more parts, the longer it takes to build.",
+  "The layout is worked out by the app. Check it, and adjust it if you need to, before you build it on a real board.",
+];
+
+/**
+ * How long a run takes, in words (D-399): "A few seconds", "About 40 seconds", "About a
+ * minute", "About 3 minutes".
+ * @param {number} seconds
+ */
+export function timeText(seconds) {
+  if (seconds < 10) return "A few seconds";
+  if (seconds < 55) return `About ${Math.round(seconds / 5) * 5} seconds`;
+  if (seconds < 90) return "About a minute";
+  return `About ${Math.round(seconds / 60)} minutes`;
+}
+
+/**
+ * The time a run has left, in words, from its speed so far: "About 25 seconds left."
+ * @param {number} seconds
+ */
+export function leftText(seconds) {
+  if (seconds < 5) return "Almost done.";
+  if (seconds < 60) return `About ${Math.ceil(seconds / 5) * 5} seconds left.`;
+  const minutes = Math.round(seconds / 60);
+  return `About ${minutes} minute${minutes === 1 ? "" : "s"} left.`;
+}
+
+/**
+ * A board's figures in a line: "21 × 14 holes, 23 cuts, 13 links".
+ * @param {{columns: number, strips: number, cuts: number, links: number}} b
+ */
+export function figuresLine(b) {
+  const count = (/** @type {number} */ n, /** @type {string} */ word) => `${n} ${word}${n === 1 ? "" : "s"}`;
+  return `${b.columns} × ${b.strips} holes, ${count(b.cuts, "cut")}, ${count(b.links, "link")}`;
+}
+
+/**
+ * A board's figures from its plain form (`circuit.stripboard`), for *Before*.
+ * @param {any} stripboard @returns {{columns: number, strips: number, cuts: number, links: number}}
+ */
+export function figuresOf(stripboard) {
+  const b = readBoard(stripboard);
+  return { columns: b.columns, strips: b.strips, cuts: b.cuts.length, links: b.links.length };
+}
+
+/**
+ * The earlier try a new one is the same board as (its index), or -1 (D-399: *Try another*
+ * may find the same board when a circuit leaves no room for another this small).
+ * @param {Array<{stripboard: any}>} tries @param {{stripboard: any}} made
+ */
+export function sameTry(tries, made) {
+  const text = JSON.stringify(made.stripboard);
+  return tries.findIndex((t) => JSON.stringify(t.stripboard) === text);
 }
 
 /**
@@ -963,11 +1022,17 @@ export function layoutDefault(placed) {
  * @param {LayoutChoice} choice @param {boolean} compact *Make the board compact* ticked
  * @param {{parts: unknown[], cuts: unknown[], links: unknown[], wires: unknown[]}} board what's on the board now
  * @param {number} toPlace the parts still in the tray
+ * @param {number} [seconds] *Build a full layout*'s time, estimated
  * @returns {{title: string, text: string, label: string}}
  */
-export function layoutConfirm(choice, compact, board, toPlace) {
+export function layoutConfirm(choice, compact, board, toPlace, seconds = 0) {
   const count = (/** @type {number} */ n, /** @type {string} */ word) => `${n} ${word}${n === 1 ? "" : "s"}`;
   const undo = "One step to undo.";
+  if (choice === "full") {
+    const takes = `It takes ${timeText(seconds).toLowerCase()}; you can stop early and keep the best board found so far.`;
+    const text = board.parts.length ? `This replaces everything on the board: ${count(board.parts.length, "part")}, its cuts, links and wires. ${takes}` : takes;
+    return { title: "Build a full layout", text, label: "Build it" };
+  }
   if (choice === "fill") {
     const what = toPlace ? `Lays out the ${count(toPlace, "part")} still in the tray below what you've placed` : "Every part is placed: it joins what's still in pieces";
     return { title: "Fill the rest", text: `${what}; the parts you've placed stay where they are. ${undo}`, label: "Fill the rest" };
@@ -1253,24 +1318,31 @@ export function linkFrom(from, to) {
 
 /**
  * @typedef {{net: string, a: Hole, b: Hole}} Strand a ratsnest line: two pieces of `net` not joined yet
+ * @typedef {{leg: string, net: string, holes: Array<[number, number, number]>, blocked: string | null}} Kept
+ *   a tray part a placed pin keeps (D-400): the free holes that keep it there, as runs;
+ *   none free: `blocked` names what's in the way
  * @typedef {{marks: Record<string, Array<[number, number, number]>>, ratsnest: Strand[], cuts: Hole[],
- *   links: Array<[Hole, Hole]>, stuck: string[], next: {ref: string, why: string} | null}} Guidance
+ *   links: Array<[Hole, Hole]>, stuck: string[], next: {ref: string, why: string} | null,
+ *   kept?: Record<string, Kept>}} Guidance
  *   what `/api/stripboard` sends to guide the next step (guidance.py, D-377): each net's
  *   free copper as runs, the ratsnest, the suggested cuts and links, a sentence per join no
- *   suggested link makes (why, what to do), what to place next
+ *   suggested link makes (why, what to do), what to place next, the parts placed pins keep
  */
 
 /**
  * The holes marked for a part being carried: the free copper of each of its legs' nets,
- * where that leg would join its net (none for a net not on the board yet).
+ * where that leg would join its net (none for a net not on the board yet); for a part a
+ * placed pin keeps, its kept leg's net only by that pin (D-400), unless none is free.
  * @param {Progress} progress @param {Guidance} guidance @param {string} ref @returns {Hole[]}
  */
 export function markedHoles(progress, guidance, ref) {
   const nets = new Set((progress.legs[ref] ?? []).map((l) => l.net).filter((n) => n !== null));
+  const kept = guidance.kept?.[ref];
   /** @type {Hole[]} */
   const holes = [];
   for (const net of nets) {
-    for (const [strip, c0, c1] of guidance.marks[/** @type {string} */ (net)] ?? []) {
+    const runs = kept && kept.net === net && kept.holes.length ? kept.holes : guidance.marks[/** @type {string} */ (net)] ?? [];
+    for (const [strip, c0, c1] of runs) {
       for (let c = c0; c <= c1; c++) holes.push([c, strip]);
     }
   }

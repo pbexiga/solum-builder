@@ -7,7 +7,7 @@ size: [12, 9]
 parts:
   Q1: {E: E3, B: E4, C: E5}
   R1: {1: C8, 2: C4}
-  R2: {1: J4, 2: J8}
+  R2: {1: I4, 2: I8}  # by Q1's base: within 4 holes of E4 (the high-gain input, D-400)
   R3: {1: H3, 2: H2}
   C1: {1: F6, 2: F4}
   C2: {1: F7, 2: F9}

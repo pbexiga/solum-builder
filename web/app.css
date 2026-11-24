@@ -724,9 +724,10 @@ body:has(.panels details.moving, .board-panels details.moving) { cursor: grabbin
 
 /* Problems (D-077) */
 .panels summary .count, .board-panels summary .count { font-family: var(--font-ui); text-transform: none; letter-spacing: 0; color: var(--text-2); margin-left: 6px; }
-.problem-list, .dc-list { overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
+.problem-list, .dc-list, .net-list { overflow-y: auto; overscroll-behavior: contain; padding-right: 4px; }
 .problem-list { max-height: 300px; } /* about six problems */
 .dc-list { max-height: 200px; } /* about the Harmonics plot */
+.net-list { max-height: 300px; } /* the board's Nets: about twelve nets, so the panes below stay in reach */
 .dc-end { color: var(--text-3); font-size: 11px; }
 .problem { border-left: 3px solid var(--border); margin: 0 0 6px; padding: 4px 0 4px 8px; }
 .problem:has(.sev-error) { border-left-color: var(--error); }

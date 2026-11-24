@@ -125,6 +125,18 @@ def test_a_circuit_without_a_board_shows_its_parts_to_place(page: Page, base_url
     )
 
 
+def test_a_long_nets_list_scrolls_in_its_own_pane(page: Page, base_url: str) -> None:
+    """The TS808's 24 nets scroll inside Nets (as Problems' rows do, D-077), so Settings
+    below stays in reach without scrolling the whole column."""
+    open_with_board(page, base_url, None, "ts808")
+    page.locator("#board-button").click()
+    nets = page.locator("#board-nets-body .net-list")
+    expect(nets.locator("li")).to_have_count(24)
+    shown, whole = nets.evaluate("e => [e.clientHeight, e.scrollHeight]")
+    assert shown <= 300 < whole
+    expect(page.locator("#board-settings summary")).to_be_in_viewport()
+
+
 def test_the_board_panes_keep_their_own_order(page: Page, base_url: str) -> None:
     open_with_board(page, base_url, None)
     page.locator("#board-button").click()

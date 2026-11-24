@@ -1036,7 +1036,7 @@ export function boardView(host, app) {
     $("board-nets-count").textContent = progress.nets.length ? `· ${progress.nets_done}/${progress.nets.length}` : "";
     $("board-nets-body").replaceChildren(
       h("p", { class: "board-progress" }, [netsLine(progress)]),
-      h("ul", { class: "board-list" }, progress.nets.map((n) => {
+      h("ul", { class: "board-list net-list" }, progress.nets.map((n) => {
         const row = h("li", { class: `net-${n.state}`, "data-net": n.net }, [h("span", { class: "net" }, [n.net]), " ", h("span", { class: "state" }, [netWords(n)])]);
         row.addEventListener("click", () => app.select({ kind: "net", id: n.net }));
         return row;

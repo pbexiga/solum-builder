@@ -54,16 +54,19 @@ The top-left buttons pick what a click does: **Parts** (P) places and moves part
 
 ### Placement limits
 
-Some parts only work well close to a particular pin, so the board checks they are there: on the pin's strip, within a few holes, nothing between:
+Some parts only work as drawn when they sit close to a particular pin. A long run of strip between them acts as an aerial and adds inductance: a decoupling capacitor far from its chip doesn't decouple, and a strip on a high-gain input picks up hum and noise that the stage then amplifies. The board reads these from the circuit:
 
 - a chip's decoupling capacitor by its supply pin, and a charge pump's capacitors;
-- an op-amp's feedback parts by its pin;
-- a regulator's smallest capacitor on each side, and a transistor's bypass capacitor;
-- the parts in series with a high-gain stage's input (a stage with ten times gain or more).
+- an op-amp's feedback parts (those between its output and its − input) by the − input;
+- a regulator's smallest capacitor on each side;
+- a transistor's bypass capacitor by its emitter (a JFET's by its source);
+- the parts in series with a high-gain stage's input. A stage counts as high gain when its own gain is ten times or more with the knobs as set, all down or all up, worked out by simulating the circuit. Parts whose other leg goes to ground, a supply or a reference voltage (a bias resistor, say) aren't kept: no signal reaches them there.
+
+A limit is met when the part's leg is **on the pin's own strip, within 2 holes of the pin, with nothing between** (no cut, no other net's leg). Each more part kept by the same pin gets one more hole: three feedback parts on one pin may be up to 4 holes away. These are warnings, not faults: the board still matches the circuit, and you can decide a part is fine where it is.
 
 A limit broken is a warning that says what breaks it: *D1, D2 and C4 should sit by IC1's pin 6 at O15 (a feedback part): on its strip within 4 holes, nothing between. D1: it's 9 holes away.* When you pick up such a part, only the holes that keep it by its pin are marked; if none is free, the card says what's in the way.
 
-The board also warns of a **link running under or beside a part on a high-gain input**, where it could pick up noise: *The link from I7 to I15 runs beside R5, on IC1's pin 5 (the high-gain stage's input): move it a column or two.* Links on ground and the supplies don't count.
+The board also warns of a **link running under or beside a part on a high-gain input**, where it could pick up noise: *The link from I7 to I15 runs beside R5, on IC1's pin 5 (the high-gain stage's input): move it a column or two.* A link counts when it passes under such a part, within one hole of one of its legs in any direction, or under a chip with a high-gain input pin. Links on ground, the supplies and reference voltages don't count: they carry no signal to pick up.
 
 ### Bodies that touch
 
@@ -109,6 +112,17 @@ Links are drawn in lavender on both sides. **Highlight rails**, in Settings, tin
 
 Start a board and Tidy up give you a start to work from; Build a full layout gives a finished board, usually a fraction of Start a board's size. Every kind keeps the parts you moved off the board, your board notes and your dismissals.
 
+### How the layout help works
+
+All four follow the placement limits and avoid links near high-gain inputs where they can, and all leave a board that passes the check.
+
+- **Start a board** lays the parts out left to right in signal order, from the input. Each net is carried along a strip, a part's legs go across the strips to reach their nets, and a part kept by a pin (a decoupling capacitor, a feedback part) is laid out right beside that pin's part. Any net still in pieces gets a strip of its own across the board, with each piece linked to it, which is why it never fails. It's quick and always the same, but roomy: a start, not a finished board.
+- **Fill the rest** does the same for the tray's parts only, below what you placed, linking them up to it. Your parts don't move.
+- **Tidy up** tries small changes one at a time, in a fixed order: drop a link or cut, move a part, link or cut one hole left or up, take out an empty column or strip, trim the edges. It keeps a change only when the board still passes the check, no limit it met is broken, and the board is no bigger and has no more cuts or links. It stops when nothing more helps.
+- **Build a full layout** starts from Start a board's layout, squeezes out the empty lines, then searches. It makes thousands of random changes (slide a part, turn it, swap two parts, take out a line, move a part a long way) and works out the cuts and links again after each one. A change that makes the board better is kept; early on, a change that makes it a little worse is sometimes kept too, so the search can get out of a dead end, and that happens less and less as it goes on (the method is called simulated annealing). Parts never land on each other, and no new touching bodies are made.
+
+  It makes four such attempts side by side, each from a different random start, and keeps the best board. The best board is the one that breaks the fewest placement limits; then the one with the fewest links near a high-gain input; then the smallest; then the one with the fewest cuts and links. Each attempt runs a fixed number of steps (more for a bigger circuit), not a fixed time, so the same circuit gives the same board on any computer. **Thorough** runs each attempt four times as long, and **Try another** runs four attempts from other random starts.
+
 ### Build a full layout
 
 Choose how long it looks:
@@ -148,7 +162,7 @@ A trimmer goes on as the square single-turn kind (triangle, Bourns 3362P) unless
 
 ## Nets and warnings
 
-**Nets** lists every net, *done*, *in pieces* or *shorted*, with how many of its legs are placed and which wires it still needs: *18 of 24 nets done; 14 lugs to wire.* Click a net to light it on the board and the schematic.
+**Nets** lists every net, *done*, *in pieces* or *shorted*, with how many of its legs are placed and which wires it still needs: *18 of 24 nets done; 14 lugs to wire.* A long list scrolls inside the pane, so the panes below stay in reach. Click a net to light it on the board and the schematic.
 
 **Warnings** lists faults first, then the broken limits and the rest. When the board is complete and right it says *The board matches the circuit.*
 

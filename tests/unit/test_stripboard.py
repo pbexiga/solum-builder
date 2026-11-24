@@ -14,7 +14,7 @@ from hypothesis import strategies as st
 from solum.circuit.build import CircuitBuilder
 from solum.circuit.connectivity import connect
 from solum.circuit.io import load_circuit
-from solum.circuit.schema import Capacitor, Circuit, Trimmer
+from solum.circuit.schema import Capacitor, Circuit, Resistor, Trimmer
 from solum.circuit.switches import KINDS
 from solum.guides import footprint_table
 from solum.models import load_models
@@ -534,6 +534,41 @@ def test_bodies_touching_between_holes_or_hanging_off_the_edge_are_warned() -> N
     assert at(4, 5) == [  # C1's edge at 13.31 mm, the board's at 4.5 holes, 11.43 mm
         "C1 hangs past the board's edge: check it clears the enclosure, or move it in."
     ]
+
+
+def _flat_resistor_and(other: Placed, other_part: Any) -> list[str]:
+    """The touching warnings for a flat ¼ W resistor R1 (legs A2, E2: its 6.3 × 2.5 mm body
+    centred on C2, 1.93–8.23 mm across and 1.29–3.79 mm down) and `other`."""
+    r1 = one_board_part(Resistor(ref="R1", pos=(0, 0), type="resistor", value=10e3), MODELS,
+                        TABLE)  # fmt: skip
+    board = {"R1": r1, other.ref: other_part}
+    flat = Placed("R1", (("1", (0, 1)), ("2", (4, 1))))
+    return [o.text for o in outline_overlaps(Layout(8, 6, (flat, other)), board)]
+
+
+def test_a_flat_resistor_s_body_is_its_length_along_the_legs_not_a_circle() -> None:
+    """P6i5: an axial's outline is a box, its length along the legs and its diameter across
+    (the table's `diameter` is the footprint's `width`), so a 6.3 mm electrolytic standing
+    in D3–D4 (centre 7.62, 6.35 mm) reaches R1's body near its end (2.56 mm from the box,
+    under its 3.15 mm radius). A 2.5 mm circle round R1's middle would leave it 0.18 mm
+    clear, unwarned. In F3–F4 (centre 12.7 mm) it's past R1's end: nothing."""
+    cap = Capacitor(ref="C1", pos=(0, 0), type="capacitor", value=100e-6, kind="electrolytic")
+    c1 = one_board_part(cap, MODELS, TABLE)
+    assert c1.footprint.diameter == 6.3
+    at = lambda column: Placed("C1", (("1", (column, 2)), ("2", (column, 3))))  # noqa: E731
+    assert _flat_resistor_and(at(3), c1) == [
+        "R1 and C1's bodies touch: move one a hole further away if you can."
+    ]
+    assert _flat_resistor_and(at(5), c1) == []
+
+
+def test_flat_resistors_on_neighbouring_strips_are_not_warned() -> None:
+    """P6i5 (the user): ¼ W resistors lying flat a strip apart, their 2.5 mm bodies 2.54 mm
+    apart, are how every board is built: 0.04 mm clear, never warned (`check._SLACK`)."""
+    r2 = one_board_part(Resistor(ref="R2", pos=(0, 0), type="resistor", value=1e3), MODELS,
+                        TABLE)  # fmt: skip
+    assert _flat_resistor_and(Placed("R2", (("1", (0, 2)), ("2", (4, 2)))), r2) == []
+    assert _flat_resistor_and(Placed("R2", (("1", (1, 2)), ("2", (5, 2)))), r2) == []
 
 
 def test_a_surface_mount_transistor_on_an_adapter_takes_the_to92_footprint() -> None:

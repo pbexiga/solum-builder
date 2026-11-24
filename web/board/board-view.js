@@ -762,7 +762,7 @@ export function boardView(host, app) {
     const times = postJson("api/stripboard/compact/estimate", { circuit: app.circuit() }).catch(() => null);
     const chosen = await chooseLayout({ board, toPlace: progress?.to_place.length ?? 0, times });
     if (!chosen) return;
-    if (chosen.choice === "full") return void run.start({ thorough: chosen.thorough });
+    if (chosen.choice === "full") return void run.start({ thorough: chosen.thorough, seconds: chosen.seconds });
     if (chosen.choice === "tidy") return void tidyUp();
     await startBoard(chosen.choice === "fill", chosen.compact);
   }

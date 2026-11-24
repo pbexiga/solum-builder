@@ -10,7 +10,7 @@ in, holes and sentences out.
 
 import heapq
 from collections import defaultdict
-from collections.abc import Sequence
+from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from itertools import pairwise
 
@@ -30,7 +30,16 @@ from solum.stripboard.check import (
     runs,
 )
 from solum.stripboard.footprints import body_holes, links_under
-from solum.stripboard.limits import REACH, WHY, Limit, limit_groups, pin_said, placement_limits
+from solum.stripboard.limits import (
+    REACH,
+    WHY,
+    Limit,
+    LoudInput,
+    limit_groups,
+    pin_said,
+    placement_limits,
+)
+from solum.stripboard.quiet import calm_nets, guards, link_holes, quiet_for, zone_of
 from solum.words import listed
 
 Run = tuple[int, int, int]  # (strip, first column, last column), as `check.runs`
@@ -192,8 +201,15 @@ class _Linking:
     pieces: dict[str, list[list[int]]] = field(default_factory=dict)
 
 
-def _linking(r: Reading, cuts: list[Hole]) -> tuple[_Linking, list[tuple[Hole, Hole]]]:
-    """The link search (`suggested_links`), and what it saw, for `stuck`."""
+_Links = list[tuple[Hole, Hole]]
+
+
+def _linking(r: Reading, cuts: list[Hole],
+             zone: Mapping[Hole, str] | None = None,
+             calm: frozenset[str] = frozenset()) -> tuple[_Linking, _Links]:  # fmt: skip
+    """The link search (`suggested_links`), and what it saw, for `stuck`; `zone`: the holes
+    kept clear of sensitive nets' parts (`quiet.zone_of`): a link keeping clear of them
+    comes before a shorter one that doesn't (D-402), a `calm` net's link always clear."""
     cut = replace(r.layout, cuts=r.layout.cuts | set(cuts))
     copper = copper_groups(cut)
     used, hard, bodies = _blocked(r)
@@ -215,7 +231,7 @@ def _linking(r: Reading, cuts: list[Hole]) -> tuple[_Linking, list[tuple[Hole, H
     links: list[tuple[Hole, Hole]] = []
     for net in sorted(by_net):
         groups = by_net[net]
-        heap: list[tuple[int, Hole, Hole, int, int]] = []
+        heap: list[tuple[bool, int, Hole, Hole, int, int]] = []
         for i, ga in enumerate(groups):
             for gb in groups[i + 1 :]:
                 for column in range(cut.columns):
@@ -223,7 +239,9 @@ def _linking(r: Reading, cuts: list[Hole]) -> tuple[_Linking, list[tuple[Hole, H
                         for b in free.get((gb, column), ()):
                             if _link_blocker(k, a, b) is None:
                                 top, bottom = sorted((a, b), key=lambda h: h[1])
-                                heap.append((bottom[1] - top[1], top, bottom, ga, gb))
+                                over = link_holes(Link(top, bottom))
+                                noisy = bool(zone) and not quiet_for(zone or {}, net, over, calm)
+                                heap.append((noisy, bottom[1] - top[1], top, bottom, ga, gb))
         heapq.heapify(heap)
         parent = {g: g for g in groups}
 
@@ -233,7 +251,7 @@ def _linking(r: Reading, cuts: list[Hole]) -> tuple[_Linking, list[tuple[Hole, H
             return g
 
         while heap:  # Kruskal's: the shortest link between two pieces not yet joined
-            _, top, bottom, ga, gb = heapq.heappop(heap)
+            _, _, top, bottom, ga, gb = heapq.heappop(heap)
             if find(ga) == find(gb) or _link_blocker(k, top, bottom) is not None:
                 continue
             parent[find(ga)] = find(gb)
@@ -459,12 +477,13 @@ def next_part(circuit: Circuit, r: Reading, limits: Sequence[Limit] = ()) -> Nex
 
 
 def guidance(layout: Layout, circuit: Circuit, models: ModelLibrary, table: FootprintTable,
-             loud: Sequence[tuple[str, str]] = ()) -> Guidance:  # fmt: skip
+             loud: Sequence[LoudInput] = ()) -> Guidance:  # fmt: skip
     """Everything the editor shows to guide the next step on `layout`; `loud`: the
     high-gain stages' inputs for the placement limits (`probe.loud_inputs`)."""
     r = read_layout(layout, circuit, models, table)
     cuts = suggested_cuts(r)
-    k, links = _linking(r, cuts)
+    kept = guards(r.board, r.nets, loud)
+    k, links = _linking(r, cuts, zone_of(r.layout, r.board, kept), calm_nets(kept))
     limits = placement_limits(circuit, r.nets, r.board, loud)
     return Guidance(marks(r), ratsnest(r), cuts, links, _stuck(r, k),
                     next_part(circuit, r, limits), kept_holes(r, k, limits))  # fmt: skip

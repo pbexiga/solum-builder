@@ -33,7 +33,8 @@ from solum.stripboard.check import (
     read_layout,
 )
 from solum.stripboard.footprints import BoardPart
-from solum.stripboard.limits import broken_limits, placement_limits
+from solum.stripboard.limits import LoudInput, broken_limits, placement_limits
+from solum.stripboard.quiet import guards, noisy_links
 from solum.stripboard.size import SizeError, remove_line, trim
 from solum.stripboard.start import StartError, start_for_me
 
@@ -214,9 +215,10 @@ def joins(layout: Layout, turnable: frozenset[str] = frozenset()) -> Joins:
 
 
 def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: FootprintTable,
-            mend: bool = False, loud: Sequence[tuple[str, str]] = ()) -> Tidied:  # fmt: skip
+            mend: bool = False, loud: Sequence[LoudInput] = ()) -> Tidied:  # fmt: skip
     """*Tidy up* on a board: smaller, still passing the check, every placement limit it
-    met still met (`loud`: the high-gain stages' inputs, `probe.loud_inputs`), the same
+    met still met and no more links near a sensitive net's parts than it had (D-402; `loud`:
+    the high-gain stages' inputs, `probe.loud_inputs`), the same
     every run. Parts placed wrongly raise `MendFirst` unless `mend`, which lays them out
     again first. A board that doesn't pass, or can't be made smaller, raises `TidyError`
     saying so."""
@@ -244,11 +246,14 @@ def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Footp
     board, off, same = r.board, r.off_board, joins(layout, turnable)
     limits = placement_limits(circuit, r.nets, board, loud)
     broken = set(broken_limits(layout, limits, turnable))
+    kept = guards(board, r.nets, loud)
+    noisy = len(noisy_links(layout, board, r.nets, kept))
 
     def passes(made: Layout) -> bool:  # quickest first: the holes, the joins, then the check
         return (not occupants(made)[1] and joins(made, turnable) == same
                 and not placement_faults(made, board, off)
                 and set(broken_limits(made, limits, turnable)) <= broken
+                and len(noisy_links(made, board, r.nets, kept)) <= noisy
                 and check_layout(made, circuit, models, table).ok)  # fmt: skip
 
     tidied = tidy_steps(layout, passes, board)

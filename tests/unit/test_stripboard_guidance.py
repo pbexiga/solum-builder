@@ -11,6 +11,7 @@ from solum.stripboard.board import hole_name, layout_from_data, parse_hole
 from solum.stripboard.check import check_layout, placement_faults
 from solum.stripboard.footprints import board_parts
 from solum.stripboard.guidance import Guidance, Kept, guidance
+from solum.stripboard.limits import LoudInput
 from solum.yamlio import load_yaml
 
 REPO = Path(__file__).resolve().parents[2]
@@ -163,7 +164,9 @@ def test_nothing_is_stuck_when_the_suggestions_join_everything() -> None:
 
 # --- the guidance follows the placement limits (D-400) ---------------------------------
 TS808 = load_circuit(LIBRARY / "starters" / "ts808.json")
-TS808_LOUD = [("IC1B", "+")]  # as `probe.loud_inputs` finds it (it needs ngspice)
+TS808_LOUD = [
+    LoudInput("IC1B", "+", frozenset({"GND", "V+"}))
+]  # as `probe.loud_inputs` finds it (it needs ngspice)
 IC1 = {"1": "E3", "2": "E4", "3": "E5", "4": "E6", "8": "H3", "7": "H4", "6": "H5", "5": "H6"}
 UNDER = ["F3", "F4", "F5", "F6"]  # the cuts under the chip
 
@@ -203,3 +206,21 @@ def test_place_next_names_a_part_a_placed_pin_keeps_first_saying_why() -> None:
     assert g.next.why == "Next: C2, by IC1's pin 5: the high-gain stage's input."
     assert guidance(layout_from_data({"size": [20, 12], "parts": {}}), TS808, MODELS, TABLE,
                     TS808_LOUD).kept == {}  # fmt: skip
+
+
+def test_a_suggested_link_keeps_clear_of_a_sensitive_part_when_it_can() -> None:
+    """D-402: with a link taken out, the shortest link back is suggested; with the holes of
+    that link kept clear of another net's sensitive part, a link down another free column
+    comes first."""
+    from solum.stripboard.check import read_layout
+    from solum.stripboard.guidance import _linking, suggested_cuts
+
+    data = {**GOOD, "links": [["B1", "B8"]]}
+    r = read_layout(layout_from_data(data), RANGEMASTER, MODELS, TABLE)
+    cuts = suggested_cuts(r)
+    (first,) = _linking(r, cuts)[1]
+    column = first[0][0]
+    zone = {(column, y): "elsewhere" for y in range(r.layout.strips)}
+    (other,) = _linking(r, cuts, zone)[1]
+    assert other[0][0] != column
+    assert abs(other[1][1] - other[0][1]) >= abs(first[1][1] - first[0][1])

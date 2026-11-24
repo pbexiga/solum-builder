@@ -79,6 +79,7 @@ from solum.stages import (
     stage_clips,
     stage_parts,
 )
+from solum.stripboard.limits import LoudInput
 from solum.units import format_quantity, parse_value, signed_db
 from solum.view import controls, drawn_pins, part_text, pin_number, probe_nets, rail_nets
 
@@ -905,14 +906,17 @@ def _signal_path(sim: Simulator, circuit: Circuit, tone: float = TONE_HZ) -> _Pa
 
 
 LOUD = 10.0  # a stage's own gain from which its input wiring must be short (D-400)
+QUIET = 0.01  # a net's signal under this share of a loud input's is AC-quiet (D-400)
 _INPUT_PINS = ("B", "G", "+")  # where a stage's signal enters: base, gate, op-amp +
 
 
-def loud_inputs(sim: Simulator, circuit: Circuit) -> list[tuple[str, str]]:
-    """Each high-gain stage's input pin, (device ref, pin), for the placement limits
-    (D-400): a stage on the signal path whose own gain (as the Bias & headroom pane
-    measures it, at the scope's tone) reaches `LOUD` with the pots as set, all turned
-    down or all turned up. None when the circuit doesn't simulate."""
+def loud_inputs(sim: Simulator, circuit: Circuit) -> list[LoudInput]:
+    """Each high-gain stage's input pin for the placement limits (D-400): a stage on the
+    signal path whose own gain (as the Bias & headroom pane measures it, at the scope's
+    tone) reaches `LOUD` with the pots as set, all turned down or all turned up; with the
+    nets whose signal there is under `QUIET` of the input's (rails, ground, a reference
+    behind its cap), from the first run that found it. None when the circuit doesn't
+    simulate."""
     pots = [p.ref for p in circuit.parts if isinstance(p, Pot)]
     turned = [circuit]
     for rotation in (0.0, 1.0):
@@ -920,7 +924,7 @@ def loud_inputs(sim: Simulator, circuit: Circuit) -> list[tuple[str, str]]:
         for ref in pots:
             c = c.with_part(ref, rotation=rotation)
         turned.append(c)
-    found: dict[tuple[str, str], None] = {}
+    found: dict[tuple[str, str], frozenset[str]] = {}
     nets = connect(circuit)
     try:
         for c in turned if pots else turned[:1]:
@@ -935,11 +939,13 @@ def loud_inputs(sim: Simulator, circuit: Circuit) -> list[tuple[str, str]]:
                 pin = next(((ref, pin) for (ref, pin), net in nets.by_pin.items()
                             if ref in stage.refs and pin in _INPUT_PINS and net == entry),
                            None)  # fmt: skip
-                if pin is not None:
-                    found.setdefault(pin)
+                if pin is not None and pin not in found:
+                    heard = QUIET * _tone_gain(path.ac, entry)
+                    found[pin] = frozenset(n for n in path.ac.responses
+                                           if _tone_gain(path.ac, n) < heard)  # fmt: skip
     except SimError:
         return []
-    return list(found)
+    return [LoudInput(ref, pin, quiet) for (ref, pin), quiet in found.items()]
 
 
 def _tone_gain(ac: AcResult, net: str, tone: float = TONE_HZ) -> float:

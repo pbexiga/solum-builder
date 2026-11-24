@@ -885,6 +885,24 @@ def test_stripboard_reports_the_open_circuit_s_board(monkeypatch: pytest.MonkeyP
     assert bad.status_code == 422 and "one column" in bad.text
 
 
+def test_stripboard_warns_of_a_link_near_a_high_gain_input(monkeypatch: pytest.MonkeyPatch) -> None:
+    """D-402: with Q1's base found high gain, a link of a net with signal on it beside R1's
+    base leg is warned about in words; the fixture's own V- link (quiet) is let be."""
+    from solum.stripboard.limits import LoudInput
+
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
+    loud = [LoudInput("Q1", "B", frozenset({"GND", "V-"}))]
+    monkeypatch.setattr(app_module, "loud_inputs", lambda _sim, _c: loud)
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    board = load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")
+    quiet = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": board}}).json()
+    assert not any(w.startswith("The link from") for w in quiet["warnings"])
+    near = {**board, "links": [*board["links"], ["D5", "D6"]]}  # the collector's strip, by C4
+    said = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": near}}).json()
+    assert any(w.startswith("The link from D5 to D6 runs beside") for w in said["warnings"])
+
+
 def test_stripboard_size_changes_the_open_circuit_s_board(monkeypatch: pytest.MonkeyPatch) -> None:
     """D-372: a line inserted, taken out or the board trimmed, as the board's new plain
     form; a change that can't be made says why. An empty board starts sized from its parts."""

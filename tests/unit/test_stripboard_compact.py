@@ -7,6 +7,7 @@ from typing import Any
 
 import pytest
 
+from solum.circuit.connectivity import connect
 from solum.circuit.io import circuit_to_dict, load_circuit
 from solum.circuit.schema import Circuit
 from solum.guides import footprint_table
@@ -25,6 +26,8 @@ from solum.stripboard.compact import (
     start_pos,
 )
 from solum.stripboard.footprints import board_parts
+from solum.stripboard.limits import LoudInput
+from solum.stripboard.quiet import noisy_links
 from solum.stripboard.start import shapes
 from solum.yamlio import load_yaml
 
@@ -139,3 +142,16 @@ def test_every_shape_adds_lying_along_a_strip_standing_and_a_trimmer_turned() ->
     mode = load_circuit(LIBRARY / "starters" / "tone-bender-mk2-mode.json")
     trimmer = board_parts(mode, MODELS, TABLE)[0]["TR1"]
     assert (len(shapes(trimmer)), len(shapes(trimmer, every=True))) == (4, 8)  # D-393
+
+
+def test_the_search_keeps_links_clear_of_a_high_gain_input_s_parts() -> None:
+    """D-402: with Q1's base sensitive (`probe.loud_inputs`), the best board lays no link
+    under or beside a part on it, and the wired board the builder gets has none either."""
+    loud = [LoudInput("Q1", "B", frozenset({"GND", "V-"}))]
+    pb = problem(None, FUZZ_FACE, MODELS, TABLE, loud)
+    assert pb.guards
+    best = best_of(search(pb, 20_000, seed) for seed in range(1, 3))
+    assert best is not None and best.key[:2] == (0, 0)  # no limit broken, no noisy link
+    board = finish(pb, best, MODELS, TABLE).layout
+    assert noisy_links(board, pb.board, connect(FUZZ_FACE), pb.guards) == []
+    assert check_layout(board, FUZZ_FACE, MODELS, TABLE).ok

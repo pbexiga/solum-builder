@@ -32,4 +32,16 @@ def sim(engine: NativeNgspice) -> Simulator:
 def test_the_high_gain_stages_are_found_by_their_own_gain(
     sim: Simulator, name: str, loud: list[tuple[str, str]]
 ) -> None:
-    assert loud_inputs(sim, load_circuit(STARTERS / f"{name}.json")) == loud
+    found = loud_inputs(sim, load_circuit(STARTERS / f"{name}.json"))
+    assert [(x.ref, x.pin) for x in found] == loud
+
+
+def test_each_input_comes_with_the_nets_ac_quiet_beside_it(sim: Simulator) -> None:
+    """D-400 narrowed (P6h5e): a net under 1 % of the input's signal is quiet: the rails,
+    ground and the Rat's Vref behind its cap, not the input's own net nor the stage's
+    output."""
+    (rat,) = loud_inputs(sim, load_circuit(STARTERS / "proco-rat.json"))
+    assert {"GND", "V+", "VREF"} <= rat.quiet
+    assert "IC1.+" not in rat.quiet and "IC1.out" not in rat.quiet
+    (q1,) = loud_inputs(sim, load_circuit(STARTERS / "dallas-rangemaster.json"))
+    assert {"GND", "V-"} <= q1.quiet and "Q1.B" not in q1.quiet

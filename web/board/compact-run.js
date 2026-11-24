@@ -76,6 +76,7 @@ export function compactRun(host, app) {
   /** @type {any} */
   let circuit = null; // the circuit as it was when the run began
   let thorough = false;
+  let expected = 0; // seconds a try was said to take (the estimate), 0 when not known
   let attempt = 0;
   /** @type {BoardLine | null} */
   let base = null;
@@ -127,6 +128,8 @@ export function compactRun(host, app) {
     bestLine.textContent = "";
     left.textContent = "";
     let started = 0;
+    const begun = performance.now();
+    bar.classList.add("working");
     try {
       const made = await postProgress("api/stripboard/compact", { circuit, thorough, attempt }, (done, of, line) => {
         if (running !== control) return;
@@ -139,7 +142,7 @@ export function compactRun(host, app) {
         bar.max = of;
         bar.value = done;
         if (!started && done) started = performance.now() - 1;
-        if (started && done < of) left.textContent = leftText(((performance.now() - started) / 1000) * (of - done) / Math.max(done, 1));
+        if (started && done < of) left.textContent = leftText(((performance.now() - started) / 1000) * (of - done) / Math.max(done, 1), (performance.now() - begun) / 1000, expected);
         if (line.best) {
           best = line.best;
           stopButton.disabled = false;
@@ -153,6 +156,8 @@ export function compactRun(host, app) {
       running = null;
       app.refuse(/** @type {Error} */ (err).message);
       back();
+    } finally {
+      bar.classList.remove("working");
     }
   }
 
@@ -242,11 +247,12 @@ export function compactRun(host, app) {
   return {
     /**
      * Build a full layout of the circuit as it is now: try 1, then the review.
-     * @param {{thorough: boolean}} choice
+     * @param {{thorough: boolean, seconds?: number}} choice `seconds`: the time it said
      */
     start(choice) {
       circuit = app.circuit();
       thorough = choice.thorough;
+      expected = choice.seconds ?? 0;
       attempt = 0;
       base = null;
       tries = [];

@@ -20,6 +20,8 @@ def test_seed_sets_and_budgets() -> None:
     assert compact_job.seeds_for(2) == [5, 6, 7, 8]
     assert compact_job.steps_for(10, False) == 10 * compact_job.STEPS_PER_PART
     assert compact_job.steps_for(10, True) == 4 * compact_job.steps_for(10, False)
+    most = compact_job.MOST_PARTS * compact_job.STEPS_PER_PART
+    assert compact_job.steps_for(compact_job.MOST_PARTS + 30, False) == most
 
 
 def test_a_stopped_run_ends_with_its_best_so_far_and_no_worker_left() -> None:

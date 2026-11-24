@@ -30,8 +30,9 @@ import random
 from collections import defaultdict
 from collections.abc import Callable, Iterable, Sequence
 from contextlib import suppress
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, field, replace
 
+from solum.circuit.connectivity import connect
 from solum.circuit.schema import Circuit
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
@@ -49,11 +50,13 @@ from solum.stripboard.footprints import (
 from solum.stripboard.limits import (
     REACH,
     Limit,
+    LoudInput,
     broken_limits,
     group_met,
     limit_groups,
     placement_limits,
 )
+from solum.stripboard.quiet import Guard, calm_nets, guards, kept_clear, noisy_links
 from solum.stripboard.start import shapes, start_for_me
 from solum.stripboard.wiring import WiringError, wire_for_me
 
@@ -62,6 +65,7 @@ SLACK = 0.05  # mm two outlines may meet by: as the overlap warnings' (D-398)
 WEIGHT = 10_000.0  # a problem's cost: more than any board's area is worth
 LIMIT = 2000.0  # a placement limit broken (D-367): as dear as 20 holes of board
 PULL = 30.0  # and each hole its legs are from keeping it: the way there, under any problem
+QUIET = 500.0  # a link too near a sensitive net's part (D-402): 5 holes of board
 NEAR = 2  # choosing the best board: a hole a broken limit's legs are away, as holes of board
 TEMP = (100.0, 2.0)  # the temperature at the first step and the last
 CELL = 8  # holes: the side of a square of the outlines' grid
@@ -135,6 +139,10 @@ class Problem:
     nets: dict[str, list[tuple[tuple[int, int, int], ...]]]  # ref → per shape: (dx, dy, net)
     net_of: dict[tuple[str, str], int]
     limits: list[tuple[tuple[str, str], tuple[tuple[str, str], ...]]]  # pin → parts' legs
+    guards: list[Guard] = field(default_factory=list)  # parts links keep clear of (D-402)
+    guarded: list[tuple[str, int, tuple[str, ...]]] = field(default_factory=list)  # as numbers
+    clear: dict[tuple[str, int], tuple[Hole, ...]] = field(default_factory=dict)  # per shape
+    calm: frozenset[int] = frozenset()  # nets whose links may pass them (`quiet.calm_nets`)
 
     def shape_of(self, ref: str, legs: dict[str, Hole], standing: bool) -> int:
         """The index of the shape `legs` stand in, added if it isn't one of `shapes`'."""
@@ -154,7 +162,7 @@ class Problem:
 
 
 def problem(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
-            table: FootprintTable, loud: Sequence[tuple[str, str]] = ()) -> Problem:  # fmt: skip
+            table: FootprintTable, loud: Sequence[LoudInput] = ()) -> Problem:  # fmt: skip
     """The search's view of `circuit`, from Start a board's base (Start over, untidied:
     the parts' On / Off the board choices and the notes kept, D-398); `loud`: the
     high-gain stages' input pins (`probe.loud_inputs`, D-400); `StartError` as Start a
@@ -181,8 +189,11 @@ def problem(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
                 pads[names[lug.net]] += 1
     limits = [(pin, tuple((g.part, g.leg) for g in group)) for pin, group in
               limit_groups(placement_limits(circuit, r.nets, r.board, loud)).items()]  # fmt: skip
+    kept = guards(r.board, r.nets, loud)
+    held = [(g.ref, names[g.net], g.legs) for g in kept if g.net in names]
+    calm = frozenset(names[n] for n in calm_nets(kept) if n in names)
     pb = Problem(circuit, base, r.board, refs, dict(sorted(pads.items())), {}, {}, net_of,
-                 limits)  # fmt: skip
+                 limits, kept, held, calm=calm)  # fmt: skip
     for ref in refs:
         found: dict[tuple[object, bool], _Variant] = {}
         for shape in shapes(r.board[ref], every=True):
@@ -262,6 +273,7 @@ class Derived:
     joins: dict[int, list[tuple[int, int, int]]]
     broken: int  # placement limits broken (D-367)
     far: int  # holes their legs are from keeping them
+    noisy: int = 0  # links too near a sensitive net's part (D-402)
 
     @property
     def area(self) -> int:
@@ -296,6 +308,8 @@ class State:
         self.shorts = 0
         self.joins = 0  # pieces less nets: the least links (or buses) to join them
         self.box: tuple[int, int, int, int] | None = None  # the parts' (None: work it out)
+        self._zone: dict[int, dict[int, int]] | None = None  # kept clear (None: work it out)
+        self._guarded = {ref for ref, _, _ in pb.guarded}
         for ref in pb.refs:
             self.pos[ref] = pos[ref]
             self._put(ref)
@@ -309,6 +323,8 @@ class State:
         return _moved(o, x, y) if o else None
 
     def _put(self, ref: str) -> None:
+        if ref in self._guarded:
+            self._zone = None
         vi, x, y = self.pos[ref]
         v = self.pb.variants[ref][vi]
         for dx, dy in v.taken:
@@ -337,6 +353,8 @@ class State:
             self.box = (min(x0, x + ax), min(y0, y + ay), max(x1, x + bx), max(y1, y + by))
 
     def _take(self, ref: str) -> None:
+        if ref in self._guarded:
+            self._zone = None
         vi, x, y = self.pos[ref]
         v = self.pb.variants[ref][vi]
         for dx, dy in v.taken:
@@ -486,6 +504,13 @@ class State:
             ends.update(((c, top), (c, bot)))
             over.update((c, q) for q in range(top + 1, bot))
 
+        zone, calm = self.zone(), self.pb.calm
+
+        def quiet(n: int, c: int, top: int, bot: int) -> bool:
+            return n in calm or all(
+                m == n or not top <= y <= bot for y, m in zone.get(c, {}).items()
+            )
+
         taken_rows = set(self.rows)
         todo = {n for n, ps in pieces.items() if len(ps) > 1}
         # links: shortest first over every net's pieces (Kruskal)
@@ -514,11 +539,14 @@ class State:
                 continue
             ra, rb = pieces[n][i][0], pieces[n][j][0]
             top, bot = min(ra, rb), max(ra, rb)
-            for c in range(lo, hi + 1):
-                if clear(c, top, bot):
-                    parent[a] = b
-                    lay(n, c, top, bot)
-                    break
+            # the first clear column; past it, a clear quiet one if there is one (D-402)
+            pick = next((c for c in range(lo, hi + 1) if clear(c, top, bot)), None)
+            if pick is not None and zone and not quiet(n, pick, top, bot):
+                pick = next((c for c in range(pick + 1, hi + 1)
+                             if quiet(n, c, top, bot) and clear(c, top, bot)), pick)  # fmt: skip
+            if pick is not None:
+                parent[a] = b
+                lay(n, pick, top, bot)
         # buses: a net still in pieces takes a free strip (or a new one above or below),
         # each of its joined groups linked to it down a free column
         unjoined = 0
@@ -571,13 +599,34 @@ class State:
             depth += sum(free[:k])
         problems = self.shorts + unjoined + padless
         broken, far = self.broken(cuts)
+        noisy = sum(not quiet(n, c, top, bot) for n, v in joins.items() for c, top, bot in v)
         area = (x1 - x0 + 1) * (y1 - y0 + 1)
         count = sum(len(v) for v in joins.values())
         length = sum(bot - top for v in joins.values() for _, top, bot in v)
         cost = (100 * area + 3 * (len(cuts) + count) + length + 0.5 * depth
-                + LIMIT * broken + PULL * far + WEIGHT * problems)  # fmt: skip
+                + LIMIT * broken + PULL * far + QUIET * noisy + WEIGHT * problems)  # fmt: skip
         return Derived(cost, problems, (x0, y0, x1, y1), cuts, count, length, dict(joins),
-                       broken, far)  # fmt: skip
+                       broken, far, noisy)  # fmt: skip
+
+    def zone(self) -> dict[int, dict[int, int]]:
+        """The holes a link of another net keeps out of (`quiet.kept_clear`) by column and
+        strip, each with its sensitive net (a hole near two: -1, every net kept out); kept
+        until a guarded part moves."""
+        if self._zone is not None:
+            return self._zone
+        found: dict[int, dict[int, int]] = defaultdict(dict)
+        clear = self.pb.clear
+        for ref, n, legs in self.pb.guarded:
+            vi, x, y = self.pos[ref]
+            rel = clear.get((ref, vi))
+            if rel is None:  # its shape's holes kept clear, from its legs' top-left
+                v = self.pb.variants[ref][vi]
+                rel = clear[ref, vi] = tuple(kept_clear([v.at[lg] for lg in legs], v.body)[1])
+            for dx, dy in rel:
+                col = found[x + dx]
+                col[y + dy] = n if col.get(y + dy, n) == n else -1
+        self._zone = dict(found)
+        return self._zone
 
     def broken(self, cuts: set[Hole]) -> tuple[int, int]:
         """How many placement limits the board breaks, by the editor's rule (D-367; a cut
@@ -644,11 +693,12 @@ class State:
         return None if best is None else (best[1], best[2])
 
 
-Key = tuple[int, int, int, int]  # limits broken, area and how far, cuts + links, links' length
+# limits broken, noisy links, area and how far, cuts + links, links' length
+Key = tuple[int, int, int, int, int]
 
 
 def key(d: Derived) -> Key:
-    return (d.broken, d.area + NEAR * d.far, len(d.cuts) + d.count, d.length)
+    return (d.broken, d.noisy, d.area + NEAR * d.far, len(d.cuts) + d.count, d.length)
 
 
 @dataclass(frozen=True)
@@ -843,10 +893,10 @@ class Built:
 def finish(pb: Problem, found: Found | None, models: ModelLibrary,
            table: FootprintTable) -> Built:  # fmt: skip
     """`found` wired (Wire it for me) and checked; the base when there's nothing found,
-    it doesn't pass the check, or it's no better than the base (limits broken, then size
-    and how far)."""
+    it doesn't pass the check, or it's no better than the base (limits broken, links too
+    near a sensitive net's part, then size and how far)."""
     was = State(pb, start_pos(pb)).derive()
-    if found is None or found.key[:2] >= key(was)[:2]:
+    if found is None or found.key[:3] >= key(was)[:3]:
         return Built(pb.base, True)
     return finish_layout(pb, board_of(pb, found), models, table)
 
@@ -855,7 +905,8 @@ def finish_layout(pb: Problem, board: Layout, models: ModelLibrary,
                   table: FootprintTable) -> Built:  # fmt: skip
     """A board the search found (`board_of`; the best so far when the builder stops it)
     wired and checked; the base when it doesn't pass the check, or breaks more placement
-    limits than the base, or as many and isn't smaller."""
+    limits than the base, or as many and has more noisy links (D-402), or as many of both
+    and isn't smaller."""
     base = pb.base
     with suppress(WiringError):  # nothing to wire
         board = wire_for_me(replace(board, wires=()), pb.circuit, models, table)
@@ -864,7 +915,8 @@ def finish_layout(pb: Problem, board: Layout, models: ModelLibrary,
     limits = [Limit(part, leg, anchor, pin, "") for (anchor, pin), legs in pb.limits
               for part, leg in legs]  # fmt: skip
 
-    def worse(lay: Layout) -> tuple[int, int]:
-        return len(broken_limits(lay, limits)), lay.columns * lay.strips
+    def worse(lay: Layout) -> tuple[int, int, int]:
+        noisy = noisy_links(lay, pb.board, connect(pb.circuit), pb.guards)
+        return len(broken_limits(lay, limits)), len(noisy), lay.columns * lay.strips
 
     return Built(base, True) if worse(board) >= worse(base) else Built(board, False)

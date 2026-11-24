@@ -40,7 +40,7 @@ from solum.stripboard.footprints import (
     one_board_part,
     outline_overlap,
 )
-from solum.stripboard.limits import limit_warnings, placement_limits
+from solum.stripboard.limits import LoudInput, limit_warnings, placement_limits
 from solum.stripboard.offboard import (
     POWER,
     SLEEVE,
@@ -49,6 +49,7 @@ from solum.stripboard.offboard import (
     lug_nets,
     off_board_items,
 )
+from solum.stripboard.quiet import guards, noisy_links, quiet_warnings
 from solum.words import listed
 
 Terminal = PinRef | str  # a board part's pin, or an off-board lug ("VR1.1", "IN.S", "V+")
@@ -836,7 +837,7 @@ def _gone(r: Reading, circuit: Circuit) -> list[str]:
 
 
 def progress(layout: Layout, circuit: Circuit, models: ModelLibrary, table: FootprintTable,
-             loud: Sequence[tuple[str, str]] = ()) -> Progress:  # fmt: skip
+             loud: Sequence[LoudInput] = ()) -> Progress:  # fmt: skip
     """The editor's check of a board in the making (D-368): what's left to place, each
     net's progress, each leg's needs, what's wrong now (`loud`: the high-gain stages'
     input pins for the placement limits, `probe.loud_inputs`, D-400). `check_layout`
@@ -889,6 +890,9 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Foot
             rows.append(LegProgress(leg, holes.get((ref, leg)), need, reach))
         legs[ref] = rows
     warnings = limit_warnings(r.layout, placement_limits(circuit, r.nets, r.board, loud))
+    warnings += quiet_warnings(
+        noisy_links(r.layout, r.board, r.nets, guards(r.board, r.nets, loud))
+    )
     touching = outline_overlaps(r.layout, r.board)
     overlaps, dismissed = dismissed_apart(layout, touching)
     done = check_layout(layout, circuit, models, table).ok

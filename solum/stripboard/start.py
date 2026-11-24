@@ -57,11 +57,13 @@ from solum.stripboard.footprints import (
 from solum.stripboard.guidance import signal_order
 from solum.stripboard.limits import (
     Limit,
+    LoudInput,
     broken_limits,
     group_met,
     limit_groups,
     placement_limits,
 )
+from solum.stripboard.quiet import MIXED, calm_nets, guards, kept_clear, noisy_links, quiet_for
 from solum.stripboard.wiring import WiringError, wire_for_me
 
 BOTTOM = (GROUND, "V-")  # nets whose bus is a bottom strip (on a new board)
@@ -69,6 +71,8 @@ AXIAL_SPREAD = 3  # holes more than its least a flat resistor or diode may span
 EXTRA_ROWS = 20  # rows beyond the tallest part's tried for the parts' band
 LIMIT_COST = 20  # pass 1: a kept part whose leg can't be on its pin's strip (2 pieces)
 SLIDE = 8  # columns the parts before a chip may slide right to sit by its pin
+
+Guarded = dict[str, tuple[str, tuple[str, ...]]]  # a sensitive net's part → (net, its legs)
 
 
 class StartError(ValueError):
@@ -97,6 +101,8 @@ class _Room:
     hard: set[Hole] = field(default_factory=set)
     over: set[Hole] = field(default_factory=set)
     links: list[Link] = field(default_factory=list)
+    zone: dict[Hole, str] = field(default_factory=dict)  # kept clear of a sensitive net's parts
+    calm: frozenset[str] = frozenset()  # nets whose links may pass them (`quiet.calm_nets`)
 
     def body(self, part: BoardPart, legs: dict[str, Hole]) -> None:
         covered = body_holes(part, legs, False)
@@ -117,6 +123,18 @@ class _Room:
                     return False
         return True
 
+    def quiet(self, column: int, a: int, b: int, net: str) -> bool:
+        """Whether a link of `net` down `column` keeps clear of every other sensitive net's
+        parts placed so far (D-402)."""
+        top, bottom = sorted((a, b))
+        holes = [(column, s) for s in range(top, bottom + 1)]
+        return quiet_for(self.zone, net, holes, self.calm)
+
+    def guard(self, net: str, legs: Iterable[Hole], body: Iterable[Hole]) -> None:
+        """A sensitive net's part placed: the holes links of other nets keep out of."""
+        for h in kept_clear(legs, body)[1]:
+            self.zone[h] = net if self.zone.get(h, net) == net else MIXED
+
     def link(self, column: int, a: int, b: int) -> None:
         top, bottom = sorted((a, b))
         made = Link((column, top), (column, bottom))
@@ -125,7 +143,7 @@ class _Room:
         self.over |= set(made.between)
 
 
-def _room(layout: Layout, board: dict[str, BoardPart]) -> _Room:
+def _room(layout: Layout, board: dict[str, BoardPart], guarded: "Guarded") -> _Room:
     """The room a board already leaves (Fill the rest)."""
     room = _Room(used=set(occupants(layout)[0]) | set(layout.cuts))
     for p in layout.parts:
@@ -135,6 +153,9 @@ def _room(layout: Layout, board: dict[str, BoardPart]) -> _Room:
             room.bodies |= covered
             if not links_under(part, p.standing):
                 room.hard |= covered
+            if p.ref in guarded:
+                net, legs = guarded[p.ref]
+                room.guard(net, [p.holes[lg] for lg in legs if lg in p.holes], covered)
     for link in layout.links:
         room.over |= set(link.between)
     return room
@@ -466,13 +487,14 @@ class _Plan:
     cuts: set[Hole] = field(default_factory=set)
     last: dict[int, int] = field(default_factory=dict)
     left: list[str] = field(default_factory=list)
+    guarded: "Guarded" = field(default_factory=dict)
 
     def copy(self) -> "_Plan":
         """A copy to try on (what's in it is frozen: the containers are copied)."""
         room = self.room
         return _Plan(_Room(set(room.used), set(room.bodies), set(room.hard), set(room.over),
-                           list(room.links)), list(self.parts), set(self.cuts),
-                     dict(self.last), list(self.left))  # fmt: skip
+                           list(room.links), dict(room.zone), room.calm), list(self.parts),
+                     set(self.cuts), dict(self.last), list(self.left), self.guarded)  # fmt: skip
 
 
 def _join_pieces(r: Reading, plan: _Plan, bus: dict[str, int]) -> None:
@@ -488,7 +510,9 @@ def _join_pieces(r: Reading, plan: _Plan, bus: dict[str, int]) -> None:
         for group in groups:
             row = bus[net]
             ways = sorted((row - h[1], h[0], h) for h in by_group[group] if h[1] < row)
-            way = next((h for _, _, h in ways if plan.room.free(h[0], h[1], row)), None)
+            free = [h for _, _, h in ways if plan.room.free(h[0], h[1], row)]
+            way = next((h for h in free if plan.room.quiet(h[0], h[1], row, net)), None)
+            way = way or next(iter(free), None)
             if way is None:
                 plan.left.append(
                     f"{net}: no free column runs down from its copper on the board to its "
@@ -544,6 +568,13 @@ def _fits(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int
         if h in room.used or h in room.bodies or (hard and h in room.over):
             return None
     taken = _Room(used=set(legs.values()), bodies=set(body), hard=set(body) if hard else set())
+    if choice.ref in plan.guarded:  # its own links keep clear of it too
+        net, held = plan.guarded[choice.ref]
+        taken.guard(net, [legs[lg] for lg in held], body)
+
+    def quiet(c: int, row: int, to: int, net: str) -> bool:
+        return room.quiet(c, row, to, net) and taken.quiet(c, row, to, net)
+
     first: dict[int, int] = {}
     for x, y in legs.values():
         first[y] = min(first.get(y, x), x)
@@ -586,8 +617,9 @@ def _fits(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int
     lefts = set(linked) if way == "left" else shape.left
     for leg in (leg for leg in linked if leg in lefts):
         (column, row), to = legs[leg], bus[nets[leg]]
-        found = (c for c in range(after[row], column) if room.free(c, row, to, taken))
-        at = next(found, None)
+        found = [c for c in range(after[row], column) if room.free(c, row, to, taken)]
+        at = next((c for c in found if quiet(c, row, to, nets[leg])), None)
+        at = next(iter(found), None) if at is None else at
         if at is None:
             return None
         taken.link(at, row, to)
@@ -630,6 +662,8 @@ def _lay(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int]
         plan.last[row] = max(plan.last.get(row, -1), column)
     part = r.board[choice.ref]
     plan.parts.append(Placed(choice.ref, tuple((leg, spot.legs[leg]) for leg in part.legs)))
+    for h, net in taken.zone.items():
+        room.zone[h] = net if room.zone.get(h, net) == net else MIXED
     return spot.later
 
 
@@ -689,8 +723,8 @@ def _lay_block(r: Reading, plan: _Plan, choices: list[_Choice], kept: _Kept, top
 
 
 def _laid_out(r: Reading, circuit: Circuit, base: Layout, todo: list[str],
-              choices: list[_Choice], kept: list[_Kept],
-              height: int) -> tuple[Layout, list[str]]:  # fmt: skip
+              choices: list[_Choice], kept: list[_Kept], height: int,
+              guarded: "Guarded", calm: frozenset[str]) -> tuple[Layout, list[str]]:  # fmt: skip
     """`base` with the parts placed as chosen below it, the buses between, every net's
     pieces joined (module doc)."""
     fresh = not base.parts
@@ -708,7 +742,8 @@ def _laid_out(r: Reading, circuit: Circuit, base: Layout, todo: list[str],
     top = start + len(above)
     floor = top + height
     bus |= {net: floor + k for k, net in enumerate(below)}
-    plan = _Plan(_room(base, r.board) if not fresh else _Room())
+    plan = _Plan(_room(base, r.board, guarded) if not fresh else _Room(), guarded=guarded)
+    plan.room.calm = calm
     _join_pieces(r, plan, bus)
     lone = set(r.ends.values()) - bus.keys()
     blocks = {k.start: k for k in kept}
@@ -741,7 +776,7 @@ def _legs_to_place(r: Reading, todo: list[str]) -> dict[str, int]:
 
 def start_for_me(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
                  table: FootprintTable, fill: bool,
-                 loud: Sequence[tuple[str, str]] = ()) -> Started:  # fmt: skip
+                 loud: Sequence[LoudInput] = ()) -> Started:  # fmt: skip
     """*Fill the rest* (`fill`: what's placed kept, the tray laid out) or *Start over* (the
     whole board laid out afresh; the parts' On / Off the board choices kept), with the
     off-board parts beside it and wired; `StartError` when there's nothing to do or a part
@@ -758,17 +793,21 @@ def start_for_me(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
     placed = {p.ref for p in base.parts}
     todo = _order(circuit, r, sorted(r.board.keys() - placed))
     limits = placement_limits(circuit, r.nets, r.board, loud)
+    kept_parts = guards(r.board, r.nets, loud)
+    guarded = {g.ref: (g.net, g.legs) for g in kept_parts}
     units = _units(todo, limits)
     tallest = max((min(s.up + s.down for s in shapes(r.board[ref])) for ref in todo), default=0)
     remaining = _legs_to_place(r, todo)
-    best: tuple[tuple[int, int, int, int], Layout, list[str]] | None = None
+    best: tuple[tuple[int, int, int, int, int], Layout, list[str]] | None = None
     for height in range(tallest + 1, tallest + 2 + EXTRA_ROWS):
         chosen = _choose(r, units, height, remaining)
         if chosen is None:
             continue
-        made, left = _laid_out(r, circuit, base, todo, *chosen, height)
+        made, left = _laid_out(r, circuit, base, todo, *chosen, height, guarded,
+                               calm_nets(kept_parts))  # fmt: skip
         broken = len(broken_limits(made, limits))
-        key = (len(left), broken, made.columns * made.strips, len(made.links))
+        noisy = len(noisy_links(made, r.board, r.nets, kept_parts))
+        key = (len(left), broken, made.columns * made.strips, noisy, len(made.links))
         if best is None or key < best[0]:
             best = (key, made, left)
         if not todo:

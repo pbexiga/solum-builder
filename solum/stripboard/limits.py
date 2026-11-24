@@ -9,6 +9,7 @@ The editor shows a broken one as a warning, not a fault: the board is still the 
 
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
+from typing import NamedTuple
 
 from solum.circuit.connectivity import GROUND, Nets
 from solum.circuit.parts import PIN_WORDS
@@ -40,6 +41,16 @@ WHY = {  # each limit's reason, as the warnings and Place next say it
 BYPASSED = {"bjt": "E", "jfet": "S"}  # the pin a bypass cap sits by
 
 
+class LoudInput(NamedTuple):
+    """A high-gain stage's input pin (device ref, pin), as `probe.loud_inputs` finds it, and
+    the nets AC-quiet beside it (a rail, Vref behind its cap: below 1 % of its signal). A
+    part on the input whose other leg is on one (or on ground) biases it: not kept."""
+
+    ref: str
+    pin: str
+    quiet: frozenset[str] = frozenset()
+
+
 @dataclass(frozen=True)
 class Limit:
     """`part`'s leg `leg` must sit by `anchor`'s leg `pin` (board refs and leg names)."""
@@ -66,9 +77,9 @@ def _two_leg(board: dict[str, BoardPart]) -> list[BoardPart]:
 
 
 def placement_limits(circuit: Circuit, nets: Nets, board: dict[str, BoardPart],
-                     loud: Sequence[tuple[str, str]] = ()) -> list[Limit]:  # fmt: skip
+                     loud: Sequence[LoudInput] = ()) -> list[Limit]:  # fmt: skip
     """Every limit the circuit sets, in a stable order. `loud`: each high-gain stage's
-    input pin, (device ref, pin), as `probe.loud_inputs` finds them (it needs a run)."""
+    input pin as `probe.loud_inputs` finds them (it needs a run)."""
     leg_of = _leg_of(board)
     parts = {p.ref: p for p in circuit.parts}
     found: list[Limit] = []
@@ -133,16 +144,18 @@ def placement_limits(circuit: Circuit, nets: Nets, board: dict[str, BoardPart],
         for cap in caps:
             if {nets.net_of(*p) for p in cap.pins.values()} == {net, GROUND}:
                 near(cap, net, leg_of.get((device.ref, pin)), "bypass")
-    # a high-gain stage's input: every two-leg part on the net its signal enters by, kept
-    # by the first such pin on it (two inputs on one net can't both keep them)
+    # a high-gain stage's input: every two-leg part in series with the signal on the net
+    # it enters by (its other leg not on ground or an AC-quiet net), kept by the first such
+    # pin on it (two inputs on one net can't both keep them)
     heard: set[str] = set()
-    for ref, pin in loud:
+    for ref, pin, quiet in loud:
         net = nets.by_pin.get((ref, pin))
         if net is None or net == GROUND or net in heard:
             continue
         heard.add(net)
         for part in _two_leg(board):
-            if net in {nets.net_of(*p) for p in part.pins.values()}:
+            ends = {nets.net_of(*p) for p in part.pins.values()}
+            if net in ends and not (ends - {net}) & (quiet | {GROUND}):
                 near(part, net, leg_of.get((ref, pin)), "input")
     # an op-amp's feedback: parts from its output to its - input
     for amp in circuit.parts:

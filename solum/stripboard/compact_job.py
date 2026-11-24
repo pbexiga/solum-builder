@@ -28,20 +28,26 @@ from solum.guides import FootprintTable
 from solum.models import ModelLibrary
 from solum.stripboard.board import Layout
 from solum.stripboard.compact import Found, Problem, best_of, problem, search
+from solum.stripboard.limits import LoudInput
 
 WORKERS = min(4, max(1, (os.cpu_count() or 2) - 1))  # as renders' (D-083)
 ATTEMPTS = 4  # seeds a run tries (P6h5a's measurement)
 STEPS_PER_PART = 12_000  # Quick: each attempt's steps for each board part
+MOST_PARTS = 40  # ...counted up to this many parts: a big board's run stays in minutes
 THOROUGH = 4  # Thorough looks this many times as long
 PROGRESS_EVERY = 0.2  # seconds between a worker's reports
 SAMPLE = 0.5  # seconds of real steps the estimate times
+# the opening's speed against a whole run's (it speeds up as the board shrinks: 0.5–1.0 on
+# the starters, 0.77 typical) and a run lasting as long as its slowest seed (~10 %, P6h5g)
+RAMP = 0.70
 SPAWN = 1.5  # seconds a run spends starting its workers (measured on a Mac)
 FELL_BACK = "Couldn't do better than Start a board's layout: here it is."
 
 
 def steps_for(parts: int, thorough: bool) -> int:
-    """Each attempt's steps: by the board parts, four times as many when Thorough."""
-    return STEPS_PER_PART * max(parts, 1) * (THOROUGH if thorough else 1)
+    """Each attempt's steps: by the board parts (up to `MOST_PARTS`), four times as many
+    when Thorough."""
+    return STEPS_PER_PART * min(max(parts, 1), MOST_PARTS) * (THOROUGH if thorough else 1)
 
 
 def seeds_for(attempt: int) -> list[int]:
@@ -63,7 +69,7 @@ def _init_worker(settings: Settings, reports: "mp.Queue[Any]", stop: MpEvent) ->
                    reports=reports, stop=stop)  # fmt: skip
 
 
-def _attempt(layout: Layout | None, circuit: Circuit, loud: Sequence[tuple[str, str]],
+def _attempt(layout: Layout | None, circuit: Circuit, loud: Sequence[LoudInput],
              steps: int, seed: int) -> Found | None:  # fmt: skip
     """One seed's search, its progress reported every `PROGRESS_EVERY` seconds."""
     pb = problem(layout, circuit, _worker["models"], _worker["table"], loud)
@@ -101,7 +107,7 @@ class Run:
     stopped: bool
 
 
-def run(pb: Problem, layout: Layout | None, circuit: Circuit, loud: Sequence[tuple[str, str]],
+def run(pb: Problem, layout: Layout | None, circuit: Circuit, loud: Sequence[LoudInput],
         thorough: bool, attempt: int, settings: Settings, report: Report,
         stop: threading.Event) -> Run:  # fmt: skip
     """Try `attempt`'s seeds on up to `WORKERS` processes, telling `report` the steps done
@@ -157,9 +163,10 @@ class Estimate:
 
 
 def estimate(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
-             table: FootprintTable, loud: Sequence[tuple[str, str]]) -> Estimate:  # fmt: skip
+             table: FootprintTable, loud: Sequence[LoudInput]) -> Estimate:  # fmt: skip
     """Time `SAMPLE` seconds of real steps on this circuit, here, and scale them to each
-    choice's steps, attempts and workers; plus what every worker does first (the base)."""
+    choice's steps, attempts and workers, corrected for the run speeding up as the board
+    shrinks (`RAMP`); plus what every worker does first (the base)."""
     started = time.monotonic()
     pb = problem(layout, circuit, models, table, loud)
     base = time.monotonic() - started
@@ -173,7 +180,7 @@ def estimate(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
         return timing[-1] - timing[0] < SAMPLE
 
     search(pb, 10**9, 1, going)
-    speed = counted / max(timing[-1] - timing[0], 1e-3) if counted else 1e4
+    speed = counted / max(timing[-1] - timing[0], 1e-3) / RAMP if counted else 1e4
     rounds = math.ceil(ATTEMPTS / WORKERS)
 
     def seconds(thorough: bool) -> float:

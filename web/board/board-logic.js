@@ -968,11 +968,17 @@ export function timeText(seconds) {
   return `About ${Math.round(seconds / 60)} minutes`;
 }
 
+export const LONGER = "Taking a little longer than expected…";
+
 /**
- * The time a run has left, in words, from its speed so far: "About 25 seconds left."
- * @param {number} seconds
+ * The time a run has left, in words, from its speed so far: "About 25 seconds left."; once
+ * the run has gone past the time it said it would take, `LONGER` instead (P6h5g).
+ * @param {number} seconds left at the speed so far
+ * @param {number} [elapsed] seconds the run has taken so far
+ * @param {number} [expected] seconds it said it would take (0: not known)
  */
-export function leftText(seconds) {
+export function leftText(seconds, elapsed = 0, expected = 0) {
+  if (expected > 0 && elapsed > expected) return LONGER;
   if (seconds < 5) return "Almost done.";
   if (seconds < 60) return `About ${Math.ceil(seconds / 5) * 5} seconds left.`;
   const minutes = Math.round(seconds / 60);

@@ -142,6 +142,7 @@ from solum.stripboard.compact import problem as compact_reading
 from solum.stripboard.edit import BoardEdit, EditError, EditKind, edit_layout
 from solum.stripboard.footprints import board_parts, board_refs, drawing_data, surface_mount
 from solum.stripboard.guidance import guidance
+from solum.stripboard.limits import LoudInput
 from solum.stripboard.offboard import off_board_items
 from solum.stripboard.sheet import Drawings, lists_for, packaged_board, stripboard_page
 from solum.stripboard.size import Axis, SizeError, insert_line, remove_line, start_size, trim
@@ -1173,7 +1174,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"problems": [asdict(p) for p in found], "checked_op": checked,
                 "ratings": ratings_to_fill(circuit, checked)}  # fmt: skip
 
-    def loud_of(circuit: Circuit) -> list[tuple[str, str]]:
+    def loud_of(circuit: Circuit) -> list[LoudInput]:
         """The high-gain stages' inputs, for the placement limits (D-400; none without a
         simulator)."""
         return loud_inputs(sim, circuit) if sim else []
@@ -1333,7 +1334,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"columns": layout.columns, "strips": layout.strips, "cuts": len(layout.cuts),
                 "links": len(layout.links), "stripboard": layout_data(layout)}  # fmt: skip
 
-    def compact_problem(circuit: Circuit) -> tuple[Any, Layout | None, list[tuple[str, str]]]:
+    def compact_problem(circuit: Circuit) -> tuple[Any, Layout | None, list[LoudInput]]:
         """The search's reading of the circuit (Start a board's base, D-399), the board it
         keeps the choices of, and the high-gain inputs; a circuit with nothing for a board
         is a 422 saying why."""

@@ -16,6 +16,7 @@ from solum.stripboard.check import Progress, check_layout, progress
 from solum.stripboard.footprints import board_parts
 from solum.stripboard.limits import (
     Limit,
+    LoudInput,
     broken_limits,
     group_met,
     limit_warnings,
@@ -285,7 +286,8 @@ def test_the_parts_on_a_high_gain_stage_s_input_must_sit_by_it(
     circuit: Callable[..., CircuitBuilder],
 ) -> None:
     """D-400: with Q1 found high gain (`probe.loud_inputs`), every two-leg part on its
-    base's net keeps by the base: its coupling cap and its bias resistors."""
+    base's net in series with the signal keeps by the base: its coupling cap and its
+    feedback resistor, not the bias resistors to ground or to a rail AC-quiet there."""
     c = (
         circuit()
         .rail("V+", 9)
@@ -294,11 +296,15 @@ def test_the_parts_on_a_high_gain_stage_s_input_must_sit_by_it(
         .part("R1", "resistor", "c", "b", value="470k")
         .part("R2", "resistor", "V+", "c", value="10k")
         .part("R3", "resistor", "in", "0", value="1M")
+        .part("R4", "resistor", "V+", "b", value="1M")
+        .part("R5", "resistor", "b", "0", value="100k")
         .build()
     )
     board, _ = board_parts(c, MODELS, TABLE)
     assert placement_limits(c, connect(c), board) == []
-    found = _kinds(placement_limits(c, connect(c), board, [("Q1", "B")]))
+    found = _kinds(
+        placement_limits(c, connect(c), board, [LoudInput("Q1", "B", frozenset({"V+"}))])
+    )
     assert found == [("C1", "Q1", "B", "input"), ("R1", "Q1", "B", "input")]
 
 
@@ -318,7 +324,9 @@ def test_two_high_gain_inputs_on_one_net_keep_its_parts_by_the_first(
         .build()
     )
     board, _ = board_parts(c, MODELS, TABLE)
-    found = _kinds(placement_limits(c, connect(c), board, [("Q1", "B"), ("Q2", "B")]))
+    found = _kinds(
+        placement_limits(c, connect(c), board, [LoudInput("Q1", "B"), LoudInput("Q2", "B")])
+    )
     assert found == [("C1", "Q1", "B", "input")]
 
 

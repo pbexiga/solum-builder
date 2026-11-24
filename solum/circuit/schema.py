@@ -41,7 +41,7 @@ from solum.circuit.switches import (
 from solum.stripboard.board import Layout, layout_from_data
 from solum.units import format_quantity, format_value, parse_value
 
-SCHEMA_VERSION: Final = 40
+SCHEMA_VERSION: Final = 41
 
 Point = tuple[int, int]
 Rotation = Literal[0, 90, 180, 270]
@@ -752,7 +752,8 @@ class Stripboard(_Model):
     (D-375): off-board parts' spots beside the board and their wires, for v35's pads. v38
     (D-385): `where`, the builder's choice of a part on the board or off it, by ref, only
     where it differs from the parts list's (`export.chosen_where`). v40 (D-398): `notes`, the
-    builder's own, and `dismissed`, the overlap warnings they dismissed."""
+    builder's own, and `dismissed`, the overlap warnings they dismissed. v41 (D-403):
+    `stand_up`, the layout help's choice for standing resistors and diodes that made it."""
 
     size: tuple[int, int]  # columns, strips
     parts: dict[str, dict[str, str]] = Field(default_factory=dict)  # ref → leg → hole
@@ -764,6 +765,7 @@ class Stripboard(_Model):
     where: dict[str, Literal["board", "off-board"]] = Field(default_factory=dict)
     notes: list[BoardNote] = Field(default_factory=list)
     dismissed: list[BoardDismissal] = Field(default_factory=list)
+    stand_up: Literal["never", "room", "prefer"] = "room"
 
     @model_validator(mode="after")
     def _readable(self) -> Self:
@@ -778,7 +780,7 @@ class Stripboard(_Model):
 
 
 class Circuit(_Model):
-    schema_: Literal[40] = Field(alias="schema")
+    schema_: Literal[41] = Field(alias="schema")
     id: str = Field(pattern=ID_PATTERN)
     name: str
     description: str = ""

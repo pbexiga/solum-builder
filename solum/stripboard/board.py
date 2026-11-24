@@ -15,7 +15,7 @@ from bisect import bisect_left
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from string import ascii_uppercase
-from typing import Any
+from typing import Any, Literal
 
 Hole = tuple[int, int]  # (column, strip), from 0
 PITCH = 2.54  # mm between holes (0.1")
@@ -97,6 +97,8 @@ class Wire:
 
 
 EDGE = "edge"  # the other side of a body hanging past the board's edge (D-394)
+StandUp = Literal["never", "room", "prefer"]  # standing resistors and diodes (D-403)
+STAND_UP: tuple[StandUp, ...] = ("never", "room", "prefer")
 
 
 @dataclass(frozen=True)
@@ -161,6 +163,7 @@ class Layout:
     where: tuple[tuple[str, str], ...] = ()  # a part moved on or off the board by choice
     notes: tuple[Note, ...] = ()  # the builder's notes (D-398)
     dismissed: tuple[Dismissed, ...] = ()  # overlap warnings dismissed (D-398)
+    stand_up: StandUp = "room"  # the layout help's choice that made it (D-403)
 
     @property
     def pads(self) -> list[Hole]:
@@ -208,7 +211,8 @@ def layout_from_data(data: Mapping[str, Any]) -> Layout:
     """A layout from its plain form: `{size: [columns, strips], parts: {R1: {1: B2, 2:
     B6}, ...}, standing: [R2], cuts: [F7], links: [[A1, A4]], wires: [{from: VR1.1, hole:
     A1}, {from: VR1.3, lug: IN.S}, {from: V+}], off: {VR1: [2, -6]}, where: {R5:
-    off-board}, notes: [{parts: [C2], text: Socket it.}], dismissed: [{parts: [C2, R1]}]}`,
+    off-board}, notes: [{parts: [C2], text: Socket it.}], dismissed: [{parts: [C2, R1]}],
+    stand_up: never}`,
     holes by name but
     an off-board part's spot (it may be off the board) as [column, strip] (the form a
     test or the circuit file writes)."""
@@ -230,8 +234,11 @@ def layout_from_data(data: Mapping[str, Any]) -> Layout:
         where = tuple((str(ref), str(at)) for ref, at in data.get("where", {}).items())
         notes = tuple(note_from_data(n) for n in data.get("notes") or ())
         dismissed = tuple(dismissed_from_data(d) for d in data.get("dismissed") or ())
+        stand_up = data.get("stand_up") or "room"
+        if stand_up not in STAND_UP:
+            raise BoardError("Standing resistors and diodes is never, room or prefer.")
         return Layout(columns, strips, parts, frozenset(_holes(data.get("cuts", ()))), links,
-                      wires, spots, where, notes, dismissed)  # fmt: skip
+                      wires, spots, where, notes, dismissed, stand_up)  # fmt: skip
     except (KeyError, TypeError, ValueError) as err:
         if isinstance(err, BoardError):
             raise
@@ -273,4 +280,5 @@ def layout_data(layout: Layout) -> dict[str, Any]:
         "where": dict(layout.where),
         "notes": [note_data(n) for n in layout.notes],
         "dismissed": [dismissed_data(d) for d in layout.dismissed],
+        "stand_up": layout.stand_up,
     }

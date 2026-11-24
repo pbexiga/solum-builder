@@ -43,7 +43,7 @@ import { compactRun } from "./compact-run.js";
 import { boardNotes } from "./board-notes.js";
 import { needsCard } from "./needs.js";
 import { openForm } from "../editor/form.js";
-import { BOARD_SETTINGS, EDGE, overlapKey, overlapMarks, overlapParts, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, placedRows, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
+import { BOARD_SETTINGS, EDGE, overlapKey, overlapMarks, overlapParts, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, placedRows, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, standUpOf, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -760,24 +760,26 @@ export function boardView(host, app) {
   async function layOut() {
     const board = readBoard(app.circuit()?.stripboard);
     const times = postJson("api/stripboard/compact/estimate", { circuit: app.circuit() }).catch(() => null);
-    const chosen = await chooseLayout({ board, toPlace: progress?.to_place.length ?? 0, times });
+    const standUp = standUpOf(app.circuit()?.stripboard);
+    const chosen = await chooseLayout({ board, toPlace: progress?.to_place.length ?? 0, times, standUp });
     if (!chosen) return;
-    if (chosen.choice === "full") return void run.start({ thorough: chosen.thorough, seconds: chosen.seconds });
-    if (chosen.choice === "tidy") return void tidyUp();
-    await startBoard(chosen.choice === "fill", chosen.compact);
+    if (chosen.choice === "full") return void run.start({ thorough: chosen.thorough, seconds: chosen.seconds, standUp: chosen.standUp });
+    if (chosen.choice === "tidy") return void tidyUp(false, chosen.standUp);
+    await startBoard(chosen.choice === "fill", chosen.compact, chosen.standUp);
   }
 
   /**
    * *Start a board* or *Fill the rest* (D-387): the server's layout, made compact after
    * when asked (Tidy up, D-388; nothing smaller found, it's kept as laid out). One undo
-   * step; what Fill the rest couldn't join is said on the bar.
-   * @param {boolean} fill @param {boolean} compact
+   * step; what Fill the rest couldn't join is said on the bar. `standUp`: standing parts
+   * (D-403), kept with the board.
+   * @param {boolean} fill @param {boolean} compact @param {import("./board-logic.js").StandUp} standUp
    */
-  async function startBoard(fill, compact) {
+  async function startBoard(fill, compact, standUp) {
     await working(async (say) => {
       try {
         say("Laying out…");
-        const { stripboard, left } = await postJson("api/stripboard/start", { circuit: app.circuit(), fill });
+        const { stripboard, left } = await postJson("api/stripboard/start", { circuit: app.circuit(), fill, stand_up: standUp });
         let board = stripboard;
         if (compact) {
           say("Tidying…");
@@ -795,13 +797,14 @@ export function boardView(host, app) {
   /**
    * *Tidy up* (D-388): the board made smaller and still checked, one undo step. Parts
    * placed wrongly are named first, and laid out again only when the builder says so.
-   * @param {boolean} [mend]
+   * `standUp`: standing parts (D-403; the board's own when not said), kept with the board.
+   * @param {boolean} [mend] @param {import("./board-logic.js").StandUp} [standUp]
    */
-  async function tidyUp(mend = false) {
+  async function tidyUp(mend = false, standUp) {
     const made = await working(async (say) => {
       say("Tidying…");
       try {
-        return await postJson("api/stripboard/tidy", { circuit: app.circuit(), mend });
+        return await postJson("api/stripboard/tidy", { circuit: app.circuit(), mend, stand_up: standUp });
       } catch (err) {
         app.refuse(/** @type {Error} */ (err).message);
         return null;
@@ -818,7 +821,7 @@ export function boardView(host, app) {
           { label: "Lay them out again", value: "mend", kind: "primary" },
         ],
       });
-      if (choice === "mend") await tidyUp(true);
+      if (choice === "mend") await tidyUp(true, standUp);
       return;
     }
     app.editBoard(made.stripboard, "Tidy up");

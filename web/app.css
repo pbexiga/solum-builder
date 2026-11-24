@@ -516,6 +516,10 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .layout-speed .layout-text { grid-column: 2 / -1; color: var(--text-3); }
 .layout-speed:has(input:disabled), .layout-speed:has(input:disabled) .layout-name { color: var(--text-3); cursor: default; }
 .layout-note { margin: 0 0 0 24px; color: var(--text-3); font-size: 12px; }
+.layout-standing { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; row-gap: 4px; font-size: 12px; color: var(--text-2); }
+.layout-standing .layout-name { flex-basis: 100%; font-size: 13px; font-weight: 600; color: var(--text); }
+.layout-stand { cursor: pointer; }
+.layout-stand input { margin: 0; accent-color: var(--accent); }
 /* Build a full layout (D-399): the running window, the review bar, the boards before and after */
 .compact-run { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); width: min(360px, calc(100% - 32px)); padding: 12px 14px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; color: var(--text-2); z-index: 3; }
 .compact-run[hidden], .compact-review[hidden], .compact-dim[hidden], .compact-title[hidden], .compact-said[hidden] { display: none; }

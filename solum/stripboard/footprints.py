@@ -458,15 +458,29 @@ def links_under(part: BoardPart, standing: bool) -> bool:
     return part.footprint.shape == "dip" or (part.footprint.shape == "axial" and not standing)
 
 
+LEAD = 0.6  # mm: a ¼ W resistor's or a small diode's lead, bent over a standing body (D-403)
 Outline = tuple[float, float, float, float, float]  # x0, y0, x1, y1 in mm; radius (0: a box)
 
 
 def body_outline(part: BoardPart, legs: dict[str, Hole], standing: bool) -> Outline | None:
     """The body's real outline in mm (hole (0, 0) at 0, 0), centred as `_body_shape`
-    centres it: a circle's box and radius, or a box (radius 0); None for no body or a
-    standing part (D-394)."""
+    centres it: a circle's box and radius, or a box (radius 0); None for no body (D-394).
+    A standing part's body is over its first leg, its lead bent over to the other: a box
+    along the legs as wide as the body, from the body's far side to the lead's (D-403)."""
     fp = part.footprint
-    if standing or not (fp.diameter or fp.length or fp.width):
+    if standing:
+        if not fp.width:
+            return None
+        r = fp.width / 2
+        (ax, ay), (bx, by) = legs[part.legs[0]], legs[part.legs[-1]]
+        ux, uy = (bx > ax) - (bx < ax), (by > ay) - (by < ay)  # from the body to the lead
+        ends = [(ax * PITCH - ux * r, ay * PITCH - uy * r),
+                (bx * PITCH + ux * LEAD / 2, by * PITCH + uy * LEAD / 2)]  # fmt: skip
+        across = (r * abs(uy), r * abs(ux))  # half the body's width, across the legs' line
+        x0, x1 = sorted(x for x, _ in ends)
+        y0, y1 = sorted(y for _, y in ends)
+        return x0 - across[0], y0 - across[1], x1 + across[0], y1 + across[1], 0.0
+    if not (fp.diameter or fp.length or fp.width):
         return None
     xs, ys = [h[0] for h in legs.values()], [h[1] for h in legs.values()]
     cx, cy = (min(xs) + max(xs)) / 2 * PITCH, (min(ys) + max(ys)) / 2 * PITCH

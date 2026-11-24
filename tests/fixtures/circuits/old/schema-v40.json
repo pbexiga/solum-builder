@@ -1,0 +1,22 @@
+{
+  "schema": 40,
+  "id": "v40",
+  "name": "v40",
+  "parts": [
+    {"ref": "IN", "pos": [0, 0], "type": "guitar"},
+    {"ref": "R1", "pos": [100, 0], "type": "resistor", "value": "10k"},
+    {"ref": "R2", "pos": [150, 0], "type": "resistor", "value": "1k"},
+    {"ref": "OUT", "pos": [200, 0], "type": "amp"}
+  ],
+  "wires": [],
+  "labels": [],
+  "stripboard": {
+    "size": [6, 3],
+    "parts": {
+      "R1": {"1": "A1", "2": "B1"},
+      "R2": {"1": "A3", "2": "E3"}
+    },
+    "standing": ["R1"],
+    "notes": [{"parts": ["R1"], "text": "Stood up to save room."}]
+  }
+}

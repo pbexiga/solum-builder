@@ -3,10 +3,13 @@ kept only when the board still passes the check and is no worse in size, cuts or
 
 The steps are tried in a fixed order, over and over until a whole pass keeps none: take
 out an empty column or strip, drop a link or a cut, slide a part left (with the cuts and
-links of its own columns, then alone) or up, slide a link, a cut or a pad, shorten a link.
+links of its own columns, then alone) or up, slide a link, a cut or a pad, shorten a link,
+and, when the board's choice allows it (D-403), stand a resistor or diode up (one leg
+kept, the other beside it) and take out the lines that empties.
 After each step the board is trimmed to what's on it. A step is kept when the check passes
 and the board's size, cuts and links are each no worse and its measure (size, cuts, links,
-the links' length, then how far everything sits from the top left) is smaller, so the
+standing parts when preferred, the links' length, then how far everything sits from the
+top left) is smaller, so the
 search always ends and the same board always tidies the same way. It can't break a board,
 nor a placement limit it met (D-367, D-400): a part kept by its pin stays there.
 
@@ -16,13 +19,14 @@ back and *Fill the rest* lays them out again, then the board is tidied.
 """
 
 from collections.abc import Callable, Iterator, Sequence
+from contextlib import suppress
 from dataclasses import dataclass, replace
 from functools import partial
 
 from solum.circuit.schema import Circuit
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
-from solum.stripboard.board import Hole, Layout, Link, Placed
+from solum.stripboard.board import Hole, Layout, Link, Placed, StandUp
 from solum.stripboard.check import (
     check_layout,
     either_way,
@@ -42,7 +46,7 @@ JUMP = 6  # holes a part, link or cut may slide left in one step (over what's be
 PASSES = 40  # most passes over the steps (each keeps at least one step, or the search ends)
 TRIES = 12000  # most steps tried in all: a big board stops there (a count, so it repeats)
 
-Key = tuple[int, int, int, int, int]
+Key = tuple[int, int, int, int, int, int]
 Step = Callable[[Layout], Layout]
 
 
@@ -70,13 +74,20 @@ class Tidied:
 
 
 def key(layout: Layout) -> Key:
-    """A board's measure, smaller is tidier: its size in holes, its cuts, its links, their
-    length, then how far its legs, cuts and links sit from the top left."""
+    """A board's measure, smaller is tidier: its size in holes (each standing part a
+    column's worth more when the board stands parts only where it saves room, D-403), its
+    cuts, its links, its parts lying flat when standing is preferred, the links' length,
+    then how far its legs, cuts and links sit from the top left."""
     length = sum(abs(link.a[1] - link.b[1]) for link in layout.links)
     spread = sum(h[0] + h[1] for p in layout.parts for _, h in p.legs)
     spread += sum(h[0] + h[1] for h in layout.cuts)
     spread += sum(h[0] + h[1] for link in layout.links for h in (link.a, link.b))
-    return (layout.columns * layout.strips, len(layout.cuts), len(layout.links), length, spread)
+    standing = sum(p.standing for p in layout.parts)
+    size = layout.columns * layout.strips
+    if layout.stand_up == "room":
+        size += standing * layout.strips
+    preferred = -standing if layout.stand_up == "prefer" else 0
+    return (size, len(layout.cuts), len(layout.links), preferred, length, spread)
 
 
 def _better(new: Key, old: Key) -> bool:
@@ -122,9 +133,10 @@ def _own(layout: Layout, placed: Placed) -> tuple[frozenset[Hole], frozenset[int
     return cuts, links
 
 
-def _steps(layout: Layout, board: dict[str, BoardPart]) -> Iterator[Step]:
+def _steps(layout: Layout, board: dict[str, BoardPart], stand: bool = False) -> Iterator[Step]:
     """The steps to try on `layout`, in their fixed order (each a layout to a layout; one
-    that can't be made raises `SizeError` and is skipped)."""
+    that can't be made raises `SizeError` and is skipped); `stand`: standing a part up
+    too, when the board's choice allows it (D-403)."""
     for column in range(layout.columns - 1, -1, -1):
         yield partial(remove_line, board=board, axis="column", at=column)
     for strip in range(layout.strips - 1, -1, -1):
@@ -156,6 +168,40 @@ def _steps(layout: Layout, board: dict[str, BoardPart]) -> Iterator[Step]:
         if wire.hole is not None:
             for d in ((-1, 0), (0, -1)):
                 yield partial(_shifted, d=d, pads=frozenset({i}))
+    if stand and layout.stand_up != "never":
+        for placed in layout.parts:
+            part = board.get(placed.ref)
+            if part is None or placed.standing or part.footprint.shape != "axial":
+                continue
+            for legs in _stood_legs(placed, part.footprint.stand):
+                yield partial(_stand_up, ref=placed.ref, legs=legs, board=board)
+
+
+_AROUND = ((1, 0), (-1, 0), (0, 1), (0, -1))
+
+
+def _stood_legs(placed: Placed, stand: int) -> Iterator[tuple[tuple[str, Hole], ...]]:
+    """A flat two-leg part's legs stood up: each leg kept in its hole in turn, the other
+    `stand` holes from it each way (the check keeps only those still on their nets)."""
+    legs = dict(placed.legs)
+    for kept in legs:
+        for dx, dy in _AROUND:
+            to = (legs[kept][0] + dx * stand, legs[kept][1] + dy * stand)
+            yield tuple((leg, legs[kept] if leg == kept else to) for leg in legs)
+
+
+def _stand_up(layout: Layout, ref: str, legs: tuple[tuple[str, Hole], ...],
+              board: dict[str, BoardPart]) -> Layout:  # fmt: skip
+    """`ref` stood up on `legs`, then every line that empties taken out (D-403)."""
+    made = replace(layout, parts=tuple(Placed(ref, legs, True) if p.ref == ref else p
+                                       for p in layout.parts))  # fmt: skip
+    for at in range(made.columns - 1, -1, -1):
+        with suppress(SizeError):
+            made = remove_line(made, board, "column", at)
+    for at in range(made.strips - 1, -1, -1):
+        with suppress(SizeError):
+            made = remove_line(made, board, "strip", at)
+    return made
 
 
 def _uncut(layout: Layout, cut: Hole) -> Layout:
@@ -169,16 +215,16 @@ def _relinked(layout: Layout, i: int, link: Link | None) -> Layout:
 
 
 def tidy_steps(layout: Layout, passes: Callable[[Layout], bool],
-               board: dict[str, BoardPart]) -> Layout:  # fmt: skip
+               board: dict[str, BoardPart], stand: bool = False) -> Layout:  # fmt: skip
     """`layout` (which `passes`) made smaller step by step: each step kept when the
     trimmed board still `passes` and is `_better`; passes over the steps until two in a
     row gain nothing but spread (things only nudged towards the top left), `PASSES`, or
-    `TRIES` steps tried in all."""
+    `TRIES` steps tried in all. `stand`: with the steps that stand a part up."""
     best, best_key = layout, key(layout)
     idle = tries = 0
     for _ in range(PASSES):
         start = best_key
-        for step in _steps(best, board):
+        for step in _steps(best, board, stand):
             tries += 1
             if tries > TRIES:
                 return best
@@ -189,7 +235,7 @@ def tidy_steps(layout: Layout, passes: Callable[[Layout], bool],
             made_key = key(made)
             if _better(made_key, best_key) and passes(made):
                 best, best_key = made, made_key
-        idle = idle + 1 if best_key[:4] == start[:4] else 0
+        idle = idle + 1 if best_key[:5] == start[:5] else 0
         if best_key == start or idle == 2:
             break
     return best
@@ -215,15 +261,18 @@ def joins(layout: Layout, turnable: frozenset[str] = frozenset()) -> Joins:
 
 
 def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: FootprintTable,
-            mend: bool = False, loud: Sequence[LoudInput] = ()) -> Tidied:  # fmt: skip
+            mend: bool = False, loud: Sequence[LoudInput] = (),
+            stand_up: StandUp | None = None) -> Tidied:  # fmt: skip
     """*Tidy up* on a board: smaller, still passing the check, every placement limit it
     met still met and no more links near a sensitive net's parts than it had (D-402; `loud`:
-    the high-gain stages' inputs, `probe.loud_inputs`), the same
-    every run. Parts placed wrongly raise `MendFirst` unless `mend`, which lays them out
+    the high-gain stages' inputs, `probe.loud_inputs`), the same every run; `stand_up`:
+    standing resistors and diodes (None: the board's own choice), kept with it (D-403).
+    Parts placed wrongly raise `MendFirst` unless `mend`, which lays them out
     again first. A board that doesn't pass, or can't be made smaller, raises `TidyError`
     saying so."""
     if not layout.parts:
         raise TidyError("There's nothing on the board to tidy: place the parts first.")
+    layout = replace(layout, stand_up=stand_up or layout.stand_up)
     mended = misfits(layout, circuit, models, table)
     if mended and not mend:
         raise MendFirst(mended)
@@ -257,7 +306,9 @@ def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Footp
                 and check_layout(made, circuit, models, table).ok)  # fmt: skip
 
     tidied = tidy_steps(layout, passes, board)
-    if key(tidied)[:4] == key(layout)[:4]:  # only nudged: keep the builder's board
+    if tidied.stand_up != "never":  # then parts stood up, from there: never worse (D-403)
+        tidied = tidy_steps(tidied, passes, board, stand=True)
+    if key(tidied)[:5] == key(layout)[:5]:  # only nudged: keep the builder's board
         if not mended:
             raise TidyError("Couldn't make this board smaller.")
         tidied = layout

@@ -11,7 +11,7 @@ import logging
 import queue
 import threading
 from collections.abc import AsyncIterator, Callable
-from dataclasses import asdict
+from dataclasses import asdict, replace
 from pathlib import Path
 from typing import Any, Literal, get_args
 
@@ -135,7 +135,15 @@ from solum.simulate import (
 )
 from solum.store import CircuitStore, StoreError, blank_circuit, split_id
 from solum.stripboard import compact_job
-from solum.stripboard.board import BoardError, Layout, layout_data, layout_from_data, note_from_data
+from solum.stripboard.board import (
+    STAND_UP,
+    BoardError,
+    Layout,
+    StandUp,
+    layout_data,
+    layout_from_data,
+    note_from_data,
+)
 from solum.stripboard.check import kept_dismissals, move_problem, progress, shorts
 from solum.stripboard.compact import board_of, finish, finish_layout
 from solum.stripboard.compact import problem as compact_reading
@@ -202,6 +210,7 @@ class BoardTidyRequest(BaseModel):
 
     circuit: dict[str, Any]
     mend: bool = False
+    stand_up: StandUp | None = None  # standing resistors and diodes (None: the board's, D-403)
 
 
 class BoardStartRequest(BaseModel):
@@ -210,6 +219,7 @@ class BoardStartRequest(BaseModel):
 
     circuit: dict[str, Any]
     fill: bool = False
+    stand_up: StandUp | None = None  # standing resistors and diodes (None: the board's, D-403)
 
 
 class BoardCompactRequest(BaseModel):
@@ -220,6 +230,7 @@ class BoardCompactRequest(BaseModel):
     thorough: bool = False
     attempt: int = Limit(1, ge=1, le=10_000)
     progress: bool = False
+    stand_up: StandUp | None = None  # standing resistors and diodes (None: the board's, D-403)
 
 
 class BoardFinishRequest(BaseModel):
@@ -1301,7 +1312,8 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         kept = circuit.stripboard
         try:
             made = start_for_me(kept.layout() if kept else None, circuit, models, table,
-                                fill=req.fill, loud=loud_of(circuit))  # fmt: skip
+                                fill=req.fill, loud=loud_of(circuit),
+                                stand_up=req.stand_up)  # fmt: skip
         except StartError as err:
             raise HTTPException(422, str(err)) from None
         parts = board_parts(circuit, models, table)[0]
@@ -1320,7 +1332,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         table = footprint_table(settings.library_dir)
         try:
             tidied = tidy_up(kept.layout(), circuit, models, table, mend=req.mend,
-                             loud=loud_of(circuit))  # fmt: skip
+                             loud=loud_of(circuit), stand_up=req.stand_up)  # fmt: skip
         except MendFirst as err:
             return {"ask": str(err), "refs": err.refs}
         except TidyError as err:
@@ -1334,13 +1346,16 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {"columns": layout.columns, "strips": layout.strips, "cuts": len(layout.cuts),
                 "links": len(layout.links), "stripboard": layout_data(layout)}  # fmt: skip
 
-    def compact_problem(circuit: Circuit) -> tuple[Any, Layout | None, list[LoudInput]]:
+    def compact_problem(circuit: Circuit, stand_up: StandUp | None = None
+                        ) -> tuple[Any, Layout | None, list[LoudInput]]:  # fmt: skip
         """The search's reading of the circuit (Start a board's base, D-399), the board it
-        keeps the choices of, and the high-gain inputs; a circuit with nothing for a board
-        is a 422 saying why."""
+        keeps the choices of (`stand_up` replacing its own, D-403), and the high-gain
+        inputs; a circuit with nothing for a board is a 422 saying why."""
         table = footprint_table(settings.library_dir)
         kept = circuit.stripboard
         layout, loud = (kept.layout() if kept else None), loud_of(circuit)
+        if stand_up in STAND_UP:
+            layout = replace(layout or Layout(0, 0, ()), stand_up=stand_up)
         try:
             return compact_reading(layout, circuit, models, table, loud), layout, loud
         except StartError as err:
@@ -1364,7 +1379,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         stop = threading.Event()
 
         def work(put: Callable[[dict[str, Any]], None]) -> dict[str, Any]:
-            pb, layout, loud = compact_problem(circuit)
+            pb, layout, loud = compact_problem(circuit, req.stand_up)
             put({"base": board_line(pb.base)})
 
             def report(done: int, of: int, best: Any) -> None:
@@ -1386,7 +1401,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         """*Stop and keep the best* (D-399): the best board so far wired and checked; the
         base when it doesn't pass or is no better."""
         circuit = parse_circuit(req.circuit)
-        pb, _, _ = compact_problem(circuit)
+        pb, _, _ = compact_problem(circuit, req.board.get("stand_up"))
         try:
             board = layout_from_data(req.board)
         except BoardError as err:

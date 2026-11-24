@@ -2,7 +2,7 @@
 starter that can go on a board, and what each board came to. Layouts are deterministic
 (D-399), so a change to the layout rules shows as this table's diff.
 
-Usage (dev image): python scripts/board_table.py [--out FILE] [starter ...]
+Usage (dev image): python scripts/board_table.py [--out FILE] [--stand-up CHOICE] [starter ...]
 """
 
 import argparse
@@ -13,14 +13,15 @@ from dataclasses import dataclass
 from pathlib import Path
 
 from solum.api.app import starter_paths
+from solum.circuit.connectivity import connect
 from solum.circuit.io import load_circuit
 from solum.config import load_settings
 from solum.guides import footprint_table
-from solum.circuit.connectivity import connect
 from solum.probe import loud_inputs
-from solum.simulate import simulator_from_settings
 from solum.sim.engine import engine_from_settings
+from solum.simulate import simulator_from_settings
 from solum.stripboard import compact_job
+from solum.stripboard.board import STAND_UP, Layout, StandUp
 from solum.stripboard.check import outline_overlaps, read_layout
 from solum.stripboard.compact import finish, problem
 from solum.stripboard.limits import broken_limits, placement_limits
@@ -49,14 +50,15 @@ class Row:
 
     def line(self) -> str:
         holes = f"{self.columns * self.strips} ({self.columns}×{self.strips})"
+        standing, loud = ", ".join(self.standing) or "–", ", ".join(self.loud) or "–"
         return (f"| {self.starter} | {holes} | {self.cuts} | {self.links} | {self.broken} "
-                f"| {self.noisy} | {self.touching} | {', '.join(self.standing) or '–'} "
-                f"| {', '.join(self.loud) or '–'} | {'yes' if self.fell_back else ''} |")  # fmt: skip
+                f"| {self.noisy} | {self.touching} | {standing} | {loud} "
+                f"| {'yes' if self.fell_back else ''} |")  # fmt: skip
 
 
-def table(names: list[str] | None) -> tuple[list[Row], list[str]]:
-    """Every starter's full layout (`names`: only those), and the starters that can't go
-    on a board, with why."""
+def table(names: list[str] | None, stand_up: StandUp = "room") -> tuple[list[Row], list[str]]:
+    """Every starter's full layout (`names`: only those) with standing parts as `stand_up`
+    says (D-403), and the starters that can't go on a board, with why."""
     settings = load_settings({"DATA_DIR": str(WORK / "data"), "CACHE_DIR": str(WORK / "cache"),
                               "LIBRARY_DIR": str(REPO / "library")})  # fmt: skip
     sim = simulator_from_settings(settings, engine_from_settings(settings))
@@ -67,13 +69,14 @@ def table(names: list[str] | None) -> tuple[list[Row], list[str]]:
             continue
         circuit = load_circuit(path)
         loud = loud_inputs(sim, circuit)
+        empty = Layout(0, 0, (), stand_up=stand_up)
         try:
-            pb = problem(None, circuit, models, tbl, loud)
+            pb = problem(empty, circuit, models, tbl, loud)
         except StartError as err:
             skipped.append(f"{name}: {err}")
             continue
         started = time.monotonic()
-        got = compact_job.run(pb, None, circuit, loud, False, 1, settings,
+        got = compact_job.run(pb, empty, circuit, loud, False, 1, settings,
                               lambda *_: None, threading.Event())  # fmt: skip
         built = finish(pb, got.best, models, tbl)
         lay = built.layout
@@ -95,8 +98,9 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("starters", nargs="*")
     ap.add_argument("--out", type=Path)
+    ap.add_argument("--stand-up", choices=STAND_UP, default="room")
     args = ap.parse_args()
-    rows, skipped = table(args.starters or None)
+    rows, skipped = table(args.starters or None, args.stand_up)
     text = "\n".join([HEAD, "|" + "---|" * HEAD.count(" | ") + "---|",
                       *(r.line() for r in rows), "",
                       *(f"Not on a board: {s}" for s in skipped)])  # fmt: skip

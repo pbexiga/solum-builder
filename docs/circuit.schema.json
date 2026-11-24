@@ -2176,7 +2176,7 @@
     },
     "Stripboard": {
       "additionalProperties": false,
-      "description": "The board laid out in the Board view (v35, D-368): the plain form `board.layout_data`\nwrites, holes by name. Only its form is checked here; whether it matches the circuit\n(a part since deleted, a leg on the wrong net) is the editor's progress check. v36\n(D-375): off-board parts' spots beside the board and their wires, for v35's pads. v38\n(D-385): `where`, the builder's choice of a part on the board or off it, by ref, only\nwhere it differs from the parts list's (`export.chosen_where`). v40 (D-398): `notes`, the\nbuilder's own, and `dismissed`, the overlap warnings they dismissed.",
+      "description": "The board laid out in the Board view (v35, D-368): the plain form `board.layout_data`\nwrites, holes by name. Only its form is checked here; whether it matches the circuit\n(a part since deleted, a leg on the wrong net) is the editor's progress check. v36\n(D-375): off-board parts' spots beside the board and their wires, for v35's pads. v38\n(D-385): `where`, the builder's choice of a part on the board or off it, by ref, only\nwhere it differs from the parts list's (`export.chosen_where`). v40 (D-398): `notes`, the\nbuilder's own, and `dismissed`, the overlap warnings they dismissed. v41 (D-403):\n`stand_up`, the layout help's choice for standing resistors and diodes that made it.",
       "properties": {
         "size": {
           "maxItems": 2,
@@ -2281,6 +2281,16 @@
           },
           "title": "Dismissed",
           "type": "array"
+        },
+        "stand_up": {
+          "default": "room",
+          "enum": [
+            "never",
+            "room",
+            "prefer"
+          ],
+          "title": "Stand Up",
+          "type": "string"
         }
       },
       "required": [
@@ -2702,7 +2712,7 @@
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "const": 40,
+      "const": 41,
       "title": "Schema",
       "type": "integer"
     },
@@ -2939,7 +2949,7 @@
     "name",
     "parts"
   ],
-  "title": "Solum Builder circuit, schema v40",
+  "title": "Solum Builder circuit, schema v41",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

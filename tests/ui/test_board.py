@@ -872,6 +872,35 @@ def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_s
     expect(size).to_have_text("Empty board")
 
 
+def test_the_layout_dialog_s_standing_choice_is_kept_with_the_board(
+    page: Page, base_url: str
+) -> None:
+    """D-403: the dialog's last line, Standing resistors and diodes, opens on the board's
+    own choice (When it saves room on a new board). Start a board with Prefer stands the
+    Fuzz Face's resistors (10 × 6 for 10 × 10 flat) and the board keeps the choice: the
+    dialog opens on Prefer next time; Never then lays everything flat again."""
+    open_with_board(page, base_url, None, "fuzz-face")
+    page.locator("#board-button").click()
+    page.locator("#board-settings summary").click()
+    page.locator("#board-layout").click()
+    dialog = page.locator("#layout-dialog")
+    expect(dialog.locator(".layout-standing")).to_contain_text("Standing resistors and diodes")
+    expect(dialog.locator("input[name='layout-stand'][value='room']")).to_be_checked()
+    dialog.locator("input[name='layout-stand'][value='prefer']").check()
+    dialog.locator("#layout-compact").set_checked(False)
+    dialog.locator("button[data-answer='go']").click()
+    page.locator(".ask-buttons button[data-answer='layout']").click()
+    size = page.locator("#board-size-text")
+    expect(size).to_contain_text("10 × 6 holes")
+    page.locator("#board-layout").click()
+    expect(dialog.locator("input[name='layout-stand'][value='prefer']")).to_be_checked()
+    dialog.locator(".layout-choice[data-layout='start'] input").check()
+    dialog.locator("input[name='layout-stand'][value='never']").check()
+    dialog.locator("button[data-answer='go']").click()
+    page.locator(".ask-buttons button[data-answer='layout']").click()
+    expect(size).to_contain_text("10 × 10 holes")
+
+
 def test_the_tray_shows_the_placed_parts_on_request(page: Page, base_url: str) -> None:
     """D-387: once laid out, the tray lists the placed parts (on the board and beside it)
     under *Show placed*, above its lists; a click selects one."""

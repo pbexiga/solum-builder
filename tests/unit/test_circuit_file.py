@@ -24,11 +24,12 @@ from solum.circuit.schema import (
     Bjt,
     Guitar,
     Jfet,
+    Stripboard,
     Trimmer,
     id_from_name,
     json_schema_text,
 )
-from solum.stripboard.board import layout_data, layout_from_data
+from solum.stripboard.board import BoardError, layout_data, layout_from_data
 
 FIXTURE = Path(__file__).parents[1] / "fixtures" / "circuits" / "jfet-drive.json"
 
@@ -231,10 +232,10 @@ def test_schema_v1_file_loads_as_current(repo: Path) -> None:
     (and dropped provenance), v6 text blocks (and dropped the power mode); a v1 file
     loads unchanged and saves as v6 at v1.0."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v1.json")
-    assert c.schema_ == SCHEMA_VERSION == 40
+    assert c.schema_ == SCHEMA_VERSION == 41
     assert c.tags == [] and c.texts == []
     assert [p.ref for p in c.parts] == ["R1", "R2"]
-    assert circuit_to_dict(c)["schema"] == 40
+    assert circuit_to_dict(c)["schema"] == 41
     assert (str(c.version), c.final) == ("v1.0", False)
 
 
@@ -810,3 +811,22 @@ def test_a_v38_trimmer_on_a_kept_board_stays_in_line(repo: Path) -> None:
     assert (tr1.style, tr2.style) == ("inline", "triangle")
     saved = {p["ref"]: p for p in circuit_to_dict(c)["parts"]}
     assert saved["TR1"]["style"] == "inline" and "style" not in saved["TR2"]
+
+
+def test_a_v40_board_reads_as_standing_when_it_saves_room(repo: Path) -> None:
+    """v41 (D-403) added the board's `stand_up`: a v40 board has none and reads as the
+    default, "room", its standing parts kept; the default isn't written, another choice
+    is, and it survives saving and loading."""
+    c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v40.json")
+    assert c.schema_ == 41 and c.stripboard is not None
+    layout = c.stripboard.layout()
+    assert layout.stand_up == "room" and [p.ref for p in layout.parts if p.standing] == ["R1"]
+    assert "stand_up" not in circuit_to_dict(c)["stripboard"]
+    never = c.model_copy(update={"stripboard": Stripboard.model_validate(
+        {**layout_data(layout), "stand_up": "never"})})  # fmt: skip
+    saved = circuit_to_dict(never)
+    assert saved["stripboard"]["stand_up"] == "never"
+    again = parse_circuit(saved).stripboard
+    assert again is not None and again.layout().stand_up == "never"
+    with pytest.raises(BoardError, match="never, room or prefer"):
+        layout_from_data({**layout_data(layout), "stand_up": "sometimes"})

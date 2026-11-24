@@ -1078,6 +1078,13 @@ def _v39_to_v40(data: Data) -> Data:
     return data
 
 
+def _v40_to_v41(data: Data) -> Data:
+    """v41 (D-403) added the board's `stand_up`, the layout help's choice for standing
+    resistors and diodes; an older board has none and reads as the default ("room"), so a
+    v40 file is a valid v41 file."""
+    return data
+
+
 MIGRATIONS: dict[int, Migration] = {
     1: _v1_to_v2, 2: _v2_to_v3, 3: _v3_to_v4, 4: _v4_to_v5, 5: _v5_to_v6, 6: _v6_to_v7,
     7: _v7_to_v8, 8: _v8_to_v9, 9: _v9_to_v10,
@@ -1088,7 +1095,7 @@ MIGRATIONS: dict[int, Migration] = {
     27: _v27_to_v28, 28: _v28_to_v29, 29: _v29_to_v30, 30: _v30_to_v31,
     31: _v31_to_v32, 32: _v32_to_v33, 33: _v33_to_v34, 34: _v34_to_v35,
     35: _v35_to_v36, 36: _v36_to_v37, 37: _v37_to_v38, 38: _v38_to_v39,
-    39: _v39_to_v40,
+    39: _v39_to_v40, 40: _v40_to_v41,
 }  # fmt: skip
 
 

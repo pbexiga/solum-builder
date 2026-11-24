@@ -9,7 +9,7 @@
 
 import { postJson, postProgress } from "../api.js";
 import { h } from "../panels.js";
-import { figuresLine, figuresOf, leftText, sameTry } from "./board-logic.js";
+import { figuresLine, figuresOf, leftText, sameTry, standUpOf } from "./board-logic.js";
 
 /**
  * @typedef {{columns: number, strips: number, cuts: number, links: number, stripboard: any}} BoardLine
@@ -76,6 +76,8 @@ export function compactRun(host, app) {
   /** @type {any} */
   let circuit = null; // the circuit as it was when the run began
   let thorough = false;
+  /** @type {import("./board-logic.js").StandUp} */
+  let standUp = "room"; // standing parts (D-403): every try's the same
   let expected = 0; // seconds a try was said to take (the estimate), 0 when not known
   let attempt = 0;
   /** @type {BoardLine | null} */
@@ -131,7 +133,7 @@ export function compactRun(host, app) {
     const begun = performance.now();
     bar.classList.add("working");
     try {
-      const made = await postProgress("api/stripboard/compact", { circuit, thorough, attempt }, (done, of, line) => {
+      const made = await postProgress("api/stripboard/compact", { circuit, thorough, attempt, stand_up: standUp }, (done, of, line) => {
         if (running !== control) return;
         if (line.base) {
           base ??= line.base;
@@ -247,11 +249,13 @@ export function compactRun(host, app) {
   return {
     /**
      * Build a full layout of the circuit as it is now: try 1, then the review.
-     * @param {{thorough: boolean, seconds?: number}} choice `seconds`: the time it said
+     * @param {{thorough: boolean, seconds?: number, standUp?: import("./board-logic.js").StandUp}} choice
+     *   `seconds`: the time it said; `standUp`: standing parts (D-403; the board's own when not said)
      */
     start(choice) {
       circuit = app.circuit();
       thorough = choice.thorough;
+      standUp = choice.standUp ?? standUpOf(circuit?.stripboard);
       expected = choice.seconds ?? 0;
       attempt = 0;
       base = null;

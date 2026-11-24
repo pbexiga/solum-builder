@@ -6,7 +6,7 @@ This page takes you from an empty sheet to a working one-knob JFET boost in abou
 
 ## The screen
 
-- **The header**, left to right: the menus (File, Edit, Blocks, View, Tools, Help), the circuit's name with a pencil to rename it, a chip saying *Not saved* or *Never saved* when there are changes to keep, the **Power** supply, **▶ Run** with its **Auto-run** switch, and **History**.
+- **The header**, left to right: the menus (File, Edit, Blocks, View, Tools, Help), **Board** (the circuit's stripboard, see [Stripboard](stripboard.md)), the circuit's name with a pencil to rename it, a chip saying *Not saved* or *Never saved* when there are changes to keep, the **Power** supply, **▶ Run** with its **Auto-run** switch, and **History**.
 - **The parts palette**, on the left: every part you can place, in groups (Wiring, Passive, Semiconductors, Signal & power, Misc). Hover a tile to see its key: R for a resistor, C for a capacitor, and so on.
 - **The sheet**, in the middle, where you draw. The +, − and Fit buttons are at its bottom right; the line under it says what a click does.
 - **The panes**, on the right: Problems, Notes, DC, Probe, Frequency, Bias & headroom, Scope, Harmonics, Knobs & switches and Audio. Click a pane's title to fold it; drag its grip (⋮⋮) to move it. View → Reset pane order puts them back; File → **Settings…** picks the theme (Solum, Dark or Light): see [Settings](settings.md). A pane with an **ⓘ** says what it shows and how to read it; a pane with **Expand** opens a large view over the sheet.

@@ -1,6 +1,6 @@
 # Export and build
 
-When a circuit is ready to build, File → **Export…** makes everything you need at the bench from it. Export works from the **last save**: save first to include your latest changes.
+When a circuit is ready to build, File → **Export…** makes everything you need at the bench from it, including the stripboard if you've laid one out. Export works from the **last save**: save first to include your latest changes.
 
 ![The Export window for the TS808](img/export.png)
 
@@ -11,13 +11,14 @@ The top of the window checks the saved circuit for anything that stops you buyin
 ## The outputs
 
 - **Build package (zip)**: everything below in one zip, with an index page and the circuit file. Open `index.html` in it first.
-- **Parts list**: as CSV for a spreadsheet or an order, as a page to print, or as an A4 PDF. Identical parts are grouped on one line (quantity, part, value, details, refs), the parts that go on the board first, then the ones off it: jacks, the DC jack, switches, pots, the battery and the status LED.
+- **Parts list**: as CSV for a spreadsheet or an order, as a page to print, or as an A4 PDF. Identical parts are grouped on one line (quantity, part, value, details, refs), the parts that go on the board first, then the ones off it: jacks, the DC jack, switches, pots, the battery and the status LED. With a board kept, the hardware names it with the size to cut: *Stripboard, 13 × 15 holes, cut to 33 × 38 mm, 0.1" pitch*.
 - **Bias sheet**: the trimmer settings and the DC voltages to check on every transistor and chip once it's built, with your meter.
 - **Notes**: the description, the circuit's notes, and each knob and switch.
 - **Wiring**: the footswitch, the jacks and the DC jack. It's generic for now, not drawn from the circuit.
 - **Circuit file (JSON)**: the circuit as last saved, the same file the app keeps, to back up, share or open again.
 - **Netlists and models (zip)**: the circuit as ngspice netlists (DC, frequency response and waveform) with every model's card, to run outside the app.
 - **Schematic**: the drawing, ink on white, as SVG or as an A4 landscape PDF.
+- **Stripboard (PDF)**: the board kept in the last save: its cut, link and wire lists, both sides, and the board at real size. It's in the build package too, when the board matches the circuit; otherwise the package's index says why it was left out. See [Stripboard](stripboard.md#in-the-build-package).
 
 A "page to print" opens in a new tab: print it from the browser.
 

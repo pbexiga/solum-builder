@@ -69,7 +69,7 @@ The DC pane lists every net's voltage at the last run, the supplies and the guit
 - **DC voltages on schematic** writes each net's DC voltage on the drawing.
 - **Impedance in and out** shows, at 1 kHz, what the pedal's input looks like to the guitar (Zin) and its output to the amp (Zout), and what that loading does: the level lost (or gained) at the input against the guitar unloaded, the pickup's resonant peak straight into the amp and into the pedal, and the level the amp gets.
 - **Capacitor types** writes each capacitor's kind under its value.
-- **Problem marks** marks each problem on the drawing, coloured by how serious it is; hover one for its message, click it to open it in Problems. See [Problems](problems.md).
+- **Problem marks** marks each problem on the drawing, coloured by how serious it is; hover one for its message, click it to open it in Problems. See [Problems](problems.md). On the stripboard it marks where two parts' bodies touch ([Stripboard](stripboard.md#bodies-that-touch)).
 
 ![The TS808 with DC voltages, impedance and capacitor types shown](img/view-overlays.png)
 

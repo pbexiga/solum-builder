@@ -31,4 +31,4 @@ Three themes: **Solum** (the app's own colours: warm dark, brass highlights), **
 
 The theme, **Auto-run**, the order of the panes, which panes are open and which are out as large views are kept with your files, not in the browser. So they are the same in any browser you open the app from, and they survive clearing the browser's data. View → **Reset pane order** puts the panes back.
 
-Smaller things stay with the browser you set them in (in the Mac app, until you quit it): how far the pane list is scrolled, list or grid in the Open and Blocks windows, the Frequency pane's layers, the Audio pane's picks, and View's **Capacitor types** and **Problem marks**.
+Smaller things stay with the browser you set them in (in the Mac app, until you quit it): how far the pane list is scrolled, list or grid in the Open and Blocks windows, the Frequency pane's layers, the Audio pane's picks, View's **Capacitor types** and **Problem marks**, and the stripboard's own switches and the Layout window's last choices ([Stripboard](stripboard.md#board-settings)).

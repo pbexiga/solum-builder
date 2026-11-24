@@ -1,6 +1,6 @@
 # Notes
 
-The Notes pane holds what you want to remember about a circuit: why a part has its value, what to try next, how you set the bias on the bench. Notes are saved with the circuit and go into the exported build notes.
+The Notes pane holds what you want to remember about a circuit: why a part has its value, what to try next, how you set the bias on the bench. Notes are saved with the circuit and go into the exported build notes. The stripboard has notes of its own, about where parts sit on the board: see [Stripboard](stripboard.md#board-notes).
 
 ## General notes and part notes
 

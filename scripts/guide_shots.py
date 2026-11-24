@@ -18,7 +18,7 @@ from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from pathlib import Path
 
-from playwright.sync_api import Browser, Page, Route, sync_playwright
+from playwright.sync_api import Browser, Locator, Page, Route, sync_playwright
 
 from solum.api.serving import serving
 from solum.circuit.draw import Drawing
@@ -517,6 +517,77 @@ def readme_logo(page: Page, base: str) -> None:
     print("wrote", "readme-logo")
 
 
+def board_shown(page: Page, base: str, circuit: str = "ts808") -> None:
+    """A starter open (not run) in the Board view, its Settings pane open."""
+    page.goto(f"{base}#{circuit}")
+    page.wait_for_selector("#board-button")
+    page.locator("#board-button").click()
+    page.wait_for_selector("#board-tray-body .board-list li")
+    page.locator("#board-settings summary").click()
+
+
+def layout_dialog(page: Page, full: bool = False) -> Locator:
+    """*Layout…* open, its times worked out; with `full`, Build a full layout (Quick) picked."""
+    page.locator("#board-layout").click()
+    dialog = page.locator("#layout-dialog")
+    if full:
+        dialog.locator(".layout-choice[data-layout='full'] input").check()
+        dialog.locator("input[name='layout-speed'][value='quick']").check()
+    page.wait_for_function(
+        "!document.querySelector('#layout-dialog').innerText.includes('Working out')",
+        timeout=60_000,
+    )
+    return dialog
+
+
+def build_full(page: Page) -> Locator:
+    """Build a full layout, Quick, run to its review bar."""
+    layout_dialog(page, full=True).locator("button[data-answer='go']").click()
+    page.locator(".ask-buttons button[data-answer='layout']").click()
+    review = page.locator(".compact-review")
+    review.wait_for(timeout=600_000)
+    return review
+
+
+def board(page: Page, base: str) -> None:
+    """board and board-copper: the TS808 built by Build a full layout (Quick) and kept,
+    nothing selected; then its copper side, parts hidden."""
+    board_shown(page, base)
+    build_full(page).locator("[data-review='keep']").click()
+    page.locator(".compact-review").wait_for(state="hidden")
+    page.keyboard.press("Escape")
+    page.locator("#board-settings summary").click()  # closed: Warnings at the top
+    page.evaluate("document.getElementById('board-panels').scrollTop = 0")
+    page.get_by_role("button", name="Fit").click()
+    shoot(page, "board")
+    page.locator("#board-flip").click()
+    shoot(page, "board-copper", "section.canvas")
+
+
+def board_carrying(page: Page, base: str) -> None:
+    """The TS808's empty board, C1 picked up from the tray and held over the board."""
+    board_shown(page, base)
+    page.locator('#board-tray-body .board-list li[data-ref="C1"]').click()
+    box = page.locator("#board").bounding_box()
+    assert box
+    page.mouse.move(box["x"] + box["width"] * 0.3, box["y"] + box["height"] * 0.4)
+    shoot(page, "board-carrying")
+
+
+def board_layout(page: Page, base: str) -> None:
+    """The TS808's Layout window, Build a full layout picked, its times worked out."""
+    board_shown(page, base)
+    layout_dialog(page, full=True)
+    shoot(page, "board-layout", "#layout-dialog")
+
+
+def board_review(page: Page, base: str) -> None:
+    """The Tone Bender MK2 built by Build a full layout: the review bar in Both."""
+    board_shown(page, base, "tone-bender-mk2")
+    build_full(page).locator("[data-mode='both']").click()
+    shoot(page, "board-review", "section.canvas")
+
+
 SHOTS: dict[str, Callable[[Page, str], None]] = {
     "overview": overview,
     "first-pedal": first_pedal,
@@ -538,6 +609,10 @@ SHOTS: dict[str, Callable[[Page, str], None]] = {
     "blocks-dialog": blocks_dialog,
     "open-dialog": open_dialog,
     "import-dialog": import_dialog,
+    "board": board,
+    "board-carrying": board_carrying,
+    "board-layout": board_layout,
+    "board-review": board_review,
     "export": export,
     "settings": settings,
     "settings-mac": settings_mac,

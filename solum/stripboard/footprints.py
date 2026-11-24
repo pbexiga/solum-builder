@@ -51,7 +51,8 @@ class Footprint:
     `flat`/`stand`: an axial's least span lying flat and its span standing; the body in mm
     (`length` along the legs' line, `width` across, or `diameter`; none: covers no hole);
     `order`: the legs in a line or a chip's, in pin order; `row_holes`: a DIP's rows apart;
-    `package`: the table's package it was sized by, for the drawing (an inline part's)."""
+    `package`: the table's package it was sized by, for the drawing (an inline part's);
+    `height` the body's typical height above the board (0: none sourced, D-398)."""
 
     shape: Shape
     steps: tuple[int, ...] = ()
@@ -63,6 +64,7 @@ class Footprint:
     order: tuple[str, ...] = ()
     row_holes: int = 0
     package: str = ""
+    height: float = 0.0
 
 
 @dataclass(frozen=True)
@@ -95,12 +97,13 @@ def _by_package[S: RadialSize | InlineSize](sizes: Iterable[S], package: str) ->
 
 def _radial(size: RadialSize) -> Footprint:
     return Footprint("radial", tuple(size.holes), length=size.length, width=size.width,
-                     diameter=size.diameter)  # fmt: skip
+                     diameter=size.diameter, height=size.height)  # fmt: skip
 
 
 def _inline(size: InlineSize, order: tuple[str, ...]) -> Footprint:
     return Footprint("inline", tuple(size.holes), length=size.length, width=size.width,
-                     diameter=size.diameter, order=order, package=size.package or "")  # fmt: skip
+                     diameter=size.diameter, order=order, package=size.package or "",
+                     height=size.height)  # fmt: skip
 
 
 ADAPTER_PACKAGE = "TO-92"  # what a surface-mount transistor's adapter takes (D-392)
@@ -146,7 +149,7 @@ def two_leg_footprint(part: Part, models: ModelLibrary, table: FootprintTable) -
         if size is None:
             raise NoFootprint(f"There's no board size for a {watts:g} W resistor ({ref}) yet.")
         return Footprint("axial", flat=size.flat, stand=size.stand, length=size.length,
-                         width=size.diameter)  # fmt: skip
+                         width=size.diameter, height=size.diameter)  # fmt: skip
     if isinstance(part, Diode):
         package = _package(models.get(part.model), ref)
         axial = next((s for s in table.axial["diode"] if package.startswith(s.package or "-")),
@@ -154,7 +157,7 @@ def two_leg_footprint(part: Part, models: ModelLibrary, table: FootprintTable) -
         if axial is None:
             raise NoFootprint(f"There's no board size for {ref}'s package ({package}) yet.")
         return Footprint("axial", flat=axial.flat, stand=axial.stand, length=axial.length,
-                         width=axial.diameter)  # fmt: skip
+                         width=axial.diameter, height=axial.diameter)  # fmt: skip
     if isinstance(part, Led):
         package = _package(models.get(part.model), ref)
         led = _by_package(table.radial["led"], package)
@@ -212,9 +215,11 @@ def _chip(ref: str, units: Sequence[Part], model: Model, table: FootprintTable) 
     named = model.info.package.pins if model.info.package else {}
     free = frozenset(str(n) for p, n in named.items() if p != "nc" and str(n) not in pins)
     if found.group(2) == "DIP":
-        shape = Footprint("dip", width=table.dip.width, order=order, row_holes=table.dip.row_holes)
+        shape = Footprint("dip", width=table.dip.width, order=order, row_holes=table.dip.row_holes,
+                          height=table.dip.height)  # fmt: skip
     else:
-        shape = Footprint("sil", (1,), length=count * PITCH, width=table.sil.width, order=order)
+        shape = Footprint("sil", (1,), length=count * PITCH, width=table.sil.width, order=order,
+                          height=table.sil.height)  # fmt: skip
     return BoardPart(ref, shape, pins, free, kind="chip")
 
 
@@ -231,7 +236,7 @@ def _dip_switch(ref: str, poles: Sequence[Switch], table: FootprintTable) -> Boa
     size = table.dip_switch
     order = tuple(str(n) for n in range(1, count + 1))
     shape = Footprint("dip", length=kind.poles * PITCH + size.extra, width=size.width,
-                      order=order, row_holes=size.row_holes)  # fmt: skip
+                      order=order, row_holes=size.row_holes, height=size.height)  # fmt: skip
     return BoardPart(ref, shape, pins, kind="switch")
 
 
@@ -266,7 +271,8 @@ def one_board_part(part: Part, models: ModelLibrary, table: FootprintTable) -> B
         if part.style == "inline":
             return BoardPart(part.ref, _inline(table.trimmer, order), pins, kind="trimmer")
         size = table.trimmer_triangle
-        shape = Footprint("triangle", (1,), length=size.length, width=size.width, order=order)
+        shape = Footprint("triangle", (1,), length=size.length, width=size.width, order=order,
+                          height=size.height)  # fmt: skip
         return BoardPart(part.ref, shape, pins, kind="trimmer")
     footprint = two_leg_footprint(part, models, table)
     pins = {pin: (part.ref, pin) for pin in pin_offsets(part)}

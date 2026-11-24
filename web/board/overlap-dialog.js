@@ -2,14 +2,16 @@
  * The board's Decide… form for one overlap (DOM, P6h4, D-398): two bodies touching, or one
  * past the board's edge. Its hints first (a trimmer's screw, a socketed chip), then the
  * choices: Stand taller (which part, by how much if known), Bend out of the way (which
- * part, toward which side as the parts side shows it), Accept; a note for any. The edge
+ * part, toward which side as the parts side shows it), Accept; a note for any. A part
+ * chosen to stand taller fills in by how much from the server's suggestion (the other's
+ * typical height and a clearance, D-398), unless the builder typed their own. The edge
  * takes Accept only. Keep waits until the choice is complete; Forget drops an earlier
  * decision. The view makes the edit; this only asks.
  */
 
 import { ask } from "../editor/form.js";
 import { h } from "../panels.js";
-import { EDGE, SIDES, decisionFrom, fixChoices, fixValues } from "./board-logic.js";
+import { EDGE, SIDES, decisionFrom, fixChoices, fixValues, tallerMm } from "./board-logic.js";
 
 /** The form's Keep button (there once `ask` has opened it). */
 const keep = () => /** @type {HTMLButtonElement} */ (document.querySelector("#overlap-dialog button[data-answer='keep']"));
@@ -34,11 +36,14 @@ export async function decideOverlap(overlap, earlier) {
     radio.checked = values.part === ref;
     radio.addEventListener("change", () => {
       values.part = ref;
+      mm.value = values.mm = tallerMm(overlap, ref, mm.value, shown);
+      shown = mm.value === String(overlap.taller?.[ref] ?? "") ? mm.value : "";
       for (const other of document.querySelectorAll(`#overlap-dialog input[value="${CSS.escape(ref)}"]`)) /** @type {HTMLInputElement} */ (other).checked = true;
       refresh();
     });
     return h("label", {}, [radio, ` ${ref}`]);
   })]);
+  let shown = ""; // the suggestion last filled in (replaced when the part changes)
   const mm = /** @type {HTMLInputElement} */ (h("input", { type: "text", inputmode: "decimal", id: "overlap-mm", size: "4", value: values.mm, "aria-label": "How much taller, in mm" }));
   mm.addEventListener("input", () => {
     values.mm = mm.value;

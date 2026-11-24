@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 
 from solum.circuit.io import circuit_to_dict, load_circuit, parse_circuit
+from solum.circuit.schema import Resistor
 from solum.guides import footprint_table
 from solum.models import load_models
 from solum.stripboard.board import (
@@ -35,7 +36,7 @@ from solum.stripboard.check import (
     progress,
 )
 from solum.stripboard.edit import BoardEdit, EditError, edit_layout
-from solum.stripboard.footprints import board_parts, outline_overlap
+from solum.stripboard.footprints import board_parts, one_board_part, outline_overlap
 
 REPO = Path(__file__).resolve().parents[2]
 LIBRARY = REPO / "library"
@@ -45,6 +46,11 @@ V39 = load_circuit(REPO / "tests/fixtures/circuits/old/schema-v39.json")
 BOARD = board_parts(V39, MODELS, TABLE)[0]
 assert V39.stripboard is not None
 LAYOUT = V39.stripboard.layout()
+HINTS = (
+    "TR1's adjusting screw must stay reachable from above.",
+    "TR1 is about 4.88 mm tall (typical: check yours).",
+    "C1 is about 11 mm tall (typical: check yours).",
+)
 TALLER = Decision(("C1", "TR1"), "taller", 0.3, part="C1", mm=3.0, note="sleeve the leg")
 
 
@@ -72,7 +78,7 @@ def test_a_v39_board_has_no_decisions_and_saves_none() -> None:
     assert outline_overlaps(LAYOUT, BOARD) == [Overlap(("TR1", "C1"), 0.3, (
         "TR1 and C1's bodies touch between the holes (0.3 mm): one would have to stand "
         "taller. Move one a hole further away if you can."
-    ), ("TR1's adjusting screw must stay reachable from above.",))]  # fmt: skip
+    ), HINTS, {"TR1": 12.0, "C1": 6.0})]  # fmt: skip
     assert "overlaps" not in circuit_to_dict(V39)["stripboard"]
 
 
@@ -197,7 +203,30 @@ def test_a_decision_in_words_for_the_warnings_and_the_build_sheet() -> None:
 
 
 def test_an_overlap_says_what_is_worth_knowing_about_its_parts() -> None:
-    """Hints by kind, not rules: a trimmer's screw, a socketed chip, a DIP switch."""
-    assert outline_overlaps(LAYOUT, BOARD)[0].hints == (
-        "TR1's adjusting screw must stay reachable from above.",
-    )
+    """Hints, not rules: by kind (a trimmer's screw), then each part's typical height from
+    the footprint table (Bourns 3362P 4.88 mm, a 6.3 mm NRWS 11 mm); to stand one taller,
+    the other's height and 1 mm, up to the next half mm (C1 over TR1: 5.88 → 6; TR1 over
+    C1: 12)."""
+    found = outline_overlaps(LAYOUT, BOARD)[0]
+    assert found.hints == HINTS
+    assert found.taller == {"TR1": 12.0, "C1": 6.0}
+
+
+def test_every_height_in_the_footprint_table_names_where_it_was_read() -> None:
+    """D-398, D-019: a typical height only from a maker's sheet, its source saying where and
+    when it was read; a flat axial part stands its diameter high; a DIP switch, a SIL and a
+    leaded MLCC have none yet (the builder types it)."""
+    radial = [s for sizes in TABLE.radial.values() for s in sizes]
+    one = [TABLE.trimmer, TABLE.trimmer_triangle, TABLE.dip, TABLE.dip_switch, TABLE.sil]
+    sized = [*radial, *TABLE.inline, *one]
+    with_height = [s for s in sized if s.height]
+    assert len(with_height) == 19
+    for size in with_height:
+        assert "read 2026-11-24" in size.source, size
+    assert [s.height for s in TABLE.radial["electrolytic"]] == [11, 11, 11.5, 12.5, 20]
+    assert (TABLE.dip_switch.height, TABLE.sil.height) == (0, 0)
+    c1 = board_parts(V39, MODELS, TABLE)[0]["C1"].footprint
+    assert (c1.diameter, c1.height) == (6.3, 11)
+    resistor = Resistor(ref="R1", pos=(0, 0), type="resistor", value=1e3)
+    r1 = one_board_part(resistor, MODELS, TABLE)
+    assert r1.footprint.height == r1.footprint.width == 2.5

@@ -7,6 +7,7 @@ circuit's own nets from `connect`: there is no second notion of a net. Every fau
 plain-English sentence naming the parts and holes; a layout with none is the circuit.
 """
 
+import math
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
@@ -166,12 +167,14 @@ _SLACK = 0.05  # mm two outlines may meet by, unwarned
 class Overlap:
     """Two bodies touching between the holes, or one past the board's edge (`parts[1]` is
     `board.EDGE`), by `mm`, to 0.1 mm (D-394); `text` the warning; `hints` what's worth
-    knowing about the parts before deciding (P6h4: hints, not rules)."""
+    knowing about the parts before deciding (P6h4: hints, not rules); `taller` how many mm
+    to stand each one taller to clear the other, where the other's height is known."""
 
     parts: tuple[str, str]
     mm: float
     text: str
     hints: tuple[str, ...] = ()
+    taller: dict[str, float] = field(default_factory=dict)
 
 
 _HINTS = {
@@ -181,10 +184,28 @@ _HINTS = {
 }
 
 
-def _hints(refs: Iterable[str], board: Mapping[str, BoardPart]) -> tuple[str, ...]:
-    """What's worth knowing about each part before deciding, by its kind (P6h4)."""
-    return tuple(_HINTS[board[r].kind].format(r) for r in refs
-                 if r in board and board[r].kind in _HINTS)  # fmt: skip
+CLEARANCE = 1.0  # mm a part stood taller clears the other's top by (D-398)
+
+
+def _hints(refs: tuple[str, str], board: Mapping[str, BoardPart]) -> tuple[str, ...]:
+    """What's worth knowing about each part before deciding: by its kind, then its typical
+    height where the footprint table has one (P6h4, D-398)."""
+    kinds = [_HINTS[board[r].kind].format(r) for r in refs if board[r].kind in _HINTS]
+    tall = [f"{r} is about {board[r].footprint.height:g} mm tall (typical: check yours)."
+            for r in refs if board[r].footprint.height]  # fmt: skip
+    return tuple(kinds + tall)
+
+
+def _taller(refs: tuple[str, str], board: Mapping[str, BoardPart]) -> dict[str, float]:
+    """How much to stand each part taller to clear the other: the other's height and the
+    clearance, up to the next half mm; none where the other's height isn't known."""
+    a, b = refs
+    found = {}
+    for part, other in ((a, b), (b, a)):
+        height = board[other].footprint.height
+        if height:
+            found[part] = math.ceil((height + CLEARANCE) * 2) / 2
+    return found
 
 
 @dataclass(frozen=True)
@@ -233,7 +254,7 @@ def outline_overlaps(layout: Layout, board: Mapping[str, BoardPart]) -> list[Ove
                 overlaps.append(Overlap((a, b), round(mm, 1), (
                     f"{a} and {b}'s bodies touch between the holes ({mm:.1f} mm): one would "
                     "have to stand taller. Move one a hole further away if you can."
-                ), _hints((a, b), board)))  # fmt: skip
+                ), _hints((a, b), board), _taller((a, b), board)))  # fmt: skip
     edge = (-PITCH, -PITCH, layout.columns * PITCH, layout.strips * PITCH)  # half a hole out
     for ref, (x0, y0, x1, y1, _) in found:
         past = max(edge[0] - x0, edge[1] - y0, x1 - edge[2], y1 - edge[3])

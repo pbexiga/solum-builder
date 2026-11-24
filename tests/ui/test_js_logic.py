@@ -1141,7 +1141,8 @@ def test_an_overlap_s_choices_and_the_decision_its_form_sends(js: Page) -> None:
     """P6h4 (D-398): Stand taller, Bend and Accept for two parts, Accept only for the edge;
     the form waits for a part (and a side for Bend); a height is optional, a length above
     0 ("2,5 mm" read as 2.5); an earlier decision fills the form; a part's decisions in
-    words for its card."""
+    words for its card; the suggested height fills in, replacing an earlier suggestion but
+    never what the builder typed, and cleared where the other's height isn't known."""
     got = run(
         js,
         """
@@ -1165,6 +1166,13 @@ def test_an_overlap_s_choices_and_the_decision_its_form_sends(js: Page) -> None:
           earlier: b.fixValues({ parts: ['TR1', 'C1'], fix: 'taller', part: 'C1', mm: 3, overlap_mm: 0.3 }),
           fresh: b.fixValues(null),
           cards: [b.decisionsOf(progress, 'C1'), b.decisionsOf(progress, 'R1')],
+          mm: [
+            b.tallerMm({ ...pair, taller: { C1: 6, TR1: 12 } }, 'C1', '', ''),
+            b.tallerMm({ ...pair, taller: { C1: 6, TR1: 12 } }, 'TR1', '6', '6'),
+            b.tallerMm({ ...pair, taller: { C1: 6, TR1: 12 } }, 'TR1', '3', '6'),
+            b.tallerMm({ ...pair, taller: { C1: 6 } }, 'TR1', '6', '6'),
+            b.tallerMm(pair, 'C1', '', ''),
+          ],
         };
         """,
     )
@@ -1184,6 +1192,7 @@ def test_an_overlap_s_choices_and_the_decision_its_form_sends(js: Page) -> None:
     assert got["earlier"] == {"fix": "taller", "part": "C1", "mm": "3", "toward": None, "note": ""}
     assert got["fresh"] == {"fix": None, "part": None, "mm": "", "toward": None, "note": ""}
     assert got["cards"] == [["C1: stand taller (clears TR1)."], []]
+    assert got["mm"] == ["6", "12", "3", "", ""]
 
 
 def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> None:

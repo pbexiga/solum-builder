@@ -868,7 +868,8 @@ def test_an_overlap_is_decided_changed_forgotten_and_undone(page: Page, base_url
     """P6h4 (D-398): on D-394's case (a triangle trimmer and an electrolytic 0.3 mm into
     each other, `schema-v39.json`) the Warnings list the overlap with *Decide…*: its hint,
     Keep waiting until the choice is complete; kept, it moves under *Decided* in words and
-    shows on the part's card; Undo brings the warning back; *Change…* → *Forget it* too."""
+    shows on the part's card; Undo brings the warning back; *Change…* → *Forget it* too.
+    Stand taller fills in by how much from the other part's typical height (P6h4d)."""
     page.goto(base_url)
     circuit = circuit_to_dict(load_circuit(REPO / "tests/fixtures/circuits/old/schema-v39.json"))
     made = {"circuit": circuit, "name": f"Overlap {next(_saves)}"}
@@ -882,8 +883,12 @@ def test_an_overlap_is_decided_changed_forgotten_and_undone(page: Page, base_url
     row.locator("button.decide").click()
     dialog = page.locator("#overlap-dialog")
     expect(dialog).to_contain_text("TR1 and C1 touch (0.3 mm)")
-    expect(dialog.locator(".overlap-hints")).to_have_text(
-        "TR1's adjusting screw must stay reachable from above."
+    expect(dialog.locator(".overlap-hints li")).to_have_text(
+        [
+            "TR1's adjusting screw must stay reachable from above.",
+            "TR1 is about 4.88 mm tall (typical: check yours).",
+            "C1 is about 11 mm tall (typical: check yours).",
+        ]
     )
     keep = dialog.locator("button[data-answer='keep']")
     expect(keep).to_be_disabled()
@@ -891,7 +896,13 @@ def test_an_overlap_is_decided_changed_forgotten_and_undone(page: Page, base_url
     expect(keep).to_be_disabled()  # which part?
     dialog.locator("input[name='which-taller'][value='C1']").check()
     expect(keep).to_be_enabled()
-    dialog.locator("#overlap-mm").fill("3")
+    mm = dialog.locator("#overlap-mm")
+    expect(mm).to_have_value("6")  # over TR1: its 4.88 mm and 1 mm, up to the half mm
+    dialog.locator("input[name='which-taller'][value='TR1']").check()
+    expect(mm).to_have_value("12")  # over C1's 11 mm
+    mm.fill("3")  # the builder's own: kept when the part changes
+    dialog.locator("input[name='which-taller'][value='C1']").check()
+    expect(mm).to_have_value("3")
     dialog.locator("#overlap-note").fill("sleeve the leg")
     keep.click()
     decided = warnings.locator(".decided li")

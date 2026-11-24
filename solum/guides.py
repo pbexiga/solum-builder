@@ -166,6 +166,7 @@ class RadialSize(BaseModel):
     width: float = 0.0
     pitch: float  # the maker's lead spacing, mm
     holes: list[int] = Field(min_length=1)
+    height: float = 0.0  # typical, above the board as fitted (0: none sourced, D-398)
     source: str
 
 
@@ -180,6 +181,7 @@ class InlineSize(BaseModel):
     length: float = 0.0
     width: float = 0.0
     holes: list[int] = Field(min_length=1)
+    height: float = 0.0  # typical, above the board as fitted (0: none sourced, D-398)
     source: str
 
 
@@ -192,6 +194,7 @@ class DipSize(BaseModel):
     row_holes: int = 0  # a SIL has one row
     width: float
     extra: float = 0.0
+    height: float = 0.0  # typical, above the board as fitted (0: none sourced, D-398)
     source: str
 
 

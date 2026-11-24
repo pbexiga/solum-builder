@@ -271,9 +271,10 @@ export function boardRefOf(footprints, ref) {
  *   shape: string, size: [number, number], places: Array<[number, number]>}} OffItem an off-board
  *   part beside the board (D-375): drawn as `shape` (row, stomp, toggle, rotary, D-384), its
  *   drawing `size` in holes, each lug's place in it in holes from its top-left hole (offboard.py)
- * @typedef {{parts: [string, string], mm: number, text: string, hints: string[]}} Overlap two
- *   bodies touching, or one past the board's edge (`parts[1]` "edge"), by `mm`, not yet
- *   decided (P6h4); `hints` what's worth knowing about its parts
+ * @typedef {{parts: [string, string], mm: number, text: string, hints: string[], taller?: Record<string, number>}} Overlap
+ *   two bodies touching, or one past the board's edge (`parts[1]` "edge"), by `mm`, not yet
+ *   decided (P6h4); `hints` what's worth knowing about its parts; `taller` how many mm to
+ *   stand each taller to clear the other, where its height is known (D-398)
  * @typedef {{parts: [string, string], fix: "taller" | "bent" | "accept", overlap_mm: number,
  *   part?: string | null, mm?: number | null, toward?: string | null, note?: string}} Decision
  *   the builder's decision on one (board.py's `Decision`)
@@ -1039,6 +1040,19 @@ export function decisionFrom(overlap, values) {
   if (!typed) return { ...decision, part: values.part };
   const mm = Number(typed);
   return Number.isFinite(mm) && mm > 0 ? { ...decision, part: values.part, mm } : null;
+}
+
+/**
+ * What the form's *By … mm* says once `part` is chosen to stand taller: the server's
+ * suggestion (the other's typical height and a clearance), unless the builder has typed
+ * their own; `shown` the suggestion it last put there.
+ * @param {Overlap} overlap @param {string} part @param {string} typed @param {string} shown
+ * @returns {string}
+ */
+export function tallerMm(overlap, part, typed, shown) {
+  if (typed.trim() && typed !== shown) return typed;
+  const suggested = overlap.taller?.[part];
+  return suggested ? String(suggested) : "";
 }
 
 /**

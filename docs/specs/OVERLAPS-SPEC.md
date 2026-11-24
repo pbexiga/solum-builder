@@ -1,35 +1,45 @@
-# Overlaps: the builder decides (P6h4, D-398)
+# Overlaps: warnings, board notes and dismissals (P6h4, as built; D-398)
+
+Replaces a first design (Decide… with Stand taller / Bend / Accept, typical heights), built on the same branch and reworked before it shipped. The user (2026-11-24): "we probably don't need the heights. We should just leave it to the builder to decide… a notes section like we did for schematics. Allowing global notes and notes per warning."
 
 ## Goal
-D-394 flags two bodies touching between holes, or one hanging past the board's edge, as a warning. The user (2026-11-23): "a trimmer can still be worked around — if a cap is next to a trimmer, I can wire taller and bend it out of the way… having a list of what is in 'error' and allowing the user to decide taller, bent, or just accept and leave notes." So the builder decides each one, and the decision travels with the board to the build sheet.
+D-394 warns when two bodies touch between holes, or one hangs past the board's edge. The builder knows their real parts, so the app doesn't guess heights or offer fixes: it warns, and the builder writes a note, dismisses the warning, or leaves it. Notes travel with the board to the build sheet.
 
 ## What the person gets
-- **The overlaps in the board's Warnings**, each naming the two parts (or the part and the edge) and by how much in mm, with **Decide…**. The form offers:
-  - **Stand taller**: which of the two, and by how much in mm if known. With typical heights known, it fills in the other part's height plus 1 mm; the builder's own figure is never replaced.
-  - **Bend out of the way**: which of the two, toward left, right, up or down (as the parts side shows the board; no bent bodies are drawn).
-  - **Accept**: leave it as it is.
-  Each may carry the builder's note ("sleeve the leg"). A part past the edge takes only Accept with a note: it's about the enclosure, and nothing bends past the edge.
-- **Hints, not rules**, at the top of the form: by kind ("TR1's adjusting screw must stay reachable from above", "If IC1 goes in a socket, it must lift straight out", "SW3's switches must stay reachable to flip"), then each part's typical height ("C1 is about 11 mm tall (typical: check yours)"). Nothing is refused.
-- **Decided overlaps** leave the warnings and are listed under *Decided (n)* in words ("C1: stand 6 mm taller (clears TR1); sleeve the leg."), each with **Change…** (the form filled in, with **Forget it**). The part's card on the board (shown while it's selected) names its decisions. Each choice is one undo step.
-- **The build sheet** (the package's stripboard page) lists the decisions after the parts, under *Where bodies touch: as you decided*, accepted ones too as a reminder.
-- **Moving a part** drops a decision when its two parts no longer touch, **or touch by another amount** (the user, 2026-11-24: the old fix may not fit); the overlap is a fresh warning.
+- **Warnings without numbers.** "C2 and R1's bodies touch: move one a hole further away if you can." / "C1 hangs past the board's edge." The outlines are one maker's, so no mm is shown (a small margin inside the check still keeps bodies that only just meet from counting).
+- **Marks on the board**, as the schematic's problem marks (D-176, D-181): one where the two bodies touch (a part past the edge: on that part). Clicking a mark opens its row in the Warnings. **View → Problem marks** hides them, the same setting for the schematic and the board. A dismissed warning has no mark.
+- **Each warning row:** **Note…** and **Dismiss…**.
+  - **Note…** opens the note form with Parts already filled in ("C2, R1").
+  - **Dismiss…** as the Problems pane's (optional reason); dismissed warnings under *Dismissed*, each with **Bring back**. Matched by the pair (either order). A dismissal whose warning no longer exists lapses quietly; if the overlap comes back, it's a fresh warning.
+  - Notes and dismissals are independent: dismissing doesn't touch a note, writing a note doesn't dismiss.
+- **A board Notes pane**, one list, as the schematic's Notes pane looks:
+  - each note: optional **Parts** (refs, e.g. "C2, R1"; checked against the board's parts) and **Text**; shown as "C2, R1: solder C2 a bit higher."; a note with no parts is a general note ("Socket IC1.").
+  - Add, edit (both fields; editing never drops the refs unless the builder clears them), delete. Each is one undo step.
+  - **Never deleted automatically.** A note goes out of date, and is shown dimmed with why, when:
+    - its parts no longer touch (it was written from a warning that has cleared): "C2 and R1 no longer touch";
+    - a part it names isn't on the board: "R1 isn't on the board".
+    The tag goes when the cause does.
+  - A part renamed in the schematic: its refs in the board's notes follow (as schematic notes do, D-267).
+- **The build sheet** (the package's stripboard page) lists every note after the parts, as written, with no out-of-date tags.
 
 ## How it works
-- The decisions are kept in the board's own section of the circuit file, `circuit.stripboard.overlaps` (schema v40; a v39 board has none): `{parts: [a, b], fix: taller | bent | accept, part?, mm?, toward?, note?, overlap_mm}`, `b` the other part or `"edge"`. They ride on `board.Layout`, so every edit round-trips them; `board.decision_problem` is the one check of what makes sense.
-- `check.outline_overlaps` gives each overlap structured (parts, mm, sentence, hints, the suggested mm per part); `check.covers` matches a decision by the pair (either order) and the amount to 0.1 mm; `progress` returns the undecided as `overlaps` and the matched decisions as `decided`, with their words from `check.decision_words` (the one owner of the words, used by the Warnings, the card and the build sheet). Every board edit, size change, Start a board and Tidy up drop the decisions that no longer match (`check.kept_decisions`).
-- A `decide` board edit keeps a decision at the amount the board has now (the page doesn't send it); `undecide` forgets one.
-- **Heights** are typical, from one maker's sheet per kind, named in `library/guides/footprints.yaml` with where and when they were read (D-019): electrolytics (NIC NRWS, 25 V), box film (WIMA MKS 2, 63 V), the 5 mm LED, TO-92, the two trimmers, a DIP. A flat axial part stands its diameter high. Without a sourced height the form leaves the mm to the builder.
+- Schema 40: `circuit.stripboard.notes: [{parts: [refs], text, overlap?: true}]` and `circuit.stripboard.dismissed: [{parts: [a, b], reason?}]` (`b` may be `"edge"`). `overlap` marks a note started from a warning, so "no longer touch" applies to it only. Migration v39 → v40: nothing to add.
+- The server owns the warnings' words and the out-of-date reasons (`check`); the browser builds the edit payloads only.
+- Dismissals lapse with the next board change when their overlap is gone (`check.kept_dismissals`). Notes are never pruned.
 - Start for me, Tidy up and the starters still avoid overlaps (D-391).
 
-## Out of scope
-- Rules that refuse a placement (the user: a trimmer can be worked around).
-- 3D clearance checks, or the enclosure's lid height (with "does the board fit the enclosure?", later).
-- Heights for the DIP switch, SIL chips, leaded MLCCs, TO-18 / TO-5 cans and 3 mm LEDs (no sheet read yet).
+## Removed from the first P6h4
+Heights (`footprints.yaml`, `Footprint.height`, guides sizes, the clearance and the suggestion), the fix kinds (taller / bent / accept, part, mm, toward), the hints by kind, `overlap_mm` and matching by amount, the Decide… form, the part card's decisions, the overlap depth in the warning text. Kept: the WIMA MKS 2 width fix (3.3 / 4.7 µF at 11 mm, the 63 V column) and the 2.2 µF row.
 
-## Answers (the user, 2026-11-23 and 24)
-1. Bend toward a side (left, right, up, down as shown), not toward a hole: no bent bodies drawn.
-2. An accepted overlap still prints on the build sheet as a reminder.
-3. "Taller", with an optional mm; heights from makers' sheets, typical ones ("standard heights, as I won't be buying caps from the same vendor every time").
-4. The edge overhang gets only Accept with a note.
-5. Decisions live in the board's section of the file.
-6. A part moved so the pair touches by another amount: drop the decision.
+## Out of scope
+- Rules that refuse a placement; 3D clearance; the enclosure's height ("does the board fit the enclosure?", later: the heights' sources were in the first design's commit 11c635b, not on main).
+- Notes per part beyond refs on a note.
+
+## Answers (the user, 2026-11-24)
+1. No heights, no fix kinds: a note in the builder's words.
+2. Notes are never cleared automatically; out-of-date ones are marked.
+3. A warning needn't have a note; it can be left alone or dismissed.
+4. Notes are editable; editing keeps the refs.
+5. Warnings marked on the board like the schematic's, with the same toggle.
+6. One Notes list (no separate Overlaps tab); general notes are notes with no parts.
+7. Overlap amounts aren't shown: the outlines aren't accurate enough.

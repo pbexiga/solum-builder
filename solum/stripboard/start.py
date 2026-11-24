@@ -507,7 +507,8 @@ def start_for_me(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
     off-board parts beside it and wired; `StartError` when there's nothing to do or a part
     can't go on a board."""
     old = layout or Layout(0, 0, ())
-    base = old if fill else Layout(0, 0, (), where=old.where)
+    kept = replace(Layout(0, 0, ()), where=old.where, notes=old.notes, dismissed=old.dismissed)
+    base = old if fill else kept  # Start over keeps the choices and the notes (D-398)
     r = read_layout(base, circuit, models, table)
     if r.unboardable:
         raise StartError(" ".join(r.unboardable))

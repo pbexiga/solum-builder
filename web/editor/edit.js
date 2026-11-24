@@ -294,14 +294,14 @@ export function isChipPart(part) {
 /**
  * Rename a chip from one half's form (D-140), or a switch from one pole's (D-143): `to`
  * is the new name or a half's or pole's (IC2 or IC2A), and every part of it follows
- * (IC2A, IC2B), with everything naming them.
+ * (IC2A, IC2B), with everything naming them, the board's notes too (they name IC2).
  * @param {Circuit} circuit @param {string} from a half's or pole's ref @param {string} to
  */
 export function renameChip(circuit, from, to) {
   const name = to.replace(/[a-h]$/i, "");
   let out = circuit;
   for (const ref of groupRefs(circuit, from)) out = renamePart(out, ref, `${name}${ref.slice(-1)}`);
-  return out;
+  return renameBoardRefs(out, from.replace(/[a-h]$/i, ""), name); // the board names the chip (IC1)
 }
 
 /**
@@ -1199,7 +1199,20 @@ export function renamePart(circuit, from, to) {
     }));
   }
   if (circuit.probes) out.probes = Object.fromEntries(Object.entries(circuit.probes).map(([k, v]) => [k, pin(v)]));
-  return out;
+  return renameBoardRefs(out, from, to);
+}
+
+/**
+ * The circuit with ref `from` renamed `to` in its board's notes and dismissed warnings
+ * (D-398: as the schematic's names follow, D-267); no board, or nothing naming it: as it is.
+ * @param {Circuit} circuit @param {string} from @param {string} to
+ * @returns {Circuit}
+ */
+export function renameBoardRefs(circuit, from, to) {
+  const board = circuit.stripboard;
+  if (!board || ![...(board.notes ?? []), ...(board.dismissed ?? [])].some((n) => n.parts?.includes(from))) return circuit;
+  const swap = (/** @type {any} */ n) => (n.parts ? { ...n, parts: n.parts.map((/** @type {string} */ r) => (r === from ? to : r)) } : n);
+  return { ...circuit, stripboard: { ...board, notes: (board.notes ?? []).map(swap), dismissed: (board.dismissed ?? []).map(swap) } };
 }
 
 /**

@@ -58,11 +58,12 @@ function drawShape(s, parent) {
  * @typedef {import("./board-logic.js").Hole} Hole
  * @typedef {{ref: string | null, hole: Hole, link: [Hole, Hole] | null, item: string | null,
  *   lug: string | null, wire: {index: number, end: "lug" | "far" | "run", run: number} | null,
- *   suggest: {kind: "cut" | "link", holes: Hole[]} | null, point: [number, number]}} Spot
+ *   suggest: {kind: "cut" | "link", holes: Hole[]} | null, mark: string | null,
+ *   point: [number, number]}} Spot
  *   what's under the pointer: a board part's ref, the nearest hole, a link's ends; an
  *   off-board part's ref, a lug's end, a wire's number and which end (D-375) or which of
  *   its middle runs (`end` "run", D-380); a suggested
- *   cut or link (D-377); the point in board units
+ *   cut or link (D-377); an overlap's mark, by its key (D-398); the point in board units
  * @typedef {{
  *   onClick: (spot: Spot) => void,
  *   onLine: (axis: "column" | "strip", line: number, x: number, y: number) => void,
@@ -174,7 +175,8 @@ export function boardCanvas(svg, app) {
   /**
    * Draw a board. `fit`: fit the view to it (the first time it's shown).
    * @param {Board} board @param {Record<string, Footprint>} footprints @param {any} circuit
-   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, off?: OffBoard, guide?: Guide, seeThrough?: boolean, chosen?: Record<string, string>, paper?: boolean}} [opts]
+   * @param {{fit?: boolean, values?: boolean, rulers?: boolean, fixed?: boolean, shorted?: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, off?: OffBoard, guide?: Guide, seeThrough?: boolean, chosen?: Record<string, string>, paper?: boolean,
+   *   marks?: Array<{key: string, at: [number, number], title: string}>}} [opts]
    *   `values`: label parts with their values too; `rulers`: the columns' letters and the
    *   strips' numbers, each a menu of size changes (a board that's started); `fixed`: auto-grow
    *   off, the margin greyed (D-372); `shorted`: the copper carrying two nets, red (D-374);
@@ -182,10 +184,12 @@ export function boardCanvas(svg, app) {
    *   `off`: the off-board parts and wires (D-375); `guide`: the guidance (D-377);
    *   `seeThrough`: the parts' bodies faint, the copper and cuts under them showing (D-378);
    *   `chosen`: the parts moved on or off the board by choice, each its mark's words (D-385);
-   *   `paper`: the board's own holes only, no margin round it (the package's drawing, D-386)
+   *   `paper`: the board's own holes only, no margin round it (the package's drawing, D-386);
+   *   `marks`: the overlap warnings marked where the bodies touch, as the schematic's
+   *   problem marks (D-398), a click opens the warning
    */
-  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], rails = {}, off = { items: [], wires: [] }, guide = { rats: [], cuts: [], links: [] }, seeThrough = false, chosen = {}, paper = false } = {}) {
-    drawn = [board, footprints, circuit, { values, rulers, fixed, shorted, rails, off, guide, seeThrough, chosen, paper }];
+  function draw(board, footprints, circuit, { fit: fitting = false, values = true, rulers = false, fixed = false, shorted = [], rails = {}, off = { items: [], wires: [] }, guide = { rats: [], cuts: [], links: [] }, seeThrough = false, chosen = {}, paper = false, marks: flagged = [] } = {}) {
+    drawn = [board, footprints, circuit, { values, rulers, fixed, shorted, rails, off, guide, seeThrough, chosen, paper, marks: flagged }];
     holes = paper ? { c0: 0, s0: 0, c1: board.columns - 1, s1: board.strips - 1 } : shownHoles(board);
     beside = null;
     for (const { item, at } of off.items) {
@@ -315,6 +319,13 @@ export function boardCanvas(svg, app) {
       el("title", {}, g).textContent = title;
     }
     root.append(itemNames);
+    const warned = el("g", { class: "board-marks" }, root); // over everything, as the schematic's (D-176)
+    const r = STEP * 0.3;
+    for (const { key, at: [x, y], title } of flagged) {
+      const g = el("g", { class: "problem-mark sev-warning", "data-mark": key }, warned);
+      el("path", { d: `M${x},${y - r - 1} L${x + r + 1},${y + r} L${x - r - 1},${y + r} Z` }, g);
+      el("title", {}, g).textContent = title;
+    }
     el("g", { class: "ghost" }, root);
     if (fitting || !shown) fit();
     else apply();
@@ -477,6 +488,7 @@ export function boardCanvas(svg, app) {
       lug: at.closest(".off-items .lug")?.getAttribute("data-lug") ?? null,
       wire: wire && end ? { index: Number(wire.getAttribute("data-wire")), end: end === "lug" || end === "run" ? end : "far", run: Number(at.closest("[data-run]")?.getAttribute("data-run") ?? -1) } : null,
       suggest: suggested ? { kind: suggested.getAttribute("data-suggest") === "link" ? "link" : "cut", holes } : null,
+      mark: at.closest(".board-marks .problem-mark")?.getAttribute("data-mark") ?? null,
       point: /** @type {[number, number]} */ (toBoard(clientX, clientY)),
     };
   };

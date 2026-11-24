@@ -271,22 +271,18 @@ export function boardRefOf(footprints, ref) {
  *   shape: string, size: [number, number], places: Array<[number, number]>}} OffItem an off-board
  *   part beside the board (D-375): drawn as `shape` (row, stomp, toggle, rotary, D-384), its
  *   drawing `size` in holes, each lug's place in it in holes from its top-left hole (offboard.py)
- * @typedef {{parts: [string, string], mm: number, text: string, hints: string[], taller?: Record<string, number>}} Overlap
- *   two bodies touching, or one past the board's edge (`parts[1]` "edge"), by `mm`, not yet
- *   decided (P6h4); `hints` what's worth knowing about its parts; `taller` how many mm to
- *   stand each taller to clear the other, where its height is known (D-398)
- * @typedef {{parts: [string, string], fix: "taller" | "bent" | "accept", overlap_mm: number,
- *   part?: string | null, mm?: number | null, toward?: string | null, note?: string}} Decision
- *   the builder's decision on one (board.py's `Decision`)
- * @typedef {{decision: Decision, text: string}} Decided a decision covering one of the
- *   board's overlaps, in words (check.py's `Decided`)
+ * @typedef {{parts: [string, string], text: string, reason: string}} Overlap two bodies
+ *   touching, or one past the board's edge (`parts[1]` "edge"), D-394; `reason` the
+ *   builder's once dismissed (check.py's `Overlap`, D-398)
+ * @typedef {{parts: string[], text: string, overlap: boolean, why: string | null}} NoteState
+ *   one of the board's notes, `why` it's out of date or null (check.py's `NoteState`)
  * @typedef {{to_place: string[], wires_to_go: string[], loose: number, items: OffItem[],
  *   spots: Record<string, Hole>,
  *   unplaceable: string[], nets: NetProgress[],
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
  *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number],
  *   shorted: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, guidance: Guidance,
- *   choices?: Record<string, Choice>, overlaps?: Overlap[], decided?: Decided[]}} Progress
+ *   choices?: Record<string, Choice>, overlaps?: Overlap[], dismissed?: Overlap[], notes?: NoteState[]}} Progress
  *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints and the
  *   guidance, D-377)
  * @typedef {{where: "board" | "off-board", moved: boolean, why: string | null}} Choice where a
@@ -986,83 +982,6 @@ export function layoutConfirm(choice, compact, board, toPlace) {
   return { title: "Start over", text: `This replaces everything on the board: ${named}. A fresh layout takes its place${then}. ${undo}`, label: "Replace the board" };
 }
 
-/** The other side of a body hanging past the board's edge, in an overlap (board.py's `EDGE`). */
-export const EDGE = "edge";
-/** The sides a part bends toward, as the parts side shows the board (P6h4). */
-export const SIDES = /** @type {const} */ (["left", "right", "up", "down"]);
-
-/**
- * @typedef {"taller" | "bent" | "accept"} Fix
- * @typedef {{value: Fix, label: string, text: string}} FixChoice
- * @typedef {{fix: Fix | null, part: string | null, mm: string, toward: string | null, note: string}} FixValues
- *   the overlap form as filled in
- */
-
-/**
- * What the builder may decide about an overlap (P6h4), each with a line saying it: a part
- * past the board's edge takes Accept only (nothing bends past the edge).
- * @param {Overlap} overlap @returns {FixChoice[]}
- */
-export function fixChoices(overlap) {
-  if (overlap.parts[1] === EDGE) return [{ value: "accept", label: "Accept", text: "Leave it past the edge: check it clears the enclosure." }];
-  return [
-    { value: "taller", label: "Stand taller", text: "Solder one higher on longer legs, so its body clears the other." },
-    { value: "bent", label: "Bend out of the way", text: "Bend one's legs so its body leans away from the other." },
-    { value: "accept", label: "Accept", text: "Leave them touching as they are." },
-  ];
-}
-
-/**
- * The form's starting values: an earlier decision's, or nothing chosen.
- * @param {Decision | null} earlier @returns {FixValues}
- */
-export function fixValues(earlier) {
-  return {
-    fix: earlier?.fix ?? null, part: earlier?.part ?? null, mm: earlier?.mm ? String(earlier.mm) : "",
-    toward: earlier?.toward ?? null, note: earlier?.note ?? "",
-  };
-}
-
-/**
- * The decision to send for the form's values, or null while it's incomplete (no choice;
- * no part for Stand taller or Bend; no side for Bend; a height that isn't a length above 0).
- * The server checks it again and sets the amount (D-398).
- * @param {Overlap} overlap @param {FixValues} values @returns {Record<string, unknown> | null}
- */
-export function decisionFrom(overlap, values) {
-  if (!values.fix) return null;
-  const note = values.note.trim();
-  const decision = { parts: overlap.parts, fix: values.fix, ...(note ? { note } : {}) };
-  if (values.fix === "accept") return decision;
-  if (!values.part || !overlap.parts.includes(values.part)) return null;
-  if (values.fix === "bent") return values.toward ? { ...decision, part: values.part, toward: values.toward } : null;
-  const typed = values.mm.trim().replace(/\s*mm$/i, "").replace(",", ".");
-  if (!typed) return { ...decision, part: values.part };
-  const mm = Number(typed);
-  return Number.isFinite(mm) && mm > 0 ? { ...decision, part: values.part, mm } : null;
-}
-
-/**
- * What the form's *By … mm* says once `part` is chosen to stand taller: the server's
- * suggestion (the other's typical height and a clearance), unless the builder has typed
- * their own; `shown` the suggestion it last put there.
- * @param {Overlap} overlap @param {string} part @param {string} typed @param {string} shown
- * @returns {string}
- */
-export function tallerMm(overlap, part, typed, shown) {
-  if (typed.trim() && typed !== shown) return typed;
-  const suggested = overlap.taller?.[part];
-  return suggested ? String(suggested) : "";
-}
-
-/**
- * The decisions on a part's overlaps, in words, for its card on the board (P6h4).
- * @param {Progress} progress @param {string} ref @returns {string[]}
- */
-export function decisionsOf(progress, ref) {
-  return (progress.decided ?? []).filter((d) => d.decision.parts.includes(ref)).map((d) => d.text);
-}
-
 /** @typedef {Record<(typeof BOARD_SETTINGS)[number]["key"], boolean>} BoardSettings */
 
 /**
@@ -1085,6 +1004,79 @@ export function netsLine(progress) {
   const left = progress.wires_to_go.length;
   const loose = progress.loose ? `, ${progress.loose} loose` : "";
   return left || progress.loose ? `${nets}; ${left} ${left === 1 ? "lug" : "lugs"} to wire${loose}.` : `${nets}.`;
+}
+
+/** The other side of a body hanging past the board's edge, in an overlap (board.py's `EDGE`). */
+export const EDGE = "edge";
+
+/**
+ * An overlap's key, the same either way round: "C1|TR1" (D-398's matching by the pair).
+ * @param {string[]} parts @returns {string}
+ */
+export function overlapKey(parts) {
+  return [...parts].sort().join("|");
+}
+
+/**
+ * Where each warned overlap is marked on the board (D-398, as the schematic's problem
+ * marks, D-176): between the two parts' middles, or on a part past the edge; dismissed
+ * ones aren't warned, so have none. In board units, with the warning as its title.
+ * @param {Progress | null} progress @param {Board} board
+ * @returns {Array<{key: string, at: [number, number], title: string}>}
+ */
+export function overlapMarks(progress, board) {
+  const middles = new Map(board.parts.filter((p) => p.legs.length).map((p) => {
+    const points = p.legs.map(([, hole]) => holeXY(hole));
+    return [p.ref, /** @type {[number, number]} */ ([0, 1].map((k) => points.reduce((sum, pt) => sum + pt[k], 0) / points.length))];
+  }));
+  return (progress?.overlaps ?? []).flatMap((o) => {
+    const ends = o.parts.filter((r) => r !== EDGE).map((r) => middles.get(r));
+    if (!ends.length || ends.some((m) => !m)) return [];
+    const points = /** @type {Array<[number, number]>} */ (ends);
+    const at = /** @type {[number, number]} */ ([0, 1].map((k) => points.reduce((sum, pt) => sum + pt[k], 0) / points.length));
+    return [{ key: overlapKey(o.parts), at, title: o.text }];
+  });
+}
+
+/**
+ * The refs typed in a note's Parts box: "c2, R1 r1" → ["C2", "R1"] (commas or spaces,
+ * each once), each matched to the board's own ref whatever its case; one not known is
+ * kept as typed, for the server to refuse by name.
+ * @param {string} text @param {string[]} [known] @returns {string[]}
+ */
+export function parseRefs(text, known = []) {
+  const byCase = new Map(known.map((r) => [r.toUpperCase(), r]));
+  return [...new Set(text.split(/[\s,;]+/).filter(Boolean).map((r) => byCase.get(r.toUpperCase()) ?? r))];
+}
+
+/**
+ * The parts a note starts with from an overlap warning: the two, or the one past the edge.
+ * @param {Overlap} overlap @returns {string[]}
+ */
+export function overlapParts(overlap) {
+  return overlap.parts.filter((r) => r !== EDGE);
+}
+
+/**
+ * A board note's plain form for the server's `note-add` / `note-set`: its refs as typed
+ * (`known` the board's refs), the text trimmed, `overlap` kept only while it still names
+ * those parts (D-398).
+ * @param {string} partsText @param {string} text @param {{parts: string[], overlap: boolean} | null} [was]
+ * @param {string[]} [known] @returns {{parts: string[], text: string, overlap?: boolean}}
+ */
+export function notePayload(partsText, text, was = null, known = []) {
+  const parts = parseRefs(partsText, known);
+  const same = Boolean(was?.overlap) && overlapKey(parts) === overlapKey(was?.parts ?? []);
+  return { parts, text: text.trim(), ...(same ? { overlap: true } : {}) };
+}
+
+/**
+ * A board note as the Notes pane shows it: "C2, R1: solder C2 a bit higher." or the
+ * text alone (check.py's `note_words`).
+ * @param {{parts: string[], text: string}} note @returns {string}
+ */
+export function noteLine(note) {
+  return note.parts.length ? `${note.parts.join(", ")}: ${note.text}` : note.text;
 }
 
 /**

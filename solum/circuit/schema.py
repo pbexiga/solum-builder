@@ -727,19 +727,22 @@ class BoardWire(_Model):
     runs: list[tuple[int, float]] = Field(default_factory=list)
 
 
-class OverlapDecision(_Model):
-    """The builder's decision on two bodies touching, or one past the board's edge (`parts`
-    [ref, "edge"]), v40 (P6h4): stand `part` taller (by `mm`), bend it `toward` a side, or
-    accept it, with a `note`; `overlap_mm` the amount it was decided at. Its sense is
-    checked by `board.decision_problem`, through `Stripboard.layout`."""
+class BoardNote(_Model):
+    """The builder's note on the board (v40, D-398): its text, about `parts` (refs; none: a
+    general note); `overlap` when written from an overlap warning. Read by
+    `board.note_from_data`, through `Stripboard.layout`."""
+
+    parts: list[str] = Field(default_factory=list)
+    text: NoteText
+    overlap: bool = False
+
+
+class BoardDismissal(_Model):
+    """An overlap warning the builder dismissed (v40, D-398): the two parts that touch, or
+    a part and "edge", either way round, with an optional reason."""
 
     parts: tuple[str, str]
-    fix: Literal["taller", "bent", "accept"]
-    part: str | None = None
-    mm: float | None = None
-    toward: Literal["left", "right", "up", "down"] | None = None
-    note: str = ""
-    overlap_mm: float
+    reason: str = Field("", max_length=REASON_MAX)
 
 
 class Stripboard(_Model):
@@ -748,8 +751,8 @@ class Stripboard(_Model):
     (a part since deleted, a leg on the wrong net) is the editor's progress check. v36
     (D-375): off-board parts' spots beside the board and their wires, for v35's pads. v38
     (D-385): `where`, the builder's choice of a part on the board or off it, by ref, only
-    where it differs from the parts list's (`export.chosen_where`). v40 (P6h4): `overlaps`,
-    the builder's decisions on bodies touching."""
+    where it differs from the parts list's (`export.chosen_where`). v40 (D-398): `notes`, the
+    builder's own, and `dismissed`, the overlap warnings they dismissed."""
 
     size: tuple[int, int]  # columns, strips
     parts: dict[str, dict[str, str]] = Field(default_factory=dict)  # ref → leg → hole
@@ -759,7 +762,8 @@ class Stripboard(_Model):
     wires: list[BoardWire] = Field(default_factory=list)
     off: dict[str, tuple[int, int]] = Field(default_factory=dict)  # ref → [column, strip]
     where: dict[str, Literal["board", "off-board"]] = Field(default_factory=dict)
-    overlaps: list[OverlapDecision] = Field(default_factory=list)
+    notes: list[BoardNote] = Field(default_factory=list)
+    dismissed: list[BoardDismissal] = Field(default_factory=list)
 
     @model_validator(mode="after")
     def _readable(self) -> Self:

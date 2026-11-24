@@ -147,21 +147,21 @@ def test_the_index_lists_the_board_when_it_went_in() -> None:
     assert '<a href="stripboard.pdf">' in text
 
 
-def test_the_builder_s_decisions_are_on_the_page_accepted_ones_too() -> None:
-    """P6h4 (D-398): each decision covering an overlap the board has, in words, beside the
-    parts; an accepted one prints too, as a reminder (the user); one that no longer covers
-    an overlap (decided at another amount) is left off; none, no heading."""
+def test_the_builder_s_notes_are_on_the_page_as_written() -> None:
+    """D-398: every board note after the parts, its parts first, no out-of-date tags (R9 is
+    on no board); none, no heading."""
     c = load_circuit(REPO / "tests/fixtures/circuits/old/schema-v39.json")
     assert c.stripboard is not None
     board = layout_data(c.stripboard.layout())
-    for overlap_mm, shown in ((0.3, True), (0.9, False)):
-        decision = {"parts": ["TR1", "C1"], "fix": "accept", "note": "sleeve the leg",
-                    "overlap_mm": overlap_mm}  # fmt: skip
-        decided = with_board({**board, "overlaps": [decision]}, c)
-        assert decided.stripboard is not None
-        lists = lists_for(decided.stripboard.layout(), decided, MODELS, TABLE)
-        assert lists.decisions == (["TR1 and C1 touch: accepted; sleeve the leg."] if shown else [])
-        text = stripboard_page(decided, Drawings(svg(80, 40), svg(80, 40), svg(80, 40)), lists, 2)
-        line = '<ul class="decisions"><li>TR1 and C1 touch: accepted; sleeve the leg.</li></ul>'
+    notes = [{"parts": ["TR1", "C1"], "text": "Sleeve the leg.", "overlap": True},
+             {"text": "Socket IC1."}, {"parts": ["R9"], "text": "Gone."}]  # fmt: skip
+    for written, shown in ((notes, True), ([], False)):
+        noted = with_board({**board, "notes": written}, c)
+        assert noted.stripboard is not None
+        lists = lists_for(noted.stripboard.layout(), noted, MODELS, TABLE)
+        assert lists.notes == (["TR1, C1: Sleeve the leg.", "Socket IC1.", "R9: Gone."]
+                               if shown else [])  # fmt: skip
+        text = stripboard_page(noted, Drawings(svg(80, 40), svg(80, 40), svg(80, 40)), lists, 2)
+        line = '<ul class="notes"><li>TR1, C1: Sleeve the leg.</li><li>Socket IC1.</li>'
         assert (line in text) is shown
-        assert ("Where bodies touch: as you decided (1)" in text) is shown
+        assert ("<h2>Notes (3)</h2>" in text) is shown

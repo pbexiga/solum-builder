@@ -512,14 +512,10 @@ def test_bodies_touching_between_holes_or_hanging_off_the_edge_are_warned() -> N
         cap_at = Placed("C1", (("1", (column, 0)), ("2", (column, 1))))
         return [o.text for o in outline_overlaps(Layout(columns, 3, (trimmer, cap_at)), board)]
 
-    assert at(3, 6) == [
-        "TR1 and C1's bodies touch between the holes (0.3 mm): one would have to stand "
-        "taller. Move one a hole further away if you can."
-    ]
+    assert at(3, 6) == ["TR1 and C1's bodies touch: move one a hole further away if you can."]
     assert at(4, 6) == []
     assert at(4, 5) == [  # C1's edge at 13.31 mm, the board's at 4.5 holes, 11.43 mm
-        "C1's body hangs 1.9 mm past the board's edge: check it clears the enclosure, or "
-        "move it in."
+        "C1 hangs past the board's edge: check it clears the enclosure, or move it in."
     ]
 
 

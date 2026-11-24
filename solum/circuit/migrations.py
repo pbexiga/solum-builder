@@ -1073,9 +1073,8 @@ def _v38_to_v39(data: Data) -> Data:
 
 
 def _v39_to_v40(data: Data) -> Data:
-    """v40 (P6h4) added the board's `overlaps`, the builder's decisions on bodies touching;
-    an older board has none (every overlap still a warning), so a v39 file is a valid v40
-    file."""
+    """v40 (D-398) added the board's `notes` and `dismissed` (overlap warnings dismissed);
+    an older board has none, so a v39 file is a valid v40 file."""
     return data
 
 

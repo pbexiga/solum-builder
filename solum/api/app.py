@@ -132,8 +132,8 @@ from solum.simulate import (
     simulator_from_settings,
 )
 from solum.store import CircuitStore, StoreError, blank_circuit, split_id
-from solum.stripboard.board import BoardError, Layout, decision_from_data, layout_data
-from solum.stripboard.check import kept_decisions, move_problem, progress, shorts
+from solum.stripboard.board import BoardError, Layout, layout_data, note_from_data
+from solum.stripboard.check import kept_dismissals, move_problem, progress, shorts
 from solum.stripboard.edit import BoardEdit, EditError, EditKind, edit_layout
 from solum.stripboard.footprints import board_parts, board_refs, drawing_data, surface_mount
 from solum.stripboard.guidance import guidance
@@ -230,8 +230,8 @@ class BoardEditRequest(BaseModel):
     to: str | None = None  # a wire's other lug (D-375); `where`: board or off-board (D-385)
     index: int = -1  # the wire `unwire`, `rewire` and `route` act on
     runs: list[tuple[int, float]] = []  # `route`: the wire's moved runs (D-380)
-    # `decide`: {parts, fix, part?, mm?, toward?, note?}, its amount the board's now (P6h4)
-    decision: dict[str, Any] | None = None
+    note: dict[str, Any] | None = None  # `note-add` / `note-set`: {parts, text, overlap?}
+    reason: str = ""  # `dismiss` (D-398)
     grow: bool = True
     shorts: bool = True
 
@@ -1175,7 +1175,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 changed = remove_line(layout, parts, req.axis, req.at)
         except SizeError as err:
             raise HTTPException(422, str(err)) from None
-        return {"stripboard": layout_data(kept_decisions(changed, parts))}
+        return {"stripboard": layout_data(kept_dismissals(changed, parts))}
 
     @app.post("/api/stripboard/edit")
     def stripboard_edit(req: BoardEditRequest) -> dict[str, Any]:
@@ -1205,15 +1205,12 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                 raise HTTPException(422, str(err)) from None
             return {"stripboard": layout_data(layout), "shift": [0, 0]}
         try:
-            decision = (decision_from_data({**req.decision, "overlap_mm": 0})
-                        if req.decision is not None else None)  # fmt: skip
-        except (BoardError, KeyError, TypeError, ValueError) as err:
-            raise HTTPException(
-                422, str(err) if isinstance(err, BoardError) else "That decision is incomplete."
-            ) from None
+            note = note_from_data(req.note) if req.note is not None else None
+        except BoardError as err:
+            raise HTTPException(422, str(err)) from None
         edit = BoardEdit(req.kind, req.ref, tuple(req.legs.items()), req.standing,
-                         tuple(req.holes), req.to, req.index, tuple(req.runs),
-                         decision)  # fmt: skip
+                         tuple(req.holes), req.to, req.index, tuple(req.runs), note,
+                         req.reason)  # fmt: skip
         if req.kind == "where" and req.ref in {p.ref for p in circuit.parts}:
             onto = (req.to or movable_where(circuit).get(req.ref)) == "board"
             why = move_problem(circuit.part(req.ref), onto, models, table)
@@ -1262,7 +1259,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except StartError as err:
             raise HTTPException(422, str(err)) from None
         parts = board_parts(circuit, models, table)[0]
-        return {"stripboard": layout_data(kept_decisions(made.layout, parts)),
+        return {"stripboard": layout_data(kept_dismissals(made.layout, parts)),
                 "left": list(made.left)}  # fmt: skip
 
     @app.post("/api/stripboard/tidy")
@@ -1282,7 +1279,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         except TidyError as err:
             raise HTTPException(422, str(err)) from None
         parts = board_parts(circuit, models, table)[0]
-        return {"stripboard": layout_data(kept_decisions(tidied.layout, parts)),
+        return {"stripboard": layout_data(kept_dismissals(tidied.layout, parts)),
                 "mended": list(tidied.mended)}  # fmt: skip
 
     @app.post("/api/part")

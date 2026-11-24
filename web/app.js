@@ -361,6 +361,7 @@ const board = boardView($("canvas-body"), {
     if (message) showError(message);
   },
   refuse: (message) => refusal.show(message),
+  marks: () => state.marks,
 });
 const menus = appMenus($("canvas-body"), schematic, {
   pinFrequency: (net) => tools.view.pin(net),
@@ -1881,6 +1882,7 @@ function toggleMarks() {
   state.marks = !state.marks;
   remember(MARKS_KEY, state.marks ? 1 : 0);
   schematic.showMarks(state.marks ? (state.problems?.result?.problems ?? []) : []); // only the drawing changes
+  board.redraw(); // the board's marks too (D-398)
 }
 
 function toggleImpedance() {

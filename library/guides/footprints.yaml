@@ -1,11 +1,7 @@
 # Stripboard footprints (D-367): how far apart a part's legs go on a 0.1" (2.54 mm) board
 # and what its body covers. The one source for the stripboard layouts (`solum.stripboard`).
 #
-# Sizes in mm, as the source gives them; `height`, the body's height above the board as
-# fitted (seated), is a **typical** figure from the sheet named in `source` (D-398, the
-# user: "standard heights, as I won't be buying from the same vendor every time"): the
-# app says "about" and "check yours". No `height`: none sourced yet (the builder types
-# it). A flat axial part's height is its `diameter`; `holes` are the leg steps on the board (0.1"
+# Sizes in mm, as the source gives them; `holes` are the leg steps on the board (0.1"
 # each) a part's legs are bent to. A body covers every hole whose centre is inside it
 # (a box: `length` along the legs' line, `width` across; round: `diameter`), centred on
 # its legs. A part with no entry for its type, kind, value or package gets no layout, and
@@ -79,35 +75,24 @@ radial:
   electrolytic:  # by value at 25 V, the first whose `max_value` holds it
     - max_value: 47µ
       diameter: 5
-      height: 11
       pitch: 2.0
       holes: [1]
       source: &nrws >
-        NIC Components NRWS (miniature radial electrolytics), case size table D × L, 25 V
-        column, and lead spacing by case diameter, page 1 (printed 152) (niccomp.com; read
-        from wts-electronic.de/download/nic-nrws-elko.pdf; heights read 2026-11-24: L,
-        the sleeve's length, "Dim. α" 0.5 more at most)
+        NIC Components NRWS (miniature radial electrolytics), case size table, 25 V column,
+        and lead spacing by case diameter (niccomp.com; read from
+        wts-electronic.de/download/nic-nrws-elko.pdf)
     - max_value: 100µ
       diameter: 6.3
-      height: 11
       pitch: 2.5
       holes: [1]
       source: *nrws
     - max_value: 330µ
       diameter: 8
-      height: 11.5
       pitch: 3.5
       holes: [1, 2]
       source: *nrws
-    - max_value: 470µ
-      diameter: 10
-      height: 12.5
-      pitch: 5.0
-      holes: [2]
-      source: *nrws
     - max_value: 1m
       diameter: 10
-      height: 20
       pitch: 5.0
       holes: [2]
       source: *nrws
@@ -115,66 +100,57 @@ radial:
     - max_value: 150n
       length: 7.2
       width: 2.5
-      height: 6.5
       pitch: 5
       holes: [2]
       source: &mks2 >
         WIMA MKS 2 (polyester, PCM 5 mm), general data table, 63 VDC column, W × H × L
-        (page 2; wima.de/wp-content/uploads/media/e_WIMA_MKS_2.pdf, read 2026-11-24: H
-        the height above the board; 2.2 µF and up corrected to that column, D-398)
+        (page 2; wima.de/wp-content/uploads/media/e_WIMA_MKS_2.pdf, read 2026-11-24: W
+        across the legs; 2.2 µF and up corrected to that column, D-398)
     - max_value: 220n
       length: 7.2
       width: 3
-      height: 7.5
       pitch: 5
       holes: [2]
       source: *mks2
     - max_value: 470n
       length: 7.2
       width: 3.5
-      height: 8.5
       pitch: 5
       holes: [2]
       source: *mks2
     - max_value: 680n
       length: 7.2
       width: 4.5
-      height: 9.5
       pitch: 5
       holes: [2]
       source: *mks2
     - max_value: 1µ
       length: 7.2
       width: 5
-      height: 10
       pitch: 5
       holes: [2]
       source: *mks2
     - max_value: 1.5µ
       length: 7.2
       width: 5.5
-      height: 11.5
       pitch: 5
       holes: [2]
       source: *mks2
     - max_value: 2.2µ
       length: 7.2
       width: 7.2
-      height: 13
       pitch: 5
       holes: [2]
       source: *mks2
     - max_value: 3.3µ
       length: 7.2
       width: 11
-      height: 16
       pitch: 5
       holes: [2]
       source: *mks2
     - max_value: 4.7µ
       length: 7.2
       width: 11
-      height: 18
       pitch: 5
       holes: [2]
       source: *mks2
@@ -198,13 +174,11 @@ radial:
   led:  # an LED on the board (the status LED is off it), by the model's package
     - package: T-1 3/4
       diameter: 5.8
-      height: 8.6
       pitch: 2.54
       holes: [1]
       source: >
         KiCad LED_D5.0mm (5.8 mm flange), after a 5 mm LED sheet
-        (cdn-reichelt.de A500 LL-504BC2E-009.pdf; Lucky Light LL-504BC2E-009, page 2 of
-        2: 8.6 mm from the flange to the top, read 2026-11-24)
+        (cdn-reichelt.de A500 LL-504BC2E-009.pdf)
     - package: T-1
       diameter: 3.8
       pitch: 2.54
@@ -217,14 +191,11 @@ inline:
   - package: TO-92
     length: 4.6
     width: 4.2
-    height: 5.2
     holes: [1, 2]
     source: >
       KiCad TO-92_Inline_Wide (legs 2.54 mm apart, body outline), after NXP SOT54
       (sot054_po.pdf); the narrow 1.27 mm legs are bent out to the board's 2.54 mm, as on
-      stripboard. TO-92 mini takes the same: its body is smaller. Height: NXP SOT54
-      package outline (nxp.com/docs/en/package-information/SOT54.pdf, 8 February 2016,
-      page 2, read 2026-11-24), body A 5.0 to 5.2 mm, the larger taken
+      stripboard. TO-92 mini takes the same: its body is smaller
   - package: TO-18
     diameter: 4.8
     holes: [1, 2]
@@ -248,12 +219,10 @@ inline:
 trimmer:  # a board trimmer in line (a trimmer's `style: inline`): three legs in a line, 1, wiper, 3
   length: 9.53
   width: 4.83
-  height: 10.03
   holes: [1]
   source: >
     Bourns 3296W (multiturn, top adjust, pins in line 2.54 mm apart), body 9.53 × 4.83 mm:
-    KiCad Potentiometer_Bourns_3296W_Vertical, after bourns.com/pdfs/3296.pdf; height
-    10.03 (.395) along the pins (that sheet's common dimensions, page 1, read 2026-11-24)
+    KiCad Potentiometer_Bourns_3296W_Vertical, after bourns.com/pdfs/3296.pdf
 
 # The default board trimmer (D-393): legs 1 and 3 two holes apart, the wiper one hole
 # back between them, toward you as you look down on it with 1 on the left. `length` runs
@@ -261,26 +230,19 @@ trimmer:  # a board trimmer in line (a trimmer's `style: inline`): three legs in
 trimmer_triangle:
   length: 6.60
   width: 6.99
-  height: 4.88
   holes: [1]
   source: >
     Bourns 3362P (1/4" square, single turn, top adjust), "3362 – 1/4˝ Square Trimpot®
     Trimming Potentiometer" (bourns.com/docs/Product-Datasheets/3362.pdf, read
     2026-11-23), page 1: body 6.60 (.260) × 6.99 (.275) mm; 3362P pins 2.54 (.100) apart
-    along the row, pin 2 2.54 (.100) back from pins 1 and 3, on the 0.1" grid; top adjust
-    4.88 (.192) high (the same page, REV 03/25, read 2026-11-24)
+    along the row, pin 2 2.54 (.100) back from pins 1 and 3, on the 0.1" grid
 
 # A chip in a DIP across the strips: its pins down two columns `row_holes` apart, one
 # strip per pin pair, pin 1 at the top left or (turned round) the bottom right.
 dip:
   row_holes: 3
   width: 6.35
-  height: 5.08
-  source: >
-    KiCad DIP-8_W7.62mm, DIP-14_W7.62mm, DIP-16_W7.62mm (7.62 mm rows, body outline);
-    height: Texas Instruments P (R-PDIP-T8), drawing 4040082/E of 04/2010
-    (ti.com/lit/ml/mpdi001b/mpdi001b.pdf, page 1, read 2026-11-24): 0.200 (5.08) max
-    above the seating plane (in a socket: the socket's height more)
+  source: KiCad DIP-8_W7.62mm, DIP-14_W7.62mm, DIP-16_W7.62mm (7.62 mm rows, body outline)
 
 # A DIP switch (D-238) on the board as a chip's DIP (D-397): switch k from pin k to the
 # pin across from it, 1 at the top left; its body runs a pitch per switch plus `extra`.

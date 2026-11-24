@@ -139,7 +139,7 @@ export function appMenus(host, schematic, app) {
       { label: "DC voltages on schematic", id: "menu-dc", checked: app.shown().dc, run: app.toggleDc },
       { label: "Impedance in and out", id: "menu-impedance", checked: app.shown().impedance, hint: "at 1 kHz", run: app.toggleImpedance },
       { label: "Capacitor types", id: "menu-cap-types", checked: app.shown().capTypes, hint: "100n film", run: app.toggleCapTypes },
-      { label: "Problem marks", id: "menu-marks", checked: app.shown().marks, hint: "each problem on the sheet", run: app.toggleMarks },
+      { label: "Problem marks", id: "menu-marks", checked: app.shown().marks, hint: "each problem on the sheet and the board", run: app.toggleMarks },
       "-",
       { label: "Reset pane order", id: "menu-reset-panes", hint: "every pane open, in the column", run: app.resetPanes },
     ];

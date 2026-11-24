@@ -7,7 +7,6 @@ circuit's own nets from `connect`: there is no second notion of a net. Every fau
 plain-English sentence naming the parts and holes; a layout with none is the circuit.
 """
 
-import math
 from collections import defaultdict
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
@@ -22,7 +21,6 @@ from solum.models import ModelError, ModelLibrary
 from solum.stripboard.board import (
     EDGE,
     PITCH,
-    Decision,
     Hole,
     Layout,
     Placed,
@@ -160,88 +158,40 @@ def _cap(text: str) -> str:
     return text[:1].upper() + text[1:]
 
 
-_SLACK = 0.05  # mm two outlines may meet by, unwarned
+_SLACK = 0.05  # mm two outlines may meet by, unwarned: one maker's outlines (D-398)
 
 
 @dataclass(frozen=True)
 class Overlap:
     """Two bodies touching between the holes, or one past the board's edge (`parts[1]` is
-    `board.EDGE`), by `mm`, to 0.1 mm (D-394); `text` the warning; `hints` what's worth
-    knowing about the parts before deciding (P6h4: hints, not rules); `taller` how many mm
-    to stand each one taller to clear the other, where the other's height is known."""
+    `board.EDGE`), D-394; `text` the warning, with no amount (the outlines are one maker's,
+    D-398); `reason` the builder's, once dismissed."""
 
     parts: tuple[str, str]
-    mm: float
     text: str
-    hints: tuple[str, ...] = ()
-    taller: dict[str, float] = field(default_factory=dict)
-
-
-_HINTS = {
-    "trimmer": "{}'s adjusting screw must stay reachable from above.",
-    "chip": "If {} goes in a socket, it must lift straight out.",
-    "switch": "{}'s switches must stay reachable to flip.",
-}
-
-
-CLEARANCE = 1.0  # mm a part stood taller clears the other's top by (D-398)
-
-
-def _hints(refs: tuple[str, str], board: Mapping[str, BoardPart]) -> tuple[str, ...]:
-    """What's worth knowing about each part before deciding: by its kind, then its typical
-    height where the footprint table has one (P6h4, D-398)."""
-    kinds = [_HINTS[board[r].kind].format(r) for r in refs if board[r].kind in _HINTS]
-    tall = [f"{r} is about {board[r].footprint.height:g} mm tall (typical: check yours)."
-            for r in refs if board[r].footprint.height]  # fmt: skip
-    return tuple(kinds + tall)
-
-
-def _taller(refs: tuple[str, str], board: Mapping[str, BoardPart]) -> dict[str, float]:
-    """How much to stand each part taller to clear the other: the other's height and the
-    clearance, up to the next half mm; none where the other's height isn't known."""
-    a, b = refs
-    found = {}
-    for part, other in ((a, b), (b, a)):
-        height = board[other].footprint.height
-        if height:
-            found[part] = math.ceil((height + CLEARANCE) * 2) / 2
-    return found
+    reason: str = ""
 
 
 @dataclass(frozen=True)
-class Decided:
-    """A decision that covers one of the board's overlaps, and `text`, it in words."""
+class NoteState:
+    """One of the board's notes as the Notes pane shows it: `why` it's out of date ("C2 and
+    R1 no longer touch", "R1 isn't on the board"), or None (D-398)."""
 
-    decision: Decision
+    parts: tuple[str, ...]
     text: str
-
-
-def decision_words(d: Decision) -> str:
-    """A decision as the build sheet and the Warnings say it: "C5: stand 3 mm taller
-    (clears TR1)", "C5: bend left (clears TR1)", "R7 and C2 touch: accepted", "C1 past the
-    board's edge: accepted"; the builder's note after it ("…: accepted; sleeve the leg")."""
-    a, b = d.parts
-    if d.fix == "accept":
-        said = f"{a} past the board's edge" if b == EDGE else f"{a} and {b} touch"
-        said += ": accepted"
-    else:
-        other = b if d.part == a else a
-        by = f"{d.mm:g} mm " if d.mm else ""
-        how = f"stand {by}taller" if d.fix == "taller" else f"bend {d.toward}"
-        said = f"{d.part}: {how} (clears {other})"
-    note = d.note.strip().rstrip(".")
-    return f"{said}; {note}." if note else f"{said}."
+    overlap: bool
+    why: str | None
 
 
 def outline_overlaps(layout: Layout, board: Mapping[str, BoardPart]) -> list[Overlap]:
     """Bodies by their real outlines (D-394): two touching between holes (a fault only
     when they share a hole: `placement_faults`), or one hanging more than half a hole past
-    the board's edge. Warnings, not faults: a part can stand a little taller, though it's
-    better not to (the user), and the builder may decide each (`decided`, P6h4)."""
+    the board's edge. Warnings, not faults: the builder knows their parts, and may note or
+    dismiss each (D-398)."""
     found: list[tuple[str, tuple[float, float, float, float, float]]] = []
     for p in layout.parts:
         part = board.get(p.ref)
-        if part is None or leg_problem(part, p.holes, p.standing):
+        if part is None:
             continue
         outline = body_outline(part, p.holes, p.standing)
         if outline is not None:
@@ -249,41 +199,65 @@ def outline_overlaps(layout: Layout, board: Mapping[str, BoardPart]) -> list[Ove
     overlaps = []
     for i, (a, out_a) in enumerate(found):
         for b, out_b in found[i + 1 :]:
-            mm = outline_overlap(out_a, out_b)
-            if mm > _SLACK:
-                overlaps.append(Overlap((a, b), round(mm, 1), (
-                    f"{a} and {b}'s bodies touch between the holes ({mm:.1f} mm): one would "
-                    "have to stand taller. Move one a hole further away if you can."
-                ), _hints((a, b), board), _taller((a, b), board)))  # fmt: skip
+            if outline_overlap(out_a, out_b) > _SLACK:
+                overlaps.append(Overlap((a, b), (
+                    f"{a} and {b}'s bodies touch: move one a hole further away if you can."
+                )))  # fmt: skip
     edge = (-PITCH, -PITCH, layout.columns * PITCH, layout.strips * PITCH)  # half a hole out
     for ref, (x0, y0, x1, y1, _) in found:
-        past = max(edge[0] - x0, edge[1] - y0, x1 - edge[2], y1 - edge[3])
-        if past > _SLACK:
-            mm = past + PITCH / 2
-            overlaps.append(Overlap((ref, EDGE), round(mm, 1), (
-                f"{ref}'s body hangs {mm:.1f} mm past the board's edge: check it clears the "
-                "enclosure, or move it in."
+        if max(edge[0] - x0, edge[1] - y0, x1 - edge[2], y1 - edge[3]) > _SLACK:
+            overlaps.append(Overlap((ref, EDGE), (
+                f"{ref} hangs past the board's edge: check it clears the enclosure, or move it in."
             )))  # fmt: skip
     return overlaps
 
 
-def covers(d: Decision, o: Overlap) -> bool:
-    """Whether decision `d` is about overlap `o`: the same two (either order) by the same
-    amount, to 0.1 mm (the user, 2026-11-24: by another amount the old fix may not fit)."""
-    return set(d.parts) == set(o.parts) and abs(d.overlap_mm - o.mm) <= 0.1 + 1e-9
+def _pair(parts: Iterable[str]) -> frozenset[str]:
+    return frozenset(parts)
 
 
-def decided(layout: Layout, overlaps: list[Overlap]) -> tuple[list[Overlap], list[Decision]]:
-    """The overlaps no decision covers, and the decisions that cover one (P6h4)."""
-    kept = [d for d in layout.overlaps if any(covers(d, o) for o in overlaps)]
-    return [o for o in overlaps if not any(covers(d, o) for d in kept)], kept
+def dismissed_apart(layout: Layout, overlaps: list[Overlap]) -> tuple[list[Overlap], list[Overlap]]:
+    """The overlaps still warned of, and the ones the builder dismissed, with their reason
+    (D-398: matched by the two parts, either way round)."""
+    reasons = {_pair(d.parts): d.reason for d in layout.dismissed}
+    warned = [o for o in overlaps if _pair(o.parts) not in reasons]
+    gone = [replace(o, reason=reasons[_pair(o.parts)]) for o in overlaps
+            if _pair(o.parts) in reasons]  # fmt: skip
+    return warned, gone
 
 
-def kept_decisions(layout: Layout, board: Mapping[str, BoardPart]) -> Layout:
-    """`layout` without the decisions on overlaps it no longer has, or has by another
-    amount (P6h4): run after every change to the board."""
-    kept = decided(layout, outline_overlaps(layout, board))[1]
-    return layout if len(kept) == len(layout.overlaps) else replace(layout, overlaps=tuple(kept))
+def kept_dismissals(layout: Layout, board: Mapping[str, BoardPart]) -> Layout:
+    """`layout` without the dismissals of overlaps it no longer has (D-398: if they come
+    back, they're warned of afresh); run after every change to the board. Notes stay."""
+    now = {_pair(o.parts) for o in outline_overlaps(layout, board)}
+    kept = tuple(d for d in layout.dismissed if _pair(d.parts) in now)
+    return layout if len(kept) == len(layout.dismissed) else replace(layout, dismissed=kept)
+
+
+def note_states(layout: Layout, overlaps: list[Overlap]) -> list[NoteState]:
+    """Each of the board's notes, with why it's out of date (D-398): a part it names isn't
+    on the board (placed, or beside it), or the parts it was written about no longer touch
+    (a note from an overlap warning). Never dropped: the builder deletes their own."""
+    here = {p.ref for p in layout.parts} | {ref for ref, _ in layout.spots}
+    touching = {_pair(r for r in o.parts if r != EDGE) for o in overlaps}
+    found = []
+    for n in layout.notes:
+        gone = [r for r in n.parts if r not in here]
+        why = None
+        if gone:
+            why = f"{' and '.join(gone)} {'isn' if len(gone) == 1 else 'aren'}'t on the board"
+        elif n.overlap and _pair(n.parts) not in touching:
+            why = (f"{n.parts[0]} no longer hangs past the edge" if len(n.parts) == 1
+                   else f"{' and '.join(n.parts)} no longer touch")  # fmt: skip
+        found.append(NoteState(n.parts, n.text, n.overlap, why))
+    return found
+
+
+def note_words(parts: Iterable[str], text: str) -> str:
+    """A note as the build sheet prints it: "C2, R1: solder C2 a bit higher.", or the
+    text alone for a general note."""
+    named = ", ".join(parts)
+    return f"{named}: {text}" if named else text
 
 
 def placement_faults(layout: Layout, board: dict[str, BoardPart],
@@ -713,9 +687,9 @@ class Progress:
     the tray, D-370); `nets` each net's progress; `legs` each board part's legs; `faults` what's
     wrong now (placement, pads, a part the wrong way round, a leg on another net's strip);
     `stale` parts no longer in the circuit (D-376: placed, beside the board, or wired to);
-    `warnings` the placement limits broken; `overlaps` bodies touching or past the edge
-    that the builder hasn't decided, `decided` their decisions on the rest (P6h4); `done`
-    the full check passes; `shorted` the
+    `warnings` the placement limits broken; `overlaps` bodies touching or past the edge,
+    `dismissed` the ones the builder dismissed, `notes` theirs with why each is out of date
+    (D-398); `done` the full check passes; `shorted` the
     copper carrying two nets (D-374); `rails` the copper carrying only a rail, V+, V- or
     GND, by net, as runs (D-381)."""
 
@@ -735,7 +709,8 @@ class Progress:
     rails: dict[str, list[tuple[int, int, int]]] = field(default_factory=dict)
     choices: dict[str, Choice] = field(default_factory=dict)
     overlaps: list[Overlap] = field(default_factory=list)
-    decided: list[Decided] = field(default_factory=list)
+    dismissed: list[Overlap] = field(default_factory=list)
+    notes: list[NoteState] = field(default_factory=list)
 
     @property
     def nets_done(self) -> int:
@@ -916,8 +891,8 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
             rows.append(LegProgress(leg, holes.get((ref, leg)), need, reach))
         legs[ref] = rows
     warnings = limit_warnings(r.layout, placement_limits(circuit, r.nets, r.board))
-    overlaps, decisions = decided(r.layout, outline_overlaps(r.layout, r.board))
-    said = [Decided(d, decision_words(d)) for d in decisions]
+    touching = outline_overlaps(r.layout, r.board)
+    overlaps, dismissed = dismissed_apart(layout, touching)
     done = check_layout(layout, circuit, models, table).ok
     mixed = {g for g, here in by_group.items() if len(here) > 1}
     copper = joined_groups(r.layout)[0]
@@ -927,7 +902,8 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
                     {i.ref: spots[i.ref] for i in r.items},
                     r.unboardable, nets, legs, faults, stale, warnings, done,
                     runs(red), _rails(by_group, copper),
-                    _choices(r, circuit, models, table), overlaps, said)  # fmt: skip
+                    _choices(r, circuit, models, table), overlaps, dismissed,
+                    note_states(layout, touching))  # fmt: skip
 
 
 def _choices(r: Reading, circuit: Circuit, models: ModelLibrary,

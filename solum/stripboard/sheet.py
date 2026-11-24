@@ -1,6 +1,7 @@
 """The kept board in the build package (P6e, D-386): `stripboard.pdf`, from the browser's
 two drawings of the board (parts side, copper side mirrored, as the schematic's, D-205):
-the checked line, the cut list, the link list and the numbered off-board wires; each side
+the checked line, the cut list, the link list, the numbered off-board wires and the
+builder's decisions on bodies touching (P6h4, D-398); each side
 filled onto its own sheet to read (`fill_sheet`); then both at real size, to lay against
 the board. A board that doesn't match the circuit as saved is never packaged;
 `packaged_board` says why in plain English for the package's index.
@@ -16,7 +17,14 @@ from solum.export import SHEET_MARGIN, bom, fill_sheet, page, view_box
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
 from solum.stripboard.board import Hole, Layout, hole_name
-from solum.stripboard.check import check_layout, end_words, read_layout
+from solum.stripboard.check import (
+    check_layout,
+    decided,
+    decision_words,
+    end_words,
+    outline_overlaps,
+    read_layout,
+)
 from solum.stripboard.offboard import OffItem
 
 PITCH_MM = 2.54  # 0.1" between holes
@@ -38,13 +46,15 @@ class BoardLists:
     """What to do to the board, each a line: the cuts and links by hole, the off-board
     wires in order (numbered when shown); `size` in holes (columns, strips); `parts` each
     part by ref, its value and what it is, to read the drawings by (the user: the sheet
-    means nothing without them)."""
+    means nothing without them); `decisions` the builder's decisions on the overlaps the
+    board has, in words (D-398: accepted ones too, as a reminder)."""
 
     size: Hole
     cuts: list[str]
     links: list[str]
     wires: list[str]
     parts: list[tuple[str, str, str]] = field(default_factory=list)
+    decisions: list[str] = field(default_factory=list)
 
 
 @dataclass(frozen=True)
@@ -124,9 +134,13 @@ def board_lists(layout: Layout, items: list[OffItem]) -> BoardLists:
 
 def lists_for(layout: Layout, circuit: Circuit, models: ModelLibrary,
               table: FootprintTable) -> BoardLists:  # fmt: skip
-    """`board_lists` with the circuit's off-board parts, and its parts' values."""
-    lists = board_lists(layout, read_layout(layout, circuit, models, table).items)
-    return replace(lists, parts=part_values(circuit, models))
+    """`board_lists` with the circuit's off-board parts, its parts' values and the
+    decisions that cover its overlaps."""
+    reading = read_layout(layout, circuit, models, table)
+    lists = board_lists(layout, reading.items)
+    covering = decided(reading.layout, outline_overlaps(reading.layout, reading.board))[1]
+    return replace(lists, parts=part_values(circuit, models),
+                   decisions=[decision_words(d) for d in covering])  # fmt: skip
 
 
 def part_values(circuit: Circuit, models: ModelLibrary) -> list[tuple[str, str, str]]:
@@ -254,6 +268,8 @@ def stripboard_page(circuit: Circuit, drawn: Drawings, lists: BoardLists, nets: 
         what = "" if part.lower() in value.lower() else f" <span>{esc(part.lower())}</span>"
         rows += f"<li><strong>{esc(ref)}</strong> {esc(value)}{what}</li>"
     body += f'<h2>Parts ({len(lists.parts)})</h2>\n<ul class="parts">{rows}</ul>\n'
+    if lists.decisions:
+        body += listed("Where bodies touch: as you decided", lists.decisions, "ul", "decisions")
     body += listed("Cuts", lists.cuts, "ul", "holes")
     body += listed("Links", lists.links, "ul", "holes")
     body += listed("Off-board wires", lists.wires, "ol", "wires")

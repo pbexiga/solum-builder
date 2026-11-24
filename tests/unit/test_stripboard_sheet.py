@@ -145,3 +145,23 @@ def test_a_drawing_without_a_view_box_is_refused() -> None:
 def test_the_index_lists_the_board_when_it_went_in() -> None:
     text = index_page(RANGEMASTER, ["circuit.json", "stripboard.pdf"], [], 0)
     assert '<a href="stripboard.pdf">' in text
+
+
+def test_the_builder_s_decisions_are_on_the_page_accepted_ones_too() -> None:
+    """P6h4 (D-398): each decision covering an overlap the board has, in words, beside the
+    parts; an accepted one prints too, as a reminder (the user); one that no longer covers
+    an overlap (decided at another amount) is left off; none, no heading."""
+    c = load_circuit(REPO / "tests/fixtures/circuits/old/schema-v39.json")
+    assert c.stripboard is not None
+    board = layout_data(c.stripboard.layout())
+    for overlap_mm, shown in ((0.3, True), (0.9, False)):
+        decision = {"parts": ["TR1", "C1"], "fix": "accept", "note": "sleeve the leg",
+                    "overlap_mm": overlap_mm}  # fmt: skip
+        decided = with_board({**board, "overlaps": [decision]}, c)
+        assert decided.stripboard is not None
+        lists = lists_for(decided.stripboard.layout(), decided, MODELS, TABLE)
+        assert lists.decisions == (["TR1 and C1 touch: accepted; sleeve the leg."] if shown else [])
+        text = stripboard_page(decided, Drawings(svg(80, 40), svg(80, 40), svg(80, 40)), lists, 2)
+        line = '<ul class="decisions"><li>TR1 and C1 touch: accepted; sleeve the leg.</li></ul>'
+        assert (line in text) is shown
+        assert ("Where bodies touch: as you decided (1)" in text) is shown

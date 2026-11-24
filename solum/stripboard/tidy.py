@@ -26,9 +26,11 @@ from functools import partial
 from solum.circuit.schema import Circuit
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
+from solum.stripboard.apart import alongside
 from solum.stripboard.board import Hole, Layout, Link, Placed, StandUp
 from solum.stripboard.check import (
     check_layout,
+    copper_groups,
     either_way,
     joined_groups,
     misfits,
@@ -297,12 +299,14 @@ def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Footp
     broken = set(broken_limits(layout, limits, turnable))
     kept = guards(board, r.nets, loud)
     noisy = len(noisy_links(layout, board, r.nets, kept))
+    beside = len(alongside(layout, board, r.nets, loud, copper_groups(layout)))  # D-404
 
     def passes(made: Layout) -> bool:  # quickest first: the holes, the joins, then the check
         return (not occupants(made)[1] and joins(made, turnable) == same
                 and not placement_faults(made, board, off)
                 and set(broken_limits(made, limits, turnable)) <= broken
                 and len(noisy_links(made, board, r.nets, kept)) <= noisy
+                and len(alongside(made, board, r.nets, loud, copper_groups(made))) <= beside
                 and check_layout(made, circuit, models, table).ok)  # fmt: skip
 
     tidied = tidy_steps(layout, passes, board)

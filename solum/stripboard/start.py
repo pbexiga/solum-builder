@@ -38,10 +38,12 @@ from solum.circuit.connectivity import GROUND
 from solum.circuit.schema import Circuit
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
+from solum.stripboard.apart import alongside
 from solum.stripboard.board import PITCH, Hole, Layout, Link, Placed, StandUp
 from solum.stripboard.check import (
     Reading,
     check_layout,
+    copper_groups,
     groups_by_net,
     joined_groups,
     occupants,
@@ -822,6 +824,7 @@ def start_for_me(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
                                calm_nets(kept_parts))  # fmt: skip
         broken = len(broken_limits(made, limits))
         noisy = len(noisy_links(made, r.board, r.nets, kept_parts))
+        noisy += len(alongside(made, r.board, r.nets, loud, copper_groups(made)))  # D-404
         key = (len(left), broken, made.columns * made.strips, noisy, len(made.links))
         if best is None or key < best[0]:
             best = (key, made, left)

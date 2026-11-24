@@ -282,9 +282,10 @@ export function boardRefOf(footprints, ref) {
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
  *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number],
  *   shorted: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, guidance: Guidance,
- *   choices?: Record<string, Choice>, overlaps?: Overlap[], dismissed?: Overlap[], notes?: NoteState[]}} Progress
+ *   choices?: Record<string, Choice>, overlaps?: Overlap[], dismissed?: Overlap[], notes?: NoteState[],
+ *   jacks_apart?: boolean}} Progress
  *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints and the
- *   guidance, D-377)
+ *   guidance, D-377; `jacks_apart`: the jacks' wires must be kept apart, D-404)
  * @typedef {{where: "board" | "off-board", moved: boolean, why: string | null}} Choice where a
  *   part is built (D-385): `moved` there by the builder's choice, `why` it can't be moved
  */
@@ -520,6 +521,48 @@ export function offBoardDrawing(progress, board) {
     return line ? [{ index, line, title: `${lugWords(progress, wire.lug)} to ${far}: drag either end to move it`, pad: Boolean(wire.hole) }] : [];
   });
   return { items: shown.map((item) => ({ item, at: board.spots[item.ref] ?? progress.spots[item.ref] ?? /** @type {Hole} */ ([0, 0]) })), wires };
+}
+
+export const APART_MM = 10; // the jacks' wires may run side by side this far, no further (P6i2, D-404)
+
+/**
+ * How far two wires' routes run side by side, in mm: their straight runs along the same
+ * way in one lane or neighbouring lanes (`GRID` apart or closer), overlaps added up.
+ * @param {Array<[number, number]>} a @param {Array<[number, number]>} b @returns {number}
+ */
+export function sideBySide(a, b) {
+  const runs = (/** @type {Array<[number, number]>} */ r) => r.slice(1).map((p, i) => [r[i], p]);
+  let total = 0;
+  for (const [[ax1, ay1], [ax2, ay2]] of runs(a)) {
+    for (const [[bx1, by1], [bx2, by2]] of runs(b)) {
+      const across = ay1 === ay2 && by1 === by2 ? [ay1, by1, [ax1, ax2], [bx1, bx2]]
+        : ax1 === ax2 && bx1 === bx2 ? [ax1, bx1, [ay1, ay2], [by1, by2]] : null;
+      if (!across) continue;
+      const [p, q, [s1, s2], [t1, t2]] = /** @type {[number, number, number[], number[]]} */ (across);
+      if (Math.abs(p - q) > GRID + 0.01) continue;
+      total += Math.max(0, Math.min(Math.max(s1, s2), Math.max(t1, t2)) - Math.max(Math.min(s1, s2), Math.min(t1, t2)));
+    }
+  }
+  return total / MM;
+}
+
+/**
+ * The warning for the jacks' wires run side by side (P6i2, D-404): only when the check
+ * found the output in phase with the input at high gain (`jacks_apart`), and the IN and
+ * OUT jacks' tip wires run side by side further than `APART_MM`. Null otherwise.
+ * @param {Progress | null} progress @param {{wires: Array<{lug: string, to: string | null}>}} board
+ * @param {Array<Array<[number, number]> | null>} routes each of `board.wires`' drawn route
+ * @returns {string | null}
+ */
+export function jackWiresWarning(progress, board, routes) {
+  if (!progress?.jacks_apart) return null;
+  const tip = (/** @type {string} */ ref) => progress.items.find((i) => i.ref === ref)?.lugs.find((l) => l.label === "T")?.end;
+  const [inTip, outTip] = [tip("IN"), tip("OUT")];
+  if (!inTip || !outTip) return null;
+  const of = (/** @type {string} */ end) => board.wires.flatMap((w, i) => (w.lug === end || w.to === end) && routes[i] ? [/** @type {Array<[number, number]>} */ (routes[i])] : []);
+  const far = Math.max(0, ...of(inTip).flatMap((a) => of(outTip).map((b) => sideBySide(a, b))));
+  if (far <= APART_MM) return null;
+  return `The input and output jacks' wires run side by side for ${Math.round(far)} mm: the output is in phase with the input, with high gain between, so it can feed back and squeal. Route one round the other side of the board, or keep them more than a hole apart.`;
 }
 
 const CORNER = STEP * 0.25; // a bend's rounding

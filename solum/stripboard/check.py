@@ -18,6 +18,7 @@ from solum.circuit.schema import POLARISED, SUPPLY_SIGNS, Capacitor, Circuit, Pa
 from solum.export import built_where, chosen_where, why_not_moved
 from solum.guides import FootprintTable
 from solum.models import ModelError, ModelLibrary
+from solum.stripboard.apart import alongside, apart_warnings
 from solum.stripboard.board import (
     EDGE,
     PITCH,
@@ -893,6 +894,8 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Foot
     warnings += quiet_warnings(
         noisy_links(r.layout, r.board, r.nets, guards(r.board, r.nets, loud))
     )
+    beside = alongside(r.layout, r.board, r.nets, loud, copper_groups(r.layout))
+    warnings += apart_warnings(beside)
     touching = outline_overlaps(r.layout, r.board)
     overlaps, dismissed = dismissed_apart(layout, touching)
     done = check_layout(layout, circuit, models, table).ok

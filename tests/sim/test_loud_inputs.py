@@ -94,3 +94,17 @@ def test_a_high_impedance_node_before_a_small_stage_counts(sim: Simulator) -> No
     assert [(x.ref, x.pin) for x in loud_inputs(sim, booster("1M", "100k"))] == [("IC1", "+")]
     assert loud_inputs(sim, booster("100k", "100k")) == []
     assert [(x.ref, x.pin) for x in loud_inputs(sim, booster("100k", "220k"))] == [("IC1", "+")]
+
+
+def test_each_input_comes_with_the_later_nets_in_phase_with_it(sim: Simulator) -> None:
+    """P6i2 (D-404): the Fuzz Face's Q2 collector (the output, two inversions on: in phase
+    with Q1's base) is kept off its side; Q1's own collector (inverted), its emitter (its own
+    pin, grounded) and Q2's emitter (joined to the base by the feedback resistor) aren't.
+    A non-inverting booster's output is in phase with its +; its − input (its own
+    feedback, meant) isn't listed."""
+    (q1,) = loud_inputs(sim, load_circuit(STARTERS / "fuzz-face.json"))
+    assert "out" in q1.along and "q2c" in q1.along
+    assert "Q2.E" not in q1.along  # joined to Q1's base by R1, its feedback: meant
+    assert "q1c" not in q1.along and "GND" not in q1.along  # Q1's collector, inverted
+    (amp,) = loud_inputs(sim, booster("100k", "220k"))
+    assert "o" in amp.along and "m" not in amp.along

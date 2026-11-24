@@ -43,7 +43,7 @@ import { compactRun } from "./compact-run.js";
 import { boardNotes } from "./board-notes.js";
 import { needsCard } from "./needs.js";
 import { openForm } from "../editor/form.js";
-import { BOARD_SETTINGS, EDGE, overlapKey, overlapMarks, overlapParts, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, placedRows, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, standUpOf, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
+import { BOARD_SETTINGS, EDGE, overlapKey, overlapMarks, overlapParts, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, jackWiresWarning, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, placedRows, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, standUpOf, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -1045,7 +1045,8 @@ export function boardView(host, app) {
         return row;
       })),
     );
-    const said = [...progress.faults, ...progress.guidance.stuck, ...progress.warnings];
+    const jacks = jackWiresWarning(progress, boardNow(), routes().all);
+    const said = [...progress.faults, ...progress.guidance.stuck, ...progress.warnings, ...(jacks ? [jacks] : [])];
     const overlaps = progress.overlaps ?? [];
     const dismissed = progress.dismissed ?? [];
     const stale = staleLine(progress.stale);

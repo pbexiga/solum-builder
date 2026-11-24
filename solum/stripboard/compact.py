@@ -12,7 +12,8 @@ then cuts and links, their length and how deep the pads sit; a placement limit b
 (D-367: a decoupling cap or feedback part off its pin's strip, or too far along it)
 costs 20 holes of board, and a little more for each hole its legs are away; problems
 (no room for a cut, a piece left unjoined, a pad with no hole) cost a forbidding
-penalty. The best board breaks the fewest limits, then is the smallest with each hole a
+penalty; a later net's strip alongside a high-gain input's (D-404) costs as a noisy link
+does. The best board breaks the fewest limits, then is the smallest with each hole a
 broken limit's legs are away counted as 2 holes of board (meeting a limit is what
 matters; how far, much less). Standing resistors and diodes follow the board's choice
 (D-403): never tried; when it saves room, each costs a column's worth of board (its
@@ -39,8 +40,9 @@ from solum.circuit.connectivity import connect
 from solum.circuit.schema import Circuit
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
+from solum.stripboard.apart import ALONGSIDE, alongside, pairs_of
 from solum.stripboard.board import PITCH, Hole, Layout, Link, Placed, StandUp
-from solum.stripboard.check import check_layout, read_layout
+from solum.stripboard.check import check_layout, copper_groups, read_layout
 from solum.stripboard.footprints import (
     BoardPart,
     Outline,
@@ -69,6 +71,7 @@ WEIGHT = 10_000.0  # a problem's cost: more than any board's area is worth
 LIMIT = 2000.0  # a placement limit broken (D-367): as dear as 20 holes of board
 PULL = 30.0  # and each hole its legs are from keeping it: the way there, under any problem
 QUIET = 500.0  # a link too near a sensitive net's part (D-402): 5 holes of board
+APART = 500.0  # a later net's strip alongside a high-gain input's (D-404): as dear
 NEAR = 2  # choosing the best board: a hole a broken limit's legs are away, as holes of board
 TEMP = (100.0, 2.0)  # the temperature at the first step and the last
 CELL = 8  # holes: the side of a square of the outlines' grid
@@ -147,6 +150,8 @@ class Problem:
     clear: dict[tuple[str, int], tuple[Hole, ...]] = field(default_factory=dict)  # per shape
     calm: frozenset[int] = frozenset()  # nets whose links may pass them (`quiet.calm_nets`)
     stand_up: StandUp = "room"  # standing resistors and diodes (D-403)
+    loud: tuple[LoudInput, ...] = ()  # the high-gain inputs (D-400)
+    along: frozenset[tuple[int, int]] = frozenset()  # nets kept off each other's side (D-404)
 
     @property
     def stand_cost(self) -> bool:
@@ -206,8 +211,11 @@ def problem(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
     kept = guards(r.board, r.nets, loud)
     held = [(g.ref, names[g.net], g.legs) for g in kept if g.net in names]
     calm = frozenset(names[n] for n in calm_nets(kept) if n in names)
+    along = frozenset((names[a], names[b]) for x, y in pairs_of(r.nets, loud)
+                      if x in names and y in names for a, b in ((x, y), (y, x)))  # fmt: skip
     pb = Problem(circuit, base, r.board, refs, dict(sorted(pads.items())), {}, {}, net_of,
-                 limits, kept, held, calm=calm, stand_up=base.stand_up)  # fmt: skip
+                 limits, kept, held, calm=calm, stand_up=base.stand_up, loud=tuple(loud),
+                 along=along)  # fmt: skip
     stand: Stand = "none" if base.stand_up == "never" else "last"
     for ref in refs:
         found: dict[tuple[object, bool], _Variant] = {}
@@ -290,6 +298,7 @@ class Derived:
     far: int  # holes their legs are from keeping them
     noisy: int = 0  # links too near a sensitive net's part (D-402)
     stood: int = 0  # holes of board its standing parts cost (D-403)
+    apart: int = 0  # later nets' strips alongside a high-gain input's (D-404)
 
     @property
     def area(self) -> int:
@@ -625,13 +634,33 @@ class State:
         broken, far = self.broken(cuts)
         noisy = sum(not quiet(n, c, top, bot) for n, v in joins.items() for c, top, bot in v)
         stood = self.stood(y1 - y0 + 1)
+        beside = self.alongside(x0, x1)
         area = (x1 - x0 + 1) * (y1 - y0 + 1) + stood
         count = sum(len(v) for v in joins.values())
         length = sum(bot - top for v in joins.values() for _, top, bot in v)
         cost = (100 * area + 3 * (len(cuts) + count) + length + 0.5 * depth
-                + LIMIT * broken + PULL * far + QUIET * noisy + WEIGHT * problems)  # fmt: skip
+                + LIMIT * broken + PULL * far + QUIET * noisy + APART * beside
+                + WEIGHT * problems)  # fmt: skip
         return Derived(cost, problems, (x0, y0, x1, y1), cuts, count, length, dict(joins),
-                       broken, far, noisy, stood)  # fmt: skip
+                       broken, far, noisy, stood, beside)  # fmt: skip
+
+    def alongside(self, x0: int, x1: int) -> int:
+        """How many pairs of neighbouring strips run a later net's copper beside a
+        high-gain input's for `apart.ALONGSIDE` columns or more, within columns `x0`–`x1`
+        (D-404; a bus's copper isn't counted)."""
+        along = self.pb.along
+        if not along:
+            return 0
+        count = 0
+        for y, row in self.done.items():
+            below = self.done.get(y + 1)
+            if below is None:
+                continue
+            for na, la, ha in row.pieces:
+                for nb, lb, hb in below.pieces:
+                    if (na, nb) in along and min(ha, hb, x1) - max(la, lb, x0) + 1 >= ALONGSIDE:
+                        count += 1
+        return count
 
     def zone(self) -> dict[int, dict[int, int]]:
         """The holes a link of another net keeps out of (`quiet.kept_clear`) by column and
@@ -718,12 +747,14 @@ class State:
         return None if best is None else (best[1], best[2])
 
 
-# limits broken, noisy links, area (and standing parts) and how far, cuts + links, links' length
+# limits broken, noisy links and strips alongside (D-404), area (and standing parts) and how
+# far, cuts + links, links' length
 Key = tuple[int, int, int, int, int]
 
 
 def key(d: Derived) -> Key:
-    return (d.broken, d.noisy, d.area + d.stood + NEAR * d.far, len(d.cuts) + d.count, d.length)
+    return (d.broken, d.noisy + d.apart, d.area + d.stood + NEAR * d.far, len(d.cuts) + d.count,
+            d.length)  # fmt: skip
 
 
 @dataclass(frozen=True)
@@ -930,8 +961,8 @@ def finish_layout(pb: Problem, board: Layout, models: ModelLibrary,
                   table: FootprintTable) -> Built:  # fmt: skip
     """A board the search found (`board_of`; the best so far when the builder stops it)
     wired and checked; the base when it doesn't pass the check, or breaks more placement
-    limits than the base, or as many and has more noisy links (D-402), or as many of both
-    and isn't smaller."""
+    limits than the base, or as many and has more noisy links (D-402) and strips alongside
+    a high-gain input's (D-404), or as many of both and isn't smaller."""
     base = pb.base
     with suppress(WiringError):  # nothing to wire
         board = wire_for_me(replace(board, wires=()), pb.circuit, models, table)
@@ -940,8 +971,11 @@ def finish_layout(pb: Problem, board: Layout, models: ModelLibrary,
     limits = [Limit(part, leg, anchor, pin, "") for (anchor, pin), legs in pb.limits
               for part, leg in legs]  # fmt: skip
 
+    nets = connect(pb.circuit)
+
     def worse(lay: Layout) -> tuple[int, int, int]:
-        noisy = noisy_links(lay, pb.board, connect(pb.circuit), pb.guards)
-        return len(broken_limits(lay, limits)), len(noisy), lay.columns * lay.strips
+        noisy = noisy_links(lay, pb.board, nets, pb.guards)
+        beside = alongside(lay, pb.board, nets, pb.loud, copper_groups(lay))
+        return len(broken_limits(lay, limits)), len(noisy) + len(beside), lay.columns * lay.strips
 
     return Built(base, True) if worse(board) >= worse(base) else Built(board, False)

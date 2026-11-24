@@ -21,8 +21,9 @@ from solum.probe import loud_inputs
 from solum.sim.engine import engine_from_settings
 from solum.simulate import simulator_from_settings
 from solum.stripboard import compact_job
+from solum.stripboard.apart import alongside
 from solum.stripboard.board import STAND_UP, Layout, StandUp
-from solum.stripboard.check import outline_overlaps, read_layout
+from solum.stripboard.check import copper_groups, outline_overlaps, read_layout
 from solum.stripboard.compact import finish, problem
 from solum.stripboard.limits import broken_limits, placement_limits
 from solum.stripboard.quiet import guards, noisy_links
@@ -31,7 +32,7 @@ from solum.stripboard.start import StartError
 REPO = Path(__file__).resolve().parents[1]
 WORK = REPO / "scratch" / "board-table"
 HEAD = ("| Starter | Holes | Cuts | Links | Limits broken | Noisy links | Touching | Standing "
-        "| High-gain inputs | Fell back |")  # fmt: skip
+        "| High-gain inputs | Fell back | Output beside input |")  # fmt: skip
 
 
 @dataclass(frozen=True)
@@ -47,13 +48,14 @@ class Row:
     standing: tuple[str, ...]
     loud: tuple[str, ...]
     fell_back: bool
+    beside: int
 
     def line(self) -> str:
         holes = f"{self.columns * self.strips} ({self.columns}×{self.strips})"
         standing, loud = ", ".join(self.standing) or "–", ", ".join(self.loud) or "–"
         return (f"| {self.starter} | {holes} | {self.cuts} | {self.links} | {self.broken} "
                 f"| {self.noisy} | {self.touching} | {standing} | {loud} "
-                f"| {'yes' if self.fell_back else ''} |")  # fmt: skip
+                f"| {'yes' if self.fell_back else ''} | {self.beside} |")  # fmt: skip
 
 
 def table(names: list[str] | None, stand_up: StandUp = "room") -> tuple[list[Row], list[str]]:
@@ -89,6 +91,7 @@ def table(names: list[str] | None, stand_up: StandUp = "room") -> tuple[list[Row
             len(outline_overlaps(lay, r.board)),
             tuple(sorted(p.ref for p in lay.parts if p.standing)),
             tuple(f"{i.ref}.{i.pin}" for i in loud), built.fell_back,
+            len(alongside(lay, r.board, nets, loud, copper_groups(lay))),
         ))  # fmt: skip
         print(f"{name}: {time.monotonic() - started:.0f} s", file=sys.stderr, flush=True)
     return rows, skipped

@@ -44,11 +44,13 @@ BYPASSED = {"bjt": "E", "jfet": "S"}  # the pin a bypass cap sits by
 class LoudInput(NamedTuple):
     """A high-gain stage's input pin (device ref, pin), as `probe.loud_inputs` finds it, and
     the nets AC-quiet beside it (a rail, Vref behind its cap: below 1 % of its signal). A
-    part on the input whose other leg is on one (or on ground) biases it: not kept."""
+    part on the input whose other leg is on one (or on ground) biases it: not kept.
+    `along`: the later nets in phase with it, kept off the strips beside it (P6i2)."""
 
     ref: str
     pin: str
     quiet: frozenset[str] = frozenset()
+    along: frozenset[str] = frozenset()
 
 
 @dataclass(frozen=True)
@@ -148,7 +150,7 @@ def placement_limits(circuit: Circuit, nets: Nets, board: dict[str, BoardPart],
     # it enters by (its other leg not on ground or an AC-quiet net), kept by the first such
     # pin on it (two inputs on one net can't both keep them)
     heard: set[str] = set()
-    for ref, pin, quiet in loud:
+    for ref, pin, quiet, _ in loud:
         net = nets.by_pin.get((ref, pin))
         if net is None or net == GROUND or net in heard:
             continue

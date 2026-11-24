@@ -1641,3 +1641,33 @@ def test_build_a_full_layout_s_words(js: Page) -> None:
     assert got["longer"] == ["Taking a little longer than expected…",
                              "About 20 seconds left.", "About 20 seconds left."]  # fmt: skip
     assert got["same"] == [1, -1]
+
+
+def test_the_jacks_wires_side_by_side(js: Page) -> None:
+    """P6i2 (D-404): two routes' runs along the same way in one lane or the next (half a
+    hole apart) add up, in mm; the warning only when the check says the jacks must be kept
+    apart and they run beside each other more than 10 mm."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const a = [[0, 0], [100, 0], [100, 50]];  // 10 holes along, then down
+        const near = [[20, 5], [80, 5]];  // half a hole below, 6 holes along
+        const apart = [[20, 10], [80, 10]];  // a hole below: two lanes apart
+        const progress = { jacks_apart: true, items: [
+          { ref: 'IN', lugs: [{ end: 'IN.out', label: 'T' }] },
+          { ref: 'OUT', lugs: [{ end: 'OUT.in', label: 'T' }, { end: 'OUT.S', label: 'S' }] }] };
+        const board = { wires: [{ lug: 'IN.out', to: null }, { lug: 'OUT.in', to: null }] };
+        return {
+          near: b.sideBySide(a, near), apart: b.sideBySide(a, apart), down: b.sideBySide(a, [[105, 0], [105, 50]]),
+          warned: b.jackWiresWarning(progress, board, [a, near]),
+          short: b.jackWiresWarning(progress, board, [a, [[20, 5], [40, 5]]]),
+          fine: b.jackWiresWarning({ ...progress, jacks_apart: false }, board, [a, near]),
+        };
+        """,
+    )
+    assert got["near"] == pytest.approx(60 / (10 / 2.54))  # 6 holes: 15.24 mm
+    assert got["apart"] == 0
+    assert got["down"] == pytest.approx(50 / (10 / 2.54))
+    assert got["warned"].startswith("The input and output jacks' wires run side by side for 15 mm")
+    assert got["short"] is None and got["fine"] is None

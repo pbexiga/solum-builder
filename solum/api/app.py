@@ -113,6 +113,7 @@ from solum.probe import (
     Progress,
     SweepError,
     impedance_view,
+    jacks_in_phase,
     knob_ranges,
     loud_inputs,
     part_view,
@@ -1209,6 +1210,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         return {**asdict(found), "nets_done": found.nets_done,
                 "footprints": drawing_data(parts, circuit),
                 "start_size": list(start_size(parts)),
+                "jacks_apart": bool(sim and layout.wires and jacks_in_phase(sim, circuit)),
                 "guidance": asdict(guidance(layout, circuit, models, table, loud))}  # fmt: skip
 
     @app.post("/api/stripboard/size")

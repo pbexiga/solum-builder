@@ -165,11 +165,51 @@ _SLACK = 0.05  # mm two outlines may meet by, unwarned
 @dataclass(frozen=True)
 class Overlap:
     """Two bodies touching between the holes, or one past the board's edge (`parts[1]` is
-    `board.EDGE`), by `mm`, to 0.1 mm (D-394); `text` the warning."""
+    `board.EDGE`), by `mm`, to 0.1 mm (D-394); `text` the warning; `hints` what's worth
+    knowing about the parts before deciding (P6h4: hints, not rules)."""
 
     parts: tuple[str, str]
     mm: float
     text: str
+    hints: tuple[str, ...] = ()
+
+
+_HINTS = {
+    "trimmer": "{}'s adjusting screw must stay reachable from above.",
+    "chip": "If {} goes in a socket, it must lift straight out.",
+    "switch": "{}'s switches must stay reachable to flip.",
+}
+
+
+def _hints(refs: Iterable[str], board: Mapping[str, BoardPart]) -> tuple[str, ...]:
+    """What's worth knowing about each part before deciding, by its kind (P6h4)."""
+    return tuple(_HINTS[board[r].kind].format(r) for r in refs
+                 if r in board and board[r].kind in _HINTS)  # fmt: skip
+
+
+@dataclass(frozen=True)
+class Decided:
+    """A decision that covers one of the board's overlaps, and `text`, it in words."""
+
+    decision: Decision
+    text: str
+
+
+def decision_words(d: Decision) -> str:
+    """A decision as the build sheet and the Warnings say it: "C5: stand 3 mm taller
+    (clears TR1)", "C5: bend left (clears TR1)", "R7 and C2 touch: accepted", "C1 past the
+    board's edge: accepted"; the builder's note after it ("…: accepted; sleeve the leg")."""
+    a, b = d.parts
+    if d.fix == "accept":
+        said = f"{a} past the board's edge" if b == EDGE else f"{a} and {b} touch"
+        said += ": accepted"
+    else:
+        other = b if d.part == a else a
+        by = f"{d.mm:g} mm " if d.mm else ""
+        how = f"stand {by}taller" if d.fix == "taller" else f"bend {d.toward}"
+        said = f"{d.part}: {how} (clears {other})"
+    note = d.note.strip().rstrip(".")
+    return f"{said}; {note}." if note else f"{said}."
 
 
 def outline_overlaps(layout: Layout, board: Mapping[str, BoardPart]) -> list[Overlap]:
@@ -193,7 +233,7 @@ def outline_overlaps(layout: Layout, board: Mapping[str, BoardPart]) -> list[Ove
                 overlaps.append(Overlap((a, b), round(mm, 1), (
                     f"{a} and {b}'s bodies touch between the holes ({mm:.1f} mm): one would "
                     "have to stand taller. Move one a hole further away if you can."
-                )))  # fmt: skip
+                ), _hints((a, b), board)))  # fmt: skip
     edge = (-PITCH, -PITCH, layout.columns * PITCH, layout.strips * PITCH)  # half a hole out
     for ref, (x0, y0, x1, y1, _) in found:
         past = max(edge[0] - x0, edge[1] - y0, x1 - edge[2], y1 - edge[3])
@@ -674,7 +714,7 @@ class Progress:
     rails: dict[str, list[tuple[int, int, int]]] = field(default_factory=dict)
     choices: dict[str, Choice] = field(default_factory=dict)
     overlaps: list[Overlap] = field(default_factory=list)
-    decided: list[Decision] = field(default_factory=list)
+    decided: list[Decided] = field(default_factory=list)
 
     @property
     def nets_done(self) -> int:
@@ -856,6 +896,7 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
         legs[ref] = rows
     warnings = limit_warnings(r.layout, placement_limits(circuit, r.nets, r.board))
     overlaps, decisions = decided(r.layout, outline_overlaps(r.layout, r.board))
+    said = [Decided(d, decision_words(d)) for d in decisions]
     done = check_layout(layout, circuit, models, table).ok
     mixed = {g for g, here in by_group.items() if len(here) > 1}
     copper = joined_groups(r.layout)[0]
@@ -865,7 +906,7 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
                     {i.ref: spots[i.ref] for i in r.items},
                     r.unboardable, nets, legs, faults, stale, warnings, done,
                     runs(red), _rails(by_group, copper),
-                    _choices(r, circuit, models, table), overlaps, decisions)  # fmt: skip
+                    _choices(r, circuit, models, table), overlaps, said)  # fmt: skip
 
 
 def _choices(r: Reading, circuit: Circuit, models: ModelLibrary,

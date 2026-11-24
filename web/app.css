@@ -313,6 +313,7 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 .board-needs h3 { margin: 0 0 4px; font: 12px var(--font-mono); color: var(--text); }
 .board-needs ul { list-style: none; margin: 0; padding: 0; }
 .board-needs .need { margin: 3px 0; }
+.board-needs .decisions { margin-top: 6px; padding-top: 4px; border-top: 1px solid var(--border); color: var(--text); }
 .board-needs .leg { color: var(--text); }
 .board-needs .where, .board-needs .net { font-family: var(--font-mono); }
 .board-needs .unused { color: var(--text-3); }
@@ -518,6 +519,14 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-panels .net-shorted .state { color: var(--error); }
 .board-panels .warnings .fault { color: var(--error); }
 .board-panels .warnings .warning { color: var(--warning); }
+.board-panels .decided li { color: var(--text-2); }
+.board-panels .decide { border: 0; background: none; padding: 0; color: var(--accent); cursor: pointer; text-decoration: underline; font: inherit; }
+.overlap-hints { margin: 0 0 12px; padding-left: 18px; color: var(--text-2); font-size: 12px; }
+.overlap-extra { margin: -4px 0 0 24px; display: flex; flex-wrap: wrap; gap: 4px 12px; color: var(--text-2); font-size: 12px; }
+.overlap-extra[hidden] { display: none; }
+.overlap-extra label { cursor: pointer; }
+.overlap-note { display: flex; gap: 8px; align-items: center; margin: 0 0 16px; color: var(--text-2); font-size: 12px; }
+.overlap-note input { flex: 1; }
 .board-panels #board-sheet { display: block; width: 100%; height: 240px; background: var(--surface-0); border: 1px solid var(--border); touch-action: none; user-select: none; }
 
 /* Schematic elements */

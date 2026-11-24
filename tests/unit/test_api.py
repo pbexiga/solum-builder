@@ -955,7 +955,7 @@ def test_an_overlap_is_decided_and_listed_apart(monkeypatch: pytest.MonkeyPatch)
     assert made["stripboard"]["overlaps"] == [{**taller, "mm": 3.0, "overlap_mm": 0.3}]
     found = c.post("/api/stripboard",
                    json={"circuit": {**data, "stripboard": made["stripboard"]}}).json()  # fmt: skip
-    assert found["overlaps"] == [] and found["decided"][0]["part"] == "C1"
+    assert found["overlaps"] == [] and found["decided"][0]["decision"]["part"] == "C1"
     bad = c.post("/api/stripboard/edit", json={"circuit": data, "kind": "decide",
                                                "decision": {**taller, "part": None}})  # fmt: skip
     assert bad.status_code == 422

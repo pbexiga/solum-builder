@@ -1137,6 +1137,55 @@ def test_the_layout_dialog_s_choices_default_and_confirmations(js: Page) -> None
     assert got["tidy"] == "Tidy up"
 
 
+def test_an_overlap_s_choices_and_the_decision_its_form_sends(js: Page) -> None:
+    """P6h4 (D-398): Stand taller, Bend and Accept for two parts, Accept only for the edge;
+    the form waits for a part (and a side for Bend); a height is optional, a length above
+    0 ("2,5 mm" read as 2.5); an earlier decision fills the form; a part's decisions in
+    words for its card."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const pair = { parts: ['TR1', 'C1'], mm: 0.3, text: '', hints: [] };
+        const edge = { parts: ['C1', 'edge'], mm: 1.9, text: '', hints: [] };
+        const v = (o) => ({ fix: null, part: null, mm: '', toward: null, note: '', ...o });
+        const progress = { decided: [{ decision: { parts: ['TR1', 'C1'] }, text: 'C1: stand taller (clears TR1).' }] };
+        return {
+          pair: b.fixChoices(pair).map((c) => c.value),
+          edge: b.fixChoices(edge).map((c) => c.value),
+          none: b.decisionFrom(pair, v({})),
+          noPart: b.decisionFrom(pair, v({ fix: 'taller' })),
+          otherPart: b.decisionFrom(pair, v({ fix: 'taller', part: 'R1' })),
+          taller: b.decisionFrom(pair, v({ fix: 'taller', part: 'C1', mm: ' 2,5 mm ', note: ' sleeve ' })),
+          noHeight: b.decisionFrom(pair, v({ fix: 'taller', part: 'C1' })),
+          badHeight: [b.decisionFrom(pair, v({ fix: 'taller', part: 'C1', mm: '0' })), b.decisionFrom(pair, v({ fix: 'taller', part: 'C1', mm: 'tall' }))],
+          noSide: b.decisionFrom(pair, v({ fix: 'bent', part: 'TR1' })),
+          bent: b.decisionFrom(pair, v({ fix: 'bent', part: 'TR1', toward: 'left' })),
+          accept: b.decisionFrom(edge, v({ fix: 'accept', part: 'C1', note: 'deep box' })),
+          earlier: b.fixValues({ parts: ['TR1', 'C1'], fix: 'taller', part: 'C1', mm: 3, overlap_mm: 0.3 }),
+          fresh: b.fixValues(null),
+          cards: [b.decisionsOf(progress, 'C1'), b.decisionsOf(progress, 'R1')],
+        };
+        """,
+    )
+    assert got["pair"] == ["taller", "bent", "accept"] and got["edge"] == ["accept"]
+    assert got["none"] is None and got["noPart"] is None and got["otherPart"] is None
+    assert got["taller"] == {
+        "parts": ["TR1", "C1"],
+        "fix": "taller",
+        "note": "sleeve",
+        "part": "C1",
+        "mm": 2.5,
+    }
+    assert got["noHeight"] == {"parts": ["TR1", "C1"], "fix": "taller", "part": "C1"}
+    assert got["badHeight"] == [None, None] and got["noSide"] is None
+    assert got["bent"] == {"parts": ["TR1", "C1"], "fix": "bent", "part": "TR1", "toward": "left"}
+    assert got["accept"] == {"parts": ["C1", "edge"], "fix": "accept", "note": "deep box"}
+    assert got["earlier"] == {"fix": "taller", "part": "C1", "mm": "3", "toward": None, "note": ""}
+    assert got["fresh"] == {"fix": None, "part": None, "mm": "", "toward": None, "note": ""}
+    assert got["cards"] == [["C1: stand taller (clears TR1)."], []]
+
+
 def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> None:
     """D-374: a part's legs in each pose, held by its middle; the pose a placed part sits
     in read back from its legs; the moves each footprint allows; a link laid down a column;

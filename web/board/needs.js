@@ -2,7 +2,8 @@
  * A part's needs, leg by leg (D-377): a card over the board canvas, shown while a part is
  * carried or selected: each leg's hole and net, and the terminals it must reach, joined
  * (✓), placed but not joined yet, or not placed yet (a lug: not wired yet). The rows come from
- * `board-logic.js`'s `legNeeds`.
+ * `board-logic.js`'s `legNeeds`. Below them, the builder's decisions on the part's
+ * overlaps, in words (P6h4).
  */
 
 import { h } from "../panels.js";
@@ -17,8 +18,9 @@ export function needsCard(card) {
     /**
      * Show a part's needs; a leg the circuit doesn't use is said so.
      * @param {string} ref @param {import("./board-logic.js").Need[]} needs
+     * @param {string[]} [decisions] its overlaps' decisions, in words
      */
-    show(ref, needs) {
+    show(ref, needs, decisions = []) {
       if (!needs.length) return this.hide();
       card.replaceChildren(
         h("h3", {}, [ref]),
@@ -34,6 +36,7 @@ export function needsCard(card) {
             ])))]
             : []),
         ]))),
+        ...(decisions.length ? [h("ul", { class: "decisions" }, decisions.map((t) => h("li", {}, [t])))] : []),
       );
       card.hidden = false;
     },

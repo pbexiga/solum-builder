@@ -271,18 +271,21 @@ export function boardRefOf(footprints, ref) {
  *   shape: string, size: [number, number], places: Array<[number, number]>}} OffItem an off-board
  *   part beside the board (D-375): drawn as `shape` (row, stomp, toggle, rotary, D-384), its
  *   drawing `size` in holes, each lug's place in it in holes from its top-left hole (offboard.py)
- * @typedef {{parts: [string, string], mm: number, text: string}} Overlap two bodies touching,
- *   or one past the board's edge (`parts[1]` "edge"), by `mm`, not yet decided (P6h4)
+ * @typedef {{parts: [string, string], mm: number, text: string, hints: string[]}} Overlap two
+ *   bodies touching, or one past the board's edge (`parts[1]` "edge"), by `mm`, not yet
+ *   decided (P6h4); `hints` what's worth knowing about its parts
  * @typedef {{parts: [string, string], fix: "taller" | "bent" | "accept", overlap_mm: number,
  *   part?: string | null, mm?: number | null, toward?: string | null, note?: string}} Decision
  *   the builder's decision on one (board.py's `Decision`)
+ * @typedef {{decision: Decision, text: string}} Decided a decision covering one of the
+ *   board's overlaps, in words (check.py's `Decided`)
  * @typedef {{to_place: string[], wires_to_go: string[], loose: number, items: OffItem[],
  *   spots: Record<string, Hole>,
  *   unplaceable: string[], nets: NetProgress[],
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
  *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number],
  *   shorted: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, guidance: Guidance,
- *   choices?: Record<string, Choice>, overlaps?: Overlap[], decided?: Decision[]}} Progress
+ *   choices?: Record<string, Choice>, overlaps?: Overlap[], decided?: Decided[]}} Progress
  *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints and the
  *   guidance, D-377)
  * @typedef {{where: "board" | "off-board", moved: boolean, why: string | null}} Choice where a
@@ -980,6 +983,70 @@ export function layoutConfirm(choice, compact, board, toPlace) {
   const listed = [count(board.parts.length, "part"), ...[[board.cuts.length, "cut"], [board.links.length, "link"], [board.wires.length, "wire"]].filter(([n]) => n).map(([n, w]) => count(/** @type {number} */ (n), /** @type {string} */ (w)))];
   const named = listed.length > 1 ? `${listed.slice(0, -1).join(", ")} and ${listed[listed.length - 1]}` : listed[0];
   return { title: "Start over", text: `This replaces everything on the board: ${named}. A fresh layout takes its place${then}. ${undo}`, label: "Replace the board" };
+}
+
+/** The other side of a body hanging past the board's edge, in an overlap (board.py's `EDGE`). */
+export const EDGE = "edge";
+/** The sides a part bends toward, as the parts side shows the board (P6h4). */
+export const SIDES = /** @type {const} */ (["left", "right", "up", "down"]);
+
+/**
+ * @typedef {"taller" | "bent" | "accept"} Fix
+ * @typedef {{value: Fix, label: string, text: string}} FixChoice
+ * @typedef {{fix: Fix | null, part: string | null, mm: string, toward: string | null, note: string}} FixValues
+ *   the overlap form as filled in
+ */
+
+/**
+ * What the builder may decide about an overlap (P6h4), each with a line saying it: a part
+ * past the board's edge takes Accept only (nothing bends past the edge).
+ * @param {Overlap} overlap @returns {FixChoice[]}
+ */
+export function fixChoices(overlap) {
+  if (overlap.parts[1] === EDGE) return [{ value: "accept", label: "Accept", text: "Leave it past the edge: check it clears the enclosure." }];
+  return [
+    { value: "taller", label: "Stand taller", text: "Solder one higher on longer legs, so its body clears the other." },
+    { value: "bent", label: "Bend out of the way", text: "Bend one's legs so its body leans away from the other." },
+    { value: "accept", label: "Accept", text: "Leave them touching as they are." },
+  ];
+}
+
+/**
+ * The form's starting values: an earlier decision's, or nothing chosen.
+ * @param {Decision | null} earlier @returns {FixValues}
+ */
+export function fixValues(earlier) {
+  return {
+    fix: earlier?.fix ?? null, part: earlier?.part ?? null, mm: earlier?.mm ? String(earlier.mm) : "",
+    toward: earlier?.toward ?? null, note: earlier?.note ?? "",
+  };
+}
+
+/**
+ * The decision to send for the form's values, or null while it's incomplete (no choice;
+ * no part for Stand taller or Bend; no side for Bend; a height that isn't a length above 0).
+ * The server checks it again and sets the amount (D-398).
+ * @param {Overlap} overlap @param {FixValues} values @returns {Record<string, unknown> | null}
+ */
+export function decisionFrom(overlap, values) {
+  if (!values.fix) return null;
+  const note = values.note.trim();
+  const decision = { parts: overlap.parts, fix: values.fix, ...(note ? { note } : {}) };
+  if (values.fix === "accept") return decision;
+  if (!values.part || !overlap.parts.includes(values.part)) return null;
+  if (values.fix === "bent") return values.toward ? { ...decision, part: values.part, toward: values.toward } : null;
+  const typed = values.mm.trim().replace(/\s*mm$/i, "").replace(",", ".");
+  if (!typed) return { ...decision, part: values.part };
+  const mm = Number(typed);
+  return Number.isFinite(mm) && mm > 0 ? { ...decision, part: values.part, mm } : null;
+}
+
+/**
+ * The decisions on a part's overlaps, in words, for its card on the board (P6h4).
+ * @param {Progress} progress @param {string} ref @returns {string[]}
+ */
+export function decisionsOf(progress, ref) {
+  return (progress.decided ?? []).filter((d) => d.decision.parts.includes(ref)).map((d) => d.text);
 }
 
 /** @typedef {Record<(typeof BOARD_SETTINGS)[number]["key"], boolean>} BoardSettings */

@@ -11,6 +11,7 @@ from typing import Any
 import pytest
 from playwright.sync_api import Page, Route, expect
 
+from solum.circuit.io import circuit_to_dict, load_circuit
 from solum.yamlio import load_yaml
 from tests.ui.conftest import REPO, click_part, open_circuit, reload_kept
 from tests.ui.test_panes import order as pane_ids
@@ -861,3 +862,52 @@ def test_the_layout_says_what_its_doing_while_it_works(page: Page, base_url: str
     expect(page.locator("#board-size-text")).to_contain_text("9 × 9 holes")
     expect(page.locator("#board-working")).to_be_hidden()
     expect(button).to_have_text("Layout…")
+
+
+def test_an_overlap_is_decided_changed_forgotten_and_undone(page: Page, base_url: str) -> None:
+    """P6h4 (D-398): on D-394's case (a triangle trimmer and an electrolytic 0.3 mm into
+    each other, `schema-v39.json`) the Warnings list the overlap with *Decide…*: its hint,
+    Keep waiting until the choice is complete; kept, it moves under *Decided* in words and
+    shows on the part's card; Undo brings the warning back; *Change…* → *Forget it* too."""
+    page.goto(base_url)
+    circuit = circuit_to_dict(load_circuit(REPO / "tests/fixtures/circuits/old/schema-v39.json"))
+    made = {"circuit": circuit, "name": f"Overlap {next(_saves)}"}
+    saved = page.request.post(f"{base_url}api/circuits", data=made)
+    assert saved.ok, saved.text()
+    open_circuit(page, base_url, "circuit/" + saved.json()["circuit"]["id"])
+    show_board(page)
+    warnings = page.locator("#board-warnings-body")
+    row = warnings.locator("li.overlap[data-parts='TR1 C1']")
+    expect(row).to_contain_text("TR1 and C1's bodies touch between the holes (0.3 mm)")
+    row.locator("button.decide").click()
+    dialog = page.locator("#overlap-dialog")
+    expect(dialog).to_contain_text("TR1 and C1 touch (0.3 mm)")
+    expect(dialog.locator(".overlap-hints")).to_have_text(
+        "TR1's adjusting screw must stay reachable from above."
+    )
+    keep = dialog.locator("button[data-answer='keep']")
+    expect(keep).to_be_disabled()
+    dialog.locator(".layout-choice[data-fix='taller'] input").check()
+    expect(keep).to_be_disabled()  # which part?
+    dialog.locator("input[name='which-taller'][value='C1']").check()
+    expect(keep).to_be_enabled()
+    dialog.locator("#overlap-mm").fill("3")
+    dialog.locator("#overlap-note").fill("sleeve the leg")
+    keep.click()
+    decided = warnings.locator(".decided li")
+    expect(decided).to_have_text("C1: stand 3 mm taller (clears TR1); sleeve the leg. Change…")
+    expect(row).to_have_count(0)
+    page.locator("#board .board-part[data-ref='C1']").click()
+    expect(page.locator("#board-needs .decisions")).to_contain_text("C1: stand 3 mm taller")
+
+    page.keyboard.press("Control+z")
+    expect(row).to_have_count(1)
+    expect(decided).to_have_count(0)
+    page.keyboard.press("Control+Shift+z")
+    expect(decided).to_have_count(1)
+    decided.locator("button.decide").click()
+    expect(dialog.locator("input[name='which-taller'][value='C1']")).to_be_checked()
+    expect(dialog.locator("#overlap-mm")).to_have_value("3")
+    dialog.locator("button[data-answer='forget']").click()
+    expect(decided).to_have_count(0)
+    expect(row).to_have_count(1)

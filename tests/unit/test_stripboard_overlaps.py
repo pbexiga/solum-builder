@@ -29,6 +29,7 @@ from solum.stripboard.check import (
     Overlap,
     covers,
     decided,
+    decision_words,
     kept_decisions,
     outline_overlaps,
     progress,
@@ -71,7 +72,7 @@ def test_a_v39_board_has_no_decisions_and_saves_none() -> None:
     assert outline_overlaps(LAYOUT, BOARD) == [Overlap(("TR1", "C1"), 0.3, (
         "TR1 and C1's bodies touch between the holes (0.3 mm): one would have to stand "
         "taller. Move one a hole further away if you can."
-    ))]  # fmt: skip
+    ), ("TR1's adjusting screw must stay reachable from above.",))]  # fmt: skip
     assert "overlaps" not in circuit_to_dict(V39)["stripboard"]
 
 
@@ -179,5 +180,24 @@ def test_progress_parts_the_undecided_overlaps_from_the_decided() -> None:
     before = progress(LAYOUT, V39, MODELS, TABLE)
     assert [o.parts for o in before.overlaps] == [("TR1", "C1")] and before.decided == []
     after = progress(replace(LAYOUT, overlaps=(TALLER,)), V39, MODELS, TABLE)
-    assert after.overlaps == [] and after.decided == [TALLER]
+    assert after.overlaps == [] and [d.decision for d in after.decided] == [TALLER]
+    assert after.decided[0].text == "C1: stand 3 mm taller (clears TR1); sleeve the leg."
     assert after.faults == before.faults
+
+
+def test_a_decision_in_words_for_the_warnings_and_the_build_sheet() -> None:
+    """Each kind of fix said plainly, the other part it clears named, the note after it."""
+    assert decision_words(replace(TALLER, note="")) == "C1: stand 3 mm taller (clears TR1)."
+    assert decision_words(replace(TALLER, mm=None, note="")) == "C1: stand taller (clears TR1)."
+    bent = Decision(("C1", "TR1"), "bent", 0.3, "TR1", toward="left", note="Away from the pot.")
+    assert decision_words(bent) == "TR1: bend left (clears C1); Away from the pot."
+    assert decision_words(Decision(("TR1", "C1"), "accept", 0.3)) == "TR1 and C1 touch: accepted."
+    edge = Decision(("C1", EDGE), "accept", 1.9, note="deep box")
+    assert decision_words(edge) == "C1 past the board's edge: accepted; deep box."
+
+
+def test_an_overlap_says_what_is_worth_knowing_about_its_parts() -> None:
+    """Hints by kind, not rules: a trimmer's screw, a socketed chip, a DIP switch."""
+    assert outline_overlaps(LAYOUT, BOARD)[0].hints == (
+        "TR1's adjusting screw must stay reachable from above.",
+    )

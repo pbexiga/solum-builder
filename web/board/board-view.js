@@ -40,7 +40,8 @@ import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
 import { chooseLayout } from "./layout-dialog.js";
 import { needsCard } from "./needs.js";
-import { BOARD_SETTINGS, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, placedRows, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
+import { decideOverlap } from "./overlap-dialog.js";
+import { BOARD_SETTINGS, boardRefOf, choiceMark, chosenMarks, decisionsOf, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, placedRows, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -563,7 +564,7 @@ export function boardView(host, app) {
       needs.hide();
       return canvas.lightNets(new Set());
     }
-    needs.show(ref, legNeeds(progress, ref, lugWords));
+    needs.show(ref, legNeeds(progress, ref, lugWords), decisionsOf(progress, ref));
     canvas.lightNets(netsOf(progress, ref));
   }
 
@@ -952,15 +953,26 @@ export function boardView(host, app) {
         return row;
       })),
     );
-    const said = [...progress.faults, ...progress.guidance.stuck, ...progress.warnings,
-      ...(progress.overlaps ?? []).map((o) => o.text)];
+    const said = [...progress.faults, ...progress.guidance.stuck, ...progress.warnings];
+    const overlaps = progress.overlaps ?? [];
+    const decided = progress.decided ?? [];
     const stale = staleLine(progress.stale);
-    $("board-warnings-count").textContent = said.length + progress.stale.length ? `· ${said.length + progress.stale.length}` : "";
+    const count = said.length + overlaps.length + progress.stale.length;
+    $("board-warnings-count").textContent = count ? `· ${count}` : "";
     $("board-warnings-body").replaceChildren(
       ...(stale ? [staleNote(stale)] : []),
-      ...(said.length
-        ? [h("ul", { class: "board-list warnings" }, said.map((text, i) => h("li", { class: i < progress.faults.length ? "fault" : "warning" }, [text])))]
+      ...(said.length + overlaps.length
+        ? [h("ul", { class: "board-list warnings" }, [
+          ...said.map((text, i) => h("li", { class: i < progress.faults.length ? "fault" : "warning" }, [text])),
+          ...overlaps.map((o) => h("li", { class: "warning overlap", "data-parts": o.parts.join(" ") }, [o.text, " ", decideButton(o, null, "Decide…")])),
+        ])]
         : stale ? [] : [h("p", { class: "empty" }, [progress.done ? "The board matches the circuit." : "Nothing wrong so far."])]),
+      ...(decided.length
+        ? [h("p", { class: "board-subhead" }, [`Decided (${decided.length})`]),
+          h("ul", { class: "board-list decided" }, decided.map((d) => h("li", { "data-parts": d.decision.parts.join(" ") }, [
+            d.text, " ", decideButton(overlapOf(d.decision), d.decision, "Change…"),
+          ])))]
+        : []),
     );
     fillSettings();
     if (next) $("board-tray-body").querySelector(`.board-list li[data-ref="${CSS.escape(next.ref)}"]`)?.classList.add("next");
@@ -1013,6 +1025,33 @@ export function boardView(host, app) {
    * board (D-376): placed parts, off-board parts beside it, their wires.
    * @param {string} text
    */
+  /**
+   * An overlap's Decide… (or a decision's Change…) button: the form, then the edit, one
+   * undo step (P6h4, D-398).
+   * @param {import("./board-logic.js").Overlap} overlap
+   * @param {import("./board-logic.js").Decision | null} earlier @param {string} label
+   */
+  function decideButton(overlap, earlier, label) {
+    const button = h("button", { type: "button", class: "link-button decide" }, [label]);
+    button.addEventListener("click", async () => {
+      const answer = await decideOverlap(overlap, earlier);
+      const [a, b] = overlap.parts;
+      const who = b === "edge" ? `${a} past the edge` : `${a} and ${b}`;
+      if (answer && "forget" in answer) void boardEdit({ kind: "undecide", ref: a, to: b }, `Forget the decision on ${who}`);
+      else if (answer) void boardEdit({ kind: "decide", decision: answer.decision }, `Decide ${who}`);
+    });
+    return button;
+  }
+
+  /**
+   * A decided overlap as the form takes it (its amount the one decided at; no hints: they
+   * were shown when it was decided).
+   * @param {import("./board-logic.js").Decision} d @returns {import("./board-logic.js").Overlap}
+   */
+  function overlapOf(d) {
+    return { parts: d.parts, mm: d.overlap_mm, text: "", hints: [] };
+  }
+
   function staleNote(text) {
     const clear = h("button", { type: "button", class: "clear-stale" }, ["Clear them"]);
     clear.title = "Take them off the board, with their wires (Undo brings them back)";

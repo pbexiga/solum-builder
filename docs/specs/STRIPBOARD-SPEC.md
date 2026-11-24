@@ -64,7 +64,7 @@ Laying out the whole board automatically was tried first. Small circuits laid ou
 - **Tidy up** (D-388): small steps (slide a part, take out an empty line, shorten or drop a link or cut), each kept only if the board still passes the check and is no worse in size, cuts or links; the same board always tidies the same way; one undo step; "Couldn't make this board smaller" otherwise. Parts placed wrongly are named first and, on asking, laid out again. Small and middling boards shrink by a tenth to a fifth; the biggest little: they are a start.
 
 ### Undo, saving, staleness (D-370, D-376, D-386)
-- **The board is saved in the circuit file** (`Circuit.stripboard`, schema v35; v36 off-board parts and wires, v37 wire runs, v38 On / Off the board; v39 a transistor's adapter and a trimmer's style).
+- **The board is saved in the circuit file** (`Circuit.stripboard`, schema v35; v36 off-board parts and wires, v37 wire runs, v38 On / Off the board; v39 a transistor's adapter and a trimmer's style; v40 the builder's decisions on bodies touching, D-398).
 - **The board has its own undo history**: board edits change only `circuit.stripboard`, schematic edits never touch it; Undo, Redo and History follow the view. The circuit is *Not saved* when either has changes; Save keeps both.
 - **On every open and export the board is checked against the circuit as it now is.** A board that doesn't match is never packaged; the package index says why.
 

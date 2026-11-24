@@ -271,13 +271,18 @@ export function boardRefOf(footprints, ref) {
  *   shape: string, size: [number, number], places: Array<[number, number]>}} OffItem an off-board
  *   part beside the board (D-375): drawn as `shape` (row, stomp, toggle, rotary, D-384), its
  *   drawing `size` in holes, each lug's place in it in holes from its top-left hole (offboard.py)
+ * @typedef {{parts: [string, string], mm: number, text: string}} Overlap two bodies touching,
+ *   or one past the board's edge (`parts[1]` "edge"), by `mm`, not yet decided (P6h4)
+ * @typedef {{parts: [string, string], fix: "taller" | "bent" | "accept", overlap_mm: number,
+ *   part?: string | null, mm?: number | null, toward?: string | null, note?: string}} Decision
+ *   the builder's decision on one (board.py's `Decision`)
  * @typedef {{to_place: string[], wires_to_go: string[], loose: number, items: OffItem[],
  *   spots: Record<string, Hole>,
  *   unplaceable: string[], nets: NetProgress[],
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
  *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number],
  *   shorted: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, guidance: Guidance,
- *   choices?: Record<string, Choice>}} Progress
+ *   choices?: Record<string, Choice>, overlaps?: Overlap[], decided?: Decision[]}} Progress
  *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints and the
  *   guidance, D-377)
  * @typedef {{where: "board" | "off-board", moved: boolean, why: string | null}} Choice where a

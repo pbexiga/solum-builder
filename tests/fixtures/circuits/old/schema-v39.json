@@ -1,0 +1,20 @@
+{
+  "schema": 39,
+  "id": "v39",
+  "name": "v39",
+  "parts": [
+    {"ref": "IN", "pos": [0, 0], "type": "guitar"},
+    {"ref": "TR1", "pos": [150, 0], "type": "trimmer", "value": "10k"},
+    {"ref": "C1", "pos": [150, 100], "type": "capacitor", "value": "100u", "kind": "electrolytic"},
+    {"ref": "OUT", "pos": [200, 0], "type": "amp"}
+  ],
+  "wires": [],
+  "labels": [],
+  "stripboard": {
+    "size": [6, 3],
+    "parts": {
+      "TR1": {"1": "B1", "2": "A2", "3": "B3"},
+      "C1": {"1": "D1", "2": "D2"}
+    }
+  }
+}

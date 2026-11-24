@@ -472,17 +472,22 @@ def body_outline(part: BoardPart, legs: dict[str, Hole], standing: bool) -> Outl
     return cx - hx, cy - hy, cx + hx, cy + hy, 0.0
 
 
-def outlines_overlap(a: Outline, b: Outline, slack: float = 0.05) -> bool:
-    """Whether two bodies' outlines overlap by more than `slack` mm."""
+def outline_overlap(a: Outline, b: Outline) -> float:
+    """How far two bodies' outlines run into each other, in mm (0 or less: apart): two
+    circles by their centres, a circle and a box by the box's point nearest the centre (the
+    centre inside the box: the radius plus its way to the nearest side), two boxes by the
+    lesser of their overlaps across and along (D-394, P6h4)."""
     if a[4] and b[4]:
         ax, ay, bx, by = (a[0] + a[2]) / 2, (a[1] + a[3]) / 2, (b[0] + b[2]) / 2, (b[1] + b[3]) / 2
-        return math.hypot(ax - bx, ay - by) < a[4] + b[4] - slack
+        return a[4] + b[4] - math.hypot(ax - bx, ay - by)
     if a[4] or b[4]:
         circle, box = (a, b) if a[4] else (b, a)
         cx, cy = (circle[0] + circle[2]) / 2, (circle[1] + circle[3]) / 2
+        if box[0] <= cx <= box[2] and box[1] <= cy <= box[3]:
+            return circle[4] + min(cx - box[0], box[2] - cx, cy - box[1], box[3] - cy)
         nx, ny = min(max(cx, box[0]), box[2]), min(max(cy, box[1]), box[3])
-        return math.hypot(cx - nx, cy - ny) < circle[4] - slack
-    return min(a[2], b[2]) - max(a[0], b[0]) > slack and min(a[3], b[3]) - max(a[1], b[1]) > slack
+        return circle[4] - math.hypot(cx - nx, cy - ny)
+    return min(min(a[2], b[2]) - max(a[0], b[0]), min(a[3], b[3]) - max(a[1], b[1]))
 
 
 @cache

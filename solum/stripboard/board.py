@@ -6,7 +6,8 @@ so (5, 6) is F7. A part is its legs in holes; a cut takes the copper off one hol
 splits its strip there (and holds no leg); a link is a wire along a column joining two
 holes. Off-board parts sit beside the board at a spot (any hole, on or off it, as drawn)
 and are joined to it by wires: from a lug to a hole (its pad), lug to lug, or loose
-(D-375).
+(D-375). Where two bodies touch, the builder's decision is kept with the board: stand one
+taller, bend it out of the way, or accept it (P6h4).
 """
 
 import re
@@ -14,7 +15,7 @@ from bisect import bisect_left
 from collections.abc import Iterable, Mapping
 from dataclasses import dataclass
 from string import ascii_uppercase
-from typing import Any
+from typing import Any, Literal, get_args
 
 Hole = tuple[int, int]  # (column, strip), from 0
 PITCH = 2.54  # mm between holes (0.1")
@@ -95,6 +96,73 @@ class Wire:
     runs: tuple[tuple[int, float], ...] = ()
 
 
+EDGE = "edge"  # the other side of a body hanging past the board's edge, in a `Decision`
+Fix = Literal["taller", "bent", "accept"]
+Side = Literal["left", "right", "up", "down"]  # as the parts side shows the board
+
+
+@dataclass(frozen=True)
+class Decision:
+    """The builder's decision on two bodies touching (D-394), or one past the board's edge
+    (`parts[1]` is `EDGE`): `fix` stand `part` taller (by `mm`, if said), bend `part`
+    `toward` a side, or accept it; `note` their own words. `overlap_mm`, the amount it was
+    decided at: an overlap by another amount is a new one (the user, 2026-11-24)."""
+
+    parts: tuple[str, str]
+    fix: Fix
+    overlap_mm: float
+    part: str | None = None
+    mm: float | None = None
+    toward: Side | None = None
+    note: str = ""
+
+
+def decision_problem(d: Decision) -> str | None:
+    """Why a decision can't be kept, in a sentence; None when it can."""
+    a, b = d.parts
+    if not a or not b or a in (b, EDGE):
+        return "An overlap's decision names the two parts that touch, or a part and the edge."
+    if d.fix not in get_args(Fix):
+        return f"{a} and {b}: stand one taller, bend one out of the way, or accept it."
+    if b == EDGE and d.fix != "accept":
+        return f"{a} hangs past the board's edge: accept it with a note, or move it in."
+    if d.fix != "accept" and d.part not in (a, b):
+        return f"Say which of {a} and {b} to {'stand taller' if d.fix == 'taller' else 'bend'}."
+    if d.fix == "bent" and d.toward not in get_args(Side):
+        return f"Say which way {d.part} bends: left, right, up or down."
+    if d.mm is not None and (d.fix != "taller" or d.mm <= 0):
+        return "How much taller is a length in mm, above 0, for a part stood taller."
+    if (d.toward is not None and d.fix != "bent") or (d.part is not None and d.fix == "accept"):
+        return f"{a} and {b}: an accepted overlap names no part or side."
+    if d.overlap_mm < 0:
+        return "An overlap's amount is 0 mm or more."
+    return None
+
+
+def decision_from_data(data: Mapping[str, Any]) -> Decision:
+    """A decision from its plain form (`{parts: [C5, TR1], fix: taller, part: C5, mm: 3,
+    overlap_mm: 0.3}`), or a `BoardError` saying what's wrong with it."""
+    a, b = (str(r) for r in data["parts"])
+    mm, part, toward = data.get("mm"), data.get("part"), data.get("toward")
+    found = Decision((a, b), data["fix"], round(float(data["overlap_mm"]), 1),
+                     None if part is None else str(part),
+                     None if mm is None else float(mm), toward,
+                     str(data.get("note") or ""))  # fmt: skip
+    why = decision_problem(found)
+    if why:
+        raise BoardError(why)
+    return found
+
+
+def decision_data(d: Decision) -> dict[str, Any]:
+    """A decision's plain form, what's unsaid left out."""
+    found: dict[str, Any] = {"parts": list(d.parts), "fix": d.fix}
+    found |= {k: v for k, v in (("part", d.part), ("mm", d.mm), ("toward", d.toward)) if v}
+    if d.note:
+        found["note"] = d.note
+    return found | {"overlap_mm": d.overlap_mm}
+
+
 @dataclass(frozen=True)
 class Layout:
     columns: int
@@ -105,6 +173,7 @@ class Layout:
     wires: tuple[Wire, ...] = ()
     spots: tuple[tuple[str, Hole], ...] = ()  # each off-board part put beside the board
     where: tuple[tuple[str, str], ...] = ()  # a part moved on or off the board by choice
+    overlaps: tuple[Decision, ...] = ()  # the builder's decisions on bodies touching (P6h4)
 
     @property
     def pads(self) -> list[Hole]:
@@ -152,7 +221,8 @@ def layout_from_data(data: Mapping[str, Any]) -> Layout:
     """A layout from its plain form: `{size: [columns, strips], parts: {R1: {1: B2, 2:
     B6}, ...}, standing: [R2], cuts: [F7], links: [[A1, A4]], wires: [{from: VR1.1, hole:
     A1}, {from: VR1.3, lug: IN.S}, {from: V+}], off: {VR1: [2, -6]}, where: {R5:
-    off-board}}`, holes by name but
+    off-board}, overlaps: [{parts: [C5, TR1], fix: accept, overlap_mm: 0.3}]}`, holes by
+    name but
     an off-board part's spot (it may be off the board) as [column, strip] (the form a
     test or the circuit file writes)."""
     try:
@@ -171,8 +241,9 @@ def layout_from_data(data: Mapping[str, Any]) -> Layout:
         spots = tuple((str(ref), (int(at[0]), int(at[1])))
                       for ref, at in data.get("off", {}).items())  # fmt: skip
         where = tuple((str(ref), str(at)) for ref, at in data.get("where", {}).items())
+        overlaps = tuple(decision_from_data(d) for d in data.get("overlaps") or ())
         return Layout(columns, strips, parts, frozenset(_holes(data.get("cuts", ()))), links,
-                      wires, spots, where)  # fmt: skip
+                      wires, spots, where, overlaps)  # fmt: skip
     except (KeyError, TypeError, ValueError) as err:
         if isinstance(err, BoardError):
             raise
@@ -212,4 +283,5 @@ def layout_data(layout: Layout) -> dict[str, Any]:
         "wires": [wire_data(w) for w in layout.wires],
         "off": {ref: list(at) for ref, at in layout.spots},
         "where": dict(layout.where),
+        "overlaps": [decision_data(d) for d in layout.overlaps],
     }

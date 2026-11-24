@@ -1,6 +1,7 @@
 """Editing the board by hand (D-374): a part placed, moved or taken back to the tray, a cut
 made or mended, a link laid or lifted; an off-board part put beside the board or back in
-the tray, a wire drawn, moved or taken off (D-375). Each edit is applied to the layout and
+the tray, a wire drawn, moved or taken off (D-375); the builder's decision on two bodies
+touching kept or forgotten (P6h4). Each edit is applied to the layout and
 refused, in a sentence, when it can't be made: legs as the footprint doesn't allow, two
 things in a hole, a body over a leg, past the board's edge with auto-grow off. With
 auto-grow on the board then fits what's on it (`size.fit_box`). Pure: a `Layout` in, a
@@ -13,13 +14,14 @@ from collections.abc import Set as AbstractSet
 from dataclasses import dataclass, replace
 from typing import Literal
 
-from solum.stripboard.board import Hole, Layout, Link, Placed, Wire, hole_name
-from solum.stripboard.check import placement_faults
+from solum.stripboard.board import Decision, Hole, Layout, Link, Placed, Wire, hole_name
+from solum.stripboard.check import kept_decisions, outline_overlaps, placement_faults
 from solum.stripboard.footprints import BoardPart, leg_problem
 from solum.stripboard.size import crop, fit_box, used_holes
 
 EditKind = Literal["place", "remove", "cut", "uncut", "link", "unlink", "spot", "unspot",
-                   "wire", "unwire", "rewire", "route", "clear", "where"]  # fmt: skip
+                   "wire", "unwire", "rewire", "route", "clear", "where", "decide",
+                   "undecide"]  # fmt: skip
 
 
 class EditError(ValueError):
@@ -40,7 +42,10 @@ class BoardEdit:
     off everything of parts the circuit no longer has (D-376): placed parts, off-board parts
     beside the board, wires to their lugs. `where` (D-385) moves part `ref` to `to`, "board"
     or "off-board" (none: back to where the parts list puts it): off, it leaves the board for
-    the tray's off-board parts; on, it leaves its spot and wires for the tray's board parts."""
+    the tray's off-board parts; on, it leaves its spot and wires for the tray's board parts.
+    `decide` keeps `decision` on two bodies touching (or one past the edge), at the amount
+    they touch by now, in place of any earlier one on them; `undecide` forgets the one on
+    `ref` and `to` (P6h4)."""
 
     kind: EditKind
     ref: str = ""
@@ -50,6 +55,7 @@ class BoardEdit:
     to: str | None = None
     index: int = -1
     runs: tuple[tuple[int, float], ...] = ()
+    decision: Decision | None = None
 
 
 @dataclass(frozen=True)
@@ -261,6 +267,8 @@ def _applied(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
             i = _wire_at(layout, edit.index)
             wire = replace(layout.wires[i], runs=_runs(edit.runs))
             return replace(layout, wires=(*layout.wires[:i], wire, *layout.wires[i + 1 :]))
+        case "decide" | "undecide":
+            return _decide(layout, edit, board)
 
 
 def _edge(layout: Layout, holes: set[Hole]) -> str | None:
@@ -293,8 +301,30 @@ def edit_layout(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
     just what's on it at the first placement).
     `grow`: auto-grow (D-372): the board fits what's on it; off, an edit past its edge is
     refused. A placement fault the edit brings (two things in a hole, a body over a leg, a
-    link over a leg) refuses it, named."""
-    after = _applied(layout, edit, board, items or {}, known, usual or {})
+    link over a leg) refuses it, named. Decisions on overlaps the edit ends, or changes the
+    amount of, are dropped (P6h4)."""
+    edited = _edited(layout, edit, board, started, grow, items or {}, known, usual or {})
+    return replace(edited, layout=kept_decisions(edited.layout, board))
+
+
+def _decide(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart]) -> Layout:
+    pair = {edit.ref, edit.to} if edit.decision is None else set(edit.decision.parts)
+    rest = tuple(d for d in layout.overlaps if set(d.parts) != pair)
+    if edit.decision is None:
+        if len(rest) == len(layout.overlaps):
+            raise EditError(f"There's no decision on {' and '.join(sorted(map(str, pair)))}.")
+        return replace(layout, overlaps=rest)
+    now = [o for o in outline_overlaps(layout, board) if set(o.parts) == pair]
+    if not now:
+        a, b = edit.decision.parts
+        raise EditError(f"{a} and {b} don't touch now: nothing to decide.")
+    return replace(layout, overlaps=(*rest, replace(edit.decision, overlap_mm=now[0].mm)))
+
+
+def _edited(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart], started: bool,
+            grow: bool, items: Mapping[str, tuple[str, ...]], known: AbstractSet[str],
+            usual: Mapping[str, str]) -> Edited:  # fmt: skip
+    after = _applied(layout, edit, board, items, known, usual)
     if not grow:
         edge = _edge(after, set(used_holes(after, board)) - set(used_holes(layout, board)))
         if edge:

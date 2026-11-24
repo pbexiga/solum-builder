@@ -918,7 +918,8 @@ def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.M
     ).json()
     assert first == {
         "stripboard": {"size": [1, 5], "parts": {"R2": {"1": "A1", "2": "A5"}}, "standing": [],
-                       "cuts": [], "links": [], "wires": [], "off": {}, "where": {}},
+                       "cuts": [], "links": [], "wires": [], "off": {}, "where": {},
+                       "overlaps": []},
         "shift": [-3, -2],
     }  # fmt: skip
     board = {**data, "stripboard": load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")}
@@ -937,6 +938,31 @@ def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.M
     assert sorted(accepted["stripboard"]["links"]) == [["B1", "B8"], ["K2", "K8"]]
     nothing = c.post("/api/stripboard/edit", json={"circuit": board, "kind": "suggested"})
     assert nothing.status_code == 422 and nothing.json()["message"].startswith("Nothing to suggest")
+
+
+def test_an_overlap_is_decided_and_listed_apart(monkeypatch: pytest.MonkeyPatch) -> None:
+    """P6h4: `decide` keeps the builder's decision at the amount the bodies touch by now;
+    the check then lists it under `decided`, not `overlaps`; a decision that makes no sense
+    is a 422 in words."""
+    repo = Path(__file__).resolve().parents[2]
+    data = circuit_to_dict(load_circuit(repo / "tests/fixtures/circuits/old/schema-v39.json"))
+    c = client(monkeypatch, lambda _s: FakeEngine())
+    assert [o["parts"] for o in c.post("/api/stripboard", json={"circuit": data}).json()[
+        "overlaps"]] == [["TR1", "C1"]]  # fmt: skip
+    taller = {"parts": ["C1", "TR1"], "fix": "taller", "part": "C1", "mm": 3}
+    made = c.post("/api/stripboard/edit", json={"circuit": data, "kind": "decide",
+                                                "decision": taller}).json()  # fmt: skip
+    assert made["stripboard"]["overlaps"] == [{**taller, "mm": 3.0, "overlap_mm": 0.3}]
+    found = c.post("/api/stripboard",
+                   json={"circuit": {**data, "stripboard": made["stripboard"]}}).json()  # fmt: skip
+    assert found["overlaps"] == [] and found["decided"][0]["part"] == "C1"
+    bad = c.post("/api/stripboard/edit", json={"circuit": data, "kind": "decide",
+                                               "decision": {**taller, "part": None}})  # fmt: skip
+    assert bad.status_code == 422
+    assert bad.json()["message"] == "Say which of C1 and TR1 to stand taller."
+    half = c.post("/api/stripboard/edit", json={"circuit": data, "kind": "decide",
+                                                "decision": {"fix": "accept"}})  # fmt: skip
+    assert half.status_code == 422 and half.json()["message"] == "That decision is incomplete."
 
 
 def test_stripboard_start_lays_out_or_fills_the_board(monkeypatch: pytest.MonkeyPatch) -> None:

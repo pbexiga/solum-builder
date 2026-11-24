@@ -1665,6 +1665,93 @@
       "title": "Ota",
       "type": "object"
     },
+    "OverlapDecision": {
+      "additionalProperties": false,
+      "description": "The builder's decision on two bodies touching, or one past the board's edge (`parts`\n[ref, \"edge\"]), v40 (P6h4): stand `part` taller (by `mm`), bend it `toward` a side, or\naccept it, with a `note`; `overlap_mm` the amount it was decided at. Its sense is\nchecked by `board.decision_problem`, through `Stripboard.layout`.",
+      "properties": {
+        "parts": {
+          "maxItems": 2,
+          "minItems": 2,
+          "prefixItems": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "string"
+            }
+          ],
+          "title": "Parts",
+          "type": "array"
+        },
+        "fix": {
+          "enum": [
+            "taller",
+            "bent",
+            "accept"
+          ],
+          "title": "Fix",
+          "type": "string"
+        },
+        "part": {
+          "anyOf": [
+            {
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Part"
+        },
+        "mm": {
+          "anyOf": [
+            {
+              "type": "number"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Mm"
+        },
+        "toward": {
+          "anyOf": [
+            {
+              "enum": [
+                "left",
+                "right",
+                "up",
+                "down"
+              ],
+              "type": "string"
+            },
+            {
+              "type": "null"
+            }
+          ],
+          "default": null,
+          "title": "Toward"
+        },
+        "note": {
+          "default": "",
+          "title": "Note",
+          "type": "string"
+        },
+        "overlap_mm": {
+          "title": "Overlap Mm",
+          "type": "number"
+        }
+      },
+      "required": [
+        "parts",
+        "fix",
+        "overlap_mm"
+      ],
+      "title": "OverlapDecision",
+      "type": "object"
+    },
     "Pickup": {
       "additionalProperties": false,
       "description": "Pickup coil as a series R-L with its own winding capacitance across the output.\n`kind`: the pickup guide's entry it was filled from (`library/guides/pickups.yaml`);\nNone for values of your own (D-096). `set` (v32, D-363): the three of R, L, C, peak\nand Q its form was given, as typed, in typing order (`{\"r\": \"8k2\", \"peak\": \"5k2\",\n\"q\": \"2.1\"}`); R, L and C are what they give. None: R, L and C were the three.",
@@ -2116,7 +2203,7 @@
     },
     "Stripboard": {
       "additionalProperties": false,
-      "description": "The board laid out in the Board view (v35, D-368): the plain form `board.layout_data`\nwrites, holes by name. Only its form is checked here; whether it matches the circuit\n(a part since deleted, a leg on the wrong net) is the editor's progress check. v36\n(D-375): off-board parts' spots beside the board and their wires, for v35's pads. v38\n(D-385): `where`, the builder's choice of a part on the board or off it, by ref, only\nwhere it differs from the parts list's (`export.chosen_where`).",
+      "description": "The board laid out in the Board view (v35, D-368): the plain form `board.layout_data`\nwrites, holes by name. Only its form is checked here; whether it matches the circuit\n(a part since deleted, a leg on the wrong net) is the editor's progress check. v36\n(D-375): off-board parts' spots beside the board and their wires, for v35's pads. v38\n(D-385): `where`, the builder's choice of a part on the board or off it, by ref, only\nwhere it differs from the parts list's (`export.chosen_where`). v40 (P6h4): `overlaps`,\nthe builder's decisions on bodies touching.",
       "properties": {
         "size": {
           "maxItems": 2,
@@ -2207,6 +2294,13 @@
           },
           "title": "Where",
           "type": "object"
+        },
+        "overlaps": {
+          "items": {
+            "$ref": "#/$defs/OverlapDecision"
+          },
+          "title": "Overlaps",
+          "type": "array"
         }
       },
       "required": [
@@ -2628,7 +2722,7 @@
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "const": 39,
+      "const": 40,
       "title": "Schema",
       "type": "integer"
     },
@@ -2865,7 +2959,7 @@
     "name",
     "parts"
   ],
-  "title": "Solum Builder circuit, schema v39",
+  "title": "Solum Builder circuit, schema v40",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

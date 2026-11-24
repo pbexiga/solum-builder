@@ -952,7 +952,8 @@ export function boardView(host, app) {
         return row;
       })),
     );
-    const said = [...progress.faults, ...progress.guidance.stuck, ...progress.warnings];
+    const said = [...progress.faults, ...progress.guidance.stuck, ...progress.warnings,
+      ...(progress.overlaps ?? []).map((o) => o.text)];
     const stale = staleLine(progress.stale);
     $("board-warnings-count").textContent = said.length + progress.stale.length ? `· ${said.length + progress.stale.length}` : "";
     $("board-warnings-body").replaceChildren(

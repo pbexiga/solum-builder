@@ -52,6 +52,7 @@ from solum.circuit.schema import (
 )
 from solum.circuit.supply import drawable, no_power, no_power_refs, supply_volts
 from solum.netlist import Dc, input_part
+from solum.rules.graph import distances, quiet_nets, signal_edges
 from solum.sim.engine import SimError
 from solum.simulate import (
     IMPEDANCE_HZ,
@@ -905,36 +906,95 @@ def _signal_path(sim: Simulator, circuit: Circuit, tone: float = TONE_HZ) -> _Pa
     return _Path(source, found, gain, ac, tone, inputs)
 
 
-LOUD = 10.0  # a stage's own gain from which its input wiring must be short (D-400)
+FOLLOWER = 1.25  # a stage with no more gain than this passes the signal on as it is
+
+
+def gain_end(path: "_Path", circuit: Circuit, nets: Nets) -> str | None:
+    """The net a high-gain input's gain is measured to (P6i3): the input of the last pot
+    on the way to the amp (its lug with more signal), so the Volume turned down doesn't
+    hide the gain before it; the amp's net when no pot is. The last pot is the one whose
+    wiper reaches the amp through passive parts and followers (`FOLLOWER`) only, the
+    nearest when several do. None without an amp."""
+    amp = next((p for p in circuit.parts if isinstance(p, AmpInput)), None)
+    if amp is None:
+        return None
+    out = nets.net_of(amp.ref, "in")
+    quiet = quiet_nets(circuit, nets)
+    ac = path.ac
+    jumps = [(entry, stage.net) for stage, entry in zip(path.found, path.inputs, strict=True)
+             if stage.kind == "stage" and entry is not None
+             and _tone_gain(ac, stage.net) <= FOLLOWER * _tone_gain(ac, entry)]  # fmt: skip
+    best: tuple[int, str, str] | None = None
+    for pot in circuit.parts:
+        if not isinstance(pot, Pot) or (pot.ref, "2") not in nets.by_pin:
+            continue
+        edges = signal_edges(circuit, nets, skip=pot.ref, active=False) + jumps
+        far = distances(nets.net_of(pot.ref, "2"), edges, quiet).get(out)
+        lugs = [nets.net_of(pot.ref, k) for k in ("1", "3") if (pot.ref, k) in nets.by_pin]
+        lugs = [n for n in lugs if n in path.ac.responses]
+        if far is not None and lugs and (best is None or far < best[0]):
+            best = (far, pot.ref, max(lugs, key=lambda n: _tone_gain(path.ac, n)))
+    return best[2] if best else out
+
+
+LOUD = 10 ** (25 / 20)  # gain to the output from which a stage's input wiring must be short
+LOUD_HIGH_Z = 10.0  # ...or this much on a node of `HIGH_Z` or more (P6i3, D-400)
+HIGH_Z = 470e3  # ohms at the scope's tone, the guitar left out: a 1 MΩ-biased input
 QUIET = 0.01  # a net's signal under this share of a loud input's is AC-quiet (D-400)
 _INPUT_PINS = ("B", "G", "+")  # where a stage's signal enters: base, gate, op-amp +
 
 
-def loud_inputs(sim: Simulator, circuit: Circuit) -> list[LoudInput]:
-    """Each high-gain stage's input pin for the placement limits (D-400): a stage on the
-    signal path whose own gain (as the Bias & headroom pane measures it, at the scope's
-    tone) reaches `LOUD` with the pots as set, all turned down or all turned up; with the
-    nets whose signal there is under `QUIET` of the input's (rails, ground, a reference
-    behind its cap), from the first run that found it. None when the circuit doesn't
-    simulate."""
+def _turned(circuit: Circuit) -> list[Circuit]:
+    """The circuit with its pots as set, all turned down and all turned up (just the one
+    without pots)."""
     pots = [p.ref for p in circuit.parts if isinstance(p, Pot)]
     turned = [circuit]
-    for rotation in (0.0, 1.0):
+    for rotation in (0.0, 1.0) if pots else ():
         c = circuit
         for ref in pots:
             c = c.with_part(ref, rotation=rotation)
         turned.append(c)
+    return turned
+
+
+def loud_inputs(sim: Simulator, circuit: Circuit) -> list[LoudInput]:
+    """Each high-gain stage's input pin for the placement limits (D-400, P6i3): a stage
+    input on the signal path whose gain to the output (to `gain_end`, the last pot's
+    input, so the Volume turned down still counts), at the scope's tone, reaches `LOUD`
+    with the pots as set, all turned down or all turned up, or `LOUD_HIGH_Z` on a node of
+    `HIGH_Z` or more with the guitar left out (a pickup barely loads it with the guitar's
+    volume down); an input past the end (an output buffer after the Volume) never. With
+    the nets whose signal there is under `QUIET` of the input's (rails, ground, a
+    reference behind its cap), from the first run that found it. None when the circuit
+    doesn't simulate."""
     found: dict[tuple[str, str], frozenset[str]] = {}
     nets = connect(circuit)
+    held = quiet_nets(circuit, nets)  # supplies and bias nets: the signal path stops there
+    guitar = input_part(circuit)
+    high: dict[str, bool] = {}
+
+    def high_z(net: str) -> bool:
+        if net not in high:
+            open_ = guitar.ref if guitar else None
+            z = sim.impedance(circuit, net, freq=TONE_HZ, open=open_)[0]
+            high[net] = abs(z) >= HIGH_Z
+        return high[net]
+
     try:
-        for c in turned if pots else turned[:1]:
+        for c in _turned(circuit):
             path = _signal_path(sim, c)
             if isinstance(path, str):
                 return []
+            end = gain_end(path, c, nets)
+            order = distances(path.source, signal_edges(c, nets), held)
             for stage, entry in zip(path.found, path.inputs, strict=True):
                 if stage.kind != "stage" or entry is None or stage.inputs:
                     continue
-                if _tone_gain(path.ac, stage.net) < LOUD * _tone_gain(path.ac, entry):
+                to = end if end is not None else stage.net
+                if order.get(entry, 0) > order.get(to, 0):
+                    continue  # past the end: its gain to there means nothing
+                gain = _tone_gain(path.ac, to) / max(_tone_gain(path.ac, entry), 1e-12)
+                if gain < LOUD and (gain < LOUD_HIGH_Z or not high_z(entry)):
                     continue
                 pin = next(((ref, pin) for (ref, pin), net in nets.by_pin.items()
                             if ref in stage.refs and pin in _INPUT_PINS and net == entry),

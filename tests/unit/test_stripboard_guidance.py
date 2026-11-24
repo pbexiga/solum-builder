@@ -165,8 +165,9 @@ def test_nothing_is_stuck_when_the_suggestions_join_everything() -> None:
 # --- the guidance follows the placement limits (D-400) ---------------------------------
 TS808 = load_circuit(LIBRARY / "starters" / "ts808.json")
 TS808_LOUD = [
-    LoudInput("IC1B", "+", frozenset({"GND", "V+"}))
-]  # as `probe.loud_inputs` finds it (it needs ngspice)
+    LoudInput("Q1", "B", frozenset({"GND", "V+"})),
+    LoudInput("IC1B", "+", frozenset({"GND", "V+"})),
+]  # as `probe.loud_inputs` finds them (it needs ngspice)
 IC1 = {"1": "E3", "2": "E4", "3": "E5", "4": "E6", "8": "H3", "7": "H4", "6": "H5", "5": "H6"}
 UNDER = ["F3", "F4", "F5", "F6"]  # the cuts under the chip
 

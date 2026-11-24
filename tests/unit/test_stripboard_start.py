@@ -144,8 +144,7 @@ def test_a_part_with_two_legs_on_one_net_gets_a_short_link_beside_it() -> None:
 # The high-gain stages' inputs as `probe.loud_inputs` finds them (it needs ngspice).
 LOUD = {
     "dallas-rangemaster": [LoudInput("Q1", "B", frozenset({"GND", "V-"}))],
-    "fuzz-face":[LoudInput("Q1", "B", frozenset({"GND", "V-"})),
-                  LoudInput("Q2", "B", frozenset({"GND", "Q1.B", "V-", "in"}))],
+    "fuzz-face": [LoudInput("Q1", "B", frozenset({"GND", "V-"}))],
     "proco-rat": [LoudInput("IC1", "+", frozenset({"GND", "IC1.comp1", "V+", "VREF"}))],
 }  # fmt: skip
 # What Start still breaks: the Rat's C4 (feedback, pin 2) lands a hole too far, the chip's

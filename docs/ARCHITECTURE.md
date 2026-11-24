@@ -278,6 +278,7 @@ Rules that keep it working:
 | `scripts/outline_svg_text.py` | one-off: converts an SVG's `<text>` to font outlines (needs fonttools + uharfbuzz in a scratch venv) |
 | `scripts/fetch_spec_sheets.py` | downloads any datasheet listed in `data/spec-sheets/README.md` that is missing (the PDFs are gitignored, D-149) |
 | `scripts/README.md` | what each script does and where it runs |
+| `scripts/board_table.py` | the starters' full layouts as a Markdown table (P6i): *Build a full layout*, Quick, try 1, on every starter that goes on a board: holes, cuts, links, limits broken, noisy links, touching bodies, standing parts, high-gain inputs; layouts are deterministic (D-399), so a change to the layout rules shows as the table's diff | `table(names)`, `Row`; `python scripts/board_table.py [--out FILE] [starters]` in the dev image |
 | `scripts/prof.py` | times the heavy requests through the API per starter, cold and warm; `--profile NAME` writes a cProfile |
 | `scripts/guide_shots.py` | the user guide's screenshots (`docs/guide/img/`, D-296): the app in-process on a free port with a temporary data folder, a 1600 × 1000 Chromium page per picture | `SHOTS` (picture name → function), `shoot(page, name, selector?)`, `server()`; `python scripts/guide_shots.py [names]` in the dev image; reuses the UI tests' helpers |
 | `scripts/dupes.py` | clean-up review helper: same-named functions in several files, repeated runs of lines |

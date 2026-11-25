@@ -6,8 +6,10 @@ the check's, and standing when needed is never worse than Never's first board.
   equal what the check finds on it, laid out and again wired; a rule the two count
   differently (a bus's copper was left out of the search's strips alongside) would
   otherwise drop good boards silently.
-- No Never run: the flat attempt is Never's seed-1 board, its counts checked here, and
-  it's what the guarantee compares against; Never's other seeds add time, not coverage.
+- No Never run, except where When needed falls back: the flat attempt is Never's seed-1
+  board, its counts checked here, and it's what the guarantee compares against. Where
+  When needed falls back to Start a board's layout, Never must too (its other seeds run
+  flat before that, D-403): only then is Never run, to check it.
 - **When needed is no worse than Never's seed 1**: a When needed run includes a flat
   attempt, Never's own first board, and ranks limits, then warnings, first. Not Never's
   best of four: the gap to that is seed-to-seed variance, what Try another is for. When
@@ -99,8 +101,9 @@ def test_the_search_counts_as_the_check_and_needed_beats_never_s_first_board(
 
     pb, best = run("needed")
     (flat,) = compact_job._flat.values()
-    if best is None:  # every board had a problem: Start a board's kept, the flat one too
+    if best is None:  # every board had a problem: Start a board's kept, and Never's too
         assert flat is None
+        assert run("never")[1] is None, f"{path.stem}: When needed fell back, Never didn't"
     elif flat is None:  # no flat board without a problem: nothing for it to beat
         agrees(pb, best)
     else:

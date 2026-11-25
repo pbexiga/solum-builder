@@ -9,7 +9,10 @@ takes longer to the same board. *Try another* is the next set of seeds. When sta
 parts is allowed, a fifth attempt lies everything flat (`FLAT_SEED`, the same steps:
 Never's own board for that seed), so standing shapes can't leave a board breaking more
 limits or with more warnings than lying flat would (D-403); it's the same for every try,
-so it runs once per board and Try another reuses it. The workers are spawned for the run
+so it runs once per board and Try another reuses it. When every attempt, flat one too,
+ends with a problem on its board (a short, a net not joined, a leg off the copper), the
+rest of Never's seeds for the try run flat before Start a board's layout is kept: When
+needed falls back only where Never would (D-403). The workers are spawned for the run
 (not the render pool: a render and a layout don't queue behind each other) and end with it.
 """
 
@@ -39,6 +42,7 @@ from solum.stripboard.limits import LoudInput
 WORKERS = min(4, max(1, (os.cpu_count() or 2) - 1))  # as renders' (D-083)
 ATTEMPTS = 4  # seeds a run tries (P6h5a's measurement)
 FLAT_SEED = 1  # the flat attempt's seed (D-403): Never's first board
+RESCUE = 1000  # tags of the flat seeds run when no attempt found a board (+ the seed)
 STEPS_PER_PART = 12_000  # Quick: each attempt's steps for each board part
 MOST_PARTS = 40  # ...counted up to this many parts: a big board's run stays in minutes
 THOROUGH = 4  # Thorough looks this many times as long
@@ -160,41 +164,51 @@ def run(pb: Problem, layout: Layout | None, circuit: Circuit, loud: Sequence[Lou
     done = {tag: 0 for tag, _, _ in jobs}
     found: dict[int, Found] = {i: f for i, f in enumerate(known, -len(known)) if f}
     best: Found | None = best_of(found.values())
-
     ended: set[int] = set()
 
-    def take(seed: int, steps_done: int, f: Found | None, last: bool) -> None:
+    def take(tag: int, steps_done: int, f: Found | None, last: bool) -> None:
         nonlocal best
-        done[seed] = steps_done
+        done[tag] = steps_done
         if last:
-            ended.add(seed)
+            ended.add(tag)
         if f is not None:
-            found[seed] = f
+            found[tag] = f
         now = best_of(found.values())
-        report(sum(done.values()), steps * len(jobs), now if now != best else None)
+        report(sum(done.values()), steps * len(done), now if now != best else None)
         best = now
 
-    with ProcessPoolExecutor(min(WORKERS, len(jobs)), mp_context=ctx, initializer=_init_worker,
-                             initargs=(settings, reports, halt)) as pool:  # fmt: skip
-        futures = [pool.submit(_attempt, layout, circuit, loud, steps, seed, tag, fl)
-                   for tag, seed, fl in jobs]  # fmt: skip
-        while len(ended) < len(jobs):
-            if stop.is_set():
-                halt.set()
-            failed = next((f for f in futures if f.done() and f.exception()), None)
-            if failed is not None:
-                halt.set()
-                failed.result()  # a worker's error, raised here
-            try:
-                take(*reports.get(timeout=0.1))
-            except queue.Empty:
-                continue
-        results = [f.result() for f in futures]
+    def attempts(jobs: list[tuple[int, int, bool]]) -> list[Found | None]:
+        """`jobs` (tag, seed, flat) on the workers, each reported to `take` as it goes."""
+        done.update({tag: 0 for tag, _, _ in jobs})
+        with ProcessPoolExecutor(min(WORKERS, len(jobs)), mp_context=ctx,
+                                 initializer=_init_worker,
+                                 initargs=(settings, reports, halt)) as pool:  # fmt: skip
+            futures = [pool.submit(_attempt, layout, circuit, loud, steps, seed, tag, fl)
+                       for tag, seed, fl in jobs]  # fmt: skip
+            while not {tag for tag, _, _ in jobs} <= ended:
+                if stop.is_set():
+                    halt.set()
+                failed = next((f for f in futures if f.done() and f.exception()), None)
+                if failed is not None:
+                    halt.set()
+                    failed.result()  # a worker's error, raised here
+                try:
+                    take(*reports.get(timeout=0.1))
+                except queue.Empty:
+                    continue
+            return [f.result() for f in futures]
+
+    results = attempts(jobs)
     if flat is not None and flat not in _flat and not stop.is_set():
         _flat[flat] = results[-1]  # a whole run's flat board only, never a stopped one's
         while len(_flat) > FLAT_KEPT:
             del _flat[next(iter(_flat))]
-    return Run(pb, best_of([*results, *known]), stop.is_set())
+    results += known
+    if flat is not None and best_of(results) is None and not stop.is_set():
+        # no board without a problem: the rest of Never's seeds, before Start a board's
+        rescue = [(RESCUE + s, s, True) for s in seeds if s != FLAT_SEED]
+        results += attempts(rescue)
+    return Run(pb, best_of(results), stop.is_set())
 
 
 @dataclass(frozen=True)

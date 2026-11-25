@@ -74,3 +74,29 @@ def test_a_run_adds_the_flat_attempt_once_per_board_when_parts_may_stand(
     assert first.best.key[:2] <= flat.key[:2]
     assert attempts("needed", 2)[1] == compact_job.ATTEMPTS
     assert attempts("never", 1)[1] == compact_job.ATTEMPTS
+
+
+def test_when_no_attempt_finds_a_board_the_rest_of_never_s_seeds_run_flat(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """D-403: When needed falls back to Start a board's layout only where Never would. The
+    BD-2 at 40 steps a part: every attempt ends with a problem (a net not joined), so the
+    run adds Never's seeds 2–4, flat (seed 1 is the flat attempt): eight attempts in all,
+    and no board, as Never's own run."""
+    monkeypatch.setattr(compact_job, "STEPS_PER_PART", 40)
+    monkeypatch.setattr(compact_job, "_flat", {})
+    circuit = load_circuit(LIBRARY / "starters" / "boss-bd2.json")
+    models, table = load_models([LIBRARY / "models"]), footprint_table(LIBRARY)
+
+    def attempts(choice: StandUp) -> tuple[compact_job.Run, int]:
+        layout = Layout(0, 0, (), stand_up=choice)
+        pb = problem(layout, circuit, models, table)
+        of: list[int] = []
+        got = compact_job.run(pb, layout, circuit, (), False, 1, load_settings(),
+                              lambda _d, n, _b: of.append(n), threading.Event())  # fmt: skip
+        return got, of[-1] // compact_job.steps_for(len(pb.refs), False)
+
+    needed, n = attempts("needed")
+    assert needed.best is None and n == 2 * compact_job.ATTEMPTS
+    never, n = attempts("never")
+    assert never.best is None and n == compact_job.ATTEMPTS

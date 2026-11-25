@@ -125,6 +125,8 @@ export function boardView(host, app) {
   let showPlaced = remembered(PLACED_KEY) === true; // the tray's placed parts shown
 
   const tools = $("board-tools");
+  const editTools = $("board-edit"); // Cuts and Links, at the top of the tray: the canvas kept clear (D-406)
+  const toolButtons = [...editTools.querySelectorAll("button[data-tool]")];
   /** @type {"parts" | "cuts" | "links"} */
   let tool = "parts";
   /** @type {Carried | null} */
@@ -252,7 +254,7 @@ export function boardView(host, app) {
       locked = on;
       // the board locked: the tray, the panes, the editing tools; the view's buttons (Hide
       // parts, Flip, See-through) and the review stay, and the canvas is outlined (D-406)
-      for (const el of [tray, sizeNote, $("board-needs"), ...column.querySelectorAll(":scope > details"), ...tools.querySelectorAll("button[data-tool]")]) /** @type {HTMLElement} */ (el).inert = on;
+      for (const el of [tray, sizeNote, $("board-needs"), ...column.querySelectorAll(":scope > details"), ...toolButtons]) /** @type {HTMLElement} */ (el).inert = on;
       host.closest(".canvas")?.classList.toggle("reviewing", on);
       button.disabled = on;
       if (on) drop();
@@ -296,7 +298,7 @@ export function boardView(host, app) {
     setSetting("mirror", !settings.mirror);
     if (e.detail) flipButton.blur();
   });
-  for (const b of tools.querySelectorAll("button[data-tool]")) b.addEventListener("click", () => {
+  for (const b of toolButtons) b.addEventListener("click", () => {
     toggleTool(/** @type {"cuts" | "links"} */ (b.getAttribute("data-tool")));
     b.blur(); // the board's keys act again
   });
@@ -357,7 +359,7 @@ export function boardView(host, app) {
   function setTool(which) {
     tool = which;
     drop();
-    for (const b of tools.querySelectorAll("button[data-tool]")) b.setAttribute("aria-pressed", String(b.getAttribute("data-tool") === which));
+    for (const b of toolButtons) b.setAttribute("aria-pressed", String(b.getAttribute("data-tool") === which));
     svg.dataset.tool = which;
     canvas.ghost(null);
   }
@@ -904,7 +906,7 @@ export function boardView(host, app) {
     column.hidden = !board;
     tray.hidden = !board;
     sizeNote.hidden = !board;
-    tools.hidden = !board;
+    tools.hidden = editTools.hidden = !board;
     if (!board) setTool("parts");
     button.setAttribute("aria-pressed", String(board));
     button.title = board ? "Back to the schematic" : BUTTON_TITLE;

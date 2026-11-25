@@ -437,14 +437,14 @@ def test_parts_are_placed_turned_moved_cut_and_linked_by_hand(
     expect(page.locator("#board .board-link")).to_have_count(3)
     expect_matches(page)
     page.keyboard.press("Escape")  # Links off: moving parts again (no Parts button, D-406)
-    expect(page.locator("#board-tools button[data-tool='links']")).to_have_attribute(
+    expect(page.locator("#board-edit button[data-tool='links']")).to_have_attribute(
         "aria-pressed", "false"
     )
-    page.locator("#board-tools button[data-tool='cuts']").click()
+    page.locator("#board-edit button[data-tool='cuts']").click()
     expect(page.locator("#board")).to_have_attribute("data-tool", "cuts")
-    page.locator("#board-tools button[data-tool='cuts']").click()  # again: off
+    page.locator("#board-edit button[data-tool='cuts']").click()  # again: off
     expect(page.locator("#board")).to_have_attribute("data-tool", "parts")
-    expect(page.locator("#board-tools button[data-tool]")).to_have_count(2)
+    expect(page.locator("#board-edit button[data-tool]")).to_have_count(2)
     browser_errors[:] = [e for e in browser_errors if "status of 422" not in e]  # the refusal
     page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
 
@@ -1139,7 +1139,7 @@ def test_build_a_full_layout_reviewed_tried_again_kept_and_undone(
     first = "document.getElementById('board-panels').firstElementChild.classList"
     assert page.evaluate(f"{first}.contains('compact-review')")
     expect(page.locator("#board-nets")).to_have_js_property("inert", True)
-    expect(page.locator("#board-tools [data-tool='cuts']")).to_have_js_property("inert", True)
+    expect(page.locator("#board-edit [data-tool='cuts']")).to_have_js_property("inert", True)
     expect(page.locator("section.canvas")).to_have_class(re.compile(r"\breviewing\b"))
     review.locator("[data-mode='both']").click()
     expect(page.locator("#canvas-body")).to_have_class(re.compile("split"))

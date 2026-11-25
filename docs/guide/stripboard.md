@@ -43,7 +43,7 @@ Drag a part from the tray onto the board, or click it and then click where it go
 
 Drag a placed part to move it; **Del** sends it back to the tray. Right-click a part for the same moves, **Back to the tray**, and for a trimmer its other shape (below). Hovering a part names its legs.
 
-Grab a part or a wire and drag it to move it. Two buttons at the top left change what a click does until you turn them off: **Cuts** (C) cuts the strip at a hole or mends a cut, and **Links** (K) lays a wire link down a column, or lifts one. Click the button again, or press Esc, to go back to moving parts.
+Grab a part or a wire and drag it to move it. Two buttons at the top of the tray change what a click does until you turn them off: **Cuts** (C) cuts the strip at a hole or mends a cut, and **Links** (K) lays a wire link down a column, or lifts one. Click the button again, or press Esc, to go back to moving parts.
 
 ### Guidance as you go
 

@@ -323,6 +323,10 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 /* the Tray: the palette's place in the Board view (D-371) */
 .board-tray { width: 232px; flex: none; overflow-y: auto; background: var(--surface-1); border-right: 1px solid var(--border); padding: 6px 10px 16px; font-size: 13px; }
 .board-tray[hidden] { display: none; }
+.board-edit { display: flex; gap: 6px; margin: 6px 0 4px; } /* Cuts and Links (D-406) */
+.board-edit[hidden] { display: none; }
+.board-edit button { flex: 1; padding: 4px 8px; font: 12px var(--font-ui); background: var(--surface-2); }
+.board-edit button[aria-pressed="true"] { background: var(--info-bg); color: var(--text); border-color: var(--accent); }
 .board-tray h2, .board-tray h3 { font-family: var(--font-display); font-weight: 300; text-transform: uppercase; letter-spacing: 0.2em; font-size: 10px; color: var(--text-3); margin: 10px 2px 6px; }
 .board-tray h2 { color: var(--text-2); }
 .board-tray h3 { margin-top: 16px; }
@@ -448,8 +452,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-tools { position: absolute; left: 12px; top: 12px; display: flex; gap: 0; }
 .board-tools[hidden] { display: none; }
 .board-tools button { padding: 3px 10px; font: 12px var(--font-ui); border-radius: 0; background: var(--surface-2); }
-.board-tools button:first-child { border-radius: 4px 0 0 4px; } /* Cuts */
-.board-tools button[data-tool="links"] { border-radius: 0 4px 4px 0; }
+.board-tools button:first-child { border-radius: 4px 0 0 4px; }
 .board-tools button + button { margin-left: -1px; }
 .board-tools button[aria-pressed="true"] { background: var(--info-bg); color: var(--text); border-color: var(--accent); position: relative; }
 #board[data-tool="cuts"], #board[data-tool="links"] { cursor: crosshair; }
@@ -541,7 +544,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 /* a layout running or under review: the canvas outlined, the board not editable */
 .canvas.reviewing { position: relative; }
 .canvas.reviewing::after { content: ""; position: absolute; inset: 0; border: 2px solid var(--warning); pointer-events: none; z-index: 5; } /* over the board drawing */
-.board-tray[inert], .board-panels > details[inert], .board-tools button[inert] { opacity: 0.55; } /* locked while it's reviewed */
+.board-tray[inert], .board-panels > details[inert] { opacity: 0.55; } /* locked while it's reviewed */
 .compact-row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
 .compact-row + .compact-row { margin-top: 6px; }
 .compact-figures { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); }

@@ -150,7 +150,8 @@ class Problem:
     limits: list[tuple[tuple[str, str], tuple[tuple[str, str], ...]]]  # pin → parts' legs
     guards: list[Guard] = field(default_factory=list)  # parts links keep clear of (D-402)
     guarded: list[tuple[str, int, tuple[str, ...]]] = field(default_factory=list)  # as numbers
-    clear: dict[tuple[str, int], tuple[Hole, ...]] = field(default_factory=dict)  # per shape
+    # per shape and guarded legs: a part guarded for two nets (IC1's pins 3 and 5) has two
+    clear: dict[tuple[str, int, tuple[str, ...]], tuple[Hole, ...]] = field(default_factory=dict)
     calm: frozenset[int] = frozenset()  # nets whose links may pass them (`quiet.calm_nets`)
     stand_up: StandUp = "needed"  # standing resistors and diodes (D-403)
     loud: tuple[LoudInput, ...] = ()  # the high-gain inputs (D-400)
@@ -680,10 +681,11 @@ class State:
         clear = self.pb.clear
         for ref, n, legs in self.pb.guarded:
             vi, x, y = self.pos[ref]
-            rel = clear.get((ref, vi))
+            rel = clear.get((ref, vi, legs))
             if rel is None:  # its shape's holes kept clear, from its legs' top-left
                 v = self.pb.variants[ref][vi]
-                rel = clear[ref, vi] = tuple(kept_clear([v.at[lg] for lg in legs], v.body)[1])
+                rel = clear[ref, vi, legs] = tuple(kept_clear([v.at[lg] for lg in legs],
+                                                              v.body)[1])  # fmt: skip
             for dx, dy in rel:
                 col = found[x + dx]
                 col[y + dy] = n if col.get(y + dy, n) == n else -1

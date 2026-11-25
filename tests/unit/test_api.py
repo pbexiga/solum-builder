@@ -960,7 +960,7 @@ def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.M
     bare = {**data, "stripboard": {**board["stripboard"], "cuts": [], "links": []}}
     accepted = c.post("/api/stripboard/edit", json={"circuit": bare, "kind": "suggested"}).json()
     assert accepted["stripboard"]["cuts"] == ["D8"]  # every suggestion, one edit (D-377)
-    assert sorted(accepted["stripboard"]["links"]) == [["B1", "B8"], ["J2", "J8"]]
+    assert sorted(accepted["stripboard"]["links"]) == [["B1", "B8"], ["G2", "G8"]]
     nothing = c.post("/api/stripboard/edit", json={"circuit": board, "kind": "suggested"})
     assert nothing.status_code == 422 and nothing.json()["message"].startswith("Nothing to suggest")
 

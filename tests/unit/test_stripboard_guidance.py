@@ -60,22 +60,23 @@ def test_a_shorted_strip_is_marked_for_no_net() -> None:
 
 
 def test_the_ratsnest_joins_each_net_s_pieces_by_their_nearest_holes() -> None:
-    """C3 and C4 on strip 2 (ground) and R2's ground leg at I8 with G8 cut: ground is in
-    two pieces, one strand between the nearest holes; V- likewise without the B link."""
+    """C3, R3 and C4 on strip 2 (ground) and R2's ground leg at I8 with G8 cut: ground is
+    in two pieces, one strand between the nearest holes (R3's H2); V- likewise without
+    the B link."""
     g = run(only("R1", "R2", "C3", "C4", "Q1", "R3", cuts=["G8"]))
     strands = {(s.net, hole_name(s.a), hole_name(s.b)) for s in g.ratsnest}
-    assert ("GND", "I2", "I8") in strands
+    assert ("GND", "H2", "I8") in strands
     assert [s.net for s in g.ratsnest].count("GND") == 1
 
 
 def test_suggested_cuts_and_links_are_the_hand_made_board_s() -> None:
     """The good board without its cut and links: a cut on strip 8 between R1's V- leg at C8
     and R2's ground leg at I8 (the first free hole, D8), and its two links: the ground one
-    in the first free column, J, where the hand-made board has it one column on, at K."""
+    in the first free column, G, where the hand-made board has it at K."""
     g = run({**GOOD, "cuts": [], "links": []})
     assert [hole_name(h) for h in g.cuts] == ["D8"]
     assert sorted((hole_name(a), hole_name(b)) for a, b in g.links) == [("B1", "B8"),
-                                                                        ("J2", "J8")]  # fmt: skip
+                                                                        ("G2", "G8")]  # fmt: skip
     done = layout_from_data({**GOOD, "cuts": ["D8"], "links": linked(g)})
     assert check_layout(done, RANGEMASTER, MODELS, TABLE).ok  # accepted, the board passes
 

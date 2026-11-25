@@ -139,9 +139,9 @@ def test_a_part_rewired_in_the_schematic_names_its_leg_and_where_it_should_go() 
     assert p.stale == [] and not p.done
     assert p.faults == [
         "R1's leg at C8 is on the strip of V-, but the circuit puts it on GND: it should join "
-        "C3's + leg at G2, C4's + leg at I2, R3's leg at H2 and 3 more.",
+        "C3's + leg at F2, C4's + leg at J2, R3's leg at H2 and 3 more.",
         "R2's leg at I8 is on the strip of GND, but the circuit puts it on V-: it should join "
-        "C4's − leg at I1, the V- supply's wire at A1 and VR1 lug 1's wire at D1.",
+        "C4's − leg at J1, the V- supply's wire at A1 and VR1 lug 1's wire at D1.",
     ]
 
 

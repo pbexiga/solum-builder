@@ -288,7 +288,7 @@ def test_a_leg_one_strip_off_is_refused() -> None:
 def test_a_missing_link_is_refused() -> None:
     result = check(edited(links=[["B1", "B8"]]))
     assert result.faults == [
-        "C3's + leg at G2 and R2's leg at I8 aren't connected on the board, but the circuit "
+        "C3's + leg at F2 and R2's leg at I8 aren't connected on the board, but the circuit "
         "joins them."
     ]
 
@@ -334,8 +334,8 @@ def test_missing_extra_and_off_board_parts_are_named() -> None:
 
 
 def test_two_legs_in_a_hole_or_a_body_over_a_leg_is_refused() -> None:
-    shared = check(edited(parts={"R3": {"1": "G3", "2": "H2"}}))
-    assert "R3 and C3 share hole G3." in shared.faults
+    shared = check(edited(parts={"R3": {"1": "F3", "2": "H2"}}))
+    assert "R3 and C3 share hole F3." in shared.faults
     covered = check(edited(parts={"R2": {"1": "C4", "2": "C8"}, "R1": {"1": "C8", "2": "C4"}}))
     assert any("share hole" in f for f in covered.faults)
     over = check(edited(parts={"Q1": {"E": "C5", "B": "C6", "C": "C7"}}))  # under R1's body

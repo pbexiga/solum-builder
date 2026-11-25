@@ -386,7 +386,7 @@ def test_parts_are_placed_turned_moved_cut_and_linked_by_hand(
     page.mouse.click(*hole_point(page, 9, 4))
     expect(page.locator("#board .cut[data-hole='J5']")).to_have_count(0)
     page.keyboard.press("k")
-    drag_to(page, hole_point(page, 9, 1), hole_point(page, 9, 7))  # J2 to J8, both GND
+    drag_to(page, hole_point(page, 11, 1), hole_point(page, 11, 7))  # L2 to L8, both GND
     expect(page.locator("#board .board-link")).to_have_count(3)
     expect_matches(page)
     page.keyboard.press("Escape")
@@ -532,14 +532,14 @@ def test_a_part_placed_finishes_its_nets_and_the_board_is_saved_as_it_was(
     tray_c3 = page.locator("#board-tray-body li[data-ref='C3']")
     box = tray_c3.bounding_box()
     assert box
-    drag_to(page, (box["x"] + 20, box["y"] + box["height"] / 2), hole_point(page, 6, 2))  # G3
+    drag_to(page, (box["x"] + 20, box["y"] + box["height"] / 2), hole_point(page, 5, 2))  # F3
     c3 = page.locator("#board .board-part[data-ref='C3']")
     expect(c3).to_have_count(1)
     expect(progress).to_have_text("All 8 nets done.")
     expect_matches(page)
     # flipped: its legs swap strips, named as it's made
-    # by its leg at G3, under a wire across the board: the wire doesn't take the click
-    page.mouse.click(*hole_point(page, 6, 2))
+    # by its leg at F3, under a wire across the board: the wire doesn't take the click
+    page.mouse.click(*hole_point(page, 5, 2))
     expect(c3).to_have_class(re.compile(r"\bboard-part\b.*\bselected\b"))
     page.keyboard.press("f")
     expect(warnings).to_contain_text("C3 is the wrong way round")
@@ -830,7 +830,7 @@ def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_s
     is confirmed, saying what will happen; each is one undo step. Once parts are placed
     nothing is chosen at first and Continue waits for a choice. On the Tone Bender MK2
     Start a board without *Make the board compact* lays out 34 columns, Tidy up makes them
-    31 (D-388); Start a board on a board with parts names what it replaces, and Cancel
+    30 (D-388); Start a board on a board with parts names what it replaces, and Cancel
     changes nothing."""
     open_with_board(page, base_url, None, TIDIES)
     page.locator("#board-button").click()
@@ -851,7 +851,7 @@ def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_s
     layout(page, "tidy")
     expect(page.locator(".ask-text")).to_contain_text("make the board smaller")
     page.locator(".ask-buttons button[data-answer='layout']").click()
-    expect(size).to_contain_text("31 × 13 holes")
+    expect(size).to_contain_text("30 × 13 holes")
     page.locator("#board-layout").click()  # parts placed: nothing chosen, Continue waits
     expect(dialog.locator("input[name='layout']:checked")).to_have_count(0)
     expect(dialog.locator("button[data-answer='go']")).to_be_disabled()
@@ -865,7 +865,7 @@ def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_s
         "Replace the board"
     )
     page.locator(".ask-buttons button[data-answer='cancel']").click()
-    expect(size).to_contain_text("31 × 13 holes")
+    expect(size).to_contain_text("30 × 13 holes")
     page.keyboard.press("Control+z")  # the tidy: one step
     expect(size).to_contain_text("34 × 13 holes")
     page.keyboard.press("Control+z")  # the layout: one step
@@ -908,7 +908,7 @@ def test_the_tray_shows_the_placed_parts_on_request(page: Page, base_url: str) -
     page.locator("#board-button").click()
     layout(page, "start", compact=True)
     page.locator(".ask-buttons button[data-answer='layout']").click()
-    expect(page.locator("#board-size-text")).to_contain_text("31 × 13 holes")
+    expect(page.locator("#board-size-text")).to_contain_text("30 × 13 holes")
     toggle = page.locator("#board-tray .placed-toggle")
     expect(toggle).to_have_text("▸ Show placed (19)")  # 14 on the board, 5 beside it
     expect(page.locator("#board-tray li.placed")).to_have_count(0)
@@ -934,7 +934,7 @@ def test_the_layout_says_what_its_doing_while_it_works(page: Page, base_url: str
     expect(button).to_be_disabled()
     expect(page.locator("#board-working")).to_be_visible()
     held[0].continue_()
-    expect(page.locator("#board-size-text")).to_contain_text("31 × 13 holes")
+    expect(page.locator("#board-size-text")).to_contain_text("30 × 13 holes")
     expect(page.locator("#board-working")).to_be_hidden()
     expect(button).to_have_text("Layout…")
 

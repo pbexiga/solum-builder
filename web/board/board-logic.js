@@ -984,7 +984,7 @@ export const BOARD_SETTINGS = /** @type {const} */ ([
   { key: "shorts", label: "Allow shorts while editing, shown red", on: true, acts: true, title: "Off: a move that makes a short is refused" },
   { key: "grow", label: "Auto-grow", on: true, acts: true, title: "The board grows to take in what's placed by its edge, and shrinks back. Off: it stays its size (the margin greyed); add or remove lines on the rulers" },
   { key: "seeThrough", label: "See-through", on: false, acts: true, title: "The parts faint, so the copper and the cuts under them show" },
-  { key: "mirror", label: "Flip the board", on: false, acts: true, title: "The board turned over, parts and all, as you hold it to solder; with Hide parts, the copper side as you solder it. Off: as seen from the parts side" },
+  { key: "mirror", label: "Flip the board", on: false, acts: true, title: "The back of the board: the copper side, turned over as you hold it to solder. Off: the front, the parts side" },
   { key: "rats", label: "Ratsnest lines: all", on: true, acts: true, title: "The dashed lines between the pieces of each net still to join. Off: only the lines of the part selected or carried" },
   { key: "rails", label: "Highlight rails", on: false, acts: true, title: "The supply's copper (V+, V-) rose, ground's grey" },
 ]);

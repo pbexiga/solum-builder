@@ -739,40 +739,38 @@ def test_a_placed_trimmer_is_made_in_line_from_its_menu(page: Page, base_url: st
     expect(tr1).to_have_count(1)
 
 
-def test_hide_parts_shows_the_copper_unmirrored_and_flip_turns_either_side_over(
-    page: Page, base_url: str
-) -> None:
-    """Hide parts shows the copper side as seen from the parts side, unmirrored, with its cuts
-    and links (D-390). Flip (was Mirror, the user, 2026-11-25) turns whichever side is up
-    over, as you hold the board to solder: from the parts side the parts stay, their names
-    readable; it never hides them. Hide parts and Flip together: the copper side as you
-    solder it."""
+def test_flip_shows_the_back_and_hide_parts_the_front_s_copper(page: Page, base_url: str) -> None:
+    """D-406 (the user, 2026-11-25): Flip shows the back of the board, the copper side turned
+    over as you solder it, its cuts and links; Hide parts is greyed there. Off the back, Hide
+    parts shows the front's copper, unmirrored (D-390). Flip is remembered: a reload opens
+    on the back."""
     open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
     show_board(page)
     board = page.locator("#board g.board")
     hide, flip = page.locator("#board-hide"), page.locator("#board-flip")
-    expect(flip).to_have_text("Flip")
     link = page.locator("#board .links .link-end").first  # a line is zero-wide to Playwright
-    flip.click()  # the parts side turned over: parts still there, names turned back
+    flip.click()  # the back: the copper side, turned over
     expect(flip).to_have_attribute("aria-pressed", "true")
-    expect(hide).to_have_attribute("aria-pressed", "false")
-    expect(page.locator("#board g.board.copper")).to_have_count(0)
-    expect(page.locator("#board .board-part")).to_have_count(8)
-    expect(board).to_have_attribute("transform", re.compile(r"scale\(-1 1\)"))
-    expect(page.locator("#board .board-label").first).to_have_attribute(
-        "transform", re.compile(r"scale\(-1 1\)")
-    )
-    hide.click()  # and the copper side, as you solder it
     expect(page.locator("#board g.board.copper")).to_have_count(1)
     expect(board).to_have_attribute("transform", re.compile(r"scale\(-1 1\)"))
     expect(link).to_be_visible()
     expect(page.locator("#board .cut")).to_have_count(1)
-    flip.click()  # Flip off: the copper side as seen from the parts side
+    expect(hide).to_be_disabled()
+    page.reload()
+    show_board(page)
+    expect(flip).to_have_attribute("aria-pressed", "true")
     expect(page.locator("#board g.board.copper")).to_have_count(1)
-    expect(board).not_to_have_attribute("transform", re.compile("scale"))
-    hide.click()  # the parts side again, unflipped
+    expect(board).to_have_attribute("transform", re.compile(r"scale\(-1 1\)"))
+    flip.click()  # the front again, parts and all
     expect(page.locator("#board g.board.copper")).to_have_count(0)
     expect(board).not_to_have_attribute("transform", re.compile("scale"))
+    expect(hide).to_be_enabled()
+    hide.click()  # the front's copper, seen through
+    expect(hide).to_have_attribute("aria-pressed", "true")
+    expect(page.locator("#board g.board.copper")).to_have_count(1)
+    expect(board).not_to_have_attribute("transform", re.compile("scale"))
+    hide.click()
+    expect(page.locator("#board g.board.copper")).to_have_count(0)
 
 
 def test_a_join_no_link_can_make_is_explained_in_warnings(page: Page, base_url: str) -> None:
@@ -1110,7 +1108,7 @@ def test_build_a_full_layout_reviewed_tried_again_kept_and_undone(
     """D-399: *Build a full layout* on the Rangemaster's empty board, Quick, its time
     worked out; the running window, then the review, a pane at the top of the right column
     with the canvas outlined (D-406): After | Before | Both (top and bottom), Hide parts and
-    Flip still at hand (both boards turned over in Both), Try another and back to try 1, Keep
+    Flip still at hand (both backs shown in Both), Try another and back to try 1, Keep
     try 1 (one undo step). Then Thorough, stopped early: its best kept for the review, and the
     old board kept."""
     open_with_board(page, base_url, None)
@@ -1142,14 +1140,15 @@ def test_build_a_full_layout_reviewed_tried_again_kept_and_undone(
     expect(page.locator("#canvas-body")).to_have_class(re.compile("split"))
     expect(page.locator(".board-before")).to_be_visible()
     expect(page.locator(".compact-title.bottom")).to_contain_text("After, try 1")
-    # the view's buttons work on the boards under review: Flip turns both over
+    # the view's buttons work on the boards under review: Flip shows both backs
     page.locator("#board-flip").click()
     for drawn in ("#board g.board", ".board-before g.board"):
         expect(page.locator(drawn)).to_have_attribute("transform", re.compile(r"scale\(-1 1\)"))
+    expect(page.locator(".board-before g.board.copper")).to_have_count(1)
+    page.locator("#board-flip").click()
     page.locator("#board-hide").click()
     expect(page.locator(".board-before g.board.copper")).to_have_count(1)
     page.locator("#board-hide").click()
-    page.locator("#board-flip").click()
     review.locator("[data-mode='before']").click()
     expect(page.locator(".board-before")).to_be_hidden()
     review.locator("[data-mode='after']").click()

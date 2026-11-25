@@ -274,14 +274,25 @@ export function boardView(host, app) {
   const hideButton = $("board-hide");
   const flipButton = $("board-flip");
   flipButton.setAttribute("aria-pressed", String(settings.mirror));
-  const sideShown = (/** @type {boolean} */ copper) => hideButton.setAttribute("aria-pressed", String(copper));
-  hideButton.addEventListener("click", (e) => { // Hide parts (D-390): the side up, flipped or not
-    const up = !canvas.copper();
-    canvas.show(up, settings.mirror, sideShown);
-    beforeCanvas.show(up, settings.mirror); // Both, under review: the board before as well
+  let hidden = false; // Hide parts: the front's copper seen through (D-390)
+  /** Hide parts pressed only on the front; greyed on the back, where there are no parts to hide. */
+  const sideShown = () => {
+    hideButton.setAttribute("aria-pressed", String(hidden && !settings.mirror));
+    /** @type {HTMLButtonElement} */ (hideButton).disabled = settings.mirror;
+  };
+  /** The side shown: Flip, the back (the copper turned over, as you solder it, D-406); else the front, parts hidden or not. @param {boolean} [now] no animation */
+  const showSide = (now = false) => {
+    const up = settings.mirror || hidden;
+    if (now) canvas.side(up, settings.mirror), beforeCanvas.side(up, settings.mirror), sideShown();
+    else canvas.show(up, settings.mirror, sideShown), beforeCanvas.show(up, settings.mirror); // Both, under review: the board before as well
+  };
+  showSide(true); // Flip is remembered: the board opens on the side it was left
+  hideButton.addEventListener("click", (e) => {
+    hidden = !hidden;
+    showSide();
     if (e.detail) hideButton.blur(); // clicked: the board's keys act again
   });
-  flipButton.addEventListener("click", (e) => { // Flip: the side shown, turned over
+  flipButton.addEventListener("click", (e) => { // Flip: the back of the board, or the front again
     setSetting("mirror", !settings.mirror);
     if (e.detail) flipButton.blur();
   });
@@ -1206,10 +1217,7 @@ export function boardView(host, app) {
     remember(SETTINGS_KEY, settings);
     seeButton.setAttribute("aria-pressed", String(settings.seeThrough));
     flipButton.setAttribute("aria-pressed", String(settings.mirror));
-    if (key === "mirror") { // Flip: the side shown, turned over, parts kept; the board before too
-      canvas.show(canvas.copper(), on, sideShown);
-      beforeCanvas.show(canvas.copper(), on);
-    }
+    if (key === "mirror") showSide(); // Flip: the back, or the front again; the board before too
     draw();
     fillPanes();
   }

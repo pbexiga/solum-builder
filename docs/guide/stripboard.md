@@ -95,8 +95,8 @@ The board is whatever is on it: the box around every leg, body, link and wire pa
 
 ## Seeing the copper
 
-- **Hide parts** shows the copper side as seen from the parts side: the strips, the holes used, the cuts and the links.
-- **Flip** turns the board over, as you hold it to solder: the parts side with its parts, or, with Hide parts, the copper side as you solder it.
+- **Flip** shows the back of the board: the copper side, turned over as you hold it to solder, with the strips, the holes used, the cuts and the links. Click it again for the front.
+- **Hide parts** shows the copper seen through from the front, lined up with the parts side, so you can match a strip to a part. It's greyed while the board is flipped.
 - **See-through** (T) fades the parts so the holes and cuts under them show.
 
 Links are drawn in lavender on both sides. **Highlight rails**, in Settings, tints the supply's copper and ground's.
@@ -152,7 +152,7 @@ While it runs, a window shows its progress and the best board so far (*Best so f
 
 ### Looking before you keep it
 
-When it's done, **Review the layout** opens at the top of the right-hand column and compares the two: *Before 34 × 13 holes, 14 cuts, 15 links → After 15 × 7 holes, 11 cuts, 6 links*. Until you keep a board, the canvas has a yellow outline and the board can't be edited: the tray, the panes and Parts, Cuts and Links are faded. **Hide parts**, **Flip** and **See-through** still work, on both boards in Both.
+When it's done, **Review the layout** opens at the top of the right-hand column and compares the two: *Before 34 × 13 holes, 14 cuts, 15 links → After 15 × 7 holes, 11 cuts, 6 links*. Until you keep a board, the canvas has a yellow outline and the board can't be edited: the tray, the panes and Parts, Cuts and Links are faded. **Flip**, **Hide parts** and **See-through** still work, on both boards in Both.
 
 ![Review the layout in Both: the board before above, the new one below](img/board-review.png)
 

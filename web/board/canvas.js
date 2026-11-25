@@ -388,7 +388,7 @@ export function boardCanvas(svg, app) {
 
   /**
    * Show the parts side or the copper side (`up`, Hide parts), either turned over or not
-   * (`mirror`, Flip; D-390's Mirror turned the copper side only). A change of mirroring is a
+   * (`mirror`: Flip shows the back, the copper side turned over, D-406). A change of mirroring is a
    * short animation turning the board over, none when the system asks for less motion; the
    * rest is at once. Holes are picked through the mirror.
    * @param {boolean} up @param {boolean} mirror @param {(copper: boolean) => void} [done] told the side now up

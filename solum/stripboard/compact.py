@@ -638,7 +638,7 @@ class State:
         broken, far = self.broken(cuts)
         noisy = sum(not quiet(n, c, top, bot) for n, v in joins.items() for c, top, bot in v)
         stood = self.stood()
-        beside = self.alongside(x0, x1)
+        beside = self.alongside(x0, x1, buses)
         area = (x1 - x0 + 1) * (y1 - y0 + 1)
         count = sum(len(v) for v in joins.values())
         length = sum(bot - top for v in joins.values() for _, top, bot in v)
@@ -648,20 +648,24 @@ class State:
         return Derived(cost, problems, (x0, y0, x1, y1), cuts, count, length, dict(joins),
                        broken, far, noisy, stood, beside)  # fmt: skip
 
-    def alongside(self, x0: int, x1: int) -> int:
+    def alongside(self, x0: int, x1: int, buses: dict[int, int] | None = None) -> int:
         """How many pairs of neighbouring strips run a later net's copper beside a
         high-gain input's for `apart.ALONGSIDE` columns or more, within columns `x0`–`x1`
-        (D-404; a bus's copper isn't counted)."""
+        (D-404); `buses`: each net's bus strip, copper the whole width (as the check
+        counts it)."""
         along = self.pb.along
         if not along:
             return 0
+        rows = {y: row.pieces for y, row in self.done.items()}
+        for n, y in (buses or {}).items():
+            rows[y] = (*rows.get(y, ()), (n, x0, x1))
         count = 0
-        for y, row in self.done.items():
-            below = self.done.get(y + 1)
+        for y, pieces in rows.items():
+            below = rows.get(y + 1)
             if below is None:
                 continue
-            for na, la, ha in row.pieces:
-                for nb, lb, hb in below.pieces:
+            for na, la, ha in pieces:
+                for nb, lb, hb in below:
                     if (na, nb) in along and min(ha, hb, x1) - max(la, lb, x0) + 1 >= ALONGSIDE:
                         count += 1
         return count

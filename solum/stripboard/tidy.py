@@ -5,9 +5,10 @@ The steps are tried in a fixed order, over and over until a whole pass keeps non
 out an empty column or strip, drop a link or a cut, slide a part left (with the cuts and
 links of its own columns, then alone) or up, slide a link, a cut or a pad, shorten a link,
 and, when the board's choice is Prefer (D-403), stand a resistor or diode up (one leg
-kept, the other beside it) and take out the lines that empties. When needed, Tidy up
-stands nothing: the board doesn't say which parts the builder laid flat by hand, and
-those are theirs (the user).
+kept, the other beside it) and take out the lines that empties. When needed, a part is
+stood up only where that leaves fewer placement limits broken and warnings (links near
+a sensitive part, strips alongside a high-gain input), whatever it does to the size, and
+then the board is tidied again (the user: as the other layout choices do).
 After each step the board is trimmed to what's on it. A step is kept when the check passes
 and the board's size, cuts and links are each no worse and its measure (size, cuts, links,
 standing parts when preferred, the links' length, then how far everything sits from the
@@ -91,6 +92,10 @@ def key(layout: Layout) -> Key:
     return (size, len(layout.cuts), len(layout.links), preferred, length, spread)
 
 
+def _standing(layout: Layout) -> set[str]:
+    return {p.ref for p in layout.parts if p.standing}
+
+
 def _better(new: Key, old: Key) -> bool:
     """No worse in size, cuts or links, and smaller as a whole."""
     return all(n <= o for n, o in zip(new[:3], old[:3], strict=True)) and new < old
@@ -170,12 +175,38 @@ def _steps(layout: Layout, board: dict[str, BoardPart], stand: bool = False) -> 
             for d in ((-1, 0), (0, -1)):
                 yield partial(_shifted, d=d, pads=frozenset({i}))
     if stand and layout.stand_up == "prefer":
-        for placed in layout.parts:
-            part = board.get(placed.ref)
-            if part is None or placed.standing or part.footprint.shape != "axial":
+        yield from _stand_steps(layout, board)
+
+
+def _stand_steps(layout: Layout, board: dict[str, BoardPart]) -> Iterator[Step]:
+    """Each flat resistor or diode stood up, every way (D-403)."""
+    for placed in layout.parts:
+        part = board.get(placed.ref)
+        if part is None or placed.standing or part.footprint.shape != "axial":
+            continue
+        for legs in _stood_legs(placed, part.footprint.stand):
+            yield partial(_stand_up, ref=placed.ref, legs=legs, board=board)
+
+
+def stand_where_needed(layout: Layout, passes: Callable[[Layout], bool],
+                       faults: Callable[[Layout], int],
+                       board: dict[str, BoardPart]) -> Layout:  # fmt: skip
+    """`layout` with parts stood up one at a time, each kept only where the board still
+    `passes` and has fewer `faults` (limits broken and warnings), the first such in the
+    steps' order, until none helps (When needed, D-403)."""
+    best, worst = layout, faults(layout)
+    while worst:
+        for step in _stand_steps(best, board):
+            try:
+                made = trim(step(best), board)
+            except (SizeError, IndexError):
                 continue
-            for legs in _stood_legs(placed, part.footprint.stand):
-                yield partial(_stand_up, ref=placed.ref, legs=legs, board=board)
+            if (now := faults(made)) < worst and passes(made):
+                best, worst = made, now
+                break
+        else:
+            break
+    return best
 
 
 _AROUND = ((1, 0), (-1, 0), (0, 1), (0, -1))
@@ -295,23 +326,42 @@ def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Footp
                          if len(part.legs) == 2 and either_way(part, kinds.get(ref)))  # fmt: skip
     board, off, same = r.board, r.off_board, joins(layout, turnable)
     limits = placement_limits(circuit, r.nets, board, loud)
-    broken = set(broken_limits(layout, limits, turnable))
     kept = guards(board, r.nets, loud)
-    noisy = len(noisy_links(layout, board, r.nets, kept))
-    beside = len(alongside(layout, board, r.nets, loud, copper_groups(layout)))  # D-404
 
-    def passes(made: Layout) -> bool:  # quickest first: the holes, the joins, then the check
-        return (not occupants(made)[1] and joins(made, turnable) == same
-                and not placement_faults(made, board, off)
-                and set(broken_limits(made, limits, turnable)) <= broken
-                and len(noisy_links(made, board, r.nets, kept)) <= noisy
-                and len(alongside(made, board, r.nets, loud, copper_groups(made))) <= beside
-                and check_layout(made, circuit, models, table).ok)  # fmt: skip
+    def broken(made: Layout) -> set[tuple[str, str]]:
+        return set(broken_limits(made, limits, turnable))
 
-    tidied = tidy_steps(layout, passes, board)
+    def noisy(made: Layout) -> int:
+        return len(noisy_links(made, board, r.nets, kept))
+
+    def beside(made: Layout) -> int:  # D-404
+        return len(alongside(made, board, r.nets, loud, copper_groups(made)))
+
+    def no_worse(than: Layout) -> Callable[[Layout], bool]:
+        """A step's check: the board still passes, with no limit broken that `than` met
+        and no more warnings."""
+        was = (broken(than), noisy(than), beside(than))
+
+        def passes(made: Layout) -> bool:  # quickest first: holes, joins, then the check
+            return (not occupants(made)[1] and joins(made, turnable) == same
+                    and not placement_faults(made, board, off)
+                    and broken(made) <= was[0] and noisy(made) <= was[1]
+                    and beside(made) <= was[2]
+                    and check_layout(made, circuit, models, table).ok)  # fmt: skip
+
+        return passes
+
+    def faults(made: Layout) -> int:
+        return len(broken(made)) + noisy(made) + beside(made)
+
+    tidied = tidy_steps(layout, no_worse(layout), board)
     if tidied.stand_up == "prefer":  # then parts stood up, from there: never worse (D-403)
-        tidied = tidy_steps(tidied, passes, board, stand=True)
-    if key(tidied)[:5] == key(layout)[:5]:  # only nudged: keep the builder's board
+        tidied = tidy_steps(tidied, no_worse(layout), board, stand=True)
+    elif tidied.stand_up == "needed":  # a part stood up only where a rule needs it
+        stood = stand_where_needed(tidied, no_worse(tidied), faults, board)
+        if stood != tidied:  # then tidied again, keeping what standing met
+            tidied = tidy_steps(stood, no_worse(stood), board)
+    if key(tidied)[:5] == key(layout)[:5] and _standing(tidied) == _standing(layout):
         if not mended:
             raise TidyError("Couldn't make this board smaller.")
         tidied = layout

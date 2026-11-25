@@ -23,7 +23,7 @@ from solum.stripboard.compact import finish, problem, search
 from solum.stripboard.footprints import one_board_part
 from solum.stripboard.limits import LoudInput, broken_limits, placement_limits
 from solum.stripboard.start import stand_order, start_for_me
-from solum.stripboard.tidy import key, tidy_up
+from solum.stripboard.tidy import key, stand_where_needed, tidy_up
 
 REPO = Path(__file__).resolve().parents[2]
 LIBRARY = REPO / "library"
@@ -113,17 +113,38 @@ def test_try_another_uses_the_board_s_own_choice() -> None:
 
 
 @pytest.mark.parametrize(("choice", "stood"), [("never", []), ("needed", []), ("prefer", ["R3"])])
-def test_tidy_up_stands_a_part_only_when_preferred(choice: StandUp, stood: list[str]) -> None:
+def test_tidy_up_stands_a_part_as_the_choice_says(choice: StandUp, stood: list[str]) -> None:
     """On the Rangemaster's Start a board (12 × 9): Prefer stands R3 up (the board no
-    bigger); When needed Tidy up stands nothing (the board can't tell the parts the
-    builder laid flat, the user), Never doesn't try. The choice is kept with the board,
-    and None means the board's own."""
+    bigger); When needed doesn't (no limit broken nor warning for it to clear: standing
+    would only save room); Never doesn't try. The choice is kept with the board, and None
+    means the board's own."""
     base = start_for_me(None, RANGEMASTER, MODELS, TABLE, fill=False).layout
     tidied = tidy_up(base, RANGEMASTER, MODELS, TABLE, stand_up=choice).layout
     assert standing(tidied) == stood and tidied.stand_up == choice
     assert check_layout(tidied, RANGEMASTER, MODELS, TABLE).ok
     own = tidy_up(replace(base, stand_up=choice), RANGEMASTER, MODELS, TABLE)
     assert own.layout == tidied
+
+
+def test_when_needed_tidy_up_stands_a_part_only_where_it_clears_a_fault() -> None:
+    """`stand_where_needed`: R1 lies flat across A1–A5 (legs 1 and 2, a strip apart is
+    the hole below); a fault cleared only with leg 2 brought to A2 (leg 1 kept in A1,
+    the other stood beside it): that stand is kept, and nothing more. With no fault, or a
+    fault no stand clears, the board is left as it was; a board that wouldn't pass the
+    check isn't taken."""
+    r1 = one_board_part(Resistor(ref="R1", pos=(0, 0), type="resistor", value=10e3), MODELS,
+                        TABLE)  # fmt: skip
+    board = {"R1": r1}
+    flat = Layout(3, 6, (Placed("R1", (("1", (0, 0)), ("2", (0, 4)))),))
+
+    def met(layout: Layout) -> bool:
+        return dict(layout.parts[0].legs)["2"] == (0, 1)
+
+    stood = stand_where_needed(flat, lambda _: True, lambda m: 0 if met(m) else 1, board)
+    assert standing(stood) == ["R1"] and met(stood)
+    assert stand_where_needed(flat, lambda _: True, lambda _: 0, board) == flat  # room alone
+    assert stand_where_needed(flat, lambda _: True, lambda _: 1, board) == flat  # no help
+    assert stand_where_needed(flat, lambda _: False, lambda m: 0 if met(m) else 1, board) == flat
 
 
 def test_tidy_up_s_measure_counts_standing_parts_only_when_preferred() -> None:

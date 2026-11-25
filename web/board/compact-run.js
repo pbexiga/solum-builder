@@ -77,7 +77,7 @@ export function compactRun(host, app) {
   let circuit = null; // the circuit as it was when the run began
   let thorough = false;
   /** @type {import("./board-logic.js").StandUp} */
-  let standUp = "room"; // standing parts (D-403): every try's the same
+  let standUp = "needed"; // standing parts (D-403): every try's the same
   let expected = 0; // seconds a try was said to take (the estimate), 0 when not known
   let attempt = 0;
   /** @type {BoardLine | null} */

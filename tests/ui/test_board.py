@@ -876,7 +876,7 @@ def test_the_layout_dialog_s_standing_choice_is_kept_with_the_board(
     page: Page, base_url: str
 ) -> None:
     """D-403: the dialog's last line, Standing resistors and diodes, opens on the board's
-    own choice (When it saves room on a new board). Start a board with Prefer stands the
+    own choice (When needed on a new board). Start a board with Prefer stands the
     Fuzz Face's resistors (10 × 6 for 10 × 10 flat) and the board keeps the choice: the
     dialog opens on Prefer next time; Never then lays everything flat again."""
     open_with_board(page, base_url, None, "fuzz-face")
@@ -885,7 +885,7 @@ def test_the_layout_dialog_s_standing_choice_is_kept_with_the_board(
     page.locator("#board-layout").click()
     dialog = page.locator("#layout-dialog")
     expect(dialog.locator(".layout-standing")).to_contain_text("Standing resistors and diodes")
-    expect(dialog.locator("input[name='layout-stand'][value='room']")).to_be_checked()
+    expect(dialog.locator("input[name='layout-stand'][value='needed']")).to_be_checked()
     dialog.locator("input[name='layout-stand'][value='prefer']").check()
     dialog.locator("#layout-compact").set_checked(False)
     dialog.locator("button[data-answer='go']").click()

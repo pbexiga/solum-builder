@@ -765,7 +765,7 @@ class Stripboard(_Model):
     where: dict[str, Literal["board", "off-board"]] = Field(default_factory=dict)
     notes: list[BoardNote] = Field(default_factory=list)
     dismissed: list[BoardDismissal] = Field(default_factory=list)
-    stand_up: Literal["never", "room", "prefer"] = "room"
+    stand_up: Literal["never", "needed", "prefer"] = "needed"
 
     @model_validator(mode="after")
     def _readable(self) -> Self:

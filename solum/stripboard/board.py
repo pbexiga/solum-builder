@@ -97,8 +97,8 @@ class Wire:
 
 
 EDGE = "edge"  # the other side of a body hanging past the board's edge (D-394)
-StandUp = Literal["never", "room", "prefer"]  # standing resistors and diodes (D-403)
-STAND_UP: tuple[StandUp, ...] = ("never", "room", "prefer")
+StandUp = Literal["never", "needed", "prefer"]  # standing resistors and diodes (D-403)
+STAND_UP: tuple[StandUp, ...] = ("never", "needed", "prefer")
 
 
 @dataclass(frozen=True)
@@ -163,7 +163,7 @@ class Layout:
     where: tuple[tuple[str, str], ...] = ()  # a part moved on or off the board by choice
     notes: tuple[Note, ...] = ()  # the builder's notes (D-398)
     dismissed: tuple[Dismissed, ...] = ()  # overlap warnings dismissed (D-398)
-    stand_up: StandUp = "room"  # the layout help's choice that made it (D-403)
+    stand_up: StandUp = "needed"  # the layout help's choice that made it (D-403)
 
     @property
     def pads(self) -> list[Hole]:
@@ -234,9 +234,9 @@ def layout_from_data(data: Mapping[str, Any]) -> Layout:
         where = tuple((str(ref), str(at)) for ref, at in data.get("where", {}).items())
         notes = tuple(note_from_data(n) for n in data.get("notes") or ())
         dismissed = tuple(dismissed_from_data(d) for d in data.get("dismissed") or ())
-        stand_up = data.get("stand_up") or "room"
+        stand_up = data.get("stand_up") or "needed"
         if stand_up not in STAND_UP:
-            raise BoardError("Standing resistors and diodes is never, room or prefer.")
+            raise BoardError("Standing resistors and diodes is never, needed or prefer.")
         return Layout(columns, strips, parts, frozenset(_holes(data.get("cuts", ()))), links,
                       wires, spots, where, notes, dismissed, stand_up)  # fmt: skip
     except (KeyError, TypeError, ValueError) as err:

@@ -71,7 +71,8 @@ from solum.stripboard.wiring import WiringError, wire_for_me
 
 BOTTOM = (GROUND, "V-")  # nets whose bus is a bottom strip (on a new board)
 AXIAL_SPREAD = 3  # holes more than its least a flat resistor or diode may span
-Stand = Literal["none", "first", "last"]  # standing tried: not at all, before, after (D-403)
+Stand = Literal["none", "first", "last", "needed"]  # standing tried (D-403): not at all,
+# before lying flat, after it, or only for a part that can't reach its pin lying flat
 EXTRA_ROWS = 20  # rows beyond the tallest part's tried for the parts' band
 LIMIT_COST = 20  # pass 1: a kept part whose leg can't be on its pin's strip (2 pieces)
 SLIDE = 8  # columns the parts before a chip may slide right to sit by its pin
@@ -195,17 +196,17 @@ def shapes(part: BoardPart, every: bool = False, stand: Stand = "none") -> list[
     top to bottom either way round, at each step its footprint allows (a flat resistor or
     diode from its least span to a few holes more). `every` adds the ways *Build a full
     layout* also tries (D-399): a line of legs along a strip, a trimmer turned a quarter.
-    `stand`: a resistor or diode stood up too, tried `first` or `last` (D-403)."""
-    return list(_shapes(part.footprint, part.legs, every, stand))
+    `stand`: a resistor or diode stood up too, tried `first` or `last` (D-403; `needed`
+    lists it last)."""
+    return list(_shapes(part.footprint, part.legs, every, "last" if stand == "needed" else stand))
 
 
-def stand_order(stand_up: StandUp, fill: bool) -> Stand:
-    """Where Start a board (`fill` False) and Fill the rest try standing a part (D-403):
-    Start a board only when the choice is Prefer (roomy and predictable); Fill the rest
-    after lying flat when it saves room, first when preferred; never, never."""
-    if stand_up == "prefer":
-        return "first"
-    return "last" if fill and stand_up == "room" else "none"
+def stand_order(stand_up: StandUp) -> Stand:
+    """How Start a board and Fill the rest try standing a part (D-403): first when
+    preferred; when needed, only for a part kept by a pin that no flat shape brings to
+    the pin's row; never, never."""
+    order: dict[StandUp, Stand] = {"prefer": "first", "needed": "needed", "never": "none"}
+    return order[stand_up]
 
 
 @lru_cache(maxsize=512)
@@ -344,8 +345,15 @@ def _best(r: Reading, ref: str, height: int, carried: list[str | None], left: di
     the rows putting it there only (any row, at `LIMIT_COST` more, when none can), and
     whether the part comes before its pin (that leg rightmost, else leftmost, as ties go)."""
     part = r.board[ref]
+    every = shapes(part, stand=stand)
+    if stand == "needed":  # flat first; standing only when no flat shape meets the limit
+        flat = _best(r, ref, height, carried, left, want, "none")
+        if want is None or _reaches(flat, want) or len(every) == len(shapes(part)):
+            return flat
+        up = _best(r, ref, height, carried, left, want, "last")
+        return up if _reaches(up, want) else flat
     best: tuple[tuple[float, int, int, int], _Choice] | None = None
-    for k, shape in enumerate(shapes(part, stand=stand)):
+    for k, shape in enumerate(every):
         rows = range(shape.up, height - shape.down)
         if want is not None:
             row = want[1] - shape.legs[want[0]][1]
@@ -364,6 +372,11 @@ def _best(r: Reading, ref: str, height: int, carried: list[str | None], left: di
     return None if best is None else (best[0][0], best[1])
 
 
+def _reaches(found: tuple[float, _Choice] | None, want: tuple[str, int, bool]) -> bool:
+    """Whether a place found puts the kept leg on its pin's row."""
+    return found is not None and found[1].row + found[1].shape.legs[want[0]][1] == want[1]
+
+
 def _block(r: Reading, block: _Block, height: int, carried: list[str | None],
            left: dict[str, int],
            stand: Stand = "none") -> tuple[list[_Choice], int] | None:  # fmt: skip
@@ -374,7 +387,8 @@ def _block(r: Reading, block: _Block, height: int, carried: list[str | None],
     anchor = r.board[block.anchor]
     best: tuple[tuple[float, int, int], list[_Choice], int, list[str | None],
                 dict[str, int]] | None = None  # fmt: skip
-    for k, shape in enumerate(shapes(anchor, stand=stand)):
+    ways = shapes(anchor, stand="none" if stand == "needed" else stand)  # an anchor lies flat
+    for k, shape in enumerate(ways):
         for row in range(shape.up, height - shape.down):
             c, lf = list(carried), dict(left)
             choices: list[_Choice] = []
@@ -796,7 +810,7 @@ def start_for_me(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
     the board's own choice), kept with the board made (D-403)."""
     old = layout or Layout(0, 0, ())
     stand_up = stand_up or old.stand_up
-    stand = stand_order(stand_up, fill)
+    stand = stand_order(stand_up)
     kept = replace(Layout(0, 0, ()), where=old.where, notes=old.notes, dismissed=old.dismissed,
                    stand_up=stand_up)  # fmt: skip
     base = replace(old, stand_up=stand_up) if fill else kept  # Start over keeps the choices
@@ -812,22 +826,31 @@ def start_for_me(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
     kept_parts = guards(r.board, r.nets, loud)
     guarded = {g.ref: (g.net, g.legs) for g in kept_parts}
     units = _units(todo, limits)
-    tallest = max((min(s.up + s.down for s in shapes(r.board[ref], stand=stand)) for ref in todo),
+    lying = "none" if stand == "needed" else stand  # the band fits the parts lying flat
+    tallest = max((min(s.up + s.down for s in shapes(r.board[ref], stand=lying)) for ref in todo),
                   default=0)  # fmt: skip
     remaining = _legs_to_place(r, todo)
-    best: tuple[tuple[int, int, int, int, int], Layout, list[str]] | None = None
+    best: tuple[tuple[int, int, int, int, int, int], Layout, list[str]] | None = None
+    # when needed, each band laid out with the parts that must stand stood up and, if any
+    # did, flat too (with none standing, the two are the same board): a standing part kept
+    # only where it breaks fewer limits, never for room (D-403)
     for height in range(tallest + 1, tallest + 2 + EXTRA_ROWS):
         chosen = _choose(r, units, height, remaining, stand)
-        if chosen is None:
-            continue
-        made, left = _laid_out(r, circuit, base, todo, *chosen, height, guarded,
-                               calm_nets(kept_parts))  # fmt: skip
-        broken = len(broken_limits(made, limits))
-        noisy = len(noisy_links(made, r.board, r.nets, kept_parts))
-        noisy += len(alongside(made, r.board, r.nets, loud, copper_groups(made)))  # D-404
-        key = (len(left), broken, made.columns * made.strips, noisy, len(made.links))
-        if best is None or key < best[0]:
-            best = (key, made, left)
+        tries = [chosen]
+        if chosen is not None and stand == "needed" and any(c.shape.standing for c in chosen[0]):
+            tries.append(_choose(r, units, height, remaining, "none"))
+        for chosen in tries:
+            if chosen is None:
+                continue
+            made, left = _laid_out(r, circuit, base, todo, *chosen, height, guarded,
+                                   calm_nets(kept_parts))  # fmt: skip
+            broken = len(broken_limits(made, limits))
+            noisy = len(noisy_links(made, r.board, r.nets, kept_parts))
+            noisy += len(alongside(made, r.board, r.nets, loud, copper_groups(made)))  # D-404
+            stood = sum(p.standing for p in made.parts) if stand == "needed" else 0
+            key = (len(left), broken, stood, made.columns * made.strips, noisy, len(made.links))
+            if best is None or key < best[0]:
+                best = (key, made, left)
         if not todo:
             break
     if best is None:

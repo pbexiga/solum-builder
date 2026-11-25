@@ -2283,10 +2283,10 @@
           "type": "array"
         },
         "stand_up": {
-          "default": "room",
+          "default": "needed",
           "enum": [
             "never",
-            "room",
+            "needed",
             "prefer"
           ],
           "title": "Stand Up",

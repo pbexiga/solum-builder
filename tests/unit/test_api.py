@@ -944,7 +944,7 @@ def test_stripboard_edit_places_moves_and_refuses_in_words(monkeypatch: pytest.M
     assert first == {
         "stripboard": {"size": [1, 5], "parts": {"R2": {"1": "A1", "2": "A5"}}, "standing": [],
                        "cuts": [], "links": [], "wires": [], "off": {}, "where": {},
-                       "notes": [], "dismissed": [], "stand_up": "room"},
+                       "notes": [], "dismissed": [], "stand_up": "needed"},
         "shift": [-3, -2],
     }  # fmt: skip
     board = {**data, "stripboard": load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")}

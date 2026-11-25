@@ -4,8 +4,10 @@ kept only when the board still passes the check and is no worse in size, cuts or
 The steps are tried in a fixed order, over and over until a whole pass keeps none: take
 out an empty column or strip, drop a link or a cut, slide a part left (with the cuts and
 links of its own columns, then alone) or up, slide a link, a cut or a pad, shorten a link,
-and, when the board's choice allows it (D-403), stand a resistor or diode up (one leg
-kept, the other beside it) and take out the lines that empties.
+and, when the board's choice is Prefer (D-403), stand a resistor or diode up (one leg
+kept, the other beside it) and take out the lines that empties. When needed, Tidy up
+stands nothing: the board doesn't say which parts the builder laid flat by hand, and
+those are theirs (the user).
 After each step the board is trimmed to what's on it. A step is kept when the check passes
 and the board's size, cuts and links are each no worse and its measure (size, cuts, links,
 standing parts when preferred, the links' length, then how far everything sits from the
@@ -76,18 +78,15 @@ class Tidied:
 
 
 def key(layout: Layout) -> Key:
-    """A board's measure, smaller is tidier: its size in holes (each standing part a
-    column's worth more when the board stands parts only where it saves room, D-403), its
-    cuts, its links, its parts lying flat when standing is preferred, the links' length,
-    then how far its legs, cuts and links sit from the top left."""
+    """A board's measure, smaller is tidier: its size in holes, its cuts, its links, its
+    parts lying flat when standing is preferred (D-403), the links' length, then how far
+    its legs, cuts and links sit from the top left."""
     length = sum(abs(link.a[1] - link.b[1]) for link in layout.links)
     spread = sum(h[0] + h[1] for p in layout.parts for _, h in p.legs)
     spread += sum(h[0] + h[1] for h in layout.cuts)
     spread += sum(h[0] + h[1] for link in layout.links for h in (link.a, link.b))
     standing = sum(p.standing for p in layout.parts)
     size = layout.columns * layout.strips
-    if layout.stand_up == "room":
-        size += standing * layout.strips
     preferred = -standing if layout.stand_up == "prefer" else 0
     return (size, len(layout.cuts), len(layout.links), preferred, length, spread)
 
@@ -170,7 +169,7 @@ def _steps(layout: Layout, board: dict[str, BoardPart], stand: bool = False) -> 
         if wire.hole is not None:
             for d in ((-1, 0), (0, -1)):
                 yield partial(_shifted, d=d, pads=frozenset({i}))
-    if stand and layout.stand_up != "never":
+    if stand and layout.stand_up == "prefer":
         for placed in layout.parts:
             part = board.get(placed.ref)
             if part is None or placed.standing or part.footprint.shape != "axial":
@@ -310,7 +309,7 @@ def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Footp
                 and check_layout(made, circuit, models, table).ok)  # fmt: skip
 
     tidied = tidy_steps(layout, passes, board)
-    if tidied.stand_up != "never":  # then parts stood up, from there: never worse (D-403)
+    if tidied.stand_up == "prefer":  # then parts stood up, from there: never worse (D-403)
         tidied = tidy_steps(tidied, passes, board, stand=True)
     if key(tidied)[:5] == key(layout)[:5]:  # only nudged: keep the builder's board
         if not mended:

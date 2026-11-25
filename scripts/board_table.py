@@ -60,7 +60,7 @@ class Row:
                 f"| {self.grounds} |")  # fmt: skip
 
 
-def table(names: list[str] | None, stand_up: StandUp = "room") -> tuple[list[Row], list[str]]:
+def table(names: list[str] | None, stand_up: StandUp = "needed") -> tuple[list[Row], list[str]]:
     """Every starter's full layout (`names`: only those) with standing parts as `stand_up`
     says (D-403), and the starters that can't go on a board, with why."""
     settings = load_settings({"DATA_DIR": str(WORK / "data"), "CACHE_DIR": str(WORK / "cache"),
@@ -105,7 +105,7 @@ def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__.splitlines()[0])
     ap.add_argument("starters", nargs="*")
     ap.add_argument("--out", type=Path)
-    ap.add_argument("--stand-up", choices=STAND_UP, default="room")
+    ap.add_argument("--stand-up", choices=STAND_UP, default="needed")
     args = ap.parse_args()
     rows, skipped = table(args.starters or None, args.stand_up)
     text = "\n".join([HEAD, "|" + "---|" * HEAD.count(" | ") + "---|",

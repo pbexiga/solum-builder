@@ -1080,7 +1080,7 @@ def _v39_to_v40(data: Data) -> Data:
 
 def _v40_to_v41(data: Data) -> Data:
     """v41 (D-403) added the board's `stand_up`, the layout help's choice for standing
-    resistors and diodes; an older board has none and reads as the default ("room"), so a
+    resistors and diodes; an older board has none and reads as the default ("needed"), so a
     v40 file is a valid v41 file."""
     return data
 

@@ -1,21 +1,27 @@
-"""Standing resistors and diodes, the board's choice (D-403): Never, When it saves room
-(the default) or Prefer, for Start a board, Fill the rest, Tidy up and Build a full
-layout; kept with the board, so Try another and a later Tidy up use it; and a standing
-part's outline, checked for touching like any other body."""
+"""Standing resistors and diodes, the board's choice (D-403): Never, When needed (the
+default) or Prefer, for Start a board, Fill the rest, Tidy up and Build a full layout;
+kept with the board, so Try another and a later Tidy up use it; and a standing part's
+outline, checked for touching like any other body. When needed, a part stands only where
+lying flat it breaks a placement limit (or a warning, in the full layout), never to save
+room (the user)."""
 
 from dataclasses import replace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
+from solum.circuit.connectivity import connect
 from solum.circuit.io import load_circuit
-from solum.circuit.schema import Capacitor, Resistor
+from solum.circuit.schema import Capacitor, Circuit, Resistor
 from solum.guides import footprint_table
 from solum.models import load_models
+from solum.stripboard import compact
 from solum.stripboard.board import Layout, Placed, StandUp
-from solum.stripboard.check import check_layout, outline_overlaps
+from solum.stripboard.check import check_layout, outline_overlaps, read_layout
 from solum.stripboard.compact import finish, problem, search
 from solum.stripboard.footprints import one_board_part
+from solum.stripboard.limits import LoudInput, broken_limits, placement_limits
 from solum.stripboard.start import stand_order, start_for_me
 from solum.stripboard.tidy import key, tidy_up
 
@@ -26,7 +32,10 @@ TABLE = footprint_table(LIBRARY)
 TS808 = load_circuit(LIBRARY / "starters" / "ts808.json")
 FUZZ_FACE = load_circuit(LIBRARY / "starters" / "fuzz-face.json")
 RANGEMASTER = load_circuit(LIBRARY / "starters" / "dallas-rangemaster.json")
-CHOICES: tuple[StandUp, ...] = ("never", "room", "prefer")
+# the TS808's high-gain stages' inputs as `probe.loud_inputs` finds them (it needs ngspice)
+TS808_LOUD = [LoudInput("Q1", "B", frozenset({"V+", "GND"})),
+              LoudInput("IC1B", "+", frozenset({"V+", "GND"}))]  # fmt: skip
+CHOICES: tuple[StandUp, ...] = ("never", "needed", "prefer")
 
 
 def standing(layout: Layout) -> list[str]:
@@ -37,26 +46,49 @@ def empty(stand_up: StandUp) -> Layout:
     return Layout(0, 0, (), stand_up=stand_up)
 
 
-def test_start_a_board_stands_parts_only_when_preferred_and_fill_when_allowed() -> None:
-    """Start a board is roomy and predictable: parts stand only when the choice is Prefer
-    (the Fuzz Face's three resistors, its board 126 holes for 162); Fill the rest tries
-    standing after lying flat when it saves room, first when preferred."""
-    assert [stand_order(s, fill=False) for s in CHOICES] == ["none", "none", "first"]
-    assert [stand_order(s, fill=True) for s in CHOICES] == ["none", "last", "first"]
+def broken(layout: Layout, circuit: Circuit) -> int:
+    """The placement limits `layout` breaks, the TS808's high-gain inputs counted."""
+    r = read_layout(layout, circuit, MODELS, TABLE)
+    limits = placement_limits(circuit, connect(circuit), r.board, TS808_LOUD)
+    return len(broken_limits(layout, limits))
+
+
+def test_start_a_board_stands_a_part_only_when_it_meets_a_limit_lying_flat_can_t() -> None:
+    """The Fuzz Face lies flat when needed (standing R4 would only save room: Prefer's
+    board is smaller, 60 holes for 100); the TS808 stands parts when needed, only because
+    they meet a limit lying flat breaks: fewer limits broken, on a bigger board."""
+    assert [stand_order(s) for s in CHOICES] == ["none", "needed", "first"]
     for choice in CHOICES:
         made = start_for_me(empty(choice), FUZZ_FACE, MODELS, TABLE, fill=False).layout
         assert made.stand_up == choice and check_layout(made, FUZZ_FACE, MODELS, TABLE).ok
         assert (len(standing(made)) > 0) == (choice == "prefer")
-    flat = start_for_me(None, FUZZ_FACE, MODELS, TABLE, fill=False).layout
-    stood = start_for_me(None, FUZZ_FACE, MODELS, TABLE, fill=False, stand_up="prefer").layout
-    assert flat.columns * flat.strips == 162 and stood.columns * stood.strips == 126
+    flat = start_for_me(empty("never"), TS808, MODELS, TABLE, False, TS808_LOUD).layout
+    needed = start_for_me(empty("needed"), TS808, MODELS, TABLE, False, TS808_LOUD).layout
+    assert not standing(flat) and standing(needed)
+    assert broken(needed, TS808) < broken(flat, TS808)
+    assert needed.columns * needed.strips > flat.columns * flat.strips  # room isn't why
+
+
+def test_the_search_ranks_standing_parts_after_limits_and_warnings_before_size() -> None:
+    """When needed, a board's key counts its standing parts third (after limits broken,
+    then noisy links and strips alongside), so a smaller board with a part standing loses
+    to a flat one, and a part stands only where it meets a limit or clears a warning;
+    a standing part costs less than a warning (`STAND` under `QUIET`, `APART`)."""
+
+    def d(broken: int, noisy: int, stood: int, area: int) -> SimpleNamespace:
+        return SimpleNamespace(broken=broken, noisy=noisy, apart=0, stood=stood, area=area,
+                               far=0, cuts=(), count=0, length=0)  # fmt: skip
+
+    assert compact.key(d(0, 0, 0, 120)) < compact.key(d(0, 0, 1, 100))  # room isn't a reason
+    assert compact.key(d(0, 0, 1, 120)) < compact.key(d(1, 0, 0, 100))  # a limit met is
+    assert compact.key(d(0, 0, 1, 120)) < compact.key(d(0, 1, 0, 100))  # so is a warning
+    assert min(compact.QUIET, compact.APART, compact.LIMIT) > compact.STAND
 
 
 def test_build_a_full_layout_follows_the_choice_the_same_board_each_time() -> None:
-    """Never stands nothing (no standing shape is tried); When it saves room stands fewer
-    parts than Prefer on the TS808 (each costs a column's worth of holes); Prefer stands
-    them freely, as before D-403. The search's base never stands parts. The same
-    choice gives the same board twice."""
+    """Never stands nothing (no standing shape is tried); When needed stands fewer parts
+    than Prefer on the TS808; Prefer stands them freely, as before D-403. The search's
+    base never stands parts. The same choice gives the same board twice."""
     found = {}
     for choice in CHOICES:
         pb = problem(empty(choice), TS808, MODELS, TABLE)
@@ -68,7 +100,7 @@ def test_build_a_full_layout_follows_the_choice_the_same_board_each_time() -> No
         assert board == again and board.stand_up == choice
         found[choice] = standing(board)
     assert found["never"] == []
-    assert len(found["room"]) < len(found["prefer"])
+    assert len(found["needed"]) < len(found["prefer"])
 
 
 def test_try_another_uses_the_board_s_own_choice() -> None:
@@ -80,11 +112,12 @@ def test_try_another_uses_the_board_s_own_choice() -> None:
     assert not any(v.standing for vs in pb.variants.values() for v in vs)
 
 
-@pytest.mark.parametrize(("choice", "stood"), [("never", []), ("room", []), ("prefer", ["R3"])])
-def test_tidy_up_stands_a_part_as_the_choice_allows(choice: StandUp, stood: list[str]) -> None:
+@pytest.mark.parametrize(("choice", "stood"), [("never", []), ("needed", []), ("prefer", ["R3"])])
+def test_tidy_up_stands_a_part_only_when_preferred(choice: StandUp, stood: list[str]) -> None:
     """On the Rangemaster's Start a board (12 × 9): Prefer stands R3 up (the board no
-    bigger); When it saves room doesn't (it saves less than a column); Never doesn't try.
-    The choice is kept with the board, and None means the board's own."""
+    bigger); When needed Tidy up stands nothing (the board can't tell the parts the
+    builder laid flat, the user), Never doesn't try. The choice is kept with the board,
+    and None means the board's own."""
     base = start_for_me(None, RANGEMASTER, MODELS, TABLE, fill=False).layout
     tidied = tidy_up(base, RANGEMASTER, MODELS, TABLE, stand_up=choice).layout
     assert standing(tidied) == stood and tidied.stand_up == choice
@@ -93,14 +126,11 @@ def test_tidy_up_stands_a_part_as_the_choice_allows(choice: StandUp, stood: list
     assert own.layout == tidied
 
 
-def test_tidy_up_s_measure_counts_standing_parts_by_the_choice() -> None:
-    """When it saves room, each standing part counts as a column's worth of holes (the
-    board's strips); preferred, the more standing the tidier; never, they don't count."""
+def test_tidy_up_s_measure_counts_standing_parts_only_when_preferred() -> None:
+    """Preferred, the more standing the tidier; otherwise they don't count."""
     part = Placed("R1", (("1", (0, 0)), ("2", (0, 1))), True)
-    board = Layout(4, 9, (part,))
-    assert key(board)[0] == 36 + 9 and key(board)[3] == 0  # the default: room
-    assert key(Layout(4, 9, (part,), stand_up="never"))[0] == 36
-    assert key(Layout(4, 9, (part,), stand_up="room"))[0] == 36 + 9
+    assert key(Layout(4, 9, (part,)))[:4] == (36, 0, 0, 0)  # the default: needed
+    assert key(Layout(4, 9, (part,), stand_up="never"))[3] == 0
     assert key(Layout(4, 9, (part,), stand_up="prefer"))[3] == -1
 
 

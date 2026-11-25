@@ -813,14 +813,14 @@ def test_a_v38_trimmer_on_a_kept_board_stays_in_line(repo: Path) -> None:
     assert saved["TR1"]["style"] == "inline" and "style" not in saved["TR2"]
 
 
-def test_a_v40_board_reads_as_standing_when_it_saves_room(repo: Path) -> None:
+def test_a_v40_board_reads_as_standing_when_needed(repo: Path) -> None:
     """v41 (D-403) added the board's `stand_up`: a v40 board has none and reads as the
-    default, "room", its standing parts kept; the default isn't written, another choice
+    default, "needed", its standing parts kept; the default isn't written, another choice
     is, and it survives saving and loading."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v40.json")
     assert c.schema_ == 41 and c.stripboard is not None
     layout = c.stripboard.layout()
-    assert layout.stand_up == "room" and [p.ref for p in layout.parts if p.standing] == ["R1"]
+    assert layout.stand_up == "needed" and [p.ref for p in layout.parts if p.standing] == ["R1"]
     assert "stand_up" not in circuit_to_dict(c)["stripboard"]
     never = c.model_copy(update={"stripboard": Stripboard.model_validate(
         {**layout_data(layout), "stand_up": "never"})})  # fmt: skip
@@ -828,5 +828,5 @@ def test_a_v40_board_reads_as_standing_when_it_saves_room(repo: Path) -> None:
     assert saved["stripboard"]["stand_up"] == "never"
     again = parse_circuit(saved).stripboard
     assert again is not None and again.layout().stand_up == "never"
-    with pytest.raises(BoardError, match="never, room or prefer"):
+    with pytest.raises(BoardError, match="never, needed or prefer"):
         layout_from_data({**layout_data(layout), "stand_up": "sometimes"})

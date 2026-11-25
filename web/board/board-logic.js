@@ -996,19 +996,19 @@ export function layoutChoices(placed) {
 /**
  * Standing resistors and diodes (D-403), the Layout dialog's last line: used by whichever
  * choice runs and kept with the board it makes. The board's own choice, else the default.
- * @typedef {"never" | "room" | "prefer"} StandUp
+ * @typedef {"never" | "needed" | "prefer"} StandUp
  * @type {Array<{value: StandUp, label: string, text: string}>}
  */
 export const STAND_UP = [
   { value: "never", label: "Never", text: "Every resistor and diode lies flat." },
-  { value: "room", label: "When it saves room", text: "Stood up only where it saves about a column of holes. Start a board keeps them flat." },
+  { value: "needed", label: "When needed", text: "Stood up only where lying flat it can't sit by its pin or would break a rule; never just to save room." },
   { value: "prefer", label: "Prefer", text: "Stood up wherever it fits." },
 ];
 
-/** The board's choice for standing parts (D-403): its own, else "room". @param {{stand_up?: string} | null | undefined} data @returns {StandUp} */
+/** The board's choice for standing parts (D-403): its own, else "needed". @param {{stand_up?: string} | null | undefined} data @returns {StandUp} */
 export function standUpOf(data) {
   const kept = STAND_UP.find((s) => s.value === data?.stand_up);
-  return kept ? kept.value : "room";
+  return kept ? kept.value : "needed";
 }
 
 /** The notes under *Build a full layout*'s choices (the user, 2026-11-24). */

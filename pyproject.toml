@@ -78,6 +78,7 @@ markers = [
     "rules: per-rule fixtures, corpus, mutations (tests/rules)",
     "ui: Playwright smoke tests (tests/ui)",
     "timing: checks how fast something is; run on its own, on an idle machine (make perf)",
+    "layout: the full layouts' rules on every starter (make layout; make accept when layout code changed)",
 ]
 
 [tool.coverage.run]

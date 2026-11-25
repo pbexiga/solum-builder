@@ -28,6 +28,7 @@ Keep throwaway work (exploration scripts, dumps, screenshots) in `scratch/`, whi
 | `make lint` | `ruff`, `jslint` and `mypy --strict`. | Part of `check`. |
 | `make check` | `lint`, then the unit, simulation, rules and parity tests with a coverage report (85 % floor on the core). A few minutes. | Before every commit. |
 | `make accept` | The acceptance tests (each starter against its published figures) and the browser tests (Playwright). | Before ending a session or merging. |
+| `make layout` | The full layouts' rules on every starter: the search counts limits and warnings as the check does, When needed is no worse than Never's first board, no part stands that needn't (D-405). | Before merging any layout change, and after changing a footprint or the simulation; `make accept` runs it when the branch changes the layout code. |
 | `make perf` | The timing tests (how fast Start a board, a knob turn, a node click are), one at a time (D-405). | On an idle machine, before merging a change that could slow things. |
 | `make bench` | `solum bench` in the runtime image: times a bench circuit through the simulator and prints a JSON report. See [Benchmarks and profiling](#benchmarks-and-profiling). | After performance work, or on a new machine. |
 | `make image-tar` | Builds the runtime image and saves it as `dist/solum-builder-image.tar.gz`, for a machine that won't build it. | Deploying to the NAS. |

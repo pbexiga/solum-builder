@@ -6,6 +6,8 @@ the check's, and standing when needed is never worse than Never's first board.
   equal what the check finds on it, laid out and again wired; a rule the two count
   differently (a bus's copper was left out of the search's strips alongside) would
   otherwise drop good boards silently.
+- No Never run: the flat attempt is Never's seed-1 board, its counts checked here, and
+  it's what the guarantee compares against; Never's other seeds add time, not coverage.
 - **When needed is no worse than Never's seed 1**: a When needed run includes a flat
   attempt, Never's own first board, and ranks limits, then warnings, first. Not Never's
   best of four: the gap to that is seed-to-seed variance, what Try another is for. When
@@ -15,7 +17,8 @@ the check's, and standing when needed is never worse than Never's first board.
   parts flat again (a leg kept in its hole, each flat shape) can't be done, or breaks a
   limit or adds a warning.
 
-Fewer steps than the app's, to be quick."""
+Fewer steps than the app's, to be quick: `make layout`, and `make accept` when the
+layout code changed (D-405)."""
 
 import threading
 from pathlib import Path
@@ -49,9 +52,9 @@ from solum.stripboard.quiet import guards, noisy_links
 
 LIBRARY = Path(__file__).resolve().parents[2] / "library"
 STARTERS = sorted((LIBRARY / "starters").glob("*.json"))
-STEPS_PER_PART = 1500  # an eighth of Quick's
+STEPS_PER_PART = 750  # a sixteenth of Quick's: still fails before both search fixes (D-405)
 
-pytestmark = pytest.mark.acceptance
+pytestmark = [pytest.mark.acceptance, pytest.mark.layout]
 
 
 def counted(board: Layout, circuit: Circuit, models: ModelLibrary,
@@ -104,6 +107,3 @@ def test_the_search_counts_as_the_check_and_needed_beats_never_s_first_board(
         assert agrees(pb, best) <= agrees(pb, flat)
     if best is not None and not (built := finish(pb, best, models, table)).fell_back:
         assert standing_unneeded(pb, positions(pb, built.layout)) == []
-    never, own = run("never")
-    if own is not None:
-        agrees(never, own)

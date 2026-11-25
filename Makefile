@@ -28,7 +28,7 @@ ACCEPT_JOBS ?= 4
 PAR := -n $(JOBS)
 ACCEPT_PAR := -n $(ACCEPT_JOBS) --dist loadfile
 
-.PHONY: help dev-image image image-tar run test ruff jslint lint check accept perf bench hooks schema mac-app
+.PHONY: help dev-image image image-tar run test ruff jslint lint check accept layout perf bench hooks schema mac-app
 
 help:
 	@echo "make dev-image  build the dev image (do this first, and after changing dependencies)"
@@ -40,6 +40,7 @@ help:
 	@echo "make lint       ruff + jslint + mypy --strict"
 	@echo "make check      lint + unit, sim, rules, parity tests + coverage (before every commit)"
 	@echo "make accept     acceptance + UI tests (before ending a session)"
+	@echo "make layout     the full layouts' rules on every starter (~5 min; accept runs it when layout code changed)"
 	@echo "make perf       the timing tests, one at a time (on an idle machine)"
 	@echo "make bench      solum bench in the runtime image"
 	@echo "make image-tar  save the runtime image to dist/ for copying to the NAS"
@@ -74,10 +75,28 @@ check: lint
 	$(PYTEST) -q $(PAR) -m "not timing" tests/unit tests/sim tests/rules tests/parity \
 		--cov --cov-report=term-missing
 
+# What the layout tests depend on, by folder (a new module is covered without editing
+# this): the stripboard package (check and footprints in it), the circuit model, the
+# simulation that finds the high-gain inputs, the library's footprints, models and starters.
+LAYOUT_PATHS := solum/stripboard solum/circuit solum/sim solum/analysis solum/rules \
+	solum/probe.py solum/simulate.py solum/netlist.py solum/stages.py \
+	library/guides library/models library/starters tests/acceptance/test_stand_needed.py
+LAYOUT_BASE ?= main
+
 # Exit code 5 means "no tests collected": fine until Phase 1 adds acceptance circuits.
+# The layout tests run too when this branch (committed or not) changes what they depend on.
 accept:
-	$(PYTEST) -q $(ACCEPT_PAR) -m "not timing" tests/acceptance tests/ui; status=$$?; \
-		if [ $$status -eq 5 ]; then echo "(no acceptance/UI tests yet)"; exit 0; fi; exit $$status
+	$(PYTEST) -q $(ACCEPT_PAR) -m "not timing and not layout" tests/acceptance tests/ui; \
+		status=$$?; if [ $$status -eq 5 ]; then echo "(no acceptance/UI tests yet)"; status=0; fi; \
+		if [ $$status -ne 0 ]; then exit $$status; fi; \
+		if git diff --quiet $(LAYOUT_BASE) -- $(LAYOUT_PATHS); then \
+			echo "(layout code unchanged since $(LAYOUT_BASE): make layout skipped)"; \
+		else $(MAKE) layout; fi
+
+# The full layouts' rules on every starter (D-405): before merging any layout change, and
+# after changing a footprint or the simulation.
+layout:
+	$(PYTEST) -q -m layout tests/acceptance
 
 # Timing tests only, one at a time, on an idle machine: check and accept never fail on a
 # busy one (D-405).

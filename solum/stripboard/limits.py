@@ -7,6 +7,7 @@ strip, close, with nothing between (a long run of strip is an antenna and an ind
 The editor shows a broken one as a warning, not a fault: the board is still the circuit.
 """
 
+import heapq
 from collections.abc import Callable, Sequence
 from dataclasses import dataclass
 from typing import NamedTuple
@@ -30,6 +31,7 @@ from solum.units import parse_value
 from solum.words import listed
 
 REACH = 2  # holes from the pin for one part; each more part on the same pin one more
+GROUND_REACH = 4  # holes along the copper from a decoupling cap's ground leg to the chip's (P6i4)
 WHY = {  # each limit's reason, as the warnings and Place next say it
     "decoupling": "its decoupling cap",
     "pump": "the charge pump's cap",
@@ -258,3 +260,91 @@ def limit_warnings(layout: Layout, limits: Sequence[Limit]) -> list[str]:
             + " ".join(w for w in why if w)
         )
     return warnings
+
+
+@dataclass(frozen=True)
+class GroundLeg:
+    """A decoupling cap's ground leg `part`.`leg` and the chip's ground pin `anchor`.`pin`
+    it should be near along the copper (board refs and legs, D-400 amended, P6i4)."""
+
+    part: str
+    leg: str
+    anchor: str
+    pin: str
+
+
+def ground_legs(circuit: Circuit, nets: Nets, board: dict[str, BoardPart],
+                limits: Sequence[Limit]) -> list[GroundLeg]:  # fmt: skip
+    """Each decoupling cap's ground leg, with its chip's ground pin (its V− on ground):
+    none on a split supply (its V− isn't ground: each supply's cap goes to ground, and
+    where the returns meet is another matter)."""
+    leg_of = _leg_of(board)
+    pin_of = {(ref, leg): pin for ref, part in board.items() for leg, pin in part.pins.items()}
+    found = []
+    for limit in limits:
+        unit = pin_of.get((limit.anchor, limit.pin))
+        if limit.why != "decoupling" or unit is None or unit[1] != "V+":
+            continue
+        ground = leg_of.get((unit[0], "V-"))
+        if ground is None or nets.by_pin.get((unit[0], "V-")) != GROUND:
+            continue
+        leg = next((lg for lg, pin in board[limit.part].pins.items()
+                    if nets.net_of(*pin) == GROUND), None)  # fmt: skip
+        if leg is not None:
+            found.append(GroundLeg(limit.part, leg, *ground))
+    return found
+
+
+def copper_distance(layout: Layout, a: Hole, b: Hole) -> int | None:
+    """Holes from `a` to `b` the way current flows: along a strip's copper (no cut
+    between), and through a link (its length in holes); None when they aren't joined."""
+    seg = segments(layout)
+    if a not in seg or b not in seg:
+        return None
+    ends: dict[Hole, list[Hole]] = {}
+    for link in layout.links:
+        ends.setdefault(link.a, []).append(link.b)
+        ends.setdefault(link.b, []).append(link.a)
+    best = {a: 0}
+    todo = [(0, a)]
+    while todo:
+        far, hole = heapq.heappop(todo)
+        if hole == b:
+            return far
+        if far > best.get(hole, far):
+            continue
+        x, y = hole
+        steps = [((x + dx, y), 1) for dx in (-1, 1) if seg.get((x + dx, y)) == seg[hole]]
+        steps += [(e, abs(e[0] - x) + abs(e[1] - y)) for e in ends.get(hole, []) if e in seg]
+        for nxt, cost in steps:
+            if far + cost < best.get(nxt, far + cost + 1):
+                best[nxt] = far + cost
+                heapq.heappush(todo, (far + cost, nxt))
+    return None
+
+
+def far_grounds(layout: Layout, legs: Sequence[GroundLeg]) -> list[tuple[GroundLeg, int]]:
+    """Each ground leg further than `GROUND_REACH` along the copper from its chip's ground
+    pin, both placed (not joined on the board yet: the nets' check says so)."""
+    holes = {(p.ref, leg): hole for p in layout.parts for leg, hole in p.legs}
+    found = []
+    for g in legs:
+        a, b = holes.get((g.part, g.leg)), holes.get((g.anchor, g.pin))
+        if a is None or b is None:
+            continue
+        far = copper_distance(layout, a, b)
+        if far is not None and far > GROUND_REACH:
+            found.append((g, far))
+    return found
+
+
+def ground_warnings(far: Sequence[tuple[GroundLeg, int]]) -> list[str]:
+    """Each far ground leg in a sentence (a warning in the editor)."""
+    said = []
+    for g, holes in far:
+        said.append(
+            f"{g.part}'s ground leg is {holes} holes from {pin_said(g.anchor, g.pin)} along "
+            "the copper (its decoupling cap's loop): keep it within "
+            f"{GROUND_REACH} holes along the strip or a link, so the loop stays small."
+        )
+    return said

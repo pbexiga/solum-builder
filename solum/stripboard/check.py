@@ -41,7 +41,14 @@ from solum.stripboard.footprints import (
     one_board_part,
     outline_overlap,
 )
-from solum.stripboard.limits import LoudInput, limit_warnings, placement_limits
+from solum.stripboard.limits import (
+    LoudInput,
+    far_grounds,
+    ground_legs,
+    ground_warnings,
+    limit_warnings,
+    placement_limits,
+)
 from solum.stripboard.offboard import (
     POWER,
     SLEEVE,
@@ -890,7 +897,10 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Foot
             )  # fmt: skip
             rows.append(LegProgress(leg, holes.get((ref, leg)), need, reach))
         legs[ref] = rows
-    warnings = limit_warnings(r.layout, placement_limits(circuit, r.nets, r.board, loud))
+    limits = placement_limits(circuit, r.nets, r.board, loud)
+    warnings = limit_warnings(r.layout, limits)
+    grounds = ground_legs(circuit, r.nets, r.board, limits)
+    warnings += ground_warnings(far_grounds(r.layout, grounds))  # P6i4
     warnings += quiet_warnings(
         noisy_links(r.layout, r.board, r.nets, guards(r.board, r.nets, loud))
     )

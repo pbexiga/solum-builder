@@ -15,9 +15,14 @@ from solum.stripboard.board import layout_from_data, parse_hole
 from solum.stripboard.check import Progress, check_layout, progress
 from solum.stripboard.footprints import board_parts
 from solum.stripboard.limits import (
+    GroundLeg,
     Limit,
     LoudInput,
     broken_limits,
+    copper_distance,
+    far_grounds,
+    ground_legs,
+    ground_warnings,
     group_met,
     limit_warnings,
     placement_limits,
@@ -221,6 +226,63 @@ def test_a_decoupling_cap_must_sit_by_its_chip_s_supply_pin(
     near = layout_from_data({"size": [14, 8], "parts": {"IC1": chip,
                              "C1": {"1": "J3", "2": "J2"}}})  # fmt: skip
     assert limit_warnings(near, limits) == []
+
+
+CHIP = {"1": "E3", "2": "E4", "3": "E5", "4": "E6", "8": "H3", "7": "H4", "6": "H5", "5": "H6"}
+
+
+def test_a_decoupling_cap_s_ground_leg_is_kept_near_the_chip_s_along_the_copper(
+    circuit: Callable[..., CircuitBuilder],
+) -> None:
+    """P6i4: C1's ground leg within 4 holes of IC1's pin 4 (its V− on ground) the way
+    current flows: along the strip (a cut parts it) and through a link (its length)."""
+    c = _two_buffers(circuit)
+    board, _ = board_parts(c, MODELS, TABLE)
+    legs = ground_legs(c, connect(c), board, placement_limits(c, connect(c), board))
+    assert legs == [GroundLeg("C1", "2", "IC1", "4")]
+
+    def lay(c1: dict[str, str], cuts: list[str], links: list[list[str]] | None = None) -> Any:
+        return layout_from_data({"size": [14, 8], "cuts": cuts, "links": links or [],
+                                 "parts": {"IC1": CHIP, "C1": c1}})  # fmt: skip
+
+    near = lay({"1": "C5", "2": "C6"}, ["F6"])  # 2 holes from E6 along strip 6
+    edge = lay({"1": "A5", "2": "A6"}, ["F6"])  # 4: just in
+    assert far_grounds(near, legs) == [] and far_grounds(edge, legs) == []
+    # through a link: J2 to D2 along strip 2 (6), the link D2–D6 (4), D6 to E6 (1)
+    linked = lay({"1": "J3", "2": "J2"}, ["F6"], [["D2", "D6"]])
+    assert copper_distance(linked, parse_hole("J2"), parse_hole("E6")) == 11
+    assert far_grounds(linked, legs) == [(legs[0], 11)]
+    assert ground_warnings(far_grounds(linked, legs)) == [
+        "C1's ground leg is 11 holes from IC1's pin 4 along the copper (its decoupling cap's "
+        "loop): keep it within 4 holes along the strip or a link, so the loop stays small."
+    ]
+    assert any(w.startswith("C1's ground leg is 11 holes")
+               for w in progress(linked, c, MODELS, TABLE).warnings)  # fmt: skip
+    # physically close but cut off from it: not joined on the board (the nets' check says)
+    cut = lay({"1": "C5", "2": "C6"}, ["D6", "F6"])
+    assert copper_distance(cut, parse_hole("C6"), parse_hole("E6")) is None
+    assert far_grounds(cut, legs) == []
+
+
+def test_a_split_supply_s_decoupling_has_no_ground_leg_check(
+    circuit: Callable[..., CircuitBuilder],
+) -> None:
+    """Its V− isn't ground (no ground pin on the chip): each supply's cap goes to ground,
+    and the ground-leg check is skipped (P6i4)."""
+    c = (
+        circuit()
+        .rail("V+", 9)
+        .rail("V-", -9)
+        .part("IC1A", "opamp", "in", "a", "a", model="TL072", half="a", supply=("V+", "V-"))
+        .part("IC1B", "opamp", "in2", "b", "b", model="TL072", half="b")
+        .part("C1", "capacitor", "V+", "0", value="100n", kind="ceramic")
+        .part("C2", "capacitor", "V-", "0", value="100n", kind="ceramic")
+        .build()
+    )
+    board, _ = board_parts(c, MODELS, TABLE)
+    limits = placement_limits(c, connect(c), board)
+    assert {lim.part for lim in limits} == {"C1", "C2"}
+    assert ground_legs(c, connect(c), board, limits) == []
 
 
 def test_an_either_way_part_meets_its_limit_by_either_leg(

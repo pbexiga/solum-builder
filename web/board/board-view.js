@@ -32,7 +32,7 @@
 import { postJson } from "../api.js";
 import { ask } from "../editor/form.js";
 import { openMenu } from "../menus.js";
-import { h } from "../panels.js";
+import { h, largeView, stackLargeViews } from "../panels.js";
 import { reorderable } from "../panes.js";
 import { Schematic } from "../schematic/render.js";
 import { latestOnly } from "../state.js";
@@ -250,14 +250,17 @@ export function boardView(host, app) {
     },
     lock(on) {
       locked = on;
-      for (const el of [tray, column, tools, sizeNote, $("board-needs")]) el.inert = on;
+      // the board locked: the tray, the panes, the editing tools; the view's buttons (Hide
+      // parts, Flip, See-through) and the review stay, and the canvas is outlined (D-406)
+      for (const el of [tray, sizeNote, $("board-needs"), ...column.querySelectorAll(":scope > details"), ...tools.querySelectorAll("button[data-tool]")]) /** @type {HTMLElement} */ (el).inert = on;
+      host.closest(".canvas")?.classList.toggle("reviewing", on);
       button.disabled = on;
       if (on) drop();
       runFrom = on ? app.circuit() : null;
     },
     keep: (stripboard) => app.editBoard(stripboard, "Build a full layout"),
     refuse: (message) => app.refuse(message),
-  });
+  }, column);
   trimButton.addEventListener("click", () => void resize("trim", "Trim the board"));
   wireButton.addEventListener("click", () => void wireForMe());
   layoutButton.addEventListener("click", () => void layOut());
@@ -268,17 +271,19 @@ export function boardView(host, app) {
     setSetting("seeThrough", !settings.seeThrough);
     if (e.detail) seeButton.blur(); // clicked: the board's keys act again
   });
+  const hideButton = $("board-hide");
   const flipButton = $("board-flip");
-  const mirrorButton = $("board-mirror");
-  mirrorButton.setAttribute("aria-pressed", String(settings.mirror));
-  const sideShown = (/** @type {boolean} */ copper) => flipButton.setAttribute("aria-pressed", String(copper));
-  flipButton.addEventListener("click", (e) => { // Hide parts (D-390)
-    canvas.show(!canvas.copper(), settings.mirror, sideShown);
-    if (e.detail) flipButton.blur(); // clicked: the board's keys act again
+  flipButton.setAttribute("aria-pressed", String(settings.mirror));
+  const sideShown = (/** @type {boolean} */ copper) => hideButton.setAttribute("aria-pressed", String(copper));
+  hideButton.addEventListener("click", (e) => { // Hide parts (D-390): the side up, flipped or not
+    const up = !canvas.copper();
+    canvas.show(up, settings.mirror, sideShown);
+    beforeCanvas.show(up, settings.mirror); // Both, under review: the board before as well
+    if (e.detail) hideButton.blur(); // clicked: the board's keys act again
   });
-  mirrorButton.addEventListener("click", (e) => {
+  flipButton.addEventListener("click", (e) => { // Flip: the side shown, turned over
     setSetting("mirror", !settings.mirror);
-    if (e.detail) mirrorButton.blur();
+    if (e.detail) flipButton.blur();
   });
   for (const b of tools.querySelectorAll("button[data-tool]")) b.addEventListener("click", () => {
     setTool(/** @type {any} */ (b.getAttribute("data-tool")));
@@ -761,7 +766,9 @@ export function boardView(host, app) {
     const board = readBoard(app.circuit()?.stripboard);
     const times = postJson("api/stripboard/compact/estimate", { circuit: app.circuit() }).catch(() => null);
     const standUp = standUpOf(app.circuit()?.stripboard);
-    const chosen = await chooseLayout({ board, toPlace: progress?.to_place.length ?? 0, times, standUp });
+    const toPlace = progress?.to_place.length ?? 0;
+    const rest = toPlace > 0 || Boolean(progress?.nets.some((n) => n.state === "pieces"));
+    const chosen = await chooseLayout({ board, toPlace, rest, times, standUp });
     if (!chosen) return;
     if (chosen.choice === "full") return void run.start({ thorough: chosen.thorough, seconds: chosen.seconds, standUp: chosen.standUp });
     if (chosen.choice === "tidy") return void tidyUp(false, chosen.standUp);
@@ -839,6 +846,16 @@ export function boardView(host, app) {
     onPart: (ref) => app.select({ kind: "part", id: ref }),
     onEmpty: () => app.select(app.resting()),
   });
+  // Expand: the schematic large over the board, as the Frequency pane's over the schematic
+  // (D-107); it selects there as in the panel, fitted again at each size
+  const refit = () => requestAnimationFrame(() => drawSheet(true));
+  largeView(/** @type {HTMLDetailsElement} */ ($("board-schematic")), {
+    id: "board-schematic-expand",
+    name: "boardSchematic",
+    what: "A large view of the schematic, over the board",
+    onChange: refit,
+    onShow: refit,
+  });
 
   button.addEventListener("click", (e) => {
     show(!active);
@@ -876,6 +893,7 @@ export function boardView(host, app) {
       results.scrollTop = resultsScroll; // hidden, the list may forget where it was
     }
     app.shown(board);
+    stackLargeViews(); // the view shown's large views, its column laid out now
   }
 
   function drawSheet(fit = false) {
@@ -1179,13 +1197,16 @@ export function boardView(host, app) {
     settings = { ...settings, [key]: on };
     remember(SETTINGS_KEY, settings);
     seeButton.setAttribute("aria-pressed", String(settings.seeThrough));
-    mirrorButton.setAttribute("aria-pressed", String(settings.mirror));
-    if (key === "mirror") canvas.show(on || canvas.copper(), on, sideShown); // on from the parts side: the copper side, mirrored
+    flipButton.setAttribute("aria-pressed", String(settings.mirror));
+    if (key === "mirror") { // Flip: the side shown, turned over, parts kept; the board before too
+      canvas.show(canvas.copper(), on, sideShown);
+      beforeCanvas.show(canvas.copper(), on);
+    }
     draw();
     fillPanes();
   }
 
-  /** Settings: *Layout…* first, the editor's settings, remembered per viewer; *Remove board* at the bottom once one is started. */
+  /** Settings: *Layout…* first, the editor's settings, remembered per viewer; *Clear board* at the bottom once one is started. */
   function fillSettings() {
     const boxes = BOARD_SETTINGS.map((setting) => {
       const box = /** @type {HTMLInputElement} */ (h("input", { type: "checkbox", "data-setting": setting.key }));
@@ -1196,10 +1217,10 @@ export function boardView(host, app) {
       label.title = setting.acts ? setting.title : `${setting.title}. Comes with placing parts.`;
       return label;
     });
-    const remove = h("button", { type: "button", id: "remove-board", class: "remove-board" }, ["Remove board"]);
-    remove.title = "Take every part, cut, link and wire off the board (Undo brings them back)";
-    remove.addEventListener("click", () => app.editBoard(null, "Remove board"));
-    $("board-settings-body").replaceChildren(layoutButton, ...boxes, ...(app.circuit()?.stripboard ? [remove] : []));
+    const clear = h("button", { type: "button", id: "clear-board", class: "clear-board" }, ["Clear board"]);
+    clear.title = "Take every part, cut, link and wire off the board (Undo brings them back)";
+    clear.addEventListener("click", () => app.editBoard(null, "Clear board"));
+    $("board-settings-body").replaceChildren(layoutButton, ...boxes, ...(app.circuit()?.stripboard ? [clear] : []));
   }
 
   /** The button marked once the open circuit has a board. */

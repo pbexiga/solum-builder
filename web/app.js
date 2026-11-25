@@ -710,7 +710,7 @@ async function useAsOpening() {
 
 /**
  * The circuit with its board changed (a size change, D-372), or without it (Settings'
- * *Remove board*, D-370: the view stays on the empty board), one step in the board's own
+ * *Clear board*, D-370: the view stays on the empty board), one step in the board's own
  * undo history (D-370).
  * @param {any} stripboard the board's new plain form; null: none
  * @param {string} label

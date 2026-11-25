@@ -1,9 +1,10 @@
 /**
  * *Build a full layout* in the Board view (DOM, D-399): the running window (what it's
  * doing, the progress, the best board so far, Stop and keep the best, Cancel) while the
- * board behind shows the best so far, dimmed and not editable; then the review bar above
- * the canvas: Before → After, After | Before | Both (top and bottom), ◀ Try n of m ▶, Try
- * another, Keep try n / Keep the old board. Keeping a try is one undo step; nothing else
+ * board behind shows the best so far, dimmed and not editable; then the review, a pane at
+ * the top of the right column (D-406), so nothing covers the board's tools: Before → After,
+ * After | Before | Both (top and bottom), ◀ Try n of m ▶, Try another, Keep try n / Keep
+ * the old board. Keeping a try is one undo step; nothing else
  * changes the circuit. The view draws and locks; this runs and asks.
  */
 
@@ -33,8 +34,9 @@ const SAME = "this circuit doesn't leave room for a different layout this small.
 
 /**
  * @param {HTMLElement} host the canvas's body @param {RunApp} app
+ * @param {HTMLElement} column the right column: the review goes at its top, above the panes
  */
-export function compactRun(host, app) {
+export function compactRun(host, app, column) {
   const stage = h("p", { class: "compact-stage" }, [""]);
   const bar = /** @type {HTMLProgressElement} */ (h("progress", { class: "compact-progress", "aria-label": "Building the layout" }));
   const bestLine = h("p", { class: "compact-best" }, [""]);
@@ -63,7 +65,8 @@ export function compactRun(host, app) {
   const keepTry = /** @type {HTMLButtonElement} */ (h("button", { type: "button", class: "primary", "data-review": "keep" }, [""]));
   const keepOld = /** @type {HTMLButtonElement} */ (h("button", { type: "button", "data-review": "old" }, [""]));
   const said = h("p", { class: "compact-said", hidden: "" }, [""]);
-  const reviewBar = h("div", { class: "compact-review", role: "toolbar", "aria-label": "Review the layout", hidden: "" }, [
+  const reviewBar = h("section", { class: "compact-review", role: "toolbar", "aria-label": "Review the layout", hidden: "" }, [
+    h("h3", {}, ["Review the layout"]),
     h("div", { class: "compact-row" }, [figures]),
     h("div", { class: "compact-row" }, [
       h("span", { class: "compact-modes", role: "group", "aria-label": "Show" }, Object.values(modes)),
@@ -71,7 +74,8 @@ export function compactRun(host, app) {
     ]),
     said,
   ]);
-  host.append(runWindow, dimNote, reviewBar);
+  host.append(runWindow, dimNote);
+  column.prepend(reviewBar); // first: the panes are reordered among themselves after it
 
   /** @type {any} */
   let circuit = null; // the circuit as it was when the run began
@@ -229,6 +233,7 @@ export function compactRun(host, app) {
     keepOld.textContent = old && old === base ? "Keep the base board" : "Keep the old board";
     said.textContent = notes[shown];
     said.hidden = !notes[shown];
+    if (reviewBar.hidden) column.scrollTop = 0; // opening: the review in sight
     reviewBar.hidden = false;
     const showing = view === "before" && old ? [{ stripboard: old.stripboard }]
       : view === "both" && old ? [{ stripboard: old.stripboard, title: `Before: ${figuresLine(old)}` }, { stripboard: after.stripboard, title: `After, try ${n}: ${figuresLine(after)}` }]

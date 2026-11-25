@@ -647,7 +647,7 @@ function largeHeight() {
  * Render, play and Dry / Pedal / Snapshot): the pane moves them in and out. `pinBar`: its
  * bar is always the bottom one while shrunk (D-111).
  * @param {HTMLDetailsElement} el
- * @param {{id: string, name: string, what: string, tools: HTMLElement, onChange?: (on: boolean) => void, onShow?: () => void,
+ * @param {{id: string, name: string, what: string, tools?: HTMLElement, onChange?: (on: boolean) => void, onShow?: () => void,
  *   canCollapse?: () => boolean, onShrink?: (shrunk: boolean) => void, pinBar?: boolean}} opts `name` sets `body.dataset[name + "Expanded"]`;
  *   `what` is the button's tooltip ("A large view of the curve, over the canvas")
  * @returns {LargeView}
@@ -699,7 +699,7 @@ export function largeView(el, opts) {
   label();
   document.addEventListener("keydown", (e) => {
     // Esc is the open view's; an open menu takes it first
-    if (e.key !== "Escape" || !on || !el.open || document.querySelector(".menu")) return;
+    if (e.key !== "Escape" || !on || !el.open || !showing(el) || document.querySelector(".menu")) return;
     el.open = false;
   });
   /** @type {LargeView} */
@@ -933,6 +933,13 @@ function setLargeView(el, on, hooks = {}) {
 }
 
 const LARGE_EDGE = 16; // px from the window's bottom
+
+/**
+ * Whether a large view is in the view shown: the Schematic view's panes and the Board
+ * view's each have their own, hidden with their column in the other view.
+ * @param {HTMLElement} el
+ */
+const showing = (el) => el.getClientRects().length > 0;
 const LARGE_GAP = 8; // px between stacked bars
 
 /** Shrink every open large view to its bar, as Esc does to the open one (D-127). */
@@ -1000,7 +1007,7 @@ function lockLargeView(el, reason) {
 /** Shrink every large view but `el` to its bar. @param {HTMLDetailsElement} el */
 function shrinkOthers(el) {
   for (const v of largeViews) {
-    if (v === el || !v.open) continue;
+    if (v === el || !v.open || !showing(v)) continue; // the other view's stay as they are
     v.open = false;
     shrunkNow(v); // now, not on its toggle event: in the same frame as the one opening
   }
@@ -1027,9 +1034,9 @@ export function largeViewChip(el, text) {
  * width so they don't cover the side panels; then the open ones above them all, across
  * the page.
  */
-function stackLargeViews() {
+export function stackLargeViews() {
   let bottom = LARGE_EDGE;
-  const views = [...largeViews];
+  const views = [...largeViews].filter(showing); // the view shown's: the other's are hidden
   const canvas = document.querySelector(".canvas")?.getBoundingClientRect();
   // a pinned bar (the Audio pane's, with its controls) is always the bottom one, so they
   // don't move about; the others stack above it in the order they shrank (D-111)

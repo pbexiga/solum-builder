@@ -1109,6 +1109,7 @@ def test_the_layout_dialog_s_choices_default_and_confirmations(js: Page) -> None
           names: [b.layoutChoices(false)[0].label, b.layoutChoices(true)[0].label],
           placed: b.layoutChoices(true).map((c) => Boolean(c.why)),
           why: b.layoutChoices(false)[1].why,
+          full: b.layoutChoices(true, false).map((c) => c.why),
           defaults: [b.layoutDefault(false), b.layoutDefault(true)],
           fresh: b.layoutConfirm('start', true, empty, 8),
           over: b.layoutConfirm('start', false, placed, 0),
@@ -1120,6 +1121,13 @@ def test_the_layout_dialog_s_choices_default_and_confirmations(js: Page) -> None
     assert got["empty"] == [["start", False], ["fill", True], ["tidy", True], ["full", False]]
     assert got["placed"] == [False, False, False, False]
     assert got["why"] == "Nothing is placed yet: start a board first."
+    # every part placed and every net joined: Fill the rest has nothing to do, Tidy up still has
+    assert got["full"] == [
+        "",
+        "Every part is placed and every net joined: nothing left to fill.",
+        "",
+        "",
+    ]
     assert got["defaults"] == ["start", None]
     assert got["fresh"] == {
         "title": "Start a board",

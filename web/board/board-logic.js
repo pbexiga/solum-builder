@@ -966,28 +966,31 @@ export const BOARD_SETTINGS = /** @type {const} */ ([
   { key: "shorts", label: "Allow shorts while editing, shown red", on: true, acts: true, title: "Off: a move that makes a short is refused" },
   { key: "grow", label: "Auto-grow", on: true, acts: true, title: "The board grows to take in what's placed by its edge, and shrinks back. Off: it stays its size (the margin greyed); add or remove lines on the rulers" },
   { key: "seeThrough", label: "See-through", on: false, acts: true, title: "The parts faint, so the copper and the cuts under them show" },
-  { key: "mirror", label: "Mirror the copper side", on: false, acts: true, title: "The copper side turned over, as you hold the board to solder (D-390). Off: as seen from the parts side" },
+  { key: "mirror", label: "Flip the board", on: false, acts: true, title: "The board turned over, parts and all, as you hold it to solder; with Hide parts, the copper side as you solder it. Off: as seen from the parts side" },
   { key: "rats", label: "Ratsnest lines: all", on: true, acts: true, title: "The dashed lines between the pieces of each net still to join. Off: only the lines of the part selected or carried" },
   { key: "rails", label: "Highlight rails", on: false, acts: true, title: "The supply's copper (V+, V-) rose, ground's grey" },
 ]);
 
 /**
  * The Layout dialog's choices (P6h2), in order, each with a line saying what it does and,
- * when it can't be chosen, why (`why`): Fill the rest and Tidy up need something placed.
+ * when it can't be chosen, why (`why`): Fill the rest and Tidy up need something placed,
+ * and Fill the rest something to fill (a part in the tray or a net in pieces).
  * The first is *Start a board* on an empty board, *Start over* once parts are placed; it
  * has *Make the board compact* under it (the dialog's own checkbox). The last, below a
  * divider, *Build a full layout* (D-399), has Quick and Thorough under it.
  * @typedef {"start" | "fill" | "tidy" | "full"} LayoutChoice
  * @param {boolean} placed whether any part is on the board
+ * @param {boolean} [rest] whether anything is left to fill: a part in the tray, a net in pieces
  * @returns {Array<{value: LayoutChoice, label: string, text: string, why: string}>}
  */
-export function layoutChoices(placed) {
+export function layoutChoices(placed, rest = true) {
   const none = placed ? "" : "Nothing is placed yet: start a board first.";
+  const filled = none || (rest ? "" : "Every part is placed and every net joined: nothing left to fill.");
   return [
     placed
       ? { value: "start", label: "Start over", text: "Wipes the board and lays it all out afresh: a base layout, the parts in signal order left to right, for you to edit by hand.", why: "" }
       : { value: "start", label: "Start a board", text: "A base layout of the whole board, the parts in signal order left to right, for you to edit by hand.", why: "" },
-    { value: "fill", label: "Fill the rest", text: "Keeps what you've placed and lays out the parts still in the tray below it.", why: none },
+    { value: "fill", label: "Fill the rest", text: "Keeps what you've placed and lays out the parts still in the tray below it.", why: filled },
     { value: "tidy", label: "Tidy up", text: "Makes the board smaller by moving parts, links and cuts in small steps, keeping the check passing.", why: none },
     { value: "full", label: "Build a full layout", text: "Starts afresh and does everything for you: lays the board out, then keeps making it smaller, wired and checked. Replaces what's on the board.", why: "" },
   ];

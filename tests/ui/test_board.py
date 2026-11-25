@@ -136,6 +136,53 @@ def test_a_long_nets_list_scrolls_in_its_own_pane(page: Page, base_url: str) -> 
     assert shown <= max(300, window / 2) < whole
 
 
+def test_a_scroll_over_nets_at_its_end_goes_on_to_the_column(page: Page, base_url: str) -> None:
+    """Nets at its end hands the scroll on to the panes' column, which stops it there, not
+    the page (D-343): the pointer over the list still reaches the panes below."""
+    page.set_viewport_size({"width": 1400, "height": 700})
+    open_with_board(page, base_url, None, "ts808")
+    page.locator("#board-button").click()
+    nets = page.locator("#board-nets-body .net-list")
+    expect(nets.locator("li")).to_have_count(24)
+    column = page.locator("#board-panels")
+    nets.evaluate("e => e.scrollIntoView({block: 'nearest'})")
+    nets.evaluate("e => { e.scrollTop = e.scrollHeight; }")
+    before = column.evaluate("e => e.scrollTop")
+    assert column.evaluate("e => e.scrollHeight > e.clientHeight + e.scrollTop")
+    nets.hover()
+    page.mouse.wheel(0, 300)
+    page.wait_for_function(f"document.getElementById('board-panels').scrollTop > {before}")
+
+
+def test_the_board_s_schematic_pane_expands_over_the_board(page: Page, base_url: str) -> None:
+    """Expand on the board's Schematic pane, as on Frequency (D-107): the schematic large over
+    the board, fitted again, selecting there as in the panel; Esc shrinks it to its bar.
+    The Schematic view's large views are its own: Frequency large there stays large."""
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    page.locator("#frequency-expand").click()
+    show_board(page)
+    pane, sheet = page.locator("#board-schematic"), page.locator("#board-sheet")
+    page.locator("#board-schematic-expand").click()
+    expect(pane).to_have_class(re.compile(r"\blarge-view\b"))
+    expect(page.locator("#board-schematic-expand")).to_have_text("Collapse")
+    assert sheet.evaluate("e => e.clientHeight") > 400
+    sheet.locator(".part[data-ref='R2']").click()
+    expect(page.locator("#board .board-part[data-ref='R2']")).to_have_class(
+        re.compile(r"\bboard-part\b.*\bselected\b")
+    )
+    page.keyboard.press("Escape")  # shrunk to its bar
+    expect(pane).not_to_have_attribute("open", "")
+    pane.locator("summary").click()  # open again from its bar
+    expect(pane).to_have_attribute("open", "")
+    page.locator("#board-schematic-expand").click()  # back in the column
+    expect(pane).not_to_have_class(re.compile(r"\blarge-view\b"))
+    assert sheet.evaluate("e => e.getBoundingClientRect().height") == 240  # its border included
+    page.locator("#board-button").click()  # the Schematic view: Frequency still large and open
+    frequency = page.locator("#panel-frequency")
+    expect(frequency).to_have_class(re.compile(r"\blarge-view\b"))
+    expect(frequency).to_have_attribute("open", "")
+
+
 def test_the_board_panes_keep_their_own_order(page: Page, base_url: str) -> None:
     open_with_board(page, base_url, None)
     page.locator("#board-button").click()
@@ -163,7 +210,7 @@ def test_visiting_the_board_changes_nothing_until_placed(page: Page, base_url: s
     button.click()
     expect(button).to_have_attribute("aria-pressed", "true")
     expect(page.locator("#board-size-text")).to_have_text("Empty board")
-    expect(page.locator("#remove-board")).to_have_count(0)
+    expect(page.locator("#clear-board")).to_have_count(0)
     button.click()
     expect(button).to_have_attribute("aria-pressed", "false")
     expect(page.locator("aside.panels")).to_be_visible()
@@ -175,13 +222,13 @@ def test_visiting_the_board_changes_nothing_until_placed(page: Page, base_url: s
     expect(button).to_have_attribute("aria-pressed", "true")
 
 
-def test_a_board_marks_the_button_and_can_be_removed(page: Page, base_url: str) -> None:
+def test_a_board_marks_the_button_and_can_be_cleared(page: Page, base_url: str) -> None:
     open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
     button = page.locator("#board-button")
     expect(button).to_have_class("board-button marked")
     show_board(page)
     page.locator("#board-settings summary").click()
-    page.locator("#remove-board").click()
+    page.locator("#clear-board").click()
     # one undo step: the view stays on the empty board, the button quiet, Not saved
     expect(page.locator("#board-size-text")).to_have_text("Empty board")
     expect(page.locator("#board .board-part")).to_have_count(0)
@@ -638,16 +685,16 @@ def test_the_realistic_drawing_see_through_and_the_copper_side(page: Page, base_
     page.locator("#board-settings > summary").click()
     page.locator("#board-settings-body input[data-setting='seeThrough']").check()
     expect(page.locator("#board g.board.see-through")).to_have_count(1)
-    page.locator("#board-flip").click()
-    expect(page.locator("#board-flip")).to_have_attribute("aria-pressed", "true")
+    page.locator("#board-hide").click()
+    expect(page.locator("#board-hide")).to_have_attribute("aria-pressed", "true")
     expect(page.locator("#board g.board.copper")).to_have_count(1)
     expect(page.locator("#board .board-label").first).to_be_hidden()
     page.keyboard.press("c")
     page.locator("#board .cut").click()
     expect(page.locator("#board .cut")).to_have_count(0)
     page.keyboard.press("Control+z")
-    page.locator("#board-flip").click()
-    expect(page.locator("#board-flip")).to_have_attribute("aria-pressed", "false")
+    page.locator("#board-hide").click()
+    expect(page.locator("#board-hide")).to_have_attribute("aria-pressed", "false")
     expect(page.locator("#board g.board.copper")).to_have_count(0)
 
 
@@ -672,36 +719,39 @@ def test_a_placed_trimmer_is_made_in_line_from_its_menu(page: Page, base_url: st
     expect(tr1).to_have_count(1)
 
 
-def test_hide_parts_shows_the_copper_unmirrored_and_mirror_turns_it_over(
+def test_hide_parts_shows_the_copper_unmirrored_and_flip_turns_either_side_over(
     page: Page, base_url: str
 ) -> None:
-    """D-390 (the user, 2026-11-23): Hide parts shows the copper side as seen from the parts
-    side, unmirrored, with its cuts and its links (in their own colour, visible); Mirror on
-    the bar turns it over as you hold the board to solder, and turning Mirror on from the
-    parts side shows the copper side mirrored; off again, unmirrored."""
+    """Hide parts shows the copper side as seen from the parts side, unmirrored, with its cuts
+    and links (D-390). Flip (was Mirror, the user, 2026-11-25) turns whichever side is up
+    over, as you hold the board to solder: from the parts side the parts stay, their names
+    readable; it never hides them. Hide parts and Flip together: the copper side as you
+    solder it."""
     open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
     show_board(page)
     board = page.locator("#board g.board")
+    hide, flip = page.locator("#board-hide"), page.locator("#board-flip")
+    expect(flip).to_have_text("Flip")
     link = page.locator("#board .links .link-end").first  # a line is zero-wide to Playwright
-    page.locator("#board-flip").click()  # Hide parts
-    expect(page.locator("#board-flip")).to_have_attribute("aria-pressed", "true")
+    flip.click()  # the parts side turned over: parts still there, names turned back
+    expect(flip).to_have_attribute("aria-pressed", "true")
+    expect(hide).to_have_attribute("aria-pressed", "false")
+    expect(page.locator("#board g.board.copper")).to_have_count(0)
+    expect(page.locator("#board .board-part")).to_have_count(8)
+    expect(board).to_have_attribute("transform", re.compile(r"scale\(-1 1\)"))
+    expect(page.locator("#board .board-label").first).to_have_attribute(
+        "transform", re.compile(r"scale\(-1 1\)")
+    )
+    hide.click()  # and the copper side, as you solder it
     expect(page.locator("#board g.board.copper")).to_have_count(1)
-    expect(board).not_to_have_attribute("transform", re.compile("scale"))
+    expect(board).to_have_attribute("transform", re.compile(r"scale\(-1 1\)"))
     expect(link).to_be_visible()
     expect(page.locator("#board .cut")).to_have_count(1)
-    page.locator("#board-mirror").click()
-    expect(page.locator("#board-mirror")).to_have_attribute("aria-pressed", "true")
-    expect(board).to_have_attribute("transform", re.compile(r"scale\(-1 1\)"))
-    expect(link).to_be_visible()
-    page.locator("#board-flip").click()  # back to the parts side: never mirrored
-    expect(page.locator("#board g.board.copper")).to_have_count(0)
-    expect(board).not_to_have_attribute("transform", re.compile("scale"))
-    page.locator("#board-mirror").click()  # off
-    page.locator("#board-mirror").click()  # on from the parts side: the copper side, mirrored
+    flip.click()  # Flip off: the copper side as seen from the parts side
     expect(page.locator("#board g.board.copper")).to_have_count(1)
-    expect(page.locator("#board-flip")).to_have_attribute("aria-pressed", "true")
-    expect(board).to_have_attribute("transform", re.compile(r"scale\(-1 1\)"))
-    page.locator("#board-mirror").click()
+    expect(board).not_to_have_attribute("transform", re.compile("scale"))
+    hide.click()  # the parts side again, unflipped
+    expect(page.locator("#board g.board.copper")).to_have_count(0)
     expect(board).not_to_have_attribute("transform", re.compile("scale"))
 
 
@@ -856,6 +906,11 @@ def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_s
     expect(dialog.locator("input[name='layout']:checked")).to_have_count(0)
     expect(dialog.locator("button[data-answer='go']")).to_be_disabled()
     expect(dialog.locator(".layout-choice[data-layout='start']")).to_contain_text("Start over")
+    # every part placed and joined (Start a board leaves nothing undone): nothing to fill
+    filled = dialog.locator(".layout-choice[data-layout='fill']")
+    expect(filled.locator("input")).to_be_disabled()
+    expect(filled).to_contain_text("nothing left to fill")
+    expect(dialog.locator(".layout-choice[data-layout='tidy'] input")).to_be_enabled()
     dialog.locator(".layout-choice[data-layout='start'] input").check()
     dialog.locator("button[data-answer='go']").click()
     expect(page.locator(".ask-text")).to_contain_text(
@@ -1033,9 +1088,11 @@ def test_build_a_full_layout_reviewed_tried_again_kept_and_undone(
     page: Page, base_url: str
 ) -> None:
     """D-399: *Build a full layout* on the Rangemaster's empty board, Quick, its time
-    worked out; the running window, then the review bar: After | Before | Both (top and
-    bottom), Try another and back to try 1, Keep try 1 (one undo step). Then Thorough,
-    stopped early: its best kept for the review, and the old board kept."""
+    worked out; the running window, then the review, a pane at the top of the right column
+    with the canvas outlined (D-406): After | Before | Both (top and bottom), Hide parts and
+    Flip still at hand (both boards turned over in Both), Try another and back to try 1, Keep
+    try 1 (one undo step). Then Thorough, stopped early: its best kept for the review, and the
+    old board kept."""
     open_with_board(page, base_url, None)
     page.locator("#board-button").click()
     page.locator("#board-settings summary").click()
@@ -1055,10 +1112,24 @@ def test_build_a_full_layout_reviewed_tried_again_kept_and_undone(
     expect(review.locator(".compact-figures")).to_contain_text("→ After")
     expect(review.locator("[data-review='old']")).to_have_text("Keep the base board")
     expect(page.locator("#board-tray")).to_have_js_property("inert", True)
+    # the review heads the column, the panes below locked; the canvas outlined
+    first = "document.getElementById('board-panels').firstElementChild.classList"
+    assert page.evaluate(f"{first}.contains('compact-review')")
+    expect(page.locator("#board-nets")).to_have_js_property("inert", True)
+    expect(page.locator("#board-tools [data-tool='cuts']")).to_have_js_property("inert", True)
+    expect(page.locator("section.canvas")).to_have_class(re.compile(r"\breviewing\b"))
     review.locator("[data-mode='both']").click()
     expect(page.locator("#canvas-body")).to_have_class(re.compile("split"))
     expect(page.locator(".board-before")).to_be_visible()
     expect(page.locator(".compact-title.bottom")).to_contain_text("After, try 1")
+    # the view's buttons work on the boards under review: Flip turns both over
+    page.locator("#board-flip").click()
+    for drawn in ("#board g.board", ".board-before g.board"):
+        expect(page.locator(drawn)).to_have_attribute("transform", re.compile(r"scale\(-1 1\)"))
+    page.locator("#board-hide").click()
+    expect(page.locator(".board-before g.board.copper")).to_have_count(1)
+    page.locator("#board-hide").click()
+    page.locator("#board-flip").click()
     review.locator("[data-mode='before']").click()
     expect(page.locator(".board-before")).to_be_hidden()
     review.locator("[data-mode='after']").click()
@@ -1070,6 +1141,8 @@ def test_build_a_full_layout_reviewed_tried_again_kept_and_undone(
     expect(review).to_be_hidden()
     expect(page.locator("#board .board-part")).to_have_count(8)
     expect(page.locator("#board-tray")).to_have_js_property("inert", False)
+    expect(page.locator("#board-nets")).to_have_js_property("inert", False)
+    expect(page.locator("section.canvas")).not_to_have_class(re.compile(r"\breviewing\b"))
     kept = page.locator("#board-size-text").inner_text()
     page.keyboard.press("Control+z")
     expect(page.locator("#board .board-part")).to_have_count(0)

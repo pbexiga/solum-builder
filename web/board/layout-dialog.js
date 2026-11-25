@@ -22,9 +22,10 @@ const THOROUGH_KEY = "solum.boardThorough"; // Build a full layout: Thorough, th
 
 /**
  * Ask which layout help to run, then confirm it: null when cancelled at either step.
- * @param {{board: {parts: unknown[], cuts: unknown[], links: unknown[], wires: unknown[]}, toPlace: number,
+ * @param {{board: {parts: unknown[], cuts: unknown[], links: unknown[], wires: unknown[]}, toPlace: number, rest: boolean,
  *   times: Promise<{quick: number, thorough: number} | null>, standUp: import("./board-logic.js").StandUp}} now
- *   what's on the board, how many parts are still in the tray, *Build a full layout*'s
+ *   what's on the board, how many parts are still in the tray, whether anything is left to
+ *   fill (a part in the tray, a net in pieces), *Build a full layout*'s
  *   times on this machine (null: not known), and the board's choice for standing parts
  * @returns {Promise<{choice: import("./board-logic.js").LayoutChoice, compact: boolean, thorough: boolean, seconds: number,
  *   standUp: import("./board-logic.js").StandUp} | null>}
@@ -56,7 +57,7 @@ export async function chooseLayout(now) {
     slow.time.textContent = t ? `${timeText(t.thorough)}.` : "";
   });
   const speeds = [quick, slow];
-  const rows = layoutChoices(placed).map((c) => {
+  const rows = layoutChoices(placed, now.rest).map((c) => {
     const radio = /** @type {HTMLInputElement} */ (h("input", { type: "radio", name: "layout", value: c.value }));
     radio.checked = c.value === choice;
     radio.disabled = Boolean(c.why);

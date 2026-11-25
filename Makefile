@@ -28,7 +28,7 @@ ACCEPT_JOBS ?= 4
 PAR := -n $(JOBS)
 ACCEPT_PAR := -n $(ACCEPT_JOBS) --dist loadfile
 
-.PHONY: help dev-image image image-tar run test ruff jslint lint check accept bench hooks schema mac-app
+.PHONY: help dev-image image image-tar run test ruff jslint lint check accept perf bench hooks schema mac-app
 
 help:
 	@echo "make dev-image  build the dev image (do this first, and after changing dependencies)"
@@ -40,6 +40,7 @@ help:
 	@echo "make lint       ruff + jslint + mypy --strict"
 	@echo "make check      lint + unit, sim, rules, parity tests + coverage (before every commit)"
 	@echo "make accept     acceptance + UI tests (before ending a session)"
+	@echo "make perf       the timing tests, one at a time (on an idle machine)"
 	@echo "make bench      solum bench in the runtime image"
 	@echo "make image-tar  save the runtime image to dist/ for copying to the NAS"
 	@echo "make hooks      install the git pre-commit hook"
@@ -74,12 +75,14 @@ check: lint
 		--cov --cov-report=term-missing
 
 # Exit code 5 means "no tests collected": fine until Phase 1 adds acceptance circuits.
-# Timing tests run on their own after the rest, so the other tests' load can't slow them.
 accept:
 	$(PYTEST) -q $(ACCEPT_PAR) -m "not timing" tests/acceptance tests/ui; status=$$?; \
-		if [ $$status -eq 5 ]; then echo "(no acceptance/UI tests yet)"; exit 0; fi; \
-		if [ $$status -ne 0 ]; then exit $$status; fi; \
-		$(PYTEST) -q -m timing tests/sim tests/acceptance tests/ui; status=$$?; \
+		if [ $$status -eq 5 ]; then echo "(no acceptance/UI tests yet)"; exit 0; fi; exit $$status
+
+# Timing tests only, one at a time, on an idle machine: check and accept never fail on a
+# busy one (D-405).
+perf:
+	$(PYTEST) -q -m timing tests/unit tests/sim tests/acceptance tests/ui; status=$$?; \
 		if [ $$status -eq 5 ]; then exit 0; fi; exit $$status
 
 # The cache timings need the disk the app's cache is on (D-126 hid on tmpfs): compose's

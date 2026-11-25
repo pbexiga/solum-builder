@@ -754,7 +754,7 @@ Under the Guitar in symbol: its pickup's name ("Strat single coil"), "Your picku
 - **What the power parts mean**: the **Power dropdown** is the wall-wart supply and always sets V+ (and V−); mains is never simulated. The **DC jack** draws the real jack and makes no voltage (for a full drawing, the parts list and export, and with a battery it's the Power switch). The **DC source** is an ideal voltage on a net other than V+/V− (a reference, a second supply, a test voltage); a voltage the pedal makes itself is the charge pump.
 - **Blocks are suggestions**: no special case for dropping bypass blocks; Problems says what's left unwired.
 - **Palette and hotkeys**: one Switch tile (S, SPDT; a footswitch is a type in its form), DC jack (H), Battery (Y).
-- **Timing tests run on their own** (`@pytest.mark.timing`, after the rest of `make accept`).
+- **Timing tests run on their own** (`@pytest.mark.timing`; since D-405 in `make perf`, not `make accept`).
 - **A DC source's text says its volts.**
 
 **D-144 — View → Capacitor types** (2026-10-29) `look`
@@ -2412,3 +2412,8 @@ Calculators → *Filter* (`filterCalculator` in `web/tools.js`, `GET /api/tools/
 - **The jacks' wires** (*default*): when the output is in phase with the guitar with high gain between (`probe.jacks_in_phase`, sent as `jacks_apart`), the IN and OUT tip wires as drawn may run side by side in one lane or the next for 10 mm at most (`board-logic.js` `APART_MM`, `sideBySide`, `jackWiresWarning`). Measured in the browser: the routes are drawn there (a wire is lug + hole to the server, D-375).
 - Tuned on the Fuzz Face and Big Muff (the spec's table): at 3 columns the Fuzz Face's full layout can keep one pair (a warning, not a bigger board forced); the TS808's clears at 46 × 17 (from 44 × 17).
 *Alternatives:* every later node (an inverting stage's coupling only trims treble: warnings with no squeal behind them); phase at 10 kHz alone (the user: misses pairs); a sweep (three points say enough, the run is there); a hard limit (Build a full layout must still finish); 2 columns (nearly every neighbour with a leg each) or 4 (a transistor's width beside its input); routing the jacks' wires apart in Wire it for me (it already puts them on opposite sides; the warning covers a dragged jack).
+
+**D-405 — Timing tests only in `make perf`, on an idle machine** (2026-11-25) `project`
+- The user: `make check` (and `make accept`) fail only on a result being wrong, never on the machine being busy. Every test that asserts how fast something is carries `@pytest.mark.timing` and runs in `make perf`, one at a time, on an idle machine; `make check` and `make accept` leave them out. Start a board's 2 s on each starter is its own test now (`test_start_for_me_is_quick`): it failed `make check` for the Klons while starter tables loaded every core (0.5 s alone).
+- **Kept elsewhere, with wide margins**: guards against a hang, not speed checks: a render job finishing within 60–120 s, a stopped render or ngspice halted within 5 s or `KILL_AFTER`, the model check apart within 15 s of its 8 s timeout. A cached audio render in a UI test is a coarse guard at 10 s, 5× its ~2 s.
+*Alternatives:* timing tests at the end of `make accept` (as before: still on a machine the agent may be loading); every limit widened 5× in place (a real slowdown of less than that goes unseen).

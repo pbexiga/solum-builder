@@ -117,10 +117,11 @@ def test_ts808_renders_plays_through_a_capture_and_replays_from_cache(
     page.locator('[data-slot="pedal"]').click()
     page.wait_for_function("!document.querySelector('#audio-body audio').paused")
     page.evaluate("document.querySelector('#audio-body audio').pause()")
-    # the same render again comes straight from the cache
+    # the same render again comes straight from the cache (a coarse guard, 5× its ~2 s:
+    # the speed itself isn't timed here, D-405)
     started = time.monotonic()
-    render_and_wait(page, timeout=5_000)
-    assert time.monotonic() - started < 2.0
+    render_and_wait(page, timeout=15_000)
+    assert time.monotonic() - started < 10.0
     assert page.evaluate("document.querySelector('#audio-body audio').src") == first
     expect(status).to_contain_text("5.0 s")  # a cached take keeps its stats
     # shrunk to its bar, Dry / Pedal still show which one plays (D-115)

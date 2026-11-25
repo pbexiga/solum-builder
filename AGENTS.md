@@ -79,6 +79,7 @@ Tests are written **with** the code, not after. A function isn't done until its 
 - `make test`: unit tests only (run constantly while coding)
 - `make check`: ruff, the browser code's check (`make jslint`: undefined names, unused and wrong imports, D-286), mypy, unit + sim + rules + parity, coverage report (run before every commit)
 - `make accept`: acceptance and UI tests (run before ending a session)
+- `make perf`: the timing tests, one at a time, on an idle machine (never in `check` or `accept`, D-405)
 A pre-commit hook runs ruff, `make jslint` and `make test`, except on commits that only change Markdown notes in `docs/` or the top folder (D-194).
 
 ### Data and files

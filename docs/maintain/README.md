@@ -27,7 +27,8 @@ Keep throwaway work (exploration scripts, dumps, screenshots) in `scratch/`, whi
 | `make jslint` | The browser code's static check: names never declared or imported, unused imports, imports that don't exist. | Part of `lint`. |
 | `make lint` | `ruff`, `jslint` and `mypy --strict`. | Part of `check`. |
 | `make check` | `lint`, then the unit, simulation, rules and parity tests with a coverage report (85 % floor on the core). A few minutes. | Before every commit. |
-| `make accept` | The acceptance tests (each starter against its published figures) and the browser tests (Playwright), then the timing tests on their own. | Before ending a session or merging. |
+| `make accept` | The acceptance tests (each starter against its published figures) and the browser tests (Playwright). | Before ending a session or merging. |
+| `make perf` | The timing tests (how fast Start a board, a knob turn, a node click are), one at a time (D-405). | On an idle machine, before merging a change that could slow things. |
 | `make bench` | `solum bench` in the runtime image: times a bench circuit through the simulator and prints a JSON report. See [Benchmarks and profiling](#benchmarks-and-profiling). | After performance work, or on a new machine. |
 | `make image-tar` | Builds the runtime image and saves it as `dist/solum-builder-image.tar.gz`, for a machine that won't build it. | Deploying to the NAS. |
 | `make schema` | Regenerates `docs/circuit.schema.json` from the circuit models. A test fails when it's stale. | After changing the circuit format. |

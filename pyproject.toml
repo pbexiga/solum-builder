@@ -77,7 +77,7 @@ markers = [
     "parity: JS linear solver vs ngspice .ac (tests/parity)",
     "rules: per-rule fixtures, corpus, mutations (tests/rules)",
     "ui: Playwright smoke tests (tests/ui)",
-    "timing: checks how fast something is; run on its own, after the rest (make accept)",
+    "timing: checks how fast something is; run on its own, on an idle machine (make perf)",
 ]
 
 [tool.coverage.run]

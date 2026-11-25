@@ -1,6 +1,6 @@
 """*Start for me* on every starter (P6f's *Accept when*, D-387): a board that passes the
-check, the same every run, well under a second; a starter with a part no board takes is
-refused in words."""
+check, the same every run; well under a second (a timing test, `make perf`); a starter
+with a part no board takes is refused in words."""
 
 import time
 from pathlib import Path
@@ -29,11 +29,21 @@ def test_start_for_me_lays_out_every_starter(path: Path) -> None:
         with pytest.raises(StartError, match=NO_BOARD[path.stem]):
             start_for_me(None, circuit, MODELS, TABLE, fill=False)
         return
-    began = time.perf_counter()
     first = start_for_me(None, circuit, MODELS, TABLE, fill=False)
-    took = time.perf_counter() - began
     checked = check_layout(first.layout, circuit, MODELS, TABLE)
     assert checked.ok, checked.faults[:3]
     assert first.left == ()
     assert start_for_me(None, circuit, MODELS, TABLE, fill=False) == first
-    assert took < 2.0  # well under a second on a desktop; room for a slow CI runner
+
+
+@pytest.mark.timing
+@pytest.mark.parametrize("path", STARTERS, ids=[p.stem for p in STARTERS])
+def test_start_for_me_is_quick(path: Path) -> None:
+    """Well under a second on a desktop (the Klons, the biggest, ~0.5 s); 2 s leaves room
+    for a slow runner, on an idle machine (`make perf`)."""
+    circuit = load_circuit(path)
+    if path.stem in NO_BOARD:
+        return
+    began = time.perf_counter()
+    start_for_me(None, circuit, MODELS, TABLE, fill=False)
+    assert time.perf_counter() - began < 2.0

@@ -43,7 +43,7 @@ Drag a part from the tray onto the board, or click it and then click where it go
 
 Drag a placed part to move it; **Del** sends it back to the tray. Right-click a part for the same moves, **Back to the tray**, and for a trimmer its other shape (below). Hovering a part names its legs.
 
-The top-left buttons pick what a click does: **Parts** (P) places and moves parts, **Cuts** (C) cuts the strip at a hole or mends a cut, and **Links** (K) lays a wire link down a column, or lifts one.
+Grab a part or a wire and drag it to move it. Two buttons at the top left change what a click does until you turn them off: **Cuts** (C) cuts the strip at a hole or mends a cut, and **Links** (K) lays a wire link down a column, or lifts one. Click the button again, or press Esc, to go back to moving parts.
 
 ### Guidance as you go
 
@@ -152,7 +152,7 @@ While it runs, a window shows its progress and the best board so far (*Best so f
 
 ### Looking before you keep it
 
-When it's done, **Review the layout** opens at the top of the right-hand column and compares the two: *Before 34 × 13 holes, 14 cuts, 15 links → After 15 × 7 holes, 11 cuts, 6 links*. Until you keep a board, the canvas has a yellow outline and the board can't be edited: the tray, the panes and Parts, Cuts and Links are faded. **Flip**, **Hide parts** and **See-through** still work, on both boards in Both.
+When it's done, **Review the layout** opens at the top of the right-hand column and compares the two: *Before 34 × 13 holes, 14 cuts, 15 links → After 15 × 7 holes, 11 cuts, 6 links*. Until you keep a board, the canvas has a yellow outline and the board can't be edited: the tray, the panes, Cuts and Links are faded. **Flip**, **Hide parts** and **See-through** still work, on both boards in Both.
 
 ![Review the layout in Both: the board before above, the new one below](img/board-review.png)
 

@@ -103,7 +103,7 @@ def test_hot_keys(page: Page, base_url: str) -> None:
     keys = page.locator("#hotkeys")
     expect(keys.locator("h3")).to_have_count(6)
     expect(keys).to_contain_text("Ctrl+Shift+Z or Ctrl+Y")
-    expect(keys.locator("tr", has_text="Make cuts")).to_contain_text("P / C / K")  # D-374
+    expect(keys.locator("tr", has_text="Make cuts")).to_contain_text("C / K")  # D-374, no P (D-406)
     expect(keys.locator("tr", has_text="Resistor")).to_contain_text("R")
     page.keyboard.press("Escape")
     expect(keys).to_have_count(0)

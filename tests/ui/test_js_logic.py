@@ -1210,7 +1210,7 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
     assert got["link"] == [[3, 1], [3, 5]] and got["noLink"] is None
     assert got["red"] == [{"x": -5, "y": 65, "w": 120, "h": 10}]
     assert got["keys"] == ["turn", "flip", "stand", "longer", "shorter", "remove", "cuts",
-                           "links", "parts", "cancel", None]  # fmt: skip
+                           "links", None, "cancel", None]  # fmt: skip
     assert got["ctrl"] is None
 
 

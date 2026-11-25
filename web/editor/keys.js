@@ -50,7 +50,7 @@ export function actionFor(press) {
  * The keys of the Board view (D-374), where the schematic's part keys mean nothing: Space
  * turns the part carried or selected, F flips it, S stands it up or lays it flat, + and −
  * lengthen and shorten its legs, Del takes it back to the tray, C and K the cut and link
- * tools, Esc drops what's carried or goes back to placing parts. Ctrl keys stay
+ * tools on and off (D-406), Esc drops what's carried or turns the tool off. Ctrl keys stay
  * `actionFor`'s (undo, redo, save, run).
  * @param {Press} press @returns {Action | null}
  */
@@ -69,7 +69,6 @@ export function boardActionFor(press) {
     case "-": return { action: "shorter" };
     case "c": return { action: "cuts" };
     case "k": return { action: "links" };
-    case "p": return { action: "parts" };
     case "t": return { action: "seeThrough" };
   }
   return null;
@@ -126,9 +125,9 @@ export function hotkeyGroups() {
       { keys: "Space / F / S", does: "Turn, flip, stand up or lay flat the part carried or selected" },
       { keys: "+ / −", does: "Longer or shorter legs" },
       { keys: "Del or Backspace", does: "Take the selected part back to the tray" },
-      { keys: "P / C / K", does: "Place parts, make cuts, lay links" },
+      { keys: "C / K", does: "Make cuts, lay links; again to move parts" },
       { keys: "T", does: "See-through: the parts faint, the holes under them showing" },
-      { keys: "Esc", does: "Drop what's carried; back to placing parts" },
+      { keys: "Esc", does: "Drop what's carried; Cuts or Links off" },
     ] },
     { title: "Elsewhere", rows: [
       { keys: "Enter / Esc", does: "In a part's form: apply / cancel" },

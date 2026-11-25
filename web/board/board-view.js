@@ -297,7 +297,7 @@ export function boardView(host, app) {
     if (e.detail) flipButton.blur();
   });
   for (const b of tools.querySelectorAll("button[data-tool]")) b.addEventListener("click", () => {
-    setTool(/** @type {any} */ (b.getAttribute("data-tool")));
+    toggleTool(/** @type {"cuts" | "links"} */ (b.getAttribute("data-tool")));
     b.blur(); // the board's keys act again
   });
   // a tray row dragged and let go: on the board it's put down, elsewhere dropped; not moved, it stays picked up
@@ -348,7 +348,12 @@ export function boardView(host, app) {
     }
   }
 
-  /** @param {"parts" | "cuts" | "links"} which */
+  /** Cuts or Links on, or off again (D-406: no Parts button, a part grabbed is a part moved). @param {"cuts" | "links"} which */
+  function toggleTool(which) {
+    setTool(tool === which ? "parts" : which);
+  }
+
+  /** @param {"parts" | "cuts" | "links"} which `parts`: neither tool on, parts and wires moved */
   function setTool(which) {
     tool = which;
     drop();
@@ -1275,7 +1280,7 @@ export function boardView(host, app) {
         else return false;
         return true;
       }
-      if (action === "parts" || action === "cuts" || action === "links") return setTool(action), true;
+      if (action === "cuts" || action === "links") return toggleTool(action), true;
       if (action === "seeThrough") return setSetting("seeThrough", !settings.seeThrough), true;
       if (action === "remove") {
         const ref = carry?.from === "board" ? carry.ref : selectedPlaced();

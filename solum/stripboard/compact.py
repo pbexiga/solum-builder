@@ -831,11 +831,15 @@ def squeeze(st: State, cur: Derived) -> Derived:
 Going = Callable[[int, Found | None], bool]  # (steps done, best so far) → go on?
 
 
-def search(pb: Problem, steps: int, seed: int, going: Going | None = None) -> Found | None:
+def search(pb: Problem, steps: int, seed: int, going: Going | None = None,
+           flat: bool = False) -> Found | None:  # fmt: skip
     """The smallest board one seed finds in `steps` steps (module doc), or None when every
     board it saw had a problem. `going` is asked every `CHECK` steps; False stops early
-    with the best so far; it's told the steps done at the end."""
+    with the best so far; it's told the steps done at the end. `flat`: no standing shape
+    chosen (the flat attempt, D-403: the same board as Never's search with this seed)."""
     rng = random.Random(seed)
+    shapes = {ref: [i for i, v in enumerate(pb.variants[ref]) if not (flat and v.standing)]
+              for ref in pb.refs}  # fmt: skip
     st = State(pb, start_pos(pb))
     refs = pb.refs
     cur = squeeze(st, st.derive())
@@ -847,7 +851,7 @@ def search(pb: Problem, steps: int, seed: int, going: Going | None = None) -> Fo
             done = step
             break
         temp = t0 * (t1 / t0) ** (step / steps)
-        changes = _move(rng, st, cur, refs)
+        changes = _move(rng, st, cur, refs, shapes)
         if not changes or (old := st.move(changes)) is None:
             continue
         # accepted when cost < cur.cost + temp·(−ln r), or no worse (Metropolis)
@@ -869,10 +873,12 @@ def search(pb: Problem, steps: int, seed: int, going: Going | None = None) -> Fo
     return best
 
 
-def _move(rng: random.Random, st: State, cur: Derived, refs: list[str]) -> dict[str, Pos]:
+def _move(rng: random.Random, st: State, cur: Derived, refs: list[str],
+          shapes: dict[str, list[int]]) -> dict[str, Pos]:  # fmt: skip
     """A random move: a part put by the pin a placement limit keeps it at, a long jump, a
     shift, another shape (a leg kept in its hole), a swap of two parts' spots, or a
-    squeeze of everything past a line."""
+    squeeze of everything past a line; `shapes`: each part's shapes it may take (all of
+    them draw as `randrange` would, so the boards don't change)."""
     variants = st.pb.variants
     limits = st.pb.limits
     if limits and rng.random() < 0.05:  # by its pin, in any shape (D-367)
@@ -881,15 +887,14 @@ def _move(rng: random.Random, st: State, cur: Derived, refs: list[str]) -> dict[
         px, py = st._hole(anchor, pin)
         reach = REACH + len(legs) - 1
         dx = rng.choice([d for d in range(-reach, reach + 1) if d])
-        wi = rng.randrange(len(variants[ref]))
+        wi = rng.choice(shapes[ref])
         ox, oy = variants[ref][wi].at[leg]
         return {ref: (wi, px + dx - ox, py - oy)}
     kind = rng.random()
     if kind < 0.05:  # a long jump: anywhere on the board, any shape
         ref = rng.choice(refs)
         x0, y0, x1, y1 = cur.box
-        return {ref: (rng.randrange(len(variants[ref])), rng.randint(x0, x1),
-                      rng.randint(y0, y1))}  # fmt: skip
+        return {ref: (rng.choice(shapes[ref]), rng.randint(x0, x1), rng.randint(y0, y1))}
     if kind < 0.45:  # shift one part
         ref = rng.choice(refs)
         vi, x, y = st.pos[ref]
@@ -902,9 +907,9 @@ def _move(rng: random.Random, st: State, cur: Derived, refs: list[str]) -> dict[
         ref = rng.choice(refs)
         vi, x, y = st.pos[ref]
         vs = variants[ref]
-        if len(vs) < 2:
+        if len(shapes[ref]) < 2:
             return {}
-        wi = rng.randrange(len(vs))
+        wi = rng.choice(shapes[ref])
         if wi == vi:
             return {}
         leg, ox, oy = rng.choice(vs[vi].legs)

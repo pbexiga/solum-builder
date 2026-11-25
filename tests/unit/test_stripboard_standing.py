@@ -19,11 +19,12 @@ from solum.models import load_models
 from solum.stripboard import compact
 from solum.stripboard.board import Layout, Placed, StandUp
 from solum.stripboard.check import check_layout, outline_overlaps, read_layout
-from solum.stripboard.compact import finish, problem, search
+from solum.stripboard.compact import board_of, finish, problem, search
 from solum.stripboard.footprints import one_board_part
 from solum.stripboard.limits import LoudInput, broken_limits, placement_limits
 from solum.stripboard.start import stand_order, start_for_me
-from solum.stripboard.tidy import key, stand_where_needed, tidy_up
+from solum.stripboard.tidy import key as tidy_key
+from solum.stripboard.tidy import stand_where_needed, tidy_up
 
 REPO = Path(__file__).resolve().parents[2]
 LIBRARY = REPO / "library"
@@ -103,6 +104,20 @@ def test_build_a_full_layout_follows_the_choice_the_same_board_each_time() -> No
     assert len(found["needed"]) < len(found["prefer"])
 
 
+def test_the_flat_attempt_is_never_s_board_for_its_seed() -> None:
+    """D-403: a search that picks no standing shape on a When needed problem finds the
+    board Never's search finds with the same seed (the standing shapes come after the
+    flat ones, and the moves draw alike), so a run with it can't do worse than Never's
+    attempt with that seed on limits or warnings, which rank first."""
+    needed = problem(empty("needed"), TS808, MODELS, TABLE)
+    never = problem(empty("never"), TS808, MODELS, TABLE)
+    flat, own = search(needed, 3000, 1, flat=True), search(never, 3000, 1)
+    assert flat is not None and own is not None
+    assert not standing(board_of(needed, flat))
+    assert replace(board_of(needed, flat), stand_up="never") == board_of(never, own)
+    assert flat.key == own.key
+
+
 def test_try_another_uses_the_board_s_own_choice() -> None:
     """The search reads the choice off the board it's given (`stand_up` None): a board
     made with Never is searched again with no standing shape."""
@@ -150,9 +165,9 @@ def test_when_needed_tidy_up_stands_a_part_only_where_it_clears_a_fault() -> Non
 def test_tidy_up_s_measure_counts_standing_parts_only_when_preferred() -> None:
     """Preferred, the more standing the tidier; otherwise they don't count."""
     part = Placed("R1", (("1", (0, 0)), ("2", (0, 1))), True)
-    assert key(Layout(4, 9, (part,)))[:4] == (36, 0, 0, 0)  # the default: needed
-    assert key(Layout(4, 9, (part,), stand_up="never"))[3] == 0
-    assert key(Layout(4, 9, (part,), stand_up="prefer"))[3] == -1
+    assert tidy_key(Layout(4, 9, (part,)))[:4] == (36, 0, 0, 0)  # the default: needed
+    assert tidy_key(Layout(4, 9, (part,), stand_up="never"))[3] == 0
+    assert tidy_key(Layout(4, 9, (part,), stand_up="prefer"))[3] == -1
 
 
 def test_a_standing_part_is_checked_for_touching() -> None:

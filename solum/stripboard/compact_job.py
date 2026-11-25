@@ -5,11 +5,15 @@ will take on this machine, measured.
 A run is a fixed set of attempts (seeds), each a fixed number of steps by the circuit's
 size (Quick, or Thorough's four times as many), so the same circuit and choice give the
 same board on any machine: a slower one, or one with fewer workers (the seeds queue),
-takes longer to the same board. *Try another* is the next set of seeds. The workers are
-spawned for the run (not the render pool: a render and a layout don't queue behind each
-other) and end with it.
+takes longer to the same board. *Try another* is the next set of seeds. When standing
+parts is allowed, a fifth attempt lies everything flat (`FLAT_SEED`, the same steps:
+Never's own board for that seed), so standing shapes can't leave a board breaking more
+limits or with more warnings than lying flat would (D-403); it's the same for every try,
+so it runs once per board and Try another reuses it. The workers are spawned for the run
+(not the render pool: a render and a layout don't queue behind each other) and end with it.
 """
 
+import json
 import math
 import multiprocessing as mp
 import os
@@ -22,16 +26,19 @@ from dataclasses import dataclass
 from multiprocessing.synchronize import Event as MpEvent
 from typing import Any
 
+from solum.cache import content_hash
+from solum.circuit.io import circuit_to_dict
 from solum.circuit.schema import Circuit
 from solum.config import Settings
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
-from solum.stripboard.board import Layout
+from solum.stripboard.board import Layout, layout_data
 from solum.stripboard.compact import Found, Problem, best_of, problem, search
 from solum.stripboard.limits import LoudInput
 
 WORKERS = min(4, max(1, (os.cpu_count() or 2) - 1))  # as renders' (D-083)
 ATTEMPTS = 4  # seeds a run tries (P6h5a's measurement)
+FLAT_SEED = 1  # the flat attempt's seed (D-403): Never's first board
 STEPS_PER_PART = 12_000  # Quick: each attempt's steps for each board part
 MOST_PARTS = 40  # ...counted up to this many parts: a big board's run stays in minutes
 THOROUGH = 4  # Thorough looks this many times as long
@@ -70,8 +77,9 @@ def _init_worker(settings: Settings, reports: "mp.Queue[Any]", stop: MpEvent) ->
 
 
 def _attempt(layout: Layout | None, circuit: Circuit, loud: Sequence[LoudInput],
-             steps: int, seed: int) -> Found | None:  # fmt: skip
-    """One seed's search, its progress reported every `PROGRESS_EVERY` seconds."""
+             steps: int, seed: int, tag: int, flat: bool) -> Found | None:  # fmt: skip
+    """One seed's search (`flat`: no standing shape), its progress reported every
+    `PROGRESS_EVERY` seconds under `tag`."""
     pb = problem(layout, circuit, _worker["models"], _worker["table"], loud)
     reports, stop = _worker["reports"], _worker["stop"]
     last = 0.0
@@ -83,13 +91,36 @@ def _attempt(layout: Layout | None, circuit: Circuit, loud: Sequence[LoudInput],
         count = done
         now = time.monotonic()
         if now - last >= PROGRESS_EVERY:
-            reports.put((seed, done, best, False))
+            reports.put((tag, done, best, False))
             last = now
         return not stop.is_set()
 
-    found = search(pb, steps, seed, going)
-    reports.put((seed, count, found, True))  # the last: the server waits for each seed's
+    found = search(pb, steps, seed, going, flat)
+    reports.put((tag, count, found, True))  # the last: the server waits for each attempt's
     return found
+
+
+_flat: dict[str, Found | None] = {}  # the flat attempt's board, by what it searched (D-403)
+FLAT_KEPT = 16  # boards' flat attempts kept, the oldest dropped
+
+
+def _flat_key(pb: Problem, circuit: Circuit, loud: Sequence[LoudInput], steps: int) -> str:
+    """What decides the flat attempt's board, hashed by content: the circuit as saved, the
+    base board and its choices, the high-gain inputs the simulation found, the parts'
+    shapes as the search sees them (footprints from the library), and the steps. The
+    rules are the code's: the cache lives in the server's memory, so a new version of
+    them (a restart) starts it empty."""
+    shapes = [[ref, [[v.legs, v.standing] for v in pb.variants[ref]]] for ref in pb.refs]
+    return content_hash(json.dumps(circuit_to_dict(circuit), sort_keys=True),
+                        json.dumps(layout_data(pb.base), sort_keys=True),
+                        json.dumps([[i.ref, i.pin, sorted(i.quiet), sorted(i.along)]
+                                    for i in loud]),
+                        json.dumps(shapes), str(steps))  # fmt: skip
+
+
+def flat_needed(pb: Problem) -> bool:
+    """Whether a run adds the flat attempt: when the board's choice stands parts (D-403)."""
+    return pb.stand_up != "never"
 
 
 # --- in the server -----------------------------------------------------------------
@@ -116,12 +147,19 @@ def run(pb: Problem, layout: Layout | None, circuit: Circuit, loud: Sequence[Lou
     the same base)."""
     steps = steps_for(len(pb.refs), thorough)
     seeds = seeds_for(attempt)
+    jobs = [(s, s, False) for s in seeds]  # (tag, seed, flat)
+    flat = _flat_key(pb, circuit, loud, steps) if flat_needed(pb) else None
+    known: list[Found | None] = []
+    if flat is not None and flat in _flat:
+        known.append(_flat[flat])  # Try another: the same flat board as before
+    elif flat is not None:
+        jobs.append((0, FLAT_SEED, True))  # tag 0: no seed's (they start at 1)
     ctx = mp.get_context("spawn")
     reports: mp.Queue[Any] = ctx.Queue()
     halt = ctx.Event()
-    done = dict.fromkeys(seeds, 0)
-    found: dict[int, Found] = {}
-    best: Found | None = None
+    done = {tag: 0 for tag, _, _ in jobs}
+    found: dict[int, Found] = {i: f for i, f in enumerate(known, -len(known)) if f}
+    best: Found | None = best_of(found.values())
 
     ended: set[int] = set()
 
@@ -133,13 +171,14 @@ def run(pb: Problem, layout: Layout | None, circuit: Circuit, loud: Sequence[Lou
         if f is not None:
             found[seed] = f
         now = best_of(found.values())
-        report(sum(done.values()), steps * len(seeds), now if now != best else None)
+        report(sum(done.values()), steps * len(jobs), now if now != best else None)
         best = now
 
-    with ProcessPoolExecutor(min(WORKERS, len(seeds)), mp_context=ctx, initializer=_init_worker,
+    with ProcessPoolExecutor(min(WORKERS, len(jobs)), mp_context=ctx, initializer=_init_worker,
                              initargs=(settings, reports, halt)) as pool:  # fmt: skip
-        futures = [pool.submit(_attempt, layout, circuit, loud, steps, s) for s in seeds]
-        while len(ended) < len(seeds):
+        futures = [pool.submit(_attempt, layout, circuit, loud, steps, seed, tag, fl)
+                   for tag, seed, fl in jobs]  # fmt: skip
+        while len(ended) < len(jobs):
             if stop.is_set():
                 halt.set()
             failed = next((f for f in futures if f.done() and f.exception()), None)
@@ -151,7 +190,11 @@ def run(pb: Problem, layout: Layout | None, circuit: Circuit, loud: Sequence[Lou
             except queue.Empty:
                 continue
         results = [f.result() for f in futures]
-    return Run(pb, best_of(results), stop.is_set())
+    if flat is not None and flat not in _flat and not stop.is_set():
+        _flat[flat] = results[-1]  # a whole run's flat board only, never a stopped one's
+        while len(_flat) > FLAT_KEPT:
+            del _flat[next(iter(_flat))]
+    return Run(pb, best_of([*results, *known]), stop.is_set())
 
 
 @dataclass(frozen=True)
@@ -181,9 +224,13 @@ def estimate(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
 
     search(pb, 10**9, 1, going)
     speed = counted / max(timing[-1] - timing[0], 1e-3) / RAMP if counted else 1e4
-    rounds = math.ceil(ATTEMPTS / WORKERS)
 
     def seconds(thorough: bool) -> float:
-        return SPAWN + base + rounds * steps_for(len(pb.refs), thorough) / speed
+        steps = steps_for(len(pb.refs), thorough)
+        flat = flat_needed(pb) and _flat_key(pb, circuit, loud, steps) not in _flat
+        # the flat attempt too (D-403): it starts as the quickest attempt ends and runs
+        # mostly alone, so it costs its share, not a whole round (TS808: +26 %, 4 workers)
+        rounds = max(math.ceil(ATTEMPTS / WORKERS), (ATTEMPTS + flat) / WORKERS)
+        return SPAWN + base + rounds * steps / speed
 
     return Estimate(round(seconds(False), 1), round(seconds(True), 1))

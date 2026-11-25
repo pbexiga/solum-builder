@@ -19,7 +19,16 @@ from solum.models import load_models
 from solum.stripboard import compact
 from solum.stripboard.board import Layout, Placed, StandUp
 from solum.stripboard.check import check_layout, outline_overlaps, read_layout
-from solum.stripboard.compact import board_of, finish, problem, search
+from solum.stripboard.compact import (
+    Found,
+    board_of,
+    finish,
+    lay_flat,
+    positions,
+    problem,
+    search,
+    standing_unneeded,
+)
 from solum.stripboard.footprints import one_board_part
 from solum.stripboard.limits import LoudInput, broken_limits, placement_limits
 from solum.stripboard.start import stand_order, start_for_me
@@ -56,8 +65,11 @@ def broken(layout: Layout, circuit: Circuit) -> int:
 
 def test_start_a_board_stands_a_part_only_when_it_meets_a_limit_lying_flat_can_t() -> None:
     """The Fuzz Face lies flat when needed (standing R4 would only save room: Prefer's
-    board is smaller, 60 holes for 100); the TS808 stands parts when needed, only because
-    they meet a limit lying flat breaks: fewer limits broken, on a bigger board."""
+    board is smaller, 60 holes for 100). The TS808 laid flat breaks two limits (R5 and
+    D1 too far along IC1's pins 5 and 6, 54 × 18); when needed the band is laid out again
+    with those limits' parts allowed to stand: D1 and D2 stand and every limit is met, on
+    a bigger board (68 × 20): room isn't why. Prefer's smaller board (51 × 17) stands parts
+    no limit asks for, so Start doesn't reach it by design; size is the full layout's."""
     assert [stand_order(s) for s in CHOICES] == ["none", "needed", "first"]
     for choice in CHOICES:
         made = start_for_me(empty(choice), FUZZ_FACE, MODELS, TABLE, fill=False).layout
@@ -65,8 +77,8 @@ def test_start_a_board_stands_a_part_only_when_it_meets_a_limit_lying_flat_can_t
         assert (len(standing(made)) > 0) == (choice == "prefer")
     flat = start_for_me(empty("never"), TS808, MODELS, TABLE, False, TS808_LOUD).layout
     needed = start_for_me(empty("needed"), TS808, MODELS, TABLE, False, TS808_LOUD).layout
-    assert not standing(flat) and standing(needed)
-    assert broken(needed, TS808) < broken(flat, TS808)
+    assert not standing(flat) and broken(flat, TS808) == 2
+    assert standing(needed) == ["D1", "D2"] and broken(needed, TS808) == 0
     assert needed.columns * needed.strips > flat.columns * flat.strips  # room isn't why
 
 
@@ -116,6 +128,23 @@ def test_the_flat_attempt_is_never_s_board_for_its_seed() -> None:
     assert not standing(board_of(needed, flat))
     assert replace(board_of(needed, flat), stand_up="never") == board_of(never, own)
     assert flat.key == own.key
+
+
+def test_a_full_layout_s_standing_parts_a_limit_or_warning_doesn_t_need_lie_flat() -> None:
+    """When needed, the search prefers fewer standing parts only among the boards it saw,
+    so finishing lays flat again each standing part that can lie flat (a leg kept in its
+    hole) with no more limits broken nor warnings (`lay_flat`): a board searched as Prefer
+    (standing free) keeps none that `standing_unneeded` finds, and its limits and warnings
+    are no worse."""
+    needed = problem(empty("needed"), TS808, MODELS, TABLE)
+    free = problem(empty("prefer"), TS808, MODELS, TABLE)
+    got = search(free, 3000, 1)
+    assert got is not None
+    pos = positions(needed, replace(board_of(free, got), stand_up="needed"))
+    assert standing_unneeded(needed, pos)  # Prefer stands parts nothing needs
+    flat = lay_flat(needed, Found(got.key, 1, 0, 0, 0, 0, tuple(pos.items())))
+    assert standing_unneeded(needed, dict(flat.pos)) == []
+    assert flat.key[:2] <= got.key[:2]
 
 
 def test_try_another_uses_the_board_s_own_choice() -> None:

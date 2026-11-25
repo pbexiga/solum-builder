@@ -788,8 +788,14 @@ def _found(d: Derived, seed: int, pos: dict[str, Pos]) -> Found:
 
 def start_pos(pb: Problem) -> dict[str, Pos]:
     """Each part's spot on the base board."""
+    return positions(pb, pb.base)
+
+
+def positions(pb: Problem, layout: Layout) -> dict[str, Pos]:
+    """Each part's spot on `layout` as the search numbers it (its shape, its legs'
+    top-left)."""
     pos = {}
-    for p in pb.base.parts:
+    for p in layout.parts:
         holes = p.holes
         x, y = min(h[0] for h in holes.values()), min(h[1] for h in holes.values())
         pos[p.ref] = (pb.shape_of(p.ref, holes, p.standing), x, y)
@@ -961,11 +967,65 @@ class Built:
     fell_back: bool
 
 
+def _flat_again(st: State, cur: Derived, ref: str) -> Derived | None:
+    """Standing `ref` laid flat (each flat shape, a leg kept in its hole) where that fits,
+    with no problem, and breaks no more limits nor adds a warning; the move left made and
+    the board it makes, else None and nothing changed."""
+    vi, x, y = st.pos[ref]
+    v = st.pb.variants[ref][vi]
+    for wi, w in enumerate(st.pb.variants[ref]):
+        if w.standing:
+            continue
+        for leg, (ox, oy) in v.at.items():
+            nx, ny = w.at[leg]
+            if (old := st.move({ref: (wi, x + ox - nx, y + oy - ny)})) is None:
+                continue
+            d = st.derive()
+            if (not d.problems and d.broken <= cur.broken
+                    and d.noisy + d.apart <= cur.noisy + cur.apart):  # fmt: skip
+                return d
+            st.undo(old)
+    return None
+
+
+def standing_unneeded(pb: Problem, pos: dict[str, Pos]) -> list[str]:
+    """The standing parts on the board at `pos` that could lie flat again with no limit
+    broken nor warning added (`_flat_again`): standing only for room (D-403)."""
+    st = State(pb, dict(pos))
+    cur = st.derive()
+    found = []
+    for ref in pb.refs:
+        if st._v(ref).standing:
+            was = dict(st.pos)
+            if _flat_again(st, cur, ref) is not None:
+                found.append(ref)
+                st.undo({ref: was[ref]})
+    return found
+
+
+def lay_flat(pb: Problem, found: Found) -> Found:
+    """When needed (D-403): `found` with each standing part a limit or warning doesn't
+    need laid flat again (`_flat_again`), in the parts' order, until none can be: the
+    search prefers fewer standing parts only among the boards it saw."""
+    st = State(pb, dict(found.pos))
+    cur = st.derive()
+    changed = True
+    while changed:
+        changed = False
+        for ref in pb.refs:
+            if st._v(ref).standing and (d := _flat_again(st, cur, ref)) is not None:
+                cur, changed = d, True
+    return _found(cur, found.seed, st.pos)
+
+
 def finish(pb: Problem, found: Found | None, models: ModelLibrary,
            table: FootprintTable) -> Built:  # fmt: skip
-    """`found` wired (Wire it for me) and checked; the base when there's nothing found,
-    it doesn't pass the check, or it's no better than the base (limits broken, links too
-    near a sensitive net's part, then standing parts when needed, then size and how far)."""
+    """`found` wired (Wire it for me) and checked, its unneeded standing parts laid flat
+    when needed (`lay_flat`); the base when there's nothing found, it doesn't pass the
+    check, or it's no better than the base (limits broken, links too near a sensitive
+    net's part, then standing parts when needed, then size and how far)."""
+    if found is not None and pb.stand_up == "needed":
+        found = lay_flat(pb, found)
     was = State(pb, start_pos(pb)).derive()
     if found is None or found.key[:4] >= key(was)[:4]:
         return Built(pb.base, True)

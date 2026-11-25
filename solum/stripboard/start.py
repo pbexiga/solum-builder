@@ -339,19 +339,20 @@ def _carry(r: Reading, choice: _Choice, carried: list[str | None], left: dict[st
 
 
 def _best(r: Reading, ref: str, height: int, carried: list[str | None], left: dict[str, int],
-          want: tuple[str, int, bool] | None = None,
-          stand: Stand = "none") -> tuple[float, _Choice] | None:  # fmt: skip
+          want: tuple[str, int, bool] | None = None, stand: Stand = "none",
+          up: frozenset[str] = frozenset()) -> tuple[float, _Choice] | None:  # fmt: skip
     """`ref`'s cheapest place in the band (`_try`); `want`: its leg that must be on a row,
     the rows putting it there only (any row, at `LIMIT_COST` more, when none can), and
     whether the part comes before its pin (that leg rightmost, else leftmost, as ties go)."""
     part = r.board[ref]
+    stand = "first" if ref in up else stand  # a part a broken limit lets stand (D-403)
     every = shapes(part, stand=stand)
     if stand == "needed":  # flat first; standing only when no flat shape meets the limit
         flat = _best(r, ref, height, carried, left, want, "none")
         if want is None or _reaches(flat, want) or len(every) == len(shapes(part)):
             return flat
-        up = _best(r, ref, height, carried, left, want, "last")
-        return up if _reaches(up, want) else flat
+        stood = _best(r, ref, height, carried, left, want, "last")
+        return stood if _reaches(stood, want) else flat
     best: tuple[tuple[float, int, int, int], _Choice] | None = None
     for k, shape in enumerate(every):
         rows = range(shape.up, height - shape.down)
@@ -378,8 +379,8 @@ def _reaches(found: tuple[float, _Choice] | None, want: tuple[str, int, bool]) -
 
 
 def _block(r: Reading, block: _Block, height: int, carried: list[str | None],
-           left: dict[str, int],
-           stand: Stand = "none") -> tuple[list[_Choice], int] | None:  # fmt: skip
+           left: dict[str, int], stand: Stand = "none",
+           up: frozenset[str] = frozenset()) -> tuple[list[_Choice], int] | None:  # fmt: skip
     """A block's places, cheapest in all: for each way the anchor can stand, the parts by
     its first column first, then the anchor, then the rest, each kept part's leg on its
     pin's row; and where the anchor's choice is among them. `carried` and `left` carried
@@ -399,7 +400,7 @@ def _block(r: Reading, block: _Block, height: int, carried: list[str | None],
                 cost = 0.0
                 for lim in lims:
                     to = (lim.leg, row + shape.legs[lim.pin][1], lim.pin in shape.left)
-                    found = _best(r, lim.part, height, c, lf, to, stand)
+                    found = _best(r, lim.part, height, c, lf, to, stand, up)
                     if found is None:
                         return None
                     _carry(r, found[1], c, lf)
@@ -430,7 +431,8 @@ def _block(r: Reading, block: _Block, height: int, carried: list[str | None],
 
 
 def _choose(r: Reading, units: list[str | _Block], height: int, left: dict[str, int],
-            stand: Stand = "none") -> tuple[list[_Choice], list[_Kept]] | None:  # fmt: skip
+            stand: Stand = "none", up: frozenset[str] = frozenset()
+            ) -> tuple[list[_Choice], list[_Kept]] | None:  # fmt: skip
     """Each part's place in a band `height` rows high, in order (module doc), and the
     blocks among them; `left`: each net's legs still to place (a net cut off while it has
     legs to come costs a piece). None when a part is taller than the band."""
@@ -440,14 +442,14 @@ def _choose(r: Reading, units: list[str | _Block], height: int, left: dict[str, 
     kept: list[_Kept] = []
     for unit in units:
         if isinstance(unit, _Block):
-            made = _block(r, unit, height, carried, left, stand)
+            made = _block(r, unit, height, carried, left, stand, up)
             if made is None:
                 return None
             choices, at = made
             kept.append(_Kept(len(found), len(found) + len(choices), len(found) + at, unit))
             found += choices
             continue
-        best = _best(r, unit, height, carried, left, stand=stand)
+        best = _best(r, unit, height, carried, left, stand=stand, up=up)
         if best is None:
             return None
         _carry(r, best[1], carried, left)
@@ -831,24 +833,34 @@ def start_for_me(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
                   default=0)  # fmt: skip
     remaining = _legs_to_place(r, todo)
     best: tuple[tuple[int, int, int, int, int, int], Layout, list[str]] | None = None
-    # when needed, each band laid out with the parts that must stand stood up and, if any
-    # did, flat too (with none standing, the two are the same board): a standing part kept
-    # only where it breaks fewer limits, never for room (D-403)
+    # when needed (D-403), each band laid out with the parts that can't reach their pin's
+    # strip lying flat stood up and, if any did, flat too (with none standing, the two
+    # are the same board); where lying flat breaks a limit (too far along the strip as
+    # well), once more with the parts those limits keep allowed to stand. The board
+    # breaking fewest limits wins, then the one with fewest standing: never for room.
     for height in range(tallest + 1, tallest + 2 + EXTRA_ROWS):
         chosen = _choose(r, units, height, remaining, stand)
         tries = [chosen]
         if chosen is not None and stand == "needed" and any(c.shape.standing for c in chosen[0]):
             tries.append(_choose(r, units, height, remaining, "none"))
-        for chosen in tries:
+        widened = False
+        while tries:
+            chosen = tries.pop(0)
             if chosen is None:
                 continue
             made, left = _laid_out(r, circuit, base, todo, *chosen, height, guarded,
                                    calm_nets(kept_parts))  # fmt: skip
-            broken = len(broken_limits(made, limits))
+            broke = set(broken_limits(made, limits))
+            if stand == "needed" and broke and not widened and not any(
+                    p.standing for p in made.parts):  # fmt: skip
+                up = frozenset(lim.part for lim in limits if (lim.anchor, lim.pin) in broke)
+                tries.append(_choose(r, units, height, remaining, stand, up))
+                widened = True
             noisy = len(noisy_links(made, r.board, r.nets, kept_parts))
             noisy += len(alongside(made, r.board, r.nets, loud, copper_groups(made)))  # D-404
             stood = sum(p.standing for p in made.parts) if stand == "needed" else 0
-            key = (len(left), broken, stood, made.columns * made.strips, noisy, len(made.links))
+            key = (len(left), len(broke), stood, made.columns * made.strips, noisy,
+                   len(made.links))  # fmt: skip
             if best is None or key < best[0]:
                 best = (key, made, left)
         if not todo:

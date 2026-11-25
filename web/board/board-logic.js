@@ -986,7 +986,7 @@ export const BOARD_SETTINGS = /** @type {const} */ ([
   { key: "grow", label: "Auto-grow", group: "edit", on: true, acts: true, title: "The board grows to take in what's placed by its edge, and shrinks back. Off: it stays its size (the margin greyed); add or remove lines on the rulers" },
   { key: "shorts", label: "Allow shorts", group: "edit", on: true, acts: true, title: "A move that makes a short is allowed, the short shown red. Off: it's refused" },
   { key: "next", label: "Suggest next", group: "tray", on: true, acts: true, title: "Suggest the part to place next, at the top of the tray" },
-  { key: "seeThrough", label: "See-through", group: "bar", on: false, acts: true, title: "The parts faint, so the copper and the cuts under them show" },
+  { key: "seeThrough", label: "See-through", group: "show", on: false, acts: true, title: "The parts faint, so the copper and the cuts under them show (T)" },
   { key: "mirror", label: "Flip", group: "bar", on: false, acts: true, title: "The back of the board: the copper side, turned over as you hold it to solder. Off: the front, the parts side" },
 ]);
 

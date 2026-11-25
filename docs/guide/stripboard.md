@@ -97,7 +97,7 @@ The board is whatever is on it: the box around every leg, body, link and wire pa
 
 - **Flip** shows the back of the board: the copper side, turned over as you hold it to solder, with the strips, the holes used, the cuts and the links. Click it again for the front.
 - **Hide parts** shows the copper seen through from the front, lined up with the parts side, so you can match a strip to a part. It's greyed while the board is flipped.
-- **See-through** (T) fades the parts so the holes and cuts under them show.
+- **See-through** (T), in Settings, fades the parts so the holes and cuts under them show.
 
 Links are drawn in lavender on both sides. **Rails**, in Settings, tints the supply's copper and ground's.
 
@@ -152,7 +152,7 @@ While it runs, a window shows its progress and the best board so far (*Best so f
 
 ### Looking before you keep it
 
-When it's done, **Review the layout** opens at the top of the right-hand column and compares the two: *Before 34 × 13 holes, 14 cuts, 15 links → After 15 × 7 holes, 11 cuts, 6 links*. Until you keep a board, the canvas has a yellow outline and the board can't be edited: the tray, the panes, Cuts and Links are faded. **Flip**, **Hide parts** and **See-through** still work, on both boards in Both.
+When it's done, **Review the layout** opens at the top of the right-hand column and compares the two: *Before 34 × 13 holes, 14 cuts, 15 links → After 15 × 7 holes, 11 cuts, 6 links*. Until you keep a board, the canvas has a yellow outline and the board can't be edited: the tray, the panes, Cuts and Links are faded. **Flip** and **Hide parts** still work, on both boards in Both, and so does T for See-through.
 
 ![Review the layout in Both: the board before above, the new one below](img/board-review.png)
 
@@ -170,12 +170,13 @@ Under **Show**:
 - **Values**: label each part with its value as well as its ref.
 - **Rails**: tint the supply's and ground's copper.
 - **All ratsnest**: the dashed lines joining the pieces of each net on the board that aren't joined yet. Off, only the lines of the part selected or carried.
+- **See-through** (T): the parts faint, so the holes and cuts under them show.
 
 Under **While editing**:
 - **Auto-grow**: the board grows to take in what's placed past its edge.
 - **Allow shorts**: a move that makes a short is allowed, and the short is shown red. Off, it's refused.
 
-**Clear board**, at the bottom, asks first. **Suggest next**, in the tray's heading, turns the suggestion at the top of the tray on or off. **See-through** and **Flip** are on the board's own bar.
+**Clear board**, at the bottom, asks first. **Suggest next**, in the tray's heading, turns the suggestion at the top of the tray on or off. **Hide parts** and **Flip** are on the board's own bar, outlined while they're on.
 
 A trimmer goes on as the square single-turn kind (triangle, Bourns 3362P) unless its form's **Board trimmer** says in line (Bourns 3296W); a placed one's right-click menu changes it too. A surface-mount transistor goes on the board on a TO-92 adapter, set by its form's **Mounting**.
 

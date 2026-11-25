@@ -451,15 +451,10 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-drawing .copper .off-wire .wire, .board-drawing .copper .wire-run, .board-drawing .copper .lug-end, .board-drawing .copper .off-wire:not(.pad), .board-drawing .copper .guide { display: none; }
 .board-drawing .copper .strip { fill: color-mix(in srgb, var(--picked) 30%, transparent); }
 .board-drawing .copper .leg, .board-drawing .copper .far-end { fill: var(--silver); }
-.board-tools .board-hide { margin-left: 8px; border-radius: 4px; }
-.board-tools .board-see, .board-tools .board-flip { margin-left: 4px; border-radius: 4px; }
 /* editing (D-374): the tools, a part carried, a link being laid, shorted copper */
-.board-tools { position: absolute; left: 12px; top: 12px; display: flex; gap: 0; }
+.board-tools { position: absolute; left: 12px; top: 12px; display: flex; gap: 4px; }
 .board-tools[hidden] { display: none; }
-.board-tools button { padding: 3px 10px; font: 12px var(--font-ui); border-radius: 0; background: var(--surface-2); }
-.board-tools button:first-child { border-radius: 4px 0 0 4px; }
-.board-tools button + button { margin-left: -1px; }
-.board-tools button[aria-pressed="true"] { background: var(--info-bg); color: var(--text); border-color: var(--accent); position: relative; }
+.board-tools button { padding: 3px 10px; }
 #board[data-tool="cuts"], #board[data-tool="links"] { cursor: crosshair; }
 #board.carrying { cursor: grabbing; }
 .board-drawing .strip.shorted { fill: var(--error); opacity: 0.45; }

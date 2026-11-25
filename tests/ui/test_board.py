@@ -255,9 +255,9 @@ def test_show_values_is_a_setting_remembered(page: Page, base_url: str) -> None:
     body = page.locator("#board-settings-body")
     expect(body.locator(".board-settings-head")).to_have_text(["Show", "While editing"])
     expect(body.locator("button[data-setting]")).to_have_text(
-        ["Values", "Rails", "All ratsnest", "Auto-grow", "Allow shorts"]
+        ["Values", "Rails", "All ratsnest", "See-through", "Auto-grow", "Allow shorts"]
     )
-    expect(page.locator("#board-tools button")).to_have_text(["Hide parts", "See-through", "Flip"])
+    expect(page.locator("#board-tools button")).to_have_text(["Hide parts", "Flip"])
     box.click()
     expect(label.locator(".value")).to_have_count(0)
     expect(label.locator(".ref")).to_have_text("R1")
@@ -290,11 +290,12 @@ def test_highlight_rails_tints_the_supply_and_ground_copper(page: Page, base_url
 
 
 def test_see_through_from_its_button_or_t(page: Page, base_url: str) -> None:
-    """See-through (D-378) from the toolbar's button or T as well as Settings: the parts
-    faint, their outlines and labels kept; the button shows whether it's on."""
+    """See-through (D-378) from Settings' toggle (D-406: no longer on the canvas's bar) or T:
+    the parts faint, their outlines and labels kept; the toggle shows whether it's on."""
     open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
     show_board(page)
-    button = page.locator("#board-see")
+    page.locator("#board-settings > summary").click()
+    button = page.locator("#board-settings-body button[data-setting='seeThrough']")
     expect(button).to_have_attribute("aria-pressed", "false")
     button.click()
     expect(page.locator("#board .board.see-through")).to_have_count(1)
@@ -721,7 +722,7 @@ def test_the_realistic_drawing_see_through_and_the_copper_side(page: Page, base_
         ["E", "B", "C"]
     )
     page.locator("#board-settings > summary").click()
-    page.locator("#board-see").click()
+    page.locator("#board-settings-body button[data-setting='seeThrough']").click()
     expect(page.locator("#board g.board.see-through")).to_have_count(1)
     page.locator("#board-hide").click()
     expect(page.locator("#board-hide")).to_have_attribute("aria-pressed", "true")
@@ -1164,6 +1165,9 @@ def test_build_a_full_layout_reviewed_tried_again_kept_and_undone(
         expect(page.locator(drawn)).to_have_attribute("transform", re.compile(r"scale\(-1 1\)"))
     expect(page.locator(".board-before g.board.copper")).to_have_count(1)
     page.locator("#board-flip").click()
+    page.keyboard.press("t")  # See-through's key still works in a review (D-406)
+    expect(page.locator("#board g.board.see-through")).to_have_count(1)
+    page.keyboard.press("t")
     page.locator("#board-hide").click()
     expect(page.locator(".board-before g.board.copper")).to_have_count(1)
     page.locator("#board-hide").click()

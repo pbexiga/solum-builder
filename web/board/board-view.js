@@ -267,17 +267,11 @@ export function boardView(host, app) {
   wireButton.addEventListener("click", () => void wireForMe());
   layoutButton.addEventListener("click", () => void layOut());
   acceptButton.addEventListener("click", () => void boardEdit({ kind: "suggested" }, acceptButton.textContent ?? "Make the suggested cuts and links"));
-  const seeButton = $("board-see");
   const nextButton = $("board-next"); // Suggest next, in the tray's heading (D-406)
   nextButton.setAttribute("aria-pressed", String(settings.next));
   nextButton.addEventListener("click", (e) => {
     setSetting("next", !settings.next);
     if (e.detail) nextButton.blur();
-  });
-  seeButton.setAttribute("aria-pressed", String(settings.seeThrough));
-  seeButton.addEventListener("click", (e) => {
-    setSetting("seeThrough", !settings.seeThrough);
-    if (e.detail) seeButton.blur(); // clicked: the board's keys act again
   });
   const hideButton = $("board-hide");
   const flipButton = $("board-flip");
@@ -1228,7 +1222,6 @@ export function boardView(host, app) {
   function setSetting(key, on) {
     settings = { ...settings, [key]: on };
     remember(SETTINGS_KEY, settings);
-    seeButton.setAttribute("aria-pressed", String(settings.seeThrough));
     flipButton.setAttribute("aria-pressed", String(settings.mirror));
     nextButton.setAttribute("aria-pressed", String(settings.next));
     if (key === "mirror") showSide(); // Flip: the back, or the front again; the board before too
@@ -1288,6 +1281,7 @@ export function boardView(host, app) {
      * @param {string} action
      */
     key(action) {
+      if (locked && action === "seeThrough") return setSetting("seeThrough", !settings.seeThrough), true; // T still looks under the parts in a review (D-406)
       if (locked) return true; // the board isn't editable while a full layout runs or is reviewed
       if (action === "cancel") {
         if (carry || carryItem || wiring || linkStart) drop();

@@ -108,3 +108,13 @@ def test_each_input_comes_with_the_later_nets_in_phase_with_it(sim: Simulator) -
     assert "q1c" not in q1.along and "GND" not in q1.along  # Q1's collector, inverted
     (amp,) = loud_inputs(sim, booster("100k", "220k"))
     assert "o" in amp.along and "m" not in amp.along
+
+
+def test_an_input_on_a_bias_net_keeps_nothing_off_its_side(sim: Simulator) -> None:
+    """The Klon's U2A (an inverting stage, its + on VR): its signal is a trace, so every
+    later node looks louder and in phase; nothing for feedback to add to (D-404)."""
+    found = {
+        (x.ref, x.pin): x for x in loud_inputs(sim, load_circuit(STARTERS / "klon-centaur.json"))
+    }
+    assert found["U2A", "+"].along == frozenset()
+    assert found["U1A", "+"].along

@@ -1014,7 +1014,8 @@ def loud_inputs(sim: Simulator, circuit: Circuit) -> list[LoudInput]:
     doesn't simulate. Each with the later nets that would feed back beside it
     (`_feeds_back`: in phase at one of `PHASE_TONES` with high gain), but those whose
     feedback is meant: its stage's own pin that follows it (an op-amp's −, an emitter, a
-    source) and a net a part joins to it directly (a feedback resistor's far end)."""
+    source) and a net a part joins to it directly (a feedback resistor's far end); none for
+    an input on a bias net (its signal is a trace: nothing for feedback to add to)."""
     found: dict[tuple[str, str], frozenset[str]] = {}
     along: dict[tuple[str, str], set[str]] = defaultdict(set)
     nets = connect(circuit)
@@ -1056,6 +1057,8 @@ def loud_inputs(sim: Simulator, circuit: Circuit) -> list[LoudInput]:
                                            if _tone_gain(path.ac, n) < heard)  # fmt: skip
                 own = nets.by_pin.get((pin[0], _COMMON_PINS[pin[1]]))
                 meant = _joined(nets, entry) | ({own} if own else set())
+                if entry in held:
+                    continue  # on a bias net (an inverting stage's +): no signal to feed back to
                 hz = gain >= LOUD_HIGH_Z and high_z(entry)
                 along[pin] |= {
                     n for n in path.ac.responses

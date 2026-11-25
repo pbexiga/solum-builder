@@ -229,6 +229,7 @@ def test_a_board_marks_the_button_and_can_be_cleared(page: Page, base_url: str) 
     show_board(page)
     page.locator("#board-settings summary").click()
     page.locator("#clear-board").click()
+    page.locator("[data-answer='clear']").click()  # asked first (D-406)
     # one undo step: the view stays on the empty board, the button quiet, Not saved
     expect(page.locator("#board-size-text")).to_have_text("Empty board")
     expect(page.locator("#board .board-part")).to_have_count(0)
@@ -248,16 +249,23 @@ def test_show_values_is_a_setting_remembered(page: Page, base_url: str) -> None:
     label = page.locator("#board .board-label[data-ref='R1']")
     expect(label.locator(".value")).to_have_count(1)
     page.locator("#board-settings > summary").click()
-    box = page.locator("#board-settings-body input[data-setting='values']")
-    expect(box).to_be_checked()
-    box.uncheck()
+    box = page.locator("#board-settings-body button[data-setting='values']")
+    expect(box).to_have_attribute("aria-pressed", "true")
+    # D-406: toggles in two groups; See-through and Flip on the canvas, Suggest next in the tray
+    body = page.locator("#board-settings-body")
+    expect(body.locator(".board-settings-head")).to_have_text(["Show", "While editing"])
+    expect(body.locator("button[data-setting]")).to_have_text(
+        ["Values", "Rails", "All ratsnest", "Auto-grow", "Allow shorts"]
+    )
+    expect(page.locator("#board-tools button")).to_have_text(["Hide parts", "See-through", "Flip"])
+    box.click()
     expect(label.locator(".value")).to_have_count(0)
     expect(label.locator(".ref")).to_have_text("R1")
     reload_kept(page)
     show_board(page)
     expect(page.locator("#board .board-label[data-ref='R1'] .value")).to_have_count(0)
     expect(page.locator("#board-settings")).to_have_attribute("open", "")  # kept open too
-    page.locator("#board-settings-body input[data-setting='values']").check()
+    page.locator("#board-settings-body button[data-setting='values']").click()
     expect(page.locator("#board .board-label[data-ref='R1'] .value")).to_have_count(1)
     page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
 
@@ -270,13 +278,13 @@ def test_highlight_rails_tints_the_supply_and_ground_copper(page: Page, base_url
     rails = page.locator("#board .strip[data-rail]")
     expect(rails).to_have_count(0)
     page.locator("#board-settings > summary").click()
-    box = page.locator("#board-settings-body input[data-setting='rails']")
-    expect(box).not_to_be_checked()
-    box.check()
+    box = page.locator("#board-settings-body button[data-setting='rails']")
+    expect(box).to_have_attribute("aria-pressed", "false")
+    box.click()
     expect(page.locator("#board .strip.rail-supply[data-rail='V-']")).to_have_count(2)
     expect(page.locator("#board .strip.rail-ground[data-rail='GND']")).to_have_count(2)
     expect(rails).to_have_count(4)
-    box.uncheck()
+    box.click()
     expect(rails).to_have_count(0)
     page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
 
@@ -324,9 +332,9 @@ def test_the_board_size_changes_by_hand(
     expect(size).to_have_text("12 × 9 holes (30 × 23 mm), 1 cut, 2 links, 9 wires")
     # auto-grow off: the margin greyed
     page.locator("#board-settings > summary").click()
-    page.locator("#board-settings-body input[data-setting='grow']").uncheck()
+    page.locator("#board-settings-body button[data-setting='grow']").click()
     expect(page.locator("#board g.board")).to_have_class("board board-fixed")
-    page.locator("#board-settings-body input[data-setting='grow']").check()
+    page.locator("#board-settings-body button[data-setting='grow']").click()
     page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
 
 
@@ -416,12 +424,12 @@ def test_parts_are_placed_turned_moved_cut_and_linked_by_hand(
     expect(page.locator("#board .strip.shorted")).to_have_count(0)
     # shorts off: the same turn refused, saying why
     page.locator("#board-settings > summary").click()
-    page.locator("#board-settings-body input[data-setting='shorts']").uncheck()
+    page.locator("#board-settings-body button[data-setting='shorts']").click()
     page.mouse.click(*hole_point(page, 9, 5))
     page.keyboard.press(" ")
     expect(page.locator("#refusal")).to_be_visible()
     expect(page.locator("#refusal .refusal-text")).to_contain_text("Shorts are off in Settings.")
-    page.locator("#board-settings-body input[data-setting='shorts']").check()
+    page.locator("#board-settings-body button[data-setting='shorts']").click()
     # moved by dragging its body: J to H, by Q1's base, nothing left to warn about
     drag_to(page, hole_point(page, 9, 5), hole_point(page, 7, 5))
     expect(r2.locator(".leg").first).to_have_attribute("cx", "70")
@@ -644,6 +652,11 @@ def test_the_guidance_marks_suggests_and_says_what_is_next(page: Page, base_url:
     show_board(page)
     expect(page.locator("#board-tray-body .board-next")).to_contain_text("Next: R3.")
     expect(page.locator("#board-tray-body li[data-ref='R3']")).to_have_class(re.compile("next"))
+    page.locator("#board-next").click()  # Suggest next, in the tray's heading (D-406): off
+    expect(page.locator("#board-next")).to_have_attribute("aria-pressed", "false")
+    expect(page.locator("#board-tray-body .board-next")).to_have_count(0)
+    page.locator("#board-next").click()
+    expect(page.locator("#board-tray-body .board-next")).to_contain_text("Next: R3.")
     accept = page.locator("#board-accept")
     expect(accept).to_have_text("Make the suggested cut and 2 links")
     suggested = page.locator("#board .suggested")
@@ -708,7 +721,7 @@ def test_the_realistic_drawing_see_through_and_the_copper_side(page: Page, base_
         ["E", "B", "C"]
     )
     page.locator("#board-settings > summary").click()
-    page.locator("#board-settings-body input[data-setting='seeThrough']").check()
+    page.locator("#board-see").click()
     expect(page.locator("#board g.board.see-through")).to_have_count(1)
     page.locator("#board-hide").click()
     expect(page.locator("#board-hide")).to_have_attribute("aria-pressed", "true")
@@ -809,16 +822,16 @@ def test_ratsnest_lines_all_or_only_the_part_in_focus(page: Page, base_url: str)
 
     showing(True)
     page.locator("#board-settings > summary").click()
-    box = page.locator("#board-settings-body input[data-setting='rats']")
-    expect(box).to_be_checked()
-    box.uncheck()
+    box = page.locator("#board-settings-body button[data-setting='rats']")
+    expect(box).to_have_attribute("aria-pressed", "true")
+    box.click()
     showing(False)
     page.locator("#board .board-part[data-ref='R1']").click()
     showing(True)
     expect(line).to_have_class(re.compile(r"\blit\b"))
     page.mouse.click(*hole_point(page, 10, 1))  # an empty hole: nothing selected
     showing(False)
-    box.check()
+    box.click()
     showing(True)
 
 

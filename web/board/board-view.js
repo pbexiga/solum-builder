@@ -30,7 +30,7 @@
  */
 
 import { postJson } from "../api.js";
-import { ask } from "../editor/form.js";
+import { ask, confirmed } from "../editor/form.js";
 import { openMenu } from "../menus.js";
 import { h, largeView, stackLargeViews } from "../panels.js";
 import { reorderable } from "../panes.js";
@@ -268,6 +268,12 @@ export function boardView(host, app) {
   layoutButton.addEventListener("click", () => void layOut());
   acceptButton.addEventListener("click", () => void boardEdit({ kind: "suggested" }, acceptButton.textContent ?? "Make the suggested cuts and links"));
   const seeButton = $("board-see");
+  const nextButton = $("board-next"); // Suggest next, in the tray's heading (D-406)
+  nextButton.setAttribute("aria-pressed", String(settings.next));
+  nextButton.addEventListener("click", (e) => {
+    setSetting("next", !settings.next);
+    if (e.detail) nextButton.blur();
+  });
   seeButton.setAttribute("aria-pressed", String(settings.seeThrough));
   seeButton.addEventListener("click", (e) => {
     setSetting("seeThrough", !settings.seeThrough);
@@ -906,7 +912,7 @@ export function boardView(host, app) {
     column.hidden = !board;
     tray.hidden = !board;
     sizeNote.hidden = !board;
-    tools.hidden = editTools.hidden = !board;
+    tools.hidden = editTools.hidden = nextButton.hidden = !board;
     if (!board) setTool("parts");
     button.setAttribute("aria-pressed", String(board));
     button.title = board ? "Back to the schematic" : BUTTON_TITLE;
@@ -1224,26 +1230,33 @@ export function boardView(host, app) {
     remember(SETTINGS_KEY, settings);
     seeButton.setAttribute("aria-pressed", String(settings.seeThrough));
     flipButton.setAttribute("aria-pressed", String(settings.mirror));
+    nextButton.setAttribute("aria-pressed", String(settings.next));
     if (key === "mirror") showSide(); // Flip: the back, or the front again; the board before too
     draw();
     fillPanes();
   }
 
-  /** Settings: *Layout…* first, the editor's settings, remembered per viewer; *Clear board* at the bottom once one is started. */
+  /**
+   * Settings: *Layout…* first; the editor's settings as toggles in two columns, *Show* and
+   * *While editing* (D-406), remembered per viewer; *Clear board* at the bottom, asked first,
+   * once one is started.
+   */
   function fillSettings() {
-    const boxes = BOARD_SETTINGS.map((setting) => {
-      const box = /** @type {HTMLInputElement} */ (h("input", { type: "checkbox", "data-setting": setting.key }));
-      box.checked = settings[setting.key];
-      box.disabled = !setting.acts;
-      box.addEventListener("change", () => setSetting(setting.key, box.checked));
-      const label = h("label", { class: setting.acts ? "board-setting" : "board-setting later" }, [box, " ", setting.label]);
-      label.title = setting.acts ? setting.title : `${setting.title}. Comes with placing parts.`;
-      return label;
-    });
+    /** @param {"show" | "edit"} group @param {string} head */
+    const group = (group, head) => [
+      h("h4", { class: "board-settings-head" }, [head]),
+      h("div", { class: "board-settings-grid" }, BOARD_SETTINGS.filter((s) => s.group === group).map((setting) => {
+        const toggle = h("button", { type: "button", class: "board-toggle", "data-setting": setting.key, "aria-pressed": String(settings[setting.key]), title: setting.title }, [setting.label]);
+        toggle.addEventListener("click", () => setSetting(setting.key, !settings[setting.key]));
+        return toggle;
+      })),
+    ];
     const clear = h("button", { type: "button", id: "clear-board", class: "clear-board" }, ["Clear board"]);
     clear.title = "Take every part, cut, link and wire off the board (Undo brings them back)";
-    clear.addEventListener("click", () => app.editBoard(null, "Clear board"));
-    $("board-settings-body").replaceChildren(layoutButton, ...boxes, ...(app.circuit()?.stripboard ? [clear] : []));
+    clear.addEventListener("click", async () => {
+      if (await confirmed("Clear the board?", "Every part, cut, link and wire comes off the board. Edit → Undo brings them back.", "Clear board", "clear")) app.editBoard(null, "Clear board");
+    });
+    $("board-settings-body").replaceChildren(layoutButton, ...group("show", "Show"), ...group("edit", "While editing"), ...(app.circuit()?.stripboard ? [clear] : []));
   }
 
   /** The button marked once the open circuit has a board. */

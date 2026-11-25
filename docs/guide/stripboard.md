@@ -8,7 +8,7 @@ Plan the stripboard (Veroboard) for a circuit before you solder it. The board is
 
 Click **Board** in the header, just before the circuit's name (or Tools → **Stripboard layout**). Click it again to go back to the schematic. The button has a small mark once the circuit has a board.
 
-The first time, the board is empty and every part is in the tray. Nothing is saved until you place something, so a look costs nothing. A board is kept in the circuit file and saved with it; **Clear board**, at the bottom of the board's Settings pane, takes it away (Undo brings it back).
+The first time, the board is empty and every part is in the tray. Nothing is saved until you place something, so a look costs nothing. A board is kept in the circuit file and saved with it; **Clear board**, at the bottom of the board's Settings pane, takes it away after asking (Undo brings it back).
 
 The Board view swaps the screen around:
 
@@ -99,7 +99,7 @@ The board is whatever is on it: the box around every leg, body, link and wire pa
 - **Hide parts** shows the copper seen through from the front, lined up with the parts side, so you can match a strip to a part. It's greyed while the board is flipped.
 - **See-through** (T) fades the parts so the holes and cuts under them show.
 
-Links are drawn in lavender on both sides. **Highlight rails**, in Settings, tints the supply's copper and ground's.
+Links are drawn in lavender on both sides. **Rails**, in Settings, tints the supply's copper and ground's.
 
 ![The copper side, parts hidden: strips, cuts and links](img/board-copper.png)
 
@@ -164,15 +164,18 @@ The layout is the app's: check it, and adjust it if you need to, before you buil
 
 ## Board settings
 
-The Settings pane's switches are remembered for you on this computer, for every circuit:
+The Settings pane's buttons turn each setting on (outlined) or off. They're remembered for you on this computer, for every circuit.
 
-- **Show values**: label each part with its value as well as its ref.
-- **What to place next**: the suggestion at the top of the tray.
-- **Allow shorts while editing, shown red**: off, a move that makes a short is refused.
+Under **Show**:
+- **Values**: label each part with its value as well as its ref.
+- **Rails**: tint the supply's and ground's copper.
+- **All ratsnest**: the dashed lines joining the pieces of each net on the board that aren't joined yet. Off, only the lines of the part selected or carried.
+
+Under **While editing**:
 - **Auto-grow**: the board grows to take in what's placed past its edge.
-- **See-through**, **Flip the board**: as the buttons on the board.
-- **Ratsnest lines: all**: off, only the lines of the part selected or carried.
-- **Highlight rails**: tint the supply's and ground's copper.
+- **Allow shorts**: a move that makes a short is allowed, and the short is shown red. Off, it's refused.
+
+**Clear board**, at the bottom, asks first. **Suggest next**, in the tray's heading, turns the suggestion at the top of the tray on or off. **See-through** and **Flip** are on the board's own bar.
 
 A trimmer goes on as the square single-turn kind (triangle, Bourns 3362P) unless its form's **Board trimmer** says in line (Bourns 3296W); a placed one's right-click menu changes it too. A surface-mount transistor goes on the board on a TO-92 adapter, set by its form's **Mounting**.
 

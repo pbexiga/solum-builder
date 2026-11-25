@@ -975,18 +975,19 @@ export function spotFor(item, hole) {
 
 /**
  * The editor's settings (spec, *Editor settings*), each on or off, remembered per viewer
- * (`solum.board`). `acts`: whether it does anything yet (the rest come with the editing
- * and guidance they belong to, P6b and P6c).
+ * (`solum.board`), in the order shown. `acts`: whether it does anything yet. `group`: where
+ * its toggle is (D-406): the Settings pane's *Show* or *While editing*, the tray's heading
+ * (`tray`), or the canvas's bar (`bar`).
  */
 export const BOARD_SETTINGS = /** @type {const} */ ([
-  { key: "values", label: "Show values", on: true, acts: true, title: "Label each part with its value as well as its ref" },
-  { key: "next", label: "What to place next", on: true, acts: true, title: "Suggest the part to place next, at the top of the tray" },
-  { key: "shorts", label: "Allow shorts while editing, shown red", on: true, acts: true, title: "Off: a move that makes a short is refused" },
-  { key: "grow", label: "Auto-grow", on: true, acts: true, title: "The board grows to take in what's placed by its edge, and shrinks back. Off: it stays its size (the margin greyed); add or remove lines on the rulers" },
-  { key: "seeThrough", label: "See-through", on: false, acts: true, title: "The parts faint, so the copper and the cuts under them show" },
-  { key: "mirror", label: "Flip the board", on: false, acts: true, title: "The back of the board: the copper side, turned over as you hold it to solder. Off: the front, the parts side" },
-  { key: "rats", label: "Ratsnest lines: all", on: true, acts: true, title: "The dashed lines between the pieces of each net still to join. Off: only the lines of the part selected or carried" },
-  { key: "rails", label: "Highlight rails", on: false, acts: true, title: "The supply's copper (V+, V-) rose, ground's grey" },
+  { key: "values", label: "Values", group: "show", on: true, acts: true, title: "Label each part with its value as well as its ref" },
+  { key: "rails", label: "Rails", group: "show", on: false, acts: true, title: "Highlight the rails: the supply's copper (V+, V-) rose, ground's grey" },
+  { key: "rats", label: "All ratsnest", group: "show", on: true, acts: true, title: "The dashed lines between the pieces of each net on the board still to join. Off: only the lines of the part selected or carried" },
+  { key: "grow", label: "Auto-grow", group: "edit", on: true, acts: true, title: "The board grows to take in what's placed by its edge, and shrinks back. Off: it stays its size (the margin greyed); add or remove lines on the rulers" },
+  { key: "shorts", label: "Allow shorts", group: "edit", on: true, acts: true, title: "A move that makes a short is allowed, the short shown red. Off: it's refused" },
+  { key: "next", label: "Suggest next", group: "tray", on: true, acts: true, title: "Suggest the part to place next, at the top of the tray" },
+  { key: "seeThrough", label: "See-through", group: "bar", on: false, acts: true, title: "The parts faint, so the copper and the cuts under them show" },
+  { key: "mirror", label: "Flip", group: "bar", on: false, acts: true, title: "The back of the board: the copper side, turned over as you hold it to solder. Off: the front, the parts side" },
 ]);
 
 /**

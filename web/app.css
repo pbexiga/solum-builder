@@ -325,8 +325,13 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-tray[hidden] { display: none; }
 .board-edit { display: flex; gap: 6px; margin: 6px 0 4px; } /* Cuts and Links (D-406) */
 .board-edit[hidden] { display: none; }
-.board-edit button { flex: 1; padding: 4px 8px; font: 12px var(--font-ui); background: var(--surface-2); }
-.board-edit button[aria-pressed="true"] { background: var(--info-bg); color: var(--text); border-color: var(--accent); }
+.board-edit button { flex: 1; }
+/* a toggle (D-406): Cuts, Links, Suggest next and the settings; on is outlined, not filled */
+.board-toggle { padding: 4px 8px; font: 12px var(--font-ui); background: var(--surface-2); color: var(--text-2); }
+.board-toggle[aria-pressed="true"] { background: var(--surface-2); color: var(--text); border-color: var(--accent-hi); box-shadow: inset 0 0 0 1px var(--accent-hi); }
+.tray-head { display: flex; align-items: center; justify-content: space-between; gap: 6px; }
+.tray-head .board-toggle { padding: 2px 7px; font-size: 11px; }
+.tray-head .board-toggle[hidden] { display: none; }
 .board-tray h2, .board-tray h3 { font-family: var(--font-display); font-weight: 300; text-transform: uppercase; letter-spacing: 0.2em; font-size: 10px; color: var(--text-3); margin: 10px 2px 6px; }
 .board-tray h2 { color: var(--text-2); }
 .board-tray h3 { margin-top: 16px; }
@@ -500,8 +505,10 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-panels .board-list li[data-net] { cursor: pointer; }
 .board-panels .board-list li[data-net]:hover .net { color: var(--accent-hi); }
 .board-panels .board-subhead { margin: 10px 0 4px; font-size: 12px; color: var(--text-3); }
-.board-panels .clear-board { margin-top: 12px; }
-.board-panels .board-layout { display: block; margin: 0 0 8px; padding: 4px 10px; }
+.board-panels .clear-board { display: block; width: 100%; margin-top: 16px; color: var(--error); }
+.board-panels .board-layout { display: block; width: 100%; margin: 0 0 4px; padding: 5px 10px; }
+.board-panels .board-settings-head { font-family: var(--font-display); font-weight: 300; text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px; color: var(--text-3); margin: 12px 2px 6px; }
+.board-panels .board-settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 /* the Layout dialog (P6h2): a radio list, each choice's line under its name, greyed with its reason */
 .layout-choices { display: flex; flex-direction: column; gap: 10px; margin: 0 0 16px; }
 .layout-choice { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; cursor: pointer; }
@@ -562,8 +569,6 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-panels .board-stale .clear-stale { margin-left: 4px; }
 .board-panels .board-subhead:first-child { margin-top: 0; }
 .board-panels .board-list .wires { font-family: var(--font-mono); color: var(--text-3); }
-.board-panels .board-setting { display: block; padding: 3px 0; color: var(--text); cursor: pointer; }
-.board-panels .board-setting.later { color: var(--text-3); cursor: default; }
 .board-panels .net-done .state { color: var(--ok); }
 .board-panels .net-shorted .state { color: var(--error); }
 .board-panels .warnings .fault { color: var(--error); }

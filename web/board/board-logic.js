@@ -576,13 +576,15 @@ const INSIDE = 6; // a step across a switch's outline costs this many beside it 
 const OUTLINE = 12; // a step on the outline's own line: crossed once to reach a lug, never run along (D-384)
 const BESIDE = 4; // a step right beside another wire running the same way: they'd read as one line
 const LUG_CLEAR = STEP * 0.55; // a lug's ring: other wires keep this far from its middle
+const BODY = 40; // a step over a body, when no route keeps off them (D-406): as few as can be
+const DROP = 2; // grid steps from its hole a wire may cross a body beside it, to drop in (D-406)
 
 /**
- * @typedef {{boxes: Box[], lines: Array<[number, number, number, number]>, soft?: Box[], lugs?: Array<[number, number]>}} Obstacles
+ * @typedef {{boxes: Box[], lines: Array<[number, number, number, number]>, soft?: Box[], lugs?: Array<[number, number]>, labels?: Box[]}} Obstacles
  *   what a wire keeps off (D-379): parts' bodies (board parts and off-board parts) and the
  *   leads of board parts, in board units; `soft`: switches' outlines, crossed only at a
  *   cost (D-384); `lugs`: every off-board lug, wired or not, whose ring only its own wires
- *   cross
+ *   cross; `labels`: the names drawn above switches, kept off as bodies are (D-406)
  */
 
 /**
@@ -594,7 +596,8 @@ const LUG_CLEAR = STEP * 0.55; // a lug's ring: other wires keep this far from i
 export function wireObstacles(board, footprints, items) {
   const shapes = items.map(({ item, at }) => itemShape(item, at));
   /** @type {Obstacles} */
-  const found = { boxes: shapes.filter((x) => x.wall).map((x) => x.body), lines: [], soft: shapes.filter((x) => !x.wall).map((x) => x.body), lugs: shapes.flatMap((x) => x.lugs.map((l) => /** @type {[number, number]} */ ([l.x, l.y]))) };
+  const found = { boxes: shapes.filter((x) => x.wall).map((x) => x.body), lines: [], soft: shapes.filter((x) => !x.wall).map((x) => x.body), lugs: shapes.flatMap((x) => x.lugs.map((l) => /** @type {[number, number]} */ ([l.x, l.y]))),
+    labels: shapes.filter((x) => !x.wall).map((x) => ({ x: x.body.x, y: x.body.y - STEP, w: x.body.w, h: STEP })) }; // a switch's name sits just above it
   for (const placed of board.parts) {
     const fp = footprints[placed.ref];
     if (!fp) continue;
@@ -666,8 +669,10 @@ function searchRoutes(lines, board, obstacles) {
     const onRuler = (Math.abs(y + ruled * STEP) < STEP / 2 && x >= edge.left && x <= edge.right) || (Math.abs(x + ruled * STEP) < STEP / 2 && y >= edge.top && y <= edge.bottom);
     dear[n] = onLine || onRuler ? 3 : soft.some((b) => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h) ? 2 : over ? 1 : 0;
     if (over && x % STEP === 0 && y % STEP === 0) wall[n] = 1; // a hole: only a wire's own end goes in
-    if (obstacles.boxes.some((b) => x > b.x - 1 && x < b.x + b.w + 1 && y > b.y - 1 && y < b.y + b.h + 1)) wall[n] = 1;
-    if (obstacles.lines.some(([ax, ay, bx, by]) => nearSegment(x, y, ax, ay, bx, by) < 1.5)) wall[n] = 1;
+    // a body or a lead (2): kept off, but crossed to drop into a hole beside it, or when nothing else reaches
+    else if (obstacles.boxes.some((b) => x > b.x - 1 && x < b.x + b.w + 1 && y > b.y - 1 && y < b.y + b.h + 1)) wall[n] = 2;
+    else if (obstacles.lines.some(([ax, ay, bx, by]) => nearSegment(x, y, ax, ay, bx, by) < 1.5)) wall[n] = 2;
+    else if ((obstacles.labels ?? []).some((b) => x >= b.x && x <= b.x + b.w && y > b.y && y < b.y + b.h)) wall[n] = 2; // a switch's name, as a body
   }
   for (const l of lines) if (l) wall[node(l.x1, l.y1)] = 1; // every lug a wall but to its own wires
   // every lug's ring, wired or not: kept clear by other wires (the user, 2026-11-23: A1's wire ran over A2 and A3)
@@ -700,9 +705,18 @@ function searchRoutes(lines, board, obstacles) {
     const inside = (/** @type {number} */ x, /** @type {number} */ y) => soft.some((b) => x > b.x && x < b.x + b.w && y > b.y && y < b.y + b.h);
     const into = line.hole || inside(x2, y2) ? -1 : 3; // into another lug: from below, but a switch's from any side (D-384)
     const own = new Set([lugOf(x1, y1), line.hole ? -1 : lugOf(x2, y2)]);
-    const path = search(node(x1, y1), node(x2, y2), into, inside(x1, y1), own);
+    const goal = node(x2, y2);
+    // its hole between bodies (a pad between two caps, D-406): the last steps in cross them
+    const drop = new Set();
+    if (line.hole) for (const [di, dj] of DIRS) for (let k = 1; k <= DROP; k++) {
+      const m = goal + dj * k * cols + di * k;
+      if (m < 0 || m >= wall.length || wall[m] !== 2) break;
+      drop.add(m);
+    }
+    const path = search(node(x1, y1), goal, into, inside(x1, y1), own, drop, false)
+      ?? search(node(x1, y1), goal, into, inside(x1, y1), own, drop, true); // walled in: over the fewest bodies
     /** @type {Array<[number, number]>} */
-    let points = path ? path.map(xy) : [[x1, y1], [x1, y2], [x2, y2]]; // walled in: straight, as before
+    let points = path ? path.map(xy) : [[x1, y1], [x1, y2], [x2, y2]]; // nothing reaches: straight
     points[0] = [x1, y1];
     points[points.length - 1] = [x2, y2];
     points = tidy(points);
@@ -736,8 +750,11 @@ function searchRoutes(lines, board, obstacles) {
    * null when there's none.
    * @param {number} start @param {number} goal @param {number} into @param {boolean} anyWay
    * @param {Set<number>} own the lugs this wire may cross the rings of: its own ends'
+   * @param {Set<number>} drop bodies beside its hole it may cross to drop in
+   * @param {boolean} overBodies bodies crossed at a cost (`BODY`) rather than kept off
    */
-  function search(start, goal, into, anyWay, own) {
+  function search(start, goal, into, anyWay, own, drop, overBodies) {
+    const blocked = (/** @type {number} */ m) => (wall[m] === 1 || (wall[m] === 2 && !overBodies && !drop.has(m)) || (ring[m] >= 0 && !own.has(ring[m])));
     const [gi, gj] = [goal % cols, Math.floor(goal / cols)];
     const cost = new Float64Array(cols * rows * 4).fill(Infinity);
     const from = new Int32Array(cols * rows * 4).fill(-1);
@@ -748,7 +765,7 @@ function searchRoutes(lines, board, obstacles) {
       if (fi < 0 || fj < 0 || fi >= cols || fj >= rows) continue;
       const first = at(fi, fj);
       if (first === goal) return [start, goal];
-      if (wall[first] || (ring[first] >= 0 && !own.has(ring[first]))) continue;
+      if (blocked(first)) continue;
       cost[first * 4 + e] = 1;
       from[first * 4 + e] = start * 4 + e;
       heap.push(first * 4 + e, 1 + Math.abs(gi - fi) + Math.abs(gj - fj));
@@ -763,9 +780,10 @@ function searchRoutes(lines, board, obstacles) {
         const [ni, nj] = [i + di, j + dj];
         if (ni < 0 || nj < 0 || ni >= cols || nj >= rows) continue;
         const m = at(ni, nj);
-        if (m === goal ? into >= 0 && e !== into : wall[m] || (ring[m] >= 0 && !own.has(ring[m]))) continue;
+        if (m === goal ? into >= 0 && e !== into : blocked(m)) continue;
         const level = e < 2 ? 1 : 2;
         let step = dear[m] === 3 ? OUTLINE : dear[m] === 2 ? INSIDE : dear[m] ? ON_BOARD : 1;
+        if (wall[m] === 2) step += BODY; // over a body: dropping into its hole, or no other way
         if (e !== d) step += BEND;
         if (used[m] & level || (used[m] && e !== d)) step += ON_TOP;
         else if (used[m]) step += CROSS;

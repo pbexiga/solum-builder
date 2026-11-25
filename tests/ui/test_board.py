@@ -498,6 +498,26 @@ def test_an_off_board_part_is_put_beside_the_board_and_wired(
     page.wait_for_function("!document.documentElement.hasAttribute('data-saving')")
 
 
+def test_a_wire_clicked_lights_its_net(page: Page, base_url: str) -> None:
+    """D-406: a click on a wire, its end or its middle, selects its net: the wire lit with
+    the rest of the net; a click on empty board clears it."""
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    show_board(page)
+    wire = page.locator("#board .off-wire").first
+    index = wire.get_attribute("data-wire")
+    expect(page.locator("#board .off-wire.lit")).to_have_count(0)
+    end = wire.locator(".far-end").bounding_box()
+    assert end
+    page.mouse.click(end["x"] + end["width"] / 2, end["y"] + end["height"] / 2)
+    expect(page.locator(f"#board .off-wire[data-wire='{index}']")).to_have_class(
+        re.compile(r"\blit\b")
+    )
+    box = page.locator("#board").bounding_box()
+    assert box
+    page.mouse.click(box["x"] + 8, box["y"] + box["height"] - 8)  # empty board: nothing selected
+    expect(page.locator("#board .off-wire.lit")).to_have_count(0)
+
+
 def test_a_wire_is_moved_by_its_middle_and_routed_for_me_again(page: Page, base_url: str) -> None:
     """D-380: a wire's upright run dragged sideways stays where it's put (one undo step);
     the wire's menu's Route it for me puts it back where the router draws it."""

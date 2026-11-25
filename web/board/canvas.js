@@ -115,6 +115,8 @@ export function boardCanvas(svg, app) {
   let litItems = [];
   /** @type {Set<string>} */
   let litNets = new Set();
+  /** @type {Set<number>} the off-board wires lit: the selected net's (D-406) */
+  let litWires = new Set();
   /** @type {Ghost | null} */
   let ghosted = null;
   let pressing = false; // a press on the board is being dragged: no hover then
@@ -332,7 +334,14 @@ export function boardCanvas(svg, app) {
     else apply();
     light(lit, litItems);
     lightNets(litNets);
+    lightWires(litWires);
     ghost(ghosted);
+  }
+
+  /** Light the off-board wires `indexes` (the selected net's, D-406). @param {Set<number>} indexes */
+  function lightWires(indexes) {
+    litWires = indexes;
+    for (const g of svg.querySelectorAll(".off-wire")) g.classList.toggle("lit", indexes.has(Number(g.getAttribute("data-wire"))));
   }
 
   /** Light the ratsnest lines of `nets` (a selected or carried part's, D-377). @param {Set<string>} nets */
@@ -549,6 +558,7 @@ export function boardCanvas(svg, app) {
     },
     light,
     lightNets,
+    lightWires,
     fit,
     ghost,
     holeAt,

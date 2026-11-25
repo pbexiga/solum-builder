@@ -503,7 +503,7 @@ export function boardView(host, app) {
       if (w.end === "new") {
         const item = progress?.items.find((i) => i.lugs.some((l) => l.end === w.lug));
         if (item) selectItem(item.ref);
-      }
+      } else selectWire(w.index); // a wire's end clicked: its net lit
       return;
     }
     if (w.end === "new") {
@@ -551,9 +551,17 @@ export function boardView(host, app) {
     bending = null;
     canvas.ghost(null);
     const wire = bent ? boardNow().wires[bent.index] : null;
+    if (bent && !moved) return selectWire(bent.index); // a wire's middle clicked: its net lit
     if (!bent || !wire || !moved || bent.at === null) return;
     const runs = [...(wire.runs ?? []).filter(([i]) => i !== bent.run), [bent.run, bent.at]];
     await boardEdit({ kind: "route", index: bent.index, runs }, `Move the wire from ${lugWords(wire.lug)}`);
+  }
+
+  /** A wire clicked: its net selected, so the wire lights with the rest of the net, on both drawings (D-406). @param {number} index */
+  function selectWire(index) {
+    const lug = boardNow().wires[index]?.lug;
+    const net = progress?.items.flatMap((i) => i.lugs).find((l) => l.end === lug)?.net;
+    if (net) app.select({ kind: "net", id: net });
   }
 
   /** A wire's menu: route it for me again, leave its end loose, or take it off. @param {number} index @param {number} x @param {number} y */
@@ -1231,6 +1239,9 @@ export function boardView(host, app) {
   /** Light the selection on the board, off-board parts too. @param {Selection | null} selection */
   function light(selection) {
     focus();
+    const wires = boardNow().wires;
+    const lugNet = new Map(progress?.items.flatMap((i) => i.lugs).map((l) => [l.end, l.net]) ?? []);
+    canvas.lightWires(new Set(selection?.kind === "net" && !selection.resting ? wires.flatMap((w, i) => (lugNet.get(w.lug) === selection.id ? [i] : [])) : []));
     if (!selection || selection.resting || !progress) return canvas.light([]);
     const fps = progress.footprints;
     const items = progress.items;

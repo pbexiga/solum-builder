@@ -1363,6 +1363,69 @@ def test_off_board_wires_are_routed_round_the_parts_and_hop_where_they_cross(js:
     assert got["along"] == [10, 5]
 
 
+def test_a_wire_drops_into_its_hole_between_bodies_and_never_runs_through_a_name(
+    js: Page,
+) -> None:
+    """D-406 (the maintainer's in-guitar boost): a wire's hole squeezed between two caps (B1
+    between C1 and C2, each body's box over its column) is still reached, the last steps in
+    crossing the bodies beside it, never the straight line through its own jack it fell back
+    to; a hole walled in by a body larger than that is reached over as little body as can
+    be, leaving its lug downward; a switch's name, above its outline, is kept off."""
+    got = run(
+        js,
+        """
+        const b = await m('board/board-logic.js');
+        const board = { columns: 21, strips: 11 };
+        const jack = { x: -95, y: -5, w: 50, h: 20 };
+        const c1 = { x: -9.84, y: -4.84, w: 19.68, h: 19.68 }, c2 = { x: 10.16, y: -4.84, w: 19.68, h: 19.68 };
+        const between = { x1: -60, y1: 20, x2: 10, y2: 0, loose: false, hole: true, box: jack };
+        const low = { x: -95, y: 95, w: 50, h: 20 };
+        const block = { x: 30, y: 30, w: 40, h: 40 };
+        const walled = { x1: -60, y1: 120, x2: 50, y2: 50, loose: false, hole: true, box: low };
+        const toggle = { x: 155, y: -115, w: 50, h: 70 };
+        const a1 = { x1: 170, y1: -100, x2: 90, y2: 90, loose: false, hole: true, box: toggle };
+        const named = b.wireObstacles({ parts: [] }, {}, []);
+        return {
+          between: b.wireRoutes([between], board, { boxes: [jack, c1, c2], lines: [] })[0],
+          walled: b.wireRoutes([walled], board, { boxes: [low, block], lines: [] })[0],
+          a1: b.wireRoutes([a1], board, { boxes: [], lines: [], soft: [toggle], labels: [{ x: 155, y: -125, w: 50, h: 10 }] })[0],
+          named: named.labels ?? null,
+        };
+        """,
+    )
+
+    def along(route: list[list[float]]) -> list[tuple[float, float]]:
+        """Every unit along the route."""
+        out = []
+        for (ax, ay), (bx, by) in pairwise(route):
+            steps = int(max(abs(bx - ax), abs(by - ay)))
+            out += [(ax + (bx - ax) * t / steps, ay + (by - ay) * t / steps) for t in range(steps)]
+        return out
+
+    def inside(x: float, y: float, b: dict[str, float]) -> bool:
+        return b["x"] < x < b["x"] + b["w"] and b["y"] < y < b["y"] + b["h"]
+
+    jack = {"x": -95, "y": -5, "w": 50, "h": 20}
+    caps = [
+        {"x": -9.84, "y": -4.84, "w": 19.68, "h": 19.68},
+        {"x": 10.16, "y": -4.84, "w": 19.68, "h": 19.68},
+    ]
+    route = got["between"]
+    assert route[0] == [-60, 20] and route[-1] == [10, 0]
+    assert route[1][0] == -60 and route[1][1] > 20  # down from the lug, not up through the jack
+    for x, y in along(route):
+        assert not inside(x, y, jack)
+        if any(inside(x, y, c) for c in caps):
+            assert abs(x - 10) + abs(y) <= 10  # only the last two half-holes in
+    walled = got["walled"]
+    assert walled[0] == [-60, 120] and walled[-1] == [50, 50]
+    assert walled[1][0] == -60 and walled[1][1] > 120  # routed, not straight up through its jack
+    label = {"x": 155, "y": -125, "w": 50, "h": 10}
+    assert got["a1"][-1] == [90, 90]
+    assert not any(inside(x, y, label) for x, y in along(got["a1"]))
+    assert got["named"] == []  # no switch, no name to keep off
+
+
 def test_parts_gone_from_the_circuit_are_said_in_one_sentence(js: Page) -> None:
     """D-376: the Warnings pane's line above its Clear them button."""
     got = run(

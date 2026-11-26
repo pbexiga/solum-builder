@@ -181,6 +181,19 @@ def test_links_are_laid_and_lifted_down_a_column() -> None:
         edit(GOOD, holes_edit("unlink", "L1", "L3"))
 
 
+def test_a_link_is_tapped_at_a_hole_it_passes_over() -> None:
+    """D-410: B1–B8 tapped at B4 is two links ending in B4, in its place in the list (a
+    tap: strip 4 joined too); not between its ends, or no such link, refused by name."""
+    tapped = edit(GOOD, holes_edit("tap", "B8", "B1", "B4"))
+    assert layout_data(tapped)["links"] == [["B1", "B4"], ["B4", "B8"], ["K2", "K8"]]
+    with pytest.raises(EditError, match="a hole the link passes over, between B1 and B8"):
+        edit(GOOD, holes_edit("tap", "B1", "B8", "B9"))
+    with pytest.raises(EditError, match="between B1 and B8"):
+        edit(GOOD, holes_edit("tap", "B1", "B8", "C4"))
+    with pytest.raises(EditError, match="no link from L1 to L3"):
+        edit(GOOD, holes_edit("tap", "L1", "L3", "L2"))
+
+
 def test_shorts_are_the_pairs_of_nets_the_board_joins() -> None:
     assert shorts(GOOD, RANGEMASTER, MODELS, TABLE) == {}
     mended = edit(GOOD, holes_edit("uncut", "G8"))

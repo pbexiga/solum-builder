@@ -43,7 +43,7 @@ import { compactRun } from "./compact-run.js";
 import { boardNotes } from "./board-notes.js";
 import { needsCard } from "./needs.js";
 import { openForm } from "../editor/form.js";
-import { BOARD_SETTINGS, EDGE, overlapKey, overlapMarks, overlapParts, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, placedRows, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, standUpOf, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
+import { BOARD_SETTINGS, EDGE, overlapKey, overlapMarks, overlapParts, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, linkTap, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, placedRows, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, standUpOf, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -227,6 +227,7 @@ export function boardView(host, app) {
       if (locked) return true; // no menu
       if (spot.wire) return wireMenu(spot.wire.index, x, y), true;
       if (spot.item) return itemMenu(spot.item, x, y), true;
+      if (spot.link) return linkMenu(spot.link, spot.hole, x, y), true;
       if (spot.ref) return partMenu(spot.ref, x, y), true;
       return false;
     },
@@ -691,6 +692,16 @@ export function boardView(host, app) {
     const legs = legsAt(fp, next, middleOf(placed.legs));
     void boardEdit({ kind: "place", ref, legs: legsData(legs), standing: next.standing }, `${moveWords(move, pose)} ${ref}`);
     return true;
+  }
+
+  /** A link's menu: a tap where it was right-clicked, if between its ends (D-410), and lift it. */
+  function linkMenu(/** @type {[Hole, Hole]} */ link, /** @type {Hole} */ hole, /** @type {number} */ x, /** @type {number} */ y) {
+    const name = link.map(holeName).join("–");
+    const tap = linkTap(link, hole);
+    openMenu(x, y, [
+      ...(tap ? [{ label: `Tap here (${holeName(hole)})`, run: () => void boardEdit({ kind: "tap", holes: tap }, `Tap the link ${name} at ${holeName(hole)}`) }] : []),
+      { label: "Lift the link", run: () => void boardEdit({ kind: "unlink", holes: link }, `Lift the link ${name}`) },
+    ]);
   }
 
   /** A placed part's menu: each pose move it allows, and back to the tray. @param {string} ref @param {number} x @param {number} y */

@@ -470,6 +470,14 @@ def test_parts_are_placed_turned_moved_cut_and_linked_by_hand(
     expect(page.locator("#board .board-link")).to_have_count(3)
     expect(page.locator("#board .link-tap")).to_have_count(0)
     expect_matches(page)
+    # a right-click on a link: Tap here splits it where it was clicked (L5, on the
+    # collector's strip: a short, so undone)
+    page.mouse.click(*hole_point(page, 11, 4), button="right")
+    page.get_by_text("Tap here (L5)").click()
+    expect(page.locator("#board .board-link")).to_have_count(4)
+    expect(page.locator("#board .link-tap[data-hole='L5']")).to_have_count(1)
+    page.keyboard.press("Control+z")
+    expect(page.locator("#board .board-link")).to_have_count(3)
     page.keyboard.press("Escape")  # Links off: moving parts again (no Parts button, D-406)
     expect(page.locator("#board-edit button[data-tool='links']")).to_have_attribute(
         "aria-pressed", "false"

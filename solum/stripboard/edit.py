@@ -29,7 +29,7 @@ from solum.stripboard.check import kept_dismissals, outline_overlaps, placement_
 from solum.stripboard.footprints import BoardPart, leg_problem
 from solum.stripboard.size import crop, fit_box, used_holes
 
-EditKind = Literal["place", "remove", "cut", "uncut", "link", "unlink", "spot", "unspot",
+EditKind = Literal["place", "remove", "cut", "uncut", "link", "unlink", "tap", "spot", "unspot",
                    "wire", "unwire", "rewire", "route", "clear", "where", "note-add",
                    "note-set", "note-delete", "dismiss", "restore"]  # fmt: skip
 
@@ -143,6 +143,20 @@ def _unlink(layout: Layout, a: Hole, b: Hole) -> Layout:
     return replace(layout, links=links)
 
 
+def _tap(layout: Layout, a: Hole, b: Hole, at: Hole) -> Layout:
+    """The link from `a` to `b` split at `at`, a hole it passes over: two links ending
+    there, a tap, joining that strip too (D-410)."""
+    i = next((i for i, link in enumerate(layout.links) if {link.a, link.b} == {a, b}), None)
+    if i is None:
+        raise EditError(f"There's no link from {_name(a)} to {_name(b)}.")
+    top, bottom = sorted((a, b), key=lambda h: h[1])
+    if at[0] != top[0] or not top[1] < at[1] < bottom[1]:
+        raise EditError(f"A tap goes in a hole the link passes over, between {_name(top)} "
+                        f"and {_name(bottom)}.")  # fmt: skip
+    links = (*layout.links[:i], Link(top, at), Link(at, bottom), *layout.links[i + 1 :])
+    return replace(layout, links=links)
+
+
 def _spot(layout: Layout, edit: BoardEdit, items: Mapping[str, tuple[str, ...]]) -> Layout:
     if edit.ref not in items:
         raise EditError(f"{edit.ref} isn't an off-board part of this circuit.")
@@ -247,6 +261,8 @@ def _applied(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
         raise EditError("A cut is in one hole.")
     if edit.kind in ("link", "unlink") and len(holes) != 2:
         raise EditError("A link has two ends.")
+    if edit.kind == "tap" and len(holes) != 3:
+        raise EditError("A tap names the link's two ends and the hole to tap it at.")
     match edit.kind:
         case "place":
             return _place(layout, edit, board)
@@ -260,6 +276,8 @@ def _applied(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
             return _link(layout, *holes)
         case "unlink":
             return _unlink(layout, *holes)
+        case "tap":
+            return _tap(layout, *holes)
         case "spot":
             return _spot(layout, edit, items)
         case "unspot":

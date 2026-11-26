@@ -1368,6 +1368,16 @@ export function linkFrom(from, to) {
 }
 
 /**
+ * A tap on `link` at `hole` (D-410): the link split there, both pieces ending in it; null
+ * unless the hole is one the link passes over, between its ends.
+ * @param {[Hole, Hole]} link @param {Hole} hole @returns {[Hole, Hole, Hole] | null}
+ */
+export function linkTap(link, hole) {
+  const [top, bottom] = [...link].sort((p, q) => p[1] - q[1]);
+  return hole[0] === top[0] && top[1] < hole[1] && hole[1] < bottom[1] ? [link[0], link[1], hole] : null;
+}
+
+/**
  * The holes where two or more links end: a tap, one solder joint for both (D-410).
  * @param {Array<[Hole, Hole]>} links @returns {Hole[]}
  */

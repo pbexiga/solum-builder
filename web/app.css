@@ -284,6 +284,8 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 .side-pane.side-hidden { visibility: hidden; transition: left 0.18s ease-in, transform 0.18s ease-in, visibility 0s 0.18s, --side-thumb 0.25s ease-out; }
 .side-pane.side-out { left: var(--slide); }
 .side-pane.side-hidden.side-peek { transform: translateX(calc(-1 * var(--slide))); visibility: visible; z-index: 35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); transition: transform 0.18s ease-out, visibility 0s, --side-thumb 0.25s ease-out; }
+/* sliding back from a peek: still above the canvas until it's gone (side-panes.js) */
+.side-pane.side-hidden.side-leaving { z-index: 35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
 .side-pane.no-slide { transition: none !important; }
 @media (prefers-reduced-motion: reduce) { .side-pane { transition: none !important; } }
 /* back once the peek has slid away, not carried by it */

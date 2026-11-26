@@ -158,13 +158,21 @@ export function sidePanes(workspace, opts) {
     if (!sides[opts.view()][side]) return;
     if (peeking && peeking !== side) unpeek();
     peeking = side;
+    column(side).classList.remove("side-leaving");
     column(side).classList.add("side-peek");
     showBars();
   }
 
   function unpeek() {
     clearTimeout(peekTimer);
-    if (peeking) column(peeking).classList.remove("side-peek");
+    if (peeking) {
+      // kept above the canvas while it slides back: the left column comes before the
+      // canvas in the page, so without it the canvas covers it at once (D-408)
+      const col = column(peeking);
+      col.classList.add("side-leaving");
+      col.classList.remove("side-peek");
+      window.setTimeout(() => col.classList.remove("side-leaving"), motion.matches ? 0 : SLIDE_MS);
+    }
     peeking = null;
     showBars();
   }

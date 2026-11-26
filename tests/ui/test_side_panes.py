@@ -194,6 +194,38 @@ def test_the_bar_hides_and_peeks(page: Page, base_url: str) -> None:
     expect(bar).to_have_attribute("aria-expanded", "true")
 
 
+def test_a_peek_slides_back_above_the_canvas_on_either_side(page: Page, base_url: str) -> None:
+    """D-408: the pointer off a peeking column, it slides back still drawn over the canvas.
+    The left column comes before the canvas in the page, so it went under it at once."""
+    open_circuit(page, base_url, "ts808")
+    for side, column in (("left", "#palette"), ("right", "aside.panels")):
+        bar = page.locator(f".side-bar.{side}")
+        bar.click()
+        page.mouse.move(700, 400)
+        page.wait_for_timeout(400)  # hidden
+        bar.hover()
+        expect(page.locator(column)).to_have_class(re.compile("side-peek"))
+        page.wait_for_timeout(400)  # slid out
+        page.mouse.move(700, 400)
+        page.wait_for_function(  # the frame it starts sliding back
+            "(sel) => !document.querySelector(sel).classList.contains('side-peek')",
+            arg=column,
+            polling="raf",
+        )
+        page.wait_for_timeout(40)
+        on_top = page.evaluate(
+            """(sel) => { const el = document.querySelector(sel);
+              const r = el.getBoundingClientRect();
+              const x = Math.min(Math.max(r.x + r.width / 2, 20), innerWidth - 20);
+              return el.contains(document.elementFromPoint(x, r.y + 120)); }""",
+            column,
+        )
+        assert on_top, f"the {side} column went under the canvas"
+        page.wait_for_timeout(400)
+        bar.click()
+        page.mouse.move(700, 400)
+
+
 def test_a_peek_covers_its_own_large_view(page: Page, base_url: str) -> None:
     open_circuit(page, base_url, "ts808")
     frequency = page.locator("#panel-frequency")

@@ -1,5 +1,7 @@
 # Standing resistors and diodes: a choice (P6i1)
 
+> **Amended by P8 (D-410, D-413):** the Layout window, Start a board, Fill the rest and Tidy up are gone; the three choices live in *Lay it out for me*'s confirmation. With no placement limits or warnings to clear, *When needed* lays everything flat and the search stands a part only to clear a warning.
+
 ## Goal
 Today Start a board, Fill the rest and Tidy up never stand a part up, while Build a full layout stands up as many as it can (it costs nothing), so the TS808's full layout has nine parts standing (R6, R9, R11, R14, R32, R34, R35, D1, D2). Builders differ: some never stand parts (sturdier, easier to read), some like the room it saves. The builder chooses, and the choice stays with the board. The default stands a part only when it's needed, never just to save room: a board that works matters more than a small one (the user, 2026-11-25).
 

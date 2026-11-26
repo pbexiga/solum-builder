@@ -1,5 +1,7 @@
 # Quiet links: keeping links away from sensitive nodes (P6h5e–f)
 
+> **Removed by P8 (D-410, `STRIPBOARD-RULES-SPEC.md`):** quiet links are no longer a rule, a cost or a warning; links go where the copper needs them. This is what D-402 built.
+
 The user, 2026-11-24: links running under parts may add noise. Agreed (option A): keep links
 under parts where the risk is low, and keep them away from the nodes where a small pickup
 gets amplified. With it, the high-gain input limit (D-400) is narrowed to the parts in series

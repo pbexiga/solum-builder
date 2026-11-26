@@ -526,23 +526,9 @@ def board_shown(page: Page, base: str, circuit: str = "ts808") -> None:
     page.locator("#board-settings summary").click()
 
 
-def layout_dialog(page: Page, full: bool = False) -> Locator:
-    """*Layout…* open, its times worked out; with `full`, Build a full layout (Quick) picked."""
+def lay_out(page: Page) -> Locator:
+    """*Lay it out for me…* confirmed, run to its review bar."""
     page.locator("#board-layout").click()
-    dialog = page.locator("#layout-dialog")
-    if full:
-        dialog.locator(".layout-choice[data-layout='full'] input").check()
-        dialog.locator("input[name='layout-speed'][value='quick']").check()
-    page.wait_for_function(
-        "!document.querySelector('#layout-dialog').innerText.includes('Working out')",
-        timeout=60_000,
-    )
-    return dialog
-
-
-def build_full(page: Page) -> Locator:
-    """Build a full layout, Quick, run to its review bar."""
-    layout_dialog(page, full=True).locator("button[data-answer='go']").click()
     page.locator(".ask-buttons button[data-answer='layout']").click()
     review = page.locator(".compact-review")
     review.wait_for(timeout=600_000)
@@ -550,10 +536,10 @@ def build_full(page: Page) -> Locator:
 
 
 def board(page: Page, base: str) -> None:
-    """board and board-copper: the TS808 built by Build a full layout (Quick) and kept,
+    """board and board-copper: the TS808 laid out by *Lay it out for me* and kept,
     nothing selected; then its copper side, parts hidden."""
     board_shown(page, base)
-    build_full(page).locator("[data-review='keep']").click()
+    lay_out(page).locator("[data-review='keep']").click()
     page.locator(".compact-review").wait_for(state="hidden")
     page.keyboard.press("Escape")
     page.locator("#board-settings summary").click()  # closed: Warnings at the top
@@ -575,16 +561,24 @@ def board_carrying(page: Page, base: str) -> None:
 
 
 def board_layout(page: Page, base: str) -> None:
-    """The TS808's Layout window, Build a full layout picked, its times worked out."""
-    board_shown(page, base)
-    layout_dialog(page, full=True)
-    shoot(page, "board-layout", "#layout-dialog")
+    """The Klon's running window: Lay it out for me confirmed, caught while it works (a large
+    circuit, so the draft line shows)."""
+    board_shown(page, base, "klon-centaur-aion")
+    page.locator("#board-layout").click()
+    page.locator(".ask-buttons button[data-answer='layout']").click()
+    run = page.locator(".compact-run")
+    page.wait_for_function(
+        "document.querySelector('.compact-run').innerText.includes('Best so far')", timeout=120_000
+    )
+    shoot(page, "board-layout", ".compact-run")
+    run.locator("button[data-run='stop']").click()
+    page.locator(".compact-review").wait_for(timeout=120_000)
 
 
 def board_review(page: Page, base: str) -> None:
-    """The Tone Bender MK2 built by Build a full layout: the review bar in Both."""
+    """The Tone Bender MK2 laid out for me: the review bar in Both."""
     board_shown(page, base, "tone-bender-mk2")
-    build_full(page).locator("[data-mode='both']").click()
+    lay_out(page).locator("[data-mode='both']").click()
     shoot(page, "board-review", "section.canvas")
 
 

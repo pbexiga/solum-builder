@@ -408,7 +408,8 @@ def test_parts_are_placed_turned_moved_cut_and_linked_by_hand(
 ) -> None:
     """D-374: R2 dragged from the tray onto the board finishes the Rangemaster; turned along
     a strip it shorts two nets, the copper red; with shorts off the same turn is refused;
-    moved by dragging; a cut made and mended, a link laid; each an undo step."""
+    moved by dragging; a cut made and mended, a link laid, a tap laid from its end and lifted
+    with a click; each an undo step."""
     board = load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml")
     del board["parts"]["R2"]
     open_with_board(page, base_url, board)
@@ -460,6 +461,14 @@ def test_parts_are_placed_turned_moved_cut_and_linked_by_hand(
     page.keyboard.press("k")
     drag_to(page, hole_point(page, 11, 1), hole_point(page, 11, 7))  # L2 to L8, both GND
     expect(page.locator("#board .board-link")).to_have_count(3)
+    expect_matches(page)
+    # from its end, a tap (one solder dot for both, D-410); a click without moving lifts it
+    drag_to(page, hole_point(page, 11, 7), hole_point(page, 11, 8))  # L8 to L9
+    expect(page.locator("#board .board-link")).to_have_count(4)
+    expect(page.locator("#board .link-tap[data-hole='L8']")).to_have_count(1)
+    page.mouse.click(*hole_point(page, 11, 8))
+    expect(page.locator("#board .board-link")).to_have_count(3)
+    expect(page.locator("#board .link-tap")).to_have_count(0)
     expect_matches(page)
     page.keyboard.press("Escape")  # Links off: moving parts again (no Parts button, D-406)
     expect(page.locator("#board-edit button[data-tool='links']")).to_have_attribute(

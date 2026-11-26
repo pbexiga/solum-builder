@@ -1234,6 +1234,7 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
           triPose: b.poseOf(tr, b.legsAt(tr, { turns: 3, flipped: false, standing: false, span: 1 }, [2, 2]), false),
           triBody: b.partShapes(tr, b.legsAt(tr, b.firstPose(tr), [5, 5]), false).find((s) => s.kind === 'rect'),
           link: b.linkFrom([3, 1], [6, 5]),
+          taps: b.linkTaps([[[3, 1], [3, 5]], [[3, 5], [3, 8]], [[4, 1], [4, 2]], [[3, 1], [3, 0]]]),
           noLink: b.linkFrom([3, 1], [6, 1]),
           red: b.runRects([[7, 0, 11]]),
           keys: [' ', 'f', 's', '+', '-', 'Delete', 'c', 'k', 'p', 'Escape', 'r'].map((key) => k.boardActionFor({ key })?.action ?? null),
@@ -1247,6 +1248,7 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
     assert got["standing"] == [["1", [5, 4]], ["2", [5, 5]]]
     assert got["longer"] == 5 and got["shorter"] is None
     # standing, a lead bent further: from its least span up (D-410); laid flat, its least
+    assert got["taps"] == [[3, 1], [3, 5]]  # two links' ends in one hole (D-410)
     assert got["stoodLonger"] == 2 and got["stoodShorter"] is None and got["laidAgain"] == 4
     assert got["poseStood"] == {"turns": 0, "flipped": False, "standing": True, "span": 2}
     assert got["flippedQ"] == [["C", [5, 4]], ["B", [5, 5]], ["E", [5, 6]]]

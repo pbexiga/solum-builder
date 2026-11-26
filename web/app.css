@@ -437,6 +437,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-drawing .cut-hole { pointer-events: none; }
 .board-drawing .link { stroke: var(--board-link); stroke-width: 1.4; }
 .board-drawing .link-end { fill: var(--board-link); }
+.board-drawing .link-tap { fill: var(--board-link); pointer-events: none; }
 /* off-board parts beside the board and their wires (D-375) */
 .board-drawing .off-item { cursor: grab; }
 .board-drawing .off-body { fill: var(--surface-1); stroke: var(--sch-line); stroke-width: 1.2; vector-effect: non-scaling-stroke; }

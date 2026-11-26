@@ -139,6 +139,8 @@ export function boardView(host, app) {
   let pressedPart = null;
   /** @type {Hole | null} where a link being laid starts */
   let linkStart = null;
+  /** @type {[Hole, Hole] | null} a link pressed: a click lifts it, a drag lays a new one from the hole (a tap at its end, D-410) */
+  let pressedLink = null;
   /** @type {{x: number, y: number} | null} a press on a tray row */
   let trayPress = null;
   /** @type {CarriedItem | null} */
@@ -176,8 +178,8 @@ export function boardView(host, app) {
       if (tool === "parts" && spot.lug) return (wiring = { lug: spot.lug, index: -1, end: "new" }), true;
       if (tool === "parts" && spot.item) return (pressedItem = { ref: spot.item, hole: spot.hole }), true;
       if (tool === "links") {
-        linkStart = spot.link ? null : spot.hole;
-        if (spot.link) void boardEdit({ kind: "unlink", holes: spot.link }, `Lift the link ${spot.link.map(holeName).join("–")}`);
+        linkStart = spot.hole;
+        pressedLink = spot.link;
         return true;
       }
       if (tool !== "parts" || !spot.ref || !placedLegs(spot.ref)) return false;
@@ -204,10 +206,11 @@ export function boardView(host, app) {
       if (carryItem) return void putItem(hole);
       if (item && !moved) return selectItem(item.ref);
       if (linkStart) {
-        const link = linkFrom(linkStart, hole);
-        linkStart = null;
+        const [link, lifted] = [moved ? linkFrom(linkStart, hole) : null, pressedLink];
+        linkStart = pressedLink = null;
         canvas.ghost(null);
         if (link) void boardEdit({ kind: "link", holes: link }, "Lay a link");
+        else if (lifted && !moved) void boardEdit({ kind: "unlink", holes: lifted }, `Lift the link ${lifted.map(holeName).join("–")}`);
         return;
       }
       if (carry) return void putDown(hole);
@@ -619,7 +622,7 @@ export function boardView(host, app) {
     pressedItem = null;
     wiring = null;
     bending = null;
-    linkStart = null;
+    linkStart = pressedLink = null;
     svg.classList.remove("carrying");
     canvas.ghost(null);
     focus();

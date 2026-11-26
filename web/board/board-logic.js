@@ -1367,6 +1367,17 @@ export function linkFrom(from, to) {
 }
 
 /**
+ * The holes where two or more links end: a tap, one solder joint for both (D-410).
+ * @param {Array<[Hole, Hole]>} links @returns {Hole[]}
+ */
+export function linkTaps(links) {
+  /** @type {Map<string, number>} */
+  const ends = new Map();
+  for (const hole of links.flat()) ends.set(hole.join(","), (ends.get(hole.join(",")) ?? 0) + 1);
+  return [...ends].filter(([, n]) => n > 1).map(([key]) => /** @type {Hole} */ (key.split(",").map(Number)));
+}
+
+/**
  * @typedef {{net: string, a: Hole, b: Hole}} Strand a ratsnest line: two pieces of `net` not joined yet
  * @typedef {{marks: Record<string, Array<[number, number, number]>>, ratsnest: Strand[], cuts: Hole[],
  *   links: Array<[Hole, Hole]>, stuck: string[], next: {ref: string, why: string} | null}} Guidance

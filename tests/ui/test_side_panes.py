@@ -241,9 +241,10 @@ def test_a_palette_group_folds_and_stays_folded(page: Page, base_url: str) -> No
 
 
 def test_a_side_column_s_scroll_bar_shows_only_while_hovered(page: Page, base_url: str) -> None:
+    """D-409: shown while the pointer is over the column, fading in and out (0.25 s)."""
     open_circuit(page, base_url, "ts808")
     colour = "getComputedStyle(document.getElementById('palette')).scrollbarColor"
     page.mouse.move(800, 400)
-    assert page.evaluate(colour).startswith("rgba(0, 0, 0, 0)")
+    page.wait_for_function(f"{colour}.startsWith('rgba(0, 0, 0, 0)')")
     page.locator("#palette").hover()
-    assert not page.evaluate(colour).startswith("rgba(0, 0, 0, 0)")
+    page.wait_for_function(f"!{colour}.startsWith('rgba(0, 0, 0, 0)')")

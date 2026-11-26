@@ -966,18 +966,6 @@ export function standUpOf(data) {
   return kept ? kept.value : "needed";
 }
 
-/**
- * How long a run takes, in words (D-399): "A few seconds", "About 40 seconds", "About a
- * minute", "About 3 minutes".
- * @param {number} seconds
- */
-export function timeText(seconds) {
-  if (seconds < 10) return "A few seconds";
-  if (seconds < 55) return `About ${Math.round(seconds / 5) * 5} seconds`;
-  if (seconds < 90) return "About a minute";
-  return `About ${Math.round(seconds / 60)} minutes`;
-}
-
 export const LONGER = "Taking a little longer than expected…";
 /** A run is late past this many times its estimate... */
 const LATE_BY = 2;
@@ -1041,9 +1029,10 @@ export function largeText(parts, large) {
 
 /**
  * *Lay it out for me*'s confirmation (P8 R3): what it replaces (named by count) and that
- * it's one undo step; how long it takes and that it can stop early (`estimate` undefined:
- * still being worked out; null: not known); and that the layout is a draft, with the
- * large-circuit line when it applies, else what counts as large.
+ * it's one undo step; that it can stop early (its time is the running window's: the
+ * estimate is worked out in the background, the user, 2026-11-26); and that the layout is
+ * a draft, with the large-circuit line when it applies, else what counts as large, once
+ * the estimate (the board parts) is known.
  * @param {{parts: unknown[], cuts: unknown[], links: unknown[], wires: unknown[]}} board what's on the board now
  * @param {{seconds: number, parts: number, large: number} | null} [estimate]
  * @returns {{text: string, takes: string, draft: string}}
@@ -1055,8 +1044,7 @@ export function layOutWords(board, estimate) {
   const text = board.parts.length
     ? `This replaces everything on the board: ${named}. One step to undo.`
     : "Lays out the whole board for you, wired and checked. One step to undo.";
-  const stop = "you can stop early and keep the best board found so far.";
-  const takes = estimate === undefined ? "Working out the time…" : estimate ? `It takes ${timeText(estimate.seconds).toLowerCase()}; ${stop}` : `It may take a while; ${stop}`;
+  const takes = "It shows how long it has left as it goes; you can stop early and keep the best board found so far.";
   const large = estimate ? largeText(estimate.parts, estimate.large) : "";
   const draft = large || `The layout is a draft: look it over before you build it.${estimate ? ` Circuits with more than ${estimate.large} parts on the board count as large: a layout made for them is likely larger than one laid out by hand.` : ""}`;
   return { text, takes, draft };

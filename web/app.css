@@ -560,7 +560,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .layout-stand { cursor: pointer; }
 .layout-stand input { margin: 0; accent-color: var(--accent); }
 /* Build a full layout (D-399): the running window, the review bar, the boards before and after */
-.compact-run { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); width: min(360px, calc(100% - 32px)); padding: 12px 14px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; color: var(--text-2); z-index: 3; }
+.compact-run { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); width: min(440px, calc(100% - 32px)); padding: 12px 14px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; color: var(--text-2); z-index: 3; }
 .compact-run[hidden], .compact-review[hidden], .compact-dim[hidden], .compact-title[hidden], .compact-said[hidden] { display: none; }
 .compact-run h3 { margin: 0 0 6px; font-size: 14px; color: var(--text); }
 .compact-run p { margin: 4px 0; }
@@ -905,8 +905,8 @@ table.readout tr.rail th { color: var(--text-2); }
 .audio-chain .chip:first-child { border-radius: 3px 0 0 3px; margin-left: 0; }
 .audio-chain .chip:last-child { border-radius: 0 3px 3px 0; }
 .audio-chain .chip .t { display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); }
-.audio-chain .chip .v { display: block; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.audio-chain .chip .s { display: block; color: var(--text-3); font-size: 12px; min-height: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.audio-chain .chip .v { display: block; color: var(--text); }
+.audio-chain .chip .s { display: block; color: var(--text-3); font-size: 12px; min-height: 1.3em; }
 .audio-chain .chip[aria-expanded="true"] { background: var(--surface-2); border-color: var(--accent); z-index: 1; }
 .audio-chain .chip:not(:last-child)::after { content: "▸"; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); color: var(--text-3); z-index: 2; font-size: 11px; }
 .audio-chain .gauge { display: flex; align-items: center; gap: 6px; margin-top: 3px; }

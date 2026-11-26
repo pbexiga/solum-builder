@@ -45,15 +45,15 @@ def test_a_stopped_run_ends_with_its_best_so_far_and_no_worker_left() -> None:
     assert mp.active_children() == []
 
 
-def test_a_run_adds_the_flat_attempt_once_per_board_when_parts_may_stand(
+def test_every_try_adds_its_own_flat_attempt_when_parts_may_stand(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """D-403: When needed, a run is five attempts, the fifth lying everything flat, and
-    its best is no worse than that flat board; Try another runs
-    four (the flat board kept from the first try); Never runs four (all flat already).
-    Few steps, to be quick: the steps are counted in the server, so the workers take them."""
+    """D-403: When needed, a try is five attempts, the fifth lying everything flat with the
+    try's first seed, so Try another runs five too and finds its own boards (reusing the
+    first try's flat board gave it back, the user, 2026-11-26). Never runs four (all flat
+    already). Few steps, to be quick: the steps are counted in the server, so the workers
+    take them."""
     monkeypatch.setattr(compact_job, "STEPS_PER_PART", 40)
-    monkeypatch.setattr(compact_job, "_flat", {})
     circuit = load_circuit(LIBRARY / "starters" / "dallas-rangemaster.json")
     models, table = load_models([LIBRARY / "models"]), footprint_table(LIBRARY)
     settings = load_settings()
@@ -66,13 +66,11 @@ def test_a_run_adds_the_flat_attempt_once_per_board_when_parts_may_stand(
                               lambda _d, n, _b: of.append(n), threading.Event())  # fmt: skip
         return got, of[-1] // compact_job.steps_for(len(pb.refs))
 
-    first, n = attempts("needed", 1)
-    assert n == compact_job.ATTEMPTS + 1 and len(compact_job._flat) == 1
-    (flat,) = compact_job._flat.values()
-    assert first.best is not None and flat is not None
-    assert first.best.key <= flat.key
-    assert attempts("needed", 2)[1] == compact_job.ATTEMPTS
-    assert attempts("never", 1)[1] == compact_job.ATTEMPTS
+    for attempt in (1, 2):
+        needed, n = attempts("needed", attempt)
+        never = attempts("never", attempt)
+        assert n == compact_job.ATTEMPTS + 1 and never[1] == compact_job.ATTEMPTS
+        assert needed.best is not None and never[0].best is not None
 
 
 def test_when_no_attempt_finds_a_board_the_rest_of_never_s_seeds_run_flat(
@@ -83,7 +81,6 @@ def test_when_no_attempt_finds_a_board_the_rest_of_never_s_seeds_run_flat(
     run adds Never's seeds 2–4, flat (seed 1 is the flat attempt): eight attempts in all,
     and no board, as Never's own run."""
     monkeypatch.setattr(compact_job, "STEPS_PER_PART", 2)
-    monkeypatch.setattr(compact_job, "_flat", {})
     circuit = load_circuit(LIBRARY / "starters" / "boss-bd2.json")
     models, table = load_models([LIBRARY / "models"]), footprint_table(LIBRARY)
 

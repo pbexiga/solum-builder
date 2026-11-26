@@ -116,7 +116,6 @@ def test_a_review_shows_the_hidden_right_column_once(page: Page, base_url: str) 
     page.locator("#board-settings summary").click()
     page.locator("#board-layout").click()
     dialog = page.locator("#layout-dialog")
-    expect(dialog.locator(".layout-takes")).not_to_contain_text("Working out")
     dialog.locator("button[data-answer='layout']").click()
     expect(page.locator(".compact-run")).to_be_visible()
     page.keyboard.press("]")  # hidden while it runs
@@ -325,3 +324,22 @@ def test_a_mark_clicked_peeks_its_hidden_side_out(page: Page, base_url: str) -> 
     expect(column).to_have_class(PEEK)
     expect(page.locator("#board-warnings-body li.overlap")).to_be_in_viewport()
     assert workspace_scroll(page) == 0
+
+
+def test_hiding_a_side_gives_the_canvas_its_width_at_once(page: Page, base_url: str) -> None:
+    """A side hidden: the canvas takes the width at once, drawn there already, and the
+    column slides away over it as a peek goes back (it used to slide out over its own
+    place first, that strip blank until the canvas took it, the user, 2026-11-26)."""
+    open_circuit(page, base_url, "ts808")
+    panels = page.locator("aside.panels")
+    width = canvas_width(page)
+    page.keyboard.press("]")
+    got = page.evaluate(
+        """() => ({
+          width: document.querySelector('section.canvas').getBoundingClientRect().width,
+          leaving: document.querySelector('aside.panels').classList.contains('side-leaving'),
+        })"""
+    )
+    assert got["width"] > width and got["leaving"]
+    expect(panels).not_to_have_class(re.compile(r"\bside-leaving\b"))
+    expect(panels).to_have_class(HIDDEN)

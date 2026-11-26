@@ -788,7 +788,7 @@ export function boardView(host, app) {
     const board = readBoard(app.circuit()?.stripboard);
     const estimate = postJson("api/stripboard/compact/estimate", { circuit: app.circuit() }).catch(() => null);
     const chosen = await confirmLayOut({ board, estimate, standUp: standUpOf(app.circuit()?.stripboard) });
-    if (chosen) run.start(chosen);
+    if (chosen) run.start({ ...chosen, estimate });
   }
 
   /** Select a board part (a chip: its units) or a circuit part on both drawings. @param {string} ref */

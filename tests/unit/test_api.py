@@ -1099,12 +1099,11 @@ def test_build_a_full_layout_streams_the_base_progress_and_a_checked_board(
 ) -> None:
     """The Rangemaster (few steps, for speed): the base first, then the steps done of the
     budget (four attempts and the flat one, D-403) and each new best, then a wired board
-    that passes the check, and the same board again (the flat board kept); *Try another*
-    is another seed set."""
+    that passes the check, and the same board again (counted steps, fixed seeds); *Try
+    another* is another seed set."""
     from solum.stripboard import compact_job
 
     monkeypatch.setattr(compact_job, "STEPS_PER_PART", 300)
-    monkeypatch.setattr(compact_job, "_flat", {})
     repo = Path(__file__).resolve().parents[2]
     data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
     c = client(monkeypatch, lambda _s: FakeEngine())

@@ -1141,10 +1141,17 @@ def test_the_board_size_offers_and_the_empty_board(js: Page) -> None:
     assert got["emptyLine"] == "Empty board"
 
 
+TAKES = (
+    "It shows how long it has left as it goes; you can stop early and keep the best board "
+    "found so far."
+)
+
+
 def test_lay_it_out_for_me_s_confirmation_words(js: Page) -> None:
     """P8 R3: what it replaces, named by count (or the empty board laid out), one undo
-    step; the time once known (still being worked out, or not known); the draft line with
-    what counts as large, or the large-circuit line past it."""
+    step; stopping early (the time is the running window's, the user, 2026-11-26); the
+    draft line with what counts as large once the estimate is known, or the large-circuit
+    line past it."""
     got = run(
         js,
         """
@@ -1154,7 +1161,6 @@ def test_lay_it_out_for_me_s_confirmation_words(js: Page) -> None:
         return {
           over: b.layOutWords(placed, { seconds: 33, parts: 8, large: 30 }),
           waiting: b.layOutWords(empty),
-          unknown: b.layOutWords(empty, null).takes,
           big: b.layOutWords(empty, { seconds: 130, parts: 42, large: 30 }).draft,
           large: [b.largeText(25, 25), b.largeText(26, 25)],
         };
@@ -1163,20 +1169,16 @@ def test_lay_it_out_for_me_s_confirmation_words(js: Page) -> None:
     assert got["over"] == {
         "text": "This replaces everything on the board: 3 parts, 1 cut and 2 wires. "
         "One step to undo.",
-        "takes": "It takes about 35 seconds; you can stop early and keep the best board "
-        "found so far.",
+        "takes": TAKES,
         "draft": "The layout is a draft: look it over before you build it. Circuits with "
         "more than 30 parts on the board count as large: a layout made for them is likely "
         "larger than one laid out by hand.",
     }
     assert got["waiting"] == {
         "text": "Lays out the whole board for you, wired and checked. One step to undo.",
-        "takes": "Working out the time…",
+        "takes": TAKES,
         "draft": "The layout is a draft: look it over before you build it.",
     }
-    assert got["unknown"] == (
-        "It may take a while; you can stop early and keep the best board found so far."
-    )
     big = (
         "This circuit has 42 parts: a layout made for you will likely be larger than one "
         "laid out by hand. Use it as a draft and look it over."
@@ -1713,8 +1715,8 @@ def test_the_board_s_overlap_marks_and_note_forms(js: Page) -> None:
 
 
 def test_lay_it_out_for_me_s_run_words(js: Page) -> None:
-    """D-399: the times in words, the figures, the time left, and a try that's the same
-    board as an earlier one."""
+    """D-399: the figures, the time left, and a try that's the same board as an earlier
+    one."""
     got = run(
         js,
         """
@@ -1722,7 +1724,6 @@ def test_lay_it_out_for_me_s_run_words(js: Page) -> None:
         const one = { stripboard: { size: [9, 8], parts: { R1: { 1: 'A1', 2: 'A5' } } } };
         const two = { stripboard: { size: [9, 7], parts: { R1: { 1: 'A1', 2: 'A5' } } } };
         return {
-          times: [4, 12, 33, 70, 130, 600].map(b.timeText),
           figures: b.figuresLine({ columns: 21, strips: 14, cuts: 1, links: 13 }),
           of: b.figuresOf({ size: [9, 8], cuts: ['A1', 'B2'], links: [['C1', 'C4']] }),
           left: [3, 22, 130].map(b.leftText),
@@ -1732,8 +1733,6 @@ def test_lay_it_out_for_me_s_run_words(js: Page) -> None:
         };
         """,
     )
-    assert got["times"] == ["A few seconds", "About 10 seconds", "About 35 seconds",
-                            "About a minute", "About 2 minutes", "About 10 minutes"]  # fmt: skip
     assert got["figures"] == "21 × 14 holes, 1 cut, 13 links"
     assert got["of"] == {"columns": 9, "strips": 8, "cuts": 2, "links": 1}
     assert got["left"] == ["Almost done.", "About 25 seconds left.", "About 2 minutes left."]

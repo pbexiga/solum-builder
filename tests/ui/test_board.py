@@ -905,14 +905,13 @@ def test_the_kept_board_is_exported_drawn_by_the_board_canvas(page: Page, base_u
 
 
 def lay_it_out(page: Page, stand: str | None = None) -> Locator:
-    """Open *Lay it out for me…* in the board's Settings, wait for its time, set the
+    """Open *Lay it out for me…* in the board's Settings, set the
     standing choice (when given) and confirm: the confirmation is returned, now closed."""
     settings = page.locator("#board-settings")
     if settings.get_attribute("open") is None:
         settings.locator("summary").click()
     page.locator("#board-layout").click()
     dialog = page.locator("#layout-dialog")
-    expect(dialog.locator(".layout-takes")).not_to_contain_text("Working out")
     if stand is not None:
         dialog.locator(f"input[name='layout-stand'][value='{stand}']").check()
     dialog.locator("button[data-answer='layout']").click()

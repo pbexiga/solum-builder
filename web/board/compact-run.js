@@ -10,7 +10,7 @@
 
 import { postJson, postProgress } from "../api.js";
 import { h } from "../panels.js";
-import { figuresLine, figuresOf, leftText, sameTry, standUpOf } from "./board-logic.js";
+import { figuresLine, figuresOf, largeText, leftText, sameTry, standUpOf } from "./board-logic.js";
 
 /**
  * @typedef {{columns: number, strips: number, cuts: number, links: number, stripboard: any}} BoardLine
@@ -260,16 +260,23 @@ export function compactRun(host, app, column) {
   return {
     /**
      * Lay out the circuit as it is now: try 1, then the review.
-     * @param {{seconds?: number, large?: string, standUp?: import("./board-logic.js").StandUp}} choice
-     *   `seconds`: the time it said; `large`: the large-circuit line ("" or not said: none,
-     *   P8 R3); `standUp`: standing parts (D-403; the board's own when not said)
+     * @param {{estimate?: Promise<{seconds: number, parts: number, large: number} | null>, standUp?: import("./board-logic.js").StandUp}} choice
+     *   `estimate`: the time on this machine and the board parts, worked out in the
+     *   background (the time it said, and the large-circuit line once it answers, P8 R3);
+     *   `standUp`: standing parts (D-403; the board's own when not said)
      */
     start(choice) {
       circuit = app.circuit();
       standUp = choice.standUp ?? standUpOf(circuit?.stripboard);
-      expected = choice.seconds ?? 0;
-      largeLine.textContent = choice.large ?? "";
-      largeLine.hidden = !choice.large;
+      expected = 0;
+      largeLine.textContent = "";
+      largeLine.hidden = true;
+      void choice.estimate?.then((e) => {
+        if (!e || circuit !== app.circuit()) return; // another run since
+        expected = e.seconds;
+        largeLine.textContent = largeText(e.parts, e.large);
+        largeLine.hidden = !largeLine.textContent;
+      });
       attempt = 0;
       base = null;
       tries = [];

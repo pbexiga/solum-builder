@@ -83,8 +83,6 @@ export function sidePanes(workspace, opts) {
   let sides = readSides(remembered(SIDES_KEY));
   let reviewing = false;
   const motion = matchMedia("(prefers-reduced-motion: reduce)");
-  /** A side sliding out before it's hidden: finished early if anything else happens. */
-  let sliding = /** @type {null | {timer: number, finish: () => void}} */ (null);
   /** The side peeking out over the canvas, if any. */
   let peeking = /** @type {null | Side} */ (null);
   let peekTimer = 0;
@@ -189,7 +187,6 @@ export function sidePanes(workspace, opts) {
 
   /** A hidden side slides out over the canvas, the drawing untouched. @param {Side} side */
   function peek(side) {
-    finishSlide(); // a side still sliding out lands first
     if (!sides[opts.view()][side]) return;
     if (peeking && peeking !== side) unpeek();
     peeking = side;
@@ -222,17 +219,10 @@ export function sidePanes(workspace, opts) {
     col.classList.remove("no-slide");
   }
 
-  function finishSlide() {
-    if (!sliding) return;
-    clearTimeout(sliding.timer);
-    const { finish } = sliding;
-    sliding = null;
-    finish();
-  }
+
 
   /** @param {Side} side @param {boolean} [hidden] undefined: turned over */
   function set(side, hidden) {
-    finishSlide();
     const view = opts.view();
     const next = withSide(sides, view, side, hidden);
     if (next[view][side] === sides[view][side]) return;
@@ -247,10 +237,17 @@ export function sidePanes(workspace, opts) {
       opts.changed?.();
     };
     if (next[view][side]) {
-      // hiding: it slides out over its own place first, then the canvas takes the width
+      // hiding: the canvas takes the width at once, drawn there already, and the column
+      // slides away over it as a peek goes back (was: it slid out over its own place first,
+      // leaving that strip blank until the canvas took it, the user, 2026-11-26)
       unpeek();
-      col.classList.add("side-out");
-      sliding = { timer: window.setTimeout(finishSlide, motion.matches ? 0 : SLIDE_MS), finish: () => still(col, () => { commit(); col.classList.remove("side-out"); }) };
+      still(col, () => {
+        col.classList.add("side-peek");
+        commit();
+      });
+      peeking = side;
+      void col.offsetWidth;
+      unpeek();
     } else if (col.classList.contains("side-peek")) {
       peeking = null;
       for (const v of /** @type {NodeListOf<HTMLElement>} */ (col.querySelectorAll(":scope > .large-view"))) v.style.clipPath = "";
@@ -291,10 +288,7 @@ export function sidePanes(workspace, opts) {
       if (!el) return;
       const side = SIDES.find((s) => column(s).contains(el));
       if (side && sides[opts.view()][side]) {
-        if (peeking !== side) {
-          peek(side);
-          finishSlide();
-        }
+        if (peeking !== side) peek(side);
         clearTimeout(peekTimer);
       }
       el.scrollIntoView({ block: "nearest" });
@@ -309,7 +303,6 @@ export function sidePanes(workspace, opts) {
     hidden: (side) => sides[opts.view()][side],
     /** The view changed: its sides and bars. */
     refresh() {
-      finishSlide();
       unpeek();
       apply();
     },

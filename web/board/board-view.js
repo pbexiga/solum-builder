@@ -787,7 +787,7 @@ export function boardView(host, app) {
   async function layOut() {
     const board = readBoard(app.circuit()?.stripboard);
     const estimate = postJson("api/stripboard/compact/estimate", { circuit: app.circuit() }).catch(() => null);
-    const chosen = await confirmLayOut({ board, estimate, standUp: standUpOf(app.circuit()?.stripboard) });
+    const chosen = await confirmLayOut({ board, standUp: standUpOf(app.circuit()?.stripboard) });
     if (chosen) run.start({ ...chosen, estimate });
   }
 

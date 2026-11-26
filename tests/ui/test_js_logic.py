@@ -1149,9 +1149,9 @@ TAKES = (
 
 def test_lay_it_out_for_me_s_confirmation_words(js: Page) -> None:
     """P8 R3: what it replaces, named by count (or the empty board laid out), one undo
-    step; stopping early (the time is the running window's, the user, 2026-11-26); the
-    draft line with what counts as large once the estimate is known, or the large-circuit
-    line past it."""
+    step; stopping early; a draft. Nothing waits for the estimate, so the words never
+    change once open (the user, 2026-11-26); the large-circuit line is the running
+    window's, past `large` board parts."""
     got = run(
         js,
         """
@@ -1159,9 +1159,8 @@ def test_lay_it_out_for_me_s_confirmation_words(js: Page) -> None:
         const placed = { parts: [1, 2, 3], cuts: ['A1'], links: [], wires: [1, 2] };
         const empty = { parts: [], cuts: [], links: [], wires: [] };
         return {
-          over: b.layOutWords(placed, { seconds: 33, parts: 8, large: 30 }),
-          waiting: b.layOutWords(empty),
-          big: b.layOutWords(empty, { seconds: 130, parts: 42, large: 30 }).draft,
+          over: b.layOutWords(placed),
+          fresh: b.layOutWords(empty).text,
           large: [b.largeText(25, 25), b.largeText(26, 25)],
         };
         """,
@@ -1170,21 +1169,14 @@ def test_lay_it_out_for_me_s_confirmation_words(js: Page) -> None:
         "text": "This replaces everything on the board: 3 parts, 1 cut and 2 wires. "
         "One step to undo.",
         "takes": TAKES,
-        "draft": "The layout is a draft: look it over before you build it. Circuits with "
-        "more than 30 parts on the board count as large: a layout made for them is likely "
-        "larger than one laid out by hand.",
-    }
-    assert got["waiting"] == {
-        "text": "Lays out the whole board for you, wired and checked. One step to undo.",
-        "takes": TAKES,
         "draft": "The layout is a draft: look it over before you build it.",
     }
-    big = (
-        "This circuit has 42 parts: a layout made for you will likely be larger than one "
-        "laid out by hand. Use it as a draft and look it over."
-    )
-    assert got["big"] == big
-    assert got["large"] == ["", big.replace("42", "26")]
+    assert got["fresh"] == "Lays out the whole board for you, wired and checked. One step to undo."
+    assert got["large"] == [
+        "",
+        "This circuit has 26 parts: a layout made for you will likely be larger than one "
+        "laid out by hand. Use it as a draft and look it over.",
+    ]
 
 
 def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> None:

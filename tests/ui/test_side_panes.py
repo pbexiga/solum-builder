@@ -343,3 +343,25 @@ def test_hiding_a_side_gives_the_canvas_its_width_at_once(page: Page, base_url: 
     assert got["width"] > width and got["leaving"]
     expect(panels).not_to_have_class(re.compile(r"\bside-leaving\b"))
     expect(panels).to_have_class(HIDDEN)
+
+
+def test_showing_a_side_slides_it_in_over_the_canvas_first(page: Page, base_url: str) -> None:
+    """A side shown: it slides in over the canvas as a peek does, the canvas keeping its
+    width until it's there, then giving it up (it used to give the width back first, the
+    strip blank until the column arrived, the user, 2026-11-26)."""
+    open_circuit(page, base_url, "ts808")
+    panels = page.locator("aside.panels")
+    page.keyboard.press("]")
+    expect(panels).to_have_class(HIDDEN)
+    expect(panels).not_to_have_class(re.compile(r"\bside-leaving\b"))
+    wide = canvas_width(page)
+    page.keyboard.press("]")
+    got = page.evaluate(
+        """() => ({
+          width: document.querySelector('section.canvas').getBoundingClientRect().width,
+          peek: document.querySelector('aside.panels').classList.contains('side-peek'),
+        })"""
+    )
+    assert got["width"] == pytest.approx(wide, abs=1) and got["peek"]
+    expect(panels).not_to_have_class(HIDDEN)
+    assert canvas_width(page) < wide

@@ -282,7 +282,6 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 .side-pane.side-left.side-hidden { margin-left: calc(-1 * var(--side-w)); }
 .side-pane.side-right.side-hidden { margin-right: calc(-1 * var(--side-w)); }
 .side-pane.side-hidden { visibility: hidden; transition: left 0.18s ease-in, transform 0.18s ease-in, visibility 0s 0.18s, --side-thumb 0.25s ease-out; }
-.side-pane.side-out { left: var(--slide); }
 /* `left`, not a transform: a transform would make a pane out as a large view (fixed) sit inside
    the column instead of where it is on screen */
 .side-pane.side-hidden.side-peek { left: calc(-1 * var(--slide)); visibility: visible; z-index: 35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); transition: left 0.18s ease-out, visibility 0s, --side-thumb 0.25s ease-out; }

@@ -86,6 +86,8 @@ export function sidePanes(workspace, opts) {
   /** The side peeking out over the canvas, if any. */
   let peeking = /** @type {null | Side} */ (null);
   let peekTimer = 0;
+  /** A side sliding in before it's shown: landed at once if anything else changes first. */
+  let showing = /** @type {null | {timer: number, pin: () => void}} */ (null);
 
   /**
    * Each side's bar, always there at the window's edge beyond its column: a click hides
@@ -103,7 +105,7 @@ export function sidePanes(workspace, opts) {
     });
     bar.addEventListener("pointerleave", () => {
       clearTimeout(peekTimer);
-      if (peeking === side) peekTimer = window.setTimeout(unpeek, PEEK_LEAVE_MS);
+      if (peeking === side && !showing) peekTimer = window.setTimeout(unpeek, PEEK_LEAVE_MS);
     });
     bars[side] = bar;
   }
@@ -116,7 +118,7 @@ export function sidePanes(workspace, opts) {
       col.classList.add("side-pane", `side-${s}`);
       col.addEventListener("pointerenter", () => { if (peeking && col === column(peeking)) clearTimeout(peekTimer); });
       col.addEventListener("pointerleave", () => {
-        if (!peeking || col !== column(peeking)) return;
+        if (!peeking || showing || col !== column(peeking)) return;
         clearTimeout(peekTimer);
         peekTimer = window.setTimeout(unpeek, PEEK_LEAVE_MS);
       });
@@ -129,7 +131,7 @@ export function sidePanes(workspace, opts) {
   // a click anywhere but the peeking side (or its bar) sends it back: a side peeked by
   // `reveal` has no pointer on it to leave
   document.addEventListener("pointerdown", (e) => {
-    if (!peeking) return;
+    if (!peeking || showing) return; // a side sliding in to be shown isn't a peek
     const target = /** @type {Node} */ (e.target);
     if (!column(peeking).contains(target) && !bars[peeking].contains(target)) unpeek();
   }, true);
@@ -223,6 +225,7 @@ export function sidePanes(workspace, opts) {
 
   /** @param {Side} side @param {boolean} [hidden] undefined: turned over */
   function set(side, hidden) {
+    landShow();
     const view = opts.view();
     const next = withSide(sides, view, side, hidden);
     if (next[view][side] === sides[view][side]) return;
@@ -248,15 +251,30 @@ export function sidePanes(workspace, opts) {
       peeking = side;
       void col.offsetWidth;
       unpeek();
-    } else if (col.classList.contains("side-peek")) {
-      peeking = null;
-      for (const v of /** @type {NodeListOf<HTMLElement>} */ (col.querySelectorAll(":scope > .large-view"))) v.style.clipPath = "";
-      still(col, commit); // pinned where it peeks: nothing moves
     } else {
-      // showing: the canvas gives the width back, then it slides in from the edge
-      still(col, () => { col.classList.add("side-out"); commit(); });
-      col.classList.remove("side-out");
+      // showing: it slides in over the canvas as a peek does, then the canvas gives up the
+      // width, so nothing is left blank meanwhile (was: the canvas gave the width back
+      // first, the strip blank until the column slid in, the user, 2026-11-26); one
+      // peeking already is pinned where it is
+      const pin = () => {
+        showing = null;
+        if (!col.classList.contains("side-peek")) return; // sent back meanwhile
+        peeking = null;
+        for (const v of /** @type {NodeListOf<HTMLElement>} */ (col.querySelectorAll(":scope > .large-view"))) v.style.clipPath = "";
+        still(col, commit);
+      };
+      if (col.classList.contains("side-peek")) return pin();
+      peek(side);
+      clearTimeout(peekTimer);
+      showing = { timer: window.setTimeout(pin, motion.matches ? 0 : SLIDE_MS), pin };
     }
+  }
+
+  /** A side still sliding in lands at once (another change comes first). */
+  function landShow() {
+    if (!showing) return;
+    clearTimeout(showing.timer);
+    showing.pin();
   }
 
   // a large view's Collapse puts it back in its column: shown first, so it lands in sight
@@ -303,6 +321,7 @@ export function sidePanes(workspace, opts) {
     hidden: (side) => sides[opts.view()][side],
     /** The view changed: its sides and bars. */
     refresh() {
+      landShow();
       unpeek();
       apply();
     },

@@ -1026,8 +1026,8 @@ def test_an_overlap_is_noted_dismissed_brought_back_and_marked(
 
 def test_lay_it_out_for_me_reviewed_tried_again_kept_and_undone(page: Page, base_url: str) -> None:
     """D-399, P8 R3: *Lay it out for me…* on the Rangemaster's empty board: its
-    confirmation says what it does, its time worked out, that it's a draft and what counts
-    as large, and the standing choice opens on the board's own (When needed); Cancel
+    confirmation says what it does, that it can stop early and that it's a draft, and the
+    standing choice opens on the board's own (When needed); Cancel
     changes nothing. Laid out with Prefer: the running window, then the review, a pane at
     the top of the right column with the canvas outlined (D-406): After | Before | Both
     (top and bottom), Hide parts and Flip still at hand (both backs shown in Both), Try
@@ -1044,7 +1044,9 @@ def test_lay_it_out_for_me_reviewed_tried_again_kept_and_undone(page: Page, base
         "Lays out the whole board for you, wired and checked. One step to undo."
     )
     expect(dialog.locator(".layout-takes")).to_contain_text("you can stop early")
-    expect(dialog.locator(".layout-draft")).to_contain_text("count as large")
+    expect(dialog.locator(".layout-draft")).to_have_text(
+        "The layout is a draft: look it over before you build it."
+    )
     expect(dialog.locator("input[name='layout-stand'][value='needed']")).to_be_checked()
     dialog.locator("button[data-answer='cancel']").click()
     expect(page.locator("#board-size-text")).to_have_text("Empty board")

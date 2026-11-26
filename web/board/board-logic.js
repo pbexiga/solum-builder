@@ -1019,8 +1019,8 @@ export function sameTry(tries, made) {
 
 /**
  * The large-circuit line (P8 R3): past `large` board parts a layout made for you is likely
- * larger than one laid out by hand, so it's said, in the confirmation and the running
- * window; "" for a smaller circuit.
+ * larger than one laid out by hand, so the running window says so; "" for a smaller
+ * circuit.
  * @param {number} parts the board parts @param {number} large how many count as large
  */
 export function largeText(parts, large) {
@@ -1029,15 +1029,13 @@ export function largeText(parts, large) {
 
 /**
  * *Lay it out for me*'s confirmation (P8 R3): what it replaces (named by count) and that
- * it's one undo step; that it can stop early (its time is the running window's: the
- * estimate is worked out in the background, the user, 2026-11-26); and that the layout is
- * a draft, with the large-circuit line when it applies, else what counts as large, once
- * the estimate (the board parts) is known.
+ * it's one undo step; that it can stop early; that the layout is a draft. Nothing in it
+ * waits for the estimate, so it never changes once open (the user, 2026-11-26): the time
+ * left and the large-circuit line are the running window's.
  * @param {{parts: unknown[], cuts: unknown[], links: unknown[], wires: unknown[]}} board what's on the board now
- * @param {{seconds: number, parts: number, large: number} | null} [estimate]
  * @returns {{text: string, takes: string, draft: string}}
  */
-export function layOutWords(board, estimate) {
+export function layOutWords(board) {
   const count = (/** @type {number} */ n, /** @type {string} */ word) => `${n} ${word}${n === 1 ? "" : "s"}`;
   const listed = [count(board.parts.length, "part"), ...[[board.cuts.length, "cut"], [board.links.length, "link"], [board.wires.length, "wire"]].filter(([n]) => n).map(([n, w]) => count(/** @type {number} */ (n), /** @type {string} */ (w)))];
   const named = listed.length > 1 ? `${listed.slice(0, -1).join(", ")} and ${listed[listed.length - 1]}` : listed[0];
@@ -1045,9 +1043,7 @@ export function layOutWords(board, estimate) {
     ? `This replaces everything on the board: ${named}. One step to undo.`
     : "Lays out the whole board for you, wired and checked. One step to undo.";
   const takes = "It shows how long it has left as it goes; you can stop early and keep the best board found so far.";
-  const large = estimate ? largeText(estimate.parts, estimate.large) : "";
-  const draft = large || `The layout is a draft: look it over before you build it.${estimate ? ` Circuits with more than ${estimate.large} parts on the board count as large: a layout made for them is likely larger than one laid out by hand.` : ""}`;
-  return { text, takes, draft };
+  return { text, takes, draft: "The layout is a draft: look it over before you build it." };
 }
 
 /** @typedef {Record<(typeof BOARD_SETTINGS)[number]["key"], boolean>} BoardSettings */

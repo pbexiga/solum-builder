@@ -1002,51 +1002,6 @@ def test_board_notes_and_dismissals_through_the_edit_endpoint(
     assert empty.status_code == 422 and empty.json()["message"] == "A note needs some text."
 
 
-def test_stripboard_start_lays_out_or_fills_the_board(monkeypatch: pytest.MonkeyPatch) -> None:
-    """D-387: Start over on an empty board, Fill the rest on one with parts; nothing to
-    fill is a 422 in words."""
-    repo = Path(__file__).resolve().parents[2]
-    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
-    c = client(monkeypatch, lambda _s: FakeEngine())
-    over = c.post("/api/stripboard/start", json={"circuit": data}).json()
-    assert over["left"] == [] and set(over["stripboard"]["parts"]) >= {"Q1", "R1", "C4"}
-    started = {**data, "stripboard": over["stripboard"]}
-    assert c.post("/api/stripboard", json={"circuit": started}).json()["done"] is True
-    good = load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")
-    part = {**good, "parts": {k: v for k, v in good["parts"].items() if k != "R2"}}
-    body = {"circuit": {**data, "stripboard": part}, "fill": True}
-    filled = c.post("/api/stripboard/start", json=body).json()
-    assert filled["left"] == [] and filled["stripboard"]["parts"]["Q1"] == good["parts"]["Q1"]
-    full = c.post("/api/stripboard/start",
-                  json={"circuit": {**data, "stripboard": good}, "fill": True})  # fmt: skip
-    assert full.status_code == 422 and "Nothing to fill" in full.json()["message"]
-
-
-def test_stripboard_tidy_makes_the_board_smaller_or_asks(monkeypatch: pytest.MonkeyPatch) -> None:
-    """D-388: Start for me's board tidied (smaller, still done); a part placed wrongly is
-    asked about first, then laid out again with `mend`; no board is a 422 in words."""
-    repo = Path(__file__).resolve().parents[2]
-    data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
-    c = client(monkeypatch, lambda _s: FakeEngine())
-    over = c.post("/api/stripboard/start", json={"circuit": data}).json()["stripboard"]
-    tidied = c.post("/api/stripboard/tidy", json={"circuit": {**data, "stripboard": over}}).json()
-    (w, h), (w0, h0) = tidied["stripboard"]["size"], over["size"]
-    assert w * h < w0 * h0 and tidied["mended"] == []
-    done = {**data, "stripboard": tidied["stripboard"]}
-    assert c.post("/api/stripboard", json={"circuit": done}).json()["done"] is True
-    good = load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")
-    moved = {
-        **data,
-        "stripboard": {**good, "parts": {**good["parts"], "R2": {"1": "J5", "2": "J9"}}},
-    }
-    asked = c.post("/api/stripboard/tidy", json={"circuit": moved}).json()
-    assert asked["refs"] == ["R2"] and "placed wrongly" in asked["ask"]
-    mended = c.post("/api/stripboard/tidy", json={"circuit": moved, "mend": True}).json()
-    assert mended["mended"] == ["R2"]
-    bare = c.post("/api/stripboard/tidy", json={"circuit": data})
-    assert bare.status_code == 422 and "nothing on the board" in bare.json()["message"]
-
-
 def test_stripboard_edit_puts_off_board_parts_and_wires(monkeypatch: pytest.MonkeyPatch) -> None:
     """D-375: an off-board part put beside the board, a wire drawn to a hole, moved to a
     lug, its route moved by hand (D-380), taken off; the part back to the tray takes its
@@ -1144,12 +1099,11 @@ def test_build_a_full_layout_streams_the_base_progress_and_a_checked_board(
 ) -> None:
     """The Rangemaster (few steps, for speed): the base first, then the steps done of the
     budget (four attempts and the flat one, D-403) and each new best, then a wired board
-    that passes the check, and the same board again (the flat board kept); *Try another*
-    is another seed set."""
+    that passes the check, and the same board again (counted steps, fixed seeds); *Try
+    another* is another seed set."""
     from solum.stripboard import compact_job
 
     monkeypatch.setattr(compact_job, "STEPS_PER_PART", 300)
-    monkeypatch.setattr(compact_job, "_flat", {})
     repo = Path(__file__).resolve().parents[2]
     data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
     c = client(monkeypatch, lambda _s: FakeEngine())
@@ -1193,8 +1147,8 @@ def test_stop_s_finish_wires_and_checks_the_best_so_far(monkeypatch: pytest.Monk
 def test_the_time_estimate_is_this_circuit_s_on_this_machine(
     monkeypatch: pytest.MonkeyPatch,
 ) -> None:
-    """Half a second of real steps timed: Thorough takes longer than Quick, both more
-    than the workers' start."""
+    """Half a second of real steps timed: longer than the workers' start; the board parts
+    counted, with how many count as large (P8 R3)."""
     from solum.stripboard import compact_job
 
     monkeypatch.setattr(compact_job, "SAMPLE", 0.1)
@@ -1205,4 +1159,5 @@ def test_the_time_estimate_is_this_circuit_s_on_this_machine(
         .post("/api/stripboard/compact/estimate", json={"circuit": data})
         .json()
     )
-    assert compact_job.SPAWN < got["quick"] < got["thorough"]
+    assert got["seconds"] > compact_job.SPAWN
+    assert got["parts"] == 8 and got["large"] == compact_job.LARGE

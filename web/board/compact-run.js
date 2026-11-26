@@ -1,5 +1,5 @@
 /**
- * *Build a full layout* in the Board view (DOM, D-399): the running window (what it's
+ * *Lay it out for me* in the Board view (DOM, D-399, P8 R3): the running window (what it's
  * doing, the progress, the best board so far, Stop and keep the best, Cancel) while the
  * board behind shows the best so far, dimmed and not editable; then the review, a pane at
  * the top of the right column (D-406), so nothing covers the board's tools: Before → After,
@@ -10,7 +10,7 @@
 
 import { postJson, postProgress } from "../api.js";
 import { h } from "../panels.js";
-import { figuresLine, figuresOf, leftText, sameTry, standUpOf } from "./board-logic.js";
+import { figuresLine, figuresOf, largeText, leftText, sameTry, standUpOf } from "./board-logic.js";
 
 /**
  * @typedef {{columns: number, strips: number, cuts: number, links: number, stripboard: any}} BoardLine
@@ -27,8 +27,8 @@ import { figuresLine, figuresOf, leftText, sameTry, standUpOf } from "./board-lo
  * }} RunApp
  *   `preview`: draw these boards in place of the circuit's (one, or Before above After),
  *   dimmed while running; null: the circuit's own again; `lock`: the board's editing off
- *   (tools, tray, panes, keys) or on; `keep`: the board kept, one undo step ("Build a full
- *   layout"); `reviewing`: the review bar has just opened (true) or been put away (false)
+ *   (tools, tray, panes, keys) or on; `keep`: the board kept, one undo step ("Lay it out for
+ *   me"); `reviewing`: the review bar has just opened (true) or been put away (false)
  *   (a hidden right column shown once, D-408)
  */
 
@@ -43,10 +43,11 @@ export function compactRun(host, app, column) {
   const bar = /** @type {HTMLProgressElement} */ (h("progress", { class: "compact-progress", "aria-label": "Building the layout" }));
   const bestLine = h("p", { class: "compact-best" }, [""]);
   const left = h("p", { class: "compact-left" }, [""]);
+  const largeLine = h("p", { class: "compact-large", hidden: "" }, [""]);
   const stopButton = /** @type {HTMLButtonElement} */ (h("button", { type: "button", class: "primary", "data-run": "stop", title: "Keeps the smallest board found so far. It's wired and checked first, a second or so." }, ["Stop and keep the best"]));
   const cancelButton = /** @type {HTMLButtonElement} */ (h("button", { type: "button", "data-run": "cancel", title: "Puts the board back as it was" }, ["Cancel"]));
-  const runWindow = h("div", { class: "compact-run", role: "dialog", "aria-label": "Build a full layout", hidden: "" }, [
-    h("h3", {}, ["Build a full layout"]), stage, bar, bestLine, left, h("div", { class: "compact-buttons" }, [stopButton, cancelButton]),
+  const runWindow = h("div", { class: "compact-run", role: "dialog", "aria-label": "Lay it out for me", hidden: "" }, [
+    h("h3", {}, ["Lay it out for me"]), largeLine, stage, bar, bestLine, left, h("div", { class: "compact-buttons" }, [stopButton, cancelButton]),
   ]);
   const dimNote = h("div", { class: "compact-dim", hidden: "" }, ["Working… not editable yet"]);
 
@@ -81,7 +82,6 @@ export function compactRun(host, app, column) {
 
   /** @type {any} */
   let circuit = null; // the circuit as it was when the run began
-  let thorough = false;
   /** @type {import("./board-logic.js").StandUp} */
   let standUp = "needed"; // standing parts (D-403): every try's the same
   let expected = 0; // seconds a try was said to take (the estimate), 0 when not known
@@ -139,7 +139,7 @@ export function compactRun(host, app, column) {
     const begun = performance.now();
     bar.classList.add("working");
     try {
-      const made = await postProgress("api/stripboard/compact", { circuit, thorough, attempt, stand_up: standUp }, (done, of, line) => {
+      const made = await postProgress("api/stripboard/compact", { circuit, attempt, stand_up: standUp }, (done, of, line) => {
         if (running !== control) return;
         if (line.base) {
           base ??= line.base;
@@ -259,15 +259,24 @@ export function compactRun(host, app, column) {
 
   return {
     /**
-     * Build a full layout of the circuit as it is now: try 1, then the review.
-     * @param {{thorough: boolean, seconds?: number, standUp?: import("./board-logic.js").StandUp}} choice
-     *   `seconds`: the time it said; `standUp`: standing parts (D-403; the board's own when not said)
+     * Lay out the circuit as it is now: try 1, then the review.
+     * @param {{estimate?: Promise<{seconds: number, parts: number, large: number} | null>, standUp?: import("./board-logic.js").StandUp}} choice
+     *   `estimate`: the time on this machine and the board parts, worked out in the
+     *   background (the time it said, and the large-circuit line once it answers, P8 R3);
+     *   `standUp`: standing parts (D-403; the board's own when not said)
      */
     start(choice) {
       circuit = app.circuit();
-      thorough = choice.thorough;
       standUp = choice.standUp ?? standUpOf(circuit?.stripboard);
-      expected = choice.seconds ?? 0;
+      expected = 0;
+      largeLine.textContent = "";
+      largeLine.hidden = true;
+      void choice.estimate?.then((e) => {
+        if (!e || circuit !== app.circuit()) return; // another run since
+        expected = e.seconds;
+        largeLine.textContent = largeText(e.parts, e.large);
+        largeLine.hidden = !largeLine.textContent;
+      });
       attempt = 0;
       base = null;
       tries = [];

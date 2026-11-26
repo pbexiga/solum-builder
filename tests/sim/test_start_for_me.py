@@ -27,13 +27,12 @@ def test_start_for_me_lays_out_every_starter(path: Path) -> None:
     circuit = load_circuit(path)
     if path.stem in NO_BOARD:
         with pytest.raises(StartError, match=NO_BOARD[path.stem]):
-            start_for_me(None, circuit, MODELS, TABLE, fill=False)
+            start_for_me(None, circuit, MODELS, TABLE)
         return
-    first = start_for_me(None, circuit, MODELS, TABLE, fill=False)
+    first = start_for_me(None, circuit, MODELS, TABLE)
     checked = check_layout(first.layout, circuit, MODELS, TABLE)
     assert checked.ok, checked.faults[:3]
-    assert first.left == ()
-    assert start_for_me(None, circuit, MODELS, TABLE, fill=False) == first
+    assert start_for_me(None, circuit, MODELS, TABLE) == first
 
 
 @pytest.mark.timing
@@ -45,5 +44,5 @@ def test_start_for_me_is_quick(path: Path) -> None:
     if path.stem in NO_BOARD:
         return
     began = time.perf_counter()
-    start_for_me(None, circuit, MODELS, TABLE, fill=False)
+    start_for_me(None, circuit, MODELS, TABLE)
     assert time.perf_counter() - began < 2.0

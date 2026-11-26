@@ -36,20 +36,17 @@ def test_when_needed_falls_back_only_where_never_does_and_stands_nothing_unneede
     path: Path, models: ModelLibrary, monkeypatch: pytest.MonkeyPatch
 ) -> None:
     monkeypatch.setattr(compact_job, "STEPS_PER_PART", STEPS_PER_PART)
-    monkeypatch.setattr(compact_job, "_flat", {})
     circuit, table = load_circuit(path), footprint_table(LIBRARY)
 
     def run(choice: StandUp) -> tuple[Problem, Found | None]:
         layout = Layout(0, 0, (), stand_up=choice)
         pb = problem(layout, circuit, models, table)
-        got = compact_job.run(pb, layout, circuit, False, 1, load_settings(),
+        got = compact_job.run(pb, layout, circuit, 1, load_settings(),
                               lambda *_: None, threading.Event())  # fmt: skip
         return pb, got.best
 
     pb, best = run("needed")
-    (flat,) = compact_job._flat.values()
-    if best is None:  # every board had a problem: Start a board's kept, and Never's too
-        assert flat is None
+    if best is None:  # every board had a problem, the flat one too: Never's too
         assert run("never")[1] is None, f"{path.stem}: When needed fell back, Never didn't"
     if best is not None and not (built := finish(pb, best, models, table)).fell_back:
         assert standing_unneeded(pb, positions(pb, built.layout)) == []

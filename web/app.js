@@ -222,7 +222,7 @@ const notes = notesPane($("notes-body"), $("notes-count"), {
   reveal() {
     const pane = /** @type {HTMLDetailsElement} */ ($("panel-notes"));
     pane.open = true;
-    pane.scrollIntoView({ block: "nearest" });
+    sides.reveal(pane);
   },
 });
 /** Why an edit was refused, over the canvas (D-335). */
@@ -360,6 +360,7 @@ const board = boardView($("canvas-body"), {
     updateButtons();
   },
   reviewing: (open) => sides.reviewing(open),
+  reveal: (el) => sides.reveal(el),
   editBoard: (stripboard, label) => editBoard(stripboard, label),
   editPart: async (ref, patch, stripboard, label) => {
     const message = await tryEdit(withBoard(updatePart(state.circuit, ref, patch), stripboard), label, "", boardStack);
@@ -1100,7 +1101,10 @@ function setWireMode(on) {
   updateButtons();
 }
 
-/** Find part (Ctrl+F): type a ref, the part is selected (probed), brought into view and ringed. */
+/**
+ * Find part (Ctrl+F): type a ref, the part is selected (probed), brought into view and
+ * ringed; in the Board view on the board (or beside it, or its row in the tray).
+ */
 function findPart() {
   openForm($("canvas-body"), {
     title: "Find part",
@@ -1109,8 +1113,11 @@ function findPart() {
     onSubmit: async (values) => {
       const ref = findRef(state.circuit, values.ref);
       if (!ref) return values.ref.trim() ? `There's no part ${values.ref.trim().toUpperCase()} on this sheet.` : "Type a part's ref, e.g. R12.";
-      schematic.reveal(ref);
-      select({ kind: "part", id: ref });
+      if (board.active()) board.find(ref);
+      else {
+        schematic.reveal(ref);
+        select({ kind: "part", id: ref });
+      }
       return null;
     },
   });
@@ -1521,7 +1528,7 @@ function openProblem(key) {
   state.openProblems.add(key);
   showProblems();
   const row = [...$("problems-body").querySelectorAll("details.problem")].find((r) => /** @type {HTMLElement} */ (r).dataset.key === key);
-  row?.scrollIntoView({ block: "nearest" });
+  sides.reveal(row);
 }
 
 /**
@@ -1926,7 +1933,7 @@ function toggleDc() {
 }
 
 /** The keys that work in the Board view: the rest edit the schematic. */
-const BOARD_KEYS = new Set(["undo", "redo", "save", "run", "cancel", "leftPane", "rightPane"]);
+const BOARD_KEYS = new Set(["undo", "redo", "save", "run", "cancel", "leftPane", "rightPane", "find"]);
 
 /** @param {KeyboardEvent} e */
 function onKey(e) {

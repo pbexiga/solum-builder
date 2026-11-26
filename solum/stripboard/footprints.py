@@ -526,7 +526,7 @@ def outline_overlap(a: Outline, b: Outline) -> float:
 @cache
 def _body_shape(fp: Footprint, legs: frozenset[Hole]) -> frozenset[Hole]:
     """A body's holes for legs placed from (0, 0): the same wherever the part sits, so
-    worked out once per footprint and leg shape (*Tidy up* asks thousands of times)."""
+    worked out once per footprint and leg shape (the search asks thousands of times)."""
     xs = [h[0] for h in legs]
     ys = [h[1] for h in legs]
     cx, cy = (min(xs) + max(xs)) / 2, (min(ys) + max(ys)) / 2

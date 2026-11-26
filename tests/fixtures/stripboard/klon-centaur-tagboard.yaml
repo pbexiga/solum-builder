@@ -30,8 +30,8 @@ differences:
   - >-
     Its 2n2 is a ceramic and the 1u at Q10-Q11 an electrolytic, as drawn (ours: box film).
   - >-
-    It lays the 15K at P6-P8 and the 392K at F15-F17 flat with legs 2 apart, which only a
-    1/8 W resistor fits: they stand here. Its germanium diodes (S10-S13, T10-T13) lie flat
+    It lays the 15K at P6-P8 and the 392K at F15-F17 flat with legs 2 apart; our resistor
+    lies flat from 3 apart (4 holes), so they stand here. Its germanium diodes (S10-S13, T10-T13) lie flat
     3 apart; our DO-7 lies flat from 4 (glass, not bent at the body), so they stand too.
   - >-
     The input's sleeve goes to F13 here, the output's to it.

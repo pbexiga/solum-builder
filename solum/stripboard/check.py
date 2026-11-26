@@ -838,16 +838,6 @@ def _misfits(r: Reading, circuit: Circuit,
     return [*turned, *_misplaced(r, wanted, {ref for ref, _ in turned})]
 
 
-def misfits(layout: Layout, circuit: Circuit, models: ModelLibrary,
-            table: FootprintTable) -> list[str]:  # fmt: skip
-    """The refs of the parts placed wrongly, in board order: the wrong way round, or a leg
-    on a strip carrying only other nets (as the progress check names them). *Tidy up*
-    offers them back to the tray."""
-    r = read_layout(layout, circuit, models, table)
-    found = {ref for ref, _ in _misfits(r, circuit, _wanted(r))}
-    return [p.ref for p in r.layout.parts if p.ref in found]
-
-
 def _gone(r: Reading, circuit: Circuit) -> list[str]:
     """What the board holds of parts the circuit no longer has (D-376): placed board parts
     (one that can't be placed now is still the circuit's: the tray names it), off-board parts

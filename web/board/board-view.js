@@ -30,7 +30,7 @@
  */
 
 import { postJson } from "../api.js";
-import { ask, confirmed } from "../editor/form.js";
+import { confirmed } from "../editor/form.js";
 import { openMenu } from "../menus.js";
 import { h, largeView, stackLargeViews } from "../panels.js";
 import { reorderable } from "../panes.js";
@@ -38,7 +38,7 @@ import { Schematic } from "../schematic/render.js";
 import { latestOnly } from "../state.js";
 import { remember, remembered } from "../storage.js";
 import { boardCanvas } from "./canvas.js";
-import { chooseLayout } from "./layout-dialog.js";
+import { confirmLayOut } from "./layout-dialog.js";
 import { compactRun } from "./compact-run.js";
 import { boardNotes } from "./board-notes.js";
 import { needsCard } from "./needs.js";
@@ -71,6 +71,7 @@ import { BOARD_SETTINGS, EDGE, overlapKey, overlapMarks, overlapParts, boardRefO
  *   refuse: (message: string) => void,
  *   marks: () => boolean,
  *   reviewing?: (open: boolean) => void,
+ *   reveal?: (el: Element | null) => void,
  * }} BoardApp
  *   `resting`: what's selected when the empty canvas is clicked (the root's own choice);
  *   `shown`: told when the view changes, so the root sets its hint (`hint`) and buttons;
@@ -78,7 +79,8 @@ import { BOARD_SETTINGS, EDGE, overlapKey, overlapMarks, overlapParts, boardRefO
  *   board*, D-370), one undo step; `editPart`: a part's properties changed and this board
  *   with it (a trimmer's style, D-393), one undo step; `marks`: View → Problem marks is on
  *   (the board's overlaps marked too, D-398); `reviewing`: a full layout's review has
- *   opened (true) or closed (false), so a hidden right column can be shown (D-408)
+ *   opened (true) or closed (false), so a hidden right column can be shown (D-408);
+ *   `reveal`: an element in a side column brought into view, a hidden side peeking out
  */
 
 const BUTTON_TITLE = "Lay out a stripboard for this circuit";
@@ -101,9 +103,8 @@ export function boardView(host, app) {
   const sizeText = $("board-size-text");
   const trimButton = /** @type {HTMLButtonElement} */ ($("board-trim"));
   const wireButton = /** @type {HTMLButtonElement} */ ($("board-wire"));
-  const layoutButton = /** @type {HTMLButtonElement} */ (h("button", { type: "button", id: "board-layout", class: "board-layout" }, ["Layout…"]));
-  layoutButton.title = "Let the app lay the board out: start a board, fill the rest, or tidy up (one undo step)";
-  const workingBar = /** @type {HTMLProgressElement} */ ($("board-working"));
+  const layoutButton = /** @type {HTMLButtonElement} */ (h("button", { type: "button", id: "board-layout", class: "board-layout" }, ["Lay it out for me…"]));
+  layoutButton.title = "Let the app lay out the whole board, wired and checked, as a draft to look over (one undo step)";
   const acceptButton = /** @type {HTMLButtonElement} */ ($("board-accept"));
   const needs = needsCard($("board-needs"));
   const notesPane = boardNotes($("board-notes-body"), $("board-notes-count"), {
@@ -782,97 +783,12 @@ export function boardView(host, app) {
     }
   }
 
-  /**
-   * The layout help at work: the Layout button off and saying what's being done (it
-   * changes with `say`), the working bar showing; put back however `work` ends.
-   * @template T
-   * @param {(say: (words: string) => void) => Promise<T>} work
-   * @returns {Promise<T>}
-   */
-  async function working(work) {
-    const words = layoutButton.textContent;
-    layoutButton.disabled = true;
-    workingBar.hidden = false;
-    try {
-      return await work((said) => (layoutButton.textContent = said));
-    } finally {
-      layoutButton.disabled = false;
-      workingBar.hidden = true;
-      layoutButton.textContent = words;
-    }
-  }
-
-  /** *Layout…* (P6h2): the dialog's choice, confirmed, then done as one undo step. */
+  /** *Lay it out for me* (D-399, P8 R3): confirmed, then run and reviewed (`compactRun`). */
   async function layOut() {
     const board = readBoard(app.circuit()?.stripboard);
-    const times = postJson("api/stripboard/compact/estimate", { circuit: app.circuit() }).catch(() => null);
-    const standUp = standUpOf(app.circuit()?.stripboard);
-    const toPlace = progress?.to_place.length ?? 0;
-    const rest = toPlace > 0 || Boolean(progress?.nets.some((n) => n.state === "pieces"));
-    const chosen = await chooseLayout({ board, toPlace, rest, times, standUp });
-    if (!chosen) return;
-    if (chosen.choice === "full") return void run.start({ thorough: chosen.thorough, seconds: chosen.seconds, standUp: chosen.standUp });
-    if (chosen.choice === "tidy") return void tidyUp(false, chosen.standUp);
-    await startBoard(chosen.choice === "fill", chosen.compact, chosen.standUp);
-  }
-
-  /**
-   * *Start a board* or *Fill the rest* (D-387): the server's layout, made compact after
-   * when asked (Tidy up, D-388; nothing smaller found, it's kept as laid out). One undo
-   * step; what Fill the rest couldn't join is said on the bar. `standUp`: standing parts
-   * (D-403), kept with the board.
-   * @param {boolean} fill @param {boolean} compact @param {import("./board-logic.js").StandUp} standUp
-   */
-  async function startBoard(fill, compact, standUp) {
-    await working(async (say) => {
-      try {
-        say("Laying out…");
-        const { stripboard, left } = await postJson("api/stripboard/start", { circuit: app.circuit(), fill, stand_up: standUp });
-        let board = stripboard;
-        if (compact) {
-          say("Tidying…");
-          const tidied = await postJson("api/stripboard/tidy", { circuit: { ...app.circuit(), stripboard } }).catch(() => null);
-          if (tidied?.stripboard) board = tidied.stripboard; // else as laid out: nothing smaller, or nothing to tidy
-        }
-        app.editBoard(board, fill ? "Fill the rest" : "Start a board");
-        if (left.length) app.refuse(left.join(" "));
-      } catch (err) {
-        app.refuse(/** @type {Error} */ (err).message);
-      }
-    });
-  }
-
-  /**
-   * *Tidy up* (D-388): the board made smaller and still checked, one undo step. Parts
-   * placed wrongly are named first, and laid out again only when the builder says so.
-   * `standUp`: standing parts (D-403; the board's own when not said), kept with the board.
-   * @param {boolean} [mend] @param {import("./board-logic.js").StandUp} [standUp]
-   */
-  async function tidyUp(mend = false, standUp) {
-    const made = await working(async (say) => {
-      say("Tidying…");
-      try {
-        return await postJson("api/stripboard/tidy", { circuit: app.circuit(), mend, stand_up: standUp });
-      } catch (err) {
-        app.refuse(/** @type {Error} */ (err).message);
-        return null;
-      }
-    });
-    if (!made) return;
-    if (made.ask) {
-      const choice = await ask({
-        title: "Tidy up",
-        text: `${made.ask} ${made.refs.length > 1 ? "They go" : "It goes"} back to the tray and ${made.refs.length > 1 ? "are" : "is"} laid out again with the rest; the parts placed right stay where they are. One step to undo.`,
-        cancel: "cancel",
-        buttons: [
-          { label: "Cancel", value: "cancel" },
-          { label: "Lay them out again", value: "mend", kind: "primary" },
-        ],
-      });
-      if (choice === "mend") await tidyUp(true, standUp);
-      return;
-    }
-    app.editBoard(made.stripboard, "Tidy up");
+    const estimate = postJson("api/stripboard/compact/estimate", { circuit: app.circuit() }).catch(() => null);
+    const chosen = await confirmLayOut({ board, standUp: standUpOf(app.circuit()?.stripboard) });
+    if (chosen) run.start({ ...chosen, estimate });
   }
 
   /** Select a board part (a chip: its units) or a circuit part on both drawings. @param {string} ref */
@@ -1211,7 +1127,8 @@ export function boardView(host, app) {
     const pane = /** @type {HTMLDetailsElement} */ ($("board-warnings"));
     pane.open = true;
     const row = $("board-warnings-body").querySelector(`[data-overlap="${CSS.escape(key)}"]`);
-    row?.scrollIntoView({ block: "nearest" });
+    if (app.reveal) app.reveal(row);
+    else row?.scrollIntoView({ block: "nearest" });
     row?.classList.remove("flash");
     void (/** @type {HTMLElement | null} */ (row))?.offsetWidth; // the flash again on a second click
     row?.classList.add("flash");
@@ -1290,6 +1207,24 @@ export function boardView(host, app) {
   return {
     /** Whether the Board view is showing. */
     active: () => active,
+    /**
+     * Find part in the Board view: a part (a chip's unit: its chip) brought into view and
+     * ringed on the board or beside it, else its row in the tray shown and flashed; then
+     * selected on both drawings.
+     * @param {string} ref
+     */
+    find(ref) {
+      const boardRef = (progress && boardRefOf(progress.footprints, ref)) ?? ref;
+      if (!canvas.reveal(boardRef) && !canvas.reveal(ref)) {
+        const row = $("board-tray-body").querySelector(`li[data-ref="${CSS.escape(boardRef)}"]`);
+        if (app.reveal) app.reveal(row);
+        else row?.scrollIntoView({ block: "nearest" });
+        row?.classList.remove("flash");
+        void (/** @type {HTMLElement | null} */ (row))?.offsetWidth;
+        row?.classList.add("flash");
+      }
+      selectPart(ref);
+    },
     /**
      * A Board view key (`boardActionFor`); false when it does nothing here.
      * @param {string} action

@@ -9,7 +9,7 @@
  * the board and footprints from the view.
  */
 
-import { fitView, holdView, panBy, viewBoxText, zoomAt, resizeView } from "../schematic/viewport.js";
+import { fitView, holdView, panBy, revealPoint, viewBoxText, zoomAt, resizeView } from "../schematic/viewport.js";
 import { STEP, columnName, holeName, holeXY, itemRefs, itemShape, labelAt, legLabel, linkTaps, partShapes, pointAlong, routePath, runRects, shownHoles, valueOf, wireHops, wireObstacles, wireRoutes } from "./board-logic.js";
 
 const SVG = "http://www.w3.org/2000/svg";
@@ -100,6 +100,8 @@ function drawShape(s, parent) {
 /**
  * @param {SVGSVGElement} svg @param {CanvasApp} app
  */
+const FOUND_MS = 1600; // how long Find part rings the part (as the schematic's)
+
 export function boardCanvas(svg, app) {
   /** @type {import("../schematic/viewport.js").ViewBox} */
   let vb = { x: 0, y: 0, w: 100, h: 100 };
@@ -580,6 +582,27 @@ export function boardCanvas(svg, app) {
     shift([dx, dy]) {
       vb = { ...vb, x: vb.x + dx * STEP, y: vb.y + dy * STEP };
       apply();
+    },
+    /**
+     * Bring a part into view (centred if it was off screen or near an edge) and ring it for
+     * a moment (Find part): a board part by its ref, an off-board part by any of its refs.
+     * False when it isn't drawn (still in the tray).
+     * @param {string} ref
+     * @returns {boolean}
+     */
+    reveal(ref) {
+      const found = svg.querySelector(`.board-parts .board-part[data-ref="${CSS.escape(ref)}"]`)
+        ?? svg.querySelector(`.off-items .off-item[data-refs~="${CSS.escape(ref)}"]`);
+      if (!(found instanceof SVGGraphicsElement)) return false;
+      const box = found.getBBox();
+      const cx = box.x + box.width / 2;
+      vb = revealPoint(vb, turned() ? 2 * middle() - cx : cx, box.y + box.height / 2);
+      apply();
+      const pad = STEP * 0.4;
+      svg.querySelector(".found-ring")?.remove();
+      const ring = el("rect", { x: box.x - pad, y: box.y - pad, width: box.width + 2 * pad, height: box.height + 2 * pad, rx: STEP * 0.3, class: "found-ring", "data-found": ref }, /** @type {Element} */ (found.parentElement));
+      setTimeout(() => ring.remove(), FOUND_MS);
+      return true;
     },
     /** @param {number} factor */
     zoomBy(factor) {

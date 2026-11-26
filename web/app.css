@@ -282,17 +282,18 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 .side-pane.side-left.side-hidden { margin-left: calc(-1 * var(--side-w)); }
 .side-pane.side-right.side-hidden { margin-right: calc(-1 * var(--side-w)); }
 .side-pane.side-hidden { visibility: hidden; transition: left 0.18s ease-in, transform 0.18s ease-in, visibility 0s 0.18s, --side-thumb 0.25s ease-out; }
-.side-pane.side-out { left: var(--slide); }
-.side-pane.side-hidden.side-peek { transform: translateX(calc(-1 * var(--slide))); visibility: visible; z-index: 35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); transition: transform 0.18s ease-out, visibility 0s, --side-thumb 0.25s ease-out; }
+/* `left`, not a transform: a transform would make a pane out as a large view (fixed) sit inside
+   the column instead of where it is on screen */
+.side-pane.side-hidden.side-peek { left: calc(-1 * var(--slide)); visibility: visible; z-index: 35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); transition: left 0.18s ease-out, visibility 0s, --side-thumb 0.25s ease-out; }
 /* sliding back from a peek: still above the canvas until it's gone (side-panes.js) */
 .side-pane.side-hidden.side-leaving { z-index: 35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
 .side-pane.no-slide { transition: none !important; }
 @media (prefers-reduced-motion: reduce) { .side-pane { transition: none !important; } }
-/* back once the peek has slid away, not carried by it */
-.side-hidden > .large-view { visibility: visible; transition: visibility 0s 0.18s; }
 /* a peek covers everything, on both sides: a peeking column's own pane out as a large view
-   (which would sit above it, being its child) is tucked away until it slides back */
-.side-pane.side-peek > .large-view { visibility: hidden; transition: none; }
+   (which sits above it, being its child) is clipped where the column comes over it, the clip
+   moving with the slide (side-panes.js) */
+.side-hidden > .large-view { visibility: visible; transition: clip-path 0.18s ease-in; }
+.side-pane.side-peek > .large-view { transition: clip-path 0.18s ease-out; }
 /* the side columns' scroll bars: thin, and shown only while the pointer is over the column
    or something in it has focus, so the palette's doesn't stand between the tiles and the
    canvas (the standard properties; WebKit, the Mac app's, reads the -webkit- ones) */
@@ -389,8 +390,6 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-tray .board-list li { padding: 3px 2px; color: var(--text-2); border-radius: 3px; }
 .board-tray .board-list li.pickable { cursor: pointer; }
 /* the Layout dialog's help at work (a big board takes seconds): no value, so it just moves */
-.board-tray .tray-working { display: block; width: 100%; height: 6px; margin: 0 0 8px; accent-color: var(--accent); }
-.board-tray .tray-working[hidden] { display: none; }
 .board-tray .placed-toggle { display: block; margin: 4px 0 2px; padding: 0 2px; background: none; border: none; color: var(--text-3); font: 12px var(--font-ui); cursor: pointer; }
 .board-tray .placed-toggle:hover { color: var(--text-2); }
 .board-tray .board-list li.placed { color: var(--text-3); cursor: pointer; }
@@ -555,29 +554,12 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-panels .board-settings-head { font-family: var(--font-display); font-weight: 300; text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px; color: var(--text-3); margin: 12px 2px 6px; }
 .board-panels .board-settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 /* the Layout dialog (P6h2): a radio list, each choice's line under its name, greyed with its reason */
-.layout-choices { display: flex; flex-direction: column; gap: 10px; margin: 0 0 16px; }
-.layout-choice { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; cursor: pointer; }
-.layout-choice input { grid-row: span 2; margin: 2px 0 0; accent-color: var(--accent); }
-.layout-choice .layout-name { color: var(--text); font-weight: 600; }
-.layout-choice .layout-text { color: var(--text-2); font-size: 12px; }
-.layout-choice.greyed { cursor: default; }
-.layout-choice.greyed .layout-name, .layout-choice.greyed .layout-text { color: var(--text-3); }
-.layout-compact { margin: -4px 0 0 24px; color: var(--text-2); font-size: 12px; cursor: pointer; }
-.layout-compact:has(input:disabled) { color: var(--text-3); cursor: default; }
-.layout-divider { border: 0; border-top: 1px solid var(--border); margin: 2px 0; }
-.layout-speed { display: grid; grid-template-columns: auto auto 1fr; column-gap: 6px; margin: -4px 0 0 24px; color: var(--text-2); font-size: 12px; cursor: pointer; }
-.layout-speed input { margin: 1px 0 0; accent-color: var(--accent); }
-.layout-speed .layout-name { font-weight: 600; color: var(--text); }
-.layout-speed .layout-time { color: var(--text-2); }
-.layout-speed .layout-text { grid-column: 2 / -1; color: var(--text-3); }
-.layout-speed:has(input:disabled), .layout-speed:has(input:disabled) .layout-name { color: var(--text-3); cursor: default; }
-.layout-note { margin: 0 0 0 24px; color: var(--text-3); font-size: 12px; }
 .layout-standing { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; row-gap: 4px; font-size: 12px; color: var(--text-2); }
 .layout-standing .layout-name { flex-basis: 100%; font-size: 13px; font-weight: 600; color: var(--text); }
 .layout-stand { cursor: pointer; }
 .layout-stand input { margin: 0; accent-color: var(--accent); }
 /* Build a full layout (D-399): the running window, the review bar, the boards before and after */
-.compact-run { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); width: min(360px, calc(100% - 32px)); padding: 12px 14px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; color: var(--text-2); z-index: 3; }
+.compact-run { position: absolute; left: 50%; top: 16px; transform: translateX(-50%); width: min(440px, calc(100% - 32px)); padding: 12px 14px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 6px; font-size: 13px; color: var(--text-2); z-index: 3; }
 .compact-run[hidden], .compact-review[hidden], .compact-dim[hidden], .compact-title[hidden], .compact-said[hidden] { display: none; }
 .compact-run h3 { margin: 0 0 6px; font-size: 14px; color: var(--text); }
 .compact-run p { margin: 4px 0; }
@@ -586,6 +568,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .compact-progress.working { animation: working 1.6s ease-in-out infinite alternate; }
 @keyframes working { from { opacity: 1; } to { opacity: 0.55; } }
 @media (prefers-reduced-motion: reduce) { .compact-progress.working { animation: none; } }
+.compact-large { color: var(--text); border-left: 3px solid var(--warning); padding-left: 8px; }
 .compact-best { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); }
 .compact-buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
 .compact-dim { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); padding: 4px 10px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 4px; font-size: 12px; color: var(--text-2); pointer-events: none; z-index: 2; }
@@ -617,7 +600,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-panels .net-shorted .state { color: var(--error); }
 .board-panels .warnings .fault { color: var(--error); }
 .board-panels .warnings .warning { color: var(--warning); }
-.board-panels .overlap.flash { animation: kept 1.2s ease-out; }
+.board-panels .overlap.flash, .board-tray li.flash { animation: kept 1.2s ease-out; }
 .board-panels .dismissed li, .board-panels .dismissed .reason { color: var(--text-3); }
 .board-panels .board-note.out-of-date .note-line { color: var(--text-3); }
 .board-panels .note-why { color: var(--text-3); font-style: italic; }
@@ -662,9 +645,9 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .schematic .part.selected .filled { fill: var(--sch-selected); }
 .schematic .part-text.selected text { fill: var(--sch-selected); }
 .schematic .wire.selected { stroke: var(--sch-selected); stroke-width: 2.4; }
-#schematic .found-ring { fill: none; stroke: var(--sch-selected); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; animation: found-ring 1.6s ease-out forwards; }
+#schematic .found-ring, .board-drawing .found-ring { fill: none; stroke: var(--sch-selected); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; animation: found-ring 1.6s ease-out forwards; }
 @keyframes found-ring { 0%, 50% { opacity: 1; } 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { #schematic .found-ring { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #schematic .found-ring, .board-drawing .found-ring { animation: none; } }
 .schematic .net-label.selected text { fill: var(--sch-selected); }
 .schematic .part[data-drag] { opacity: 0.8; }
 /* text blocks (D-091): notes on the sheet, not part of the circuit */
@@ -921,8 +904,8 @@ table.readout tr.rail th { color: var(--text-2); }
 .audio-chain .chip:first-child { border-radius: 3px 0 0 3px; margin-left: 0; }
 .audio-chain .chip:last-child { border-radius: 0 3px 3px 0; }
 .audio-chain .chip .t { display: block; font-size: 11px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--text-2); }
-.audio-chain .chip .v { display: block; color: var(--text); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.audio-chain .chip .s { display: block; color: var(--text-3); font-size: 12px; min-height: 1.3em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.audio-chain .chip .v { display: block; color: var(--text); }
+.audio-chain .chip .s { display: block; color: var(--text-3); font-size: 12px; min-height: 1.3em; }
 .audio-chain .chip[aria-expanded="true"] { background: var(--surface-2); border-color: var(--accent); z-index: 1; }
 .audio-chain .chip:not(:last-child)::after { content: "▸"; position: absolute; right: -6px; top: 50%; transform: translateY(-50%); color: var(--text-3); z-index: 2; font-size: 11px; }
 .audio-chain .gauge { display: flex; align-items: center; gap: 6px; margin-top: 3px; }

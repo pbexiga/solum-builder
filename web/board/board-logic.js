@@ -982,7 +982,7 @@ export function spotFor(item, hole) {
 export const BOARD_SETTINGS = /** @type {const} */ ([
   { key: "values", label: "Values", group: "show", on: true, acts: true, title: "Label each part with its value as well as its ref" },
   { key: "rails", label: "Rails", group: "show", on: false, acts: true, title: "Highlight the rails: the supply's copper (V+, V-) rose, ground's grey" },
-  { key: "rats", label: "All ratsnest", group: "show", on: true, acts: true, title: "The dashed lines between the pieces of each net on the board still to join. Off: only the lines of the part selected or carried" },
+  { key: "rats", label: "Ratsnest", group: "show", on: true, acts: true, title: "The dashed lines between the pieces of each net on the board still to join. Off: only the lines of the part selected or carried" },
   { key: "grow", label: "Auto-grow", group: "edit", on: true, acts: true, title: "The board grows to take in what's placed by its edge, and shrinks back. Off: it stays its size (the margin greyed); add or remove lines on the rulers" },
   { key: "shorts", label: "Allow shorts", group: "edit", on: true, acts: true, title: "A move that makes a short is allowed, the short shown red. Off: it's refused" },
   { key: "next", label: "Suggest next", group: "tray", on: true, acts: true, title: "Suggest the part to place next, at the top of the tray" },

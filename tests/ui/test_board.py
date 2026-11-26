@@ -255,7 +255,7 @@ def test_show_values_is_a_setting_remembered(page: Page, base_url: str) -> None:
     body = page.locator("#board-settings-body")
     expect(body.locator(".board-settings-head")).to_have_text(["Show", "While editing"])
     expect(body.locator("button[data-setting]")).to_have_text(
-        ["Values", "Rails", "All ratsnest", "See-through", "Auto-grow", "Allow shorts"]
+        ["Values", "Rails", "Ratsnest", "See-through", "Auto-grow", "Allow shorts"]
     )
     expect(page.locator("#board-tools button")).to_have_text(["Hide parts", "Flip"])
     box.click()

@@ -169,7 +169,7 @@ The Settings pane's buttons turn each setting on (outlined) or off. They're reme
 Under **Show**:
 - **Values**: label each part with its value as well as its ref.
 - **Rails**: tint the supply's and ground's copper.
-- **All ratsnest**: the dashed lines joining the pieces of each net on the board that aren't joined yet. Off, only the lines of the part selected or carried.
+- **Ratsnest**: the dashed lines joining the pieces of each net on the board that aren't joined yet. Off, only the lines of the part selected or carried.
 - **See-through** (T): the parts faint, so the holes and cuts under them show.
 
 Under **While editing**:

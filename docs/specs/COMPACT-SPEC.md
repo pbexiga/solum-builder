@@ -1,5 +1,7 @@
 # Build a full layout — spec (P6h5, 2026-11-24; agreed with the user)
 
+> **Amended by P8 (D-413, `STRIPBOARD-RULES-SPEC.md`):** this is now the board's one layout help, *Lay it out for me…*: the Layout dialog, Start a board, Fill the rest, Tidy up and Thorough are gone (one speed, Quick's steps), the confirmation is a single dialog, and its cost no longer counts placement limits, quiet links or output-away warnings. A circuit past 25 board parts is called a draft in the running window.
+
 ## What it's for
 A builder with a circuit and no wish to lay the board out by hand gets the whole board done for them, as small as the app can make it, and checked. It is the Layout dialog's last choice (below the divider, P6h2 / D-396), beside Start a board, Fill the rest and Tidy up. Those give a base to edit; this gives a finished board. The search is the P6h1 spike's (`scratch/spike/anneal.py`, results in `scratch/spike/RESULTS.md`), chosen by the user on 2026-11-23 over CP-SAT in the app or a separate tool: pure Python, no new dependency.
 

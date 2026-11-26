@@ -1,5 +1,7 @@
 # A stage's output kept away from its input (P6i2)
 
+> **Removed by P8 (D-410, `STRIPBOARD-RULES-SPEC.md`):** a stage's output is no longer kept away from its input, and the jacks' wires warning is gone; the guide has a note instead. This is what D-404 built.
+
 ## Goal
 The failure that makes fuzzes and high-gain drives squeal: a later node's copper running alongside an earlier high-gain input's (neighbouring strips couple a little through the board, enough at high gain and impedance), and the input and output jacks' wires running side by side round the board's edge. Warn about both, and have the layout help keep clear of the first.
 

@@ -2,7 +2,8 @@
 # and what its body covers. The one source for the stripboard layouts (`solum.stripboard`).
 #
 # Sizes in mm, as the source gives them; `holes` are the leg steps on the board (0.1"
-# each) a part's legs are bent to. A body covers every hole whose centre is inside it
+# each) a part's legs are bent to. A capacitor's go from its own pitch to a hole or two
+# wider, the leads bent out (the user, 2026-11-26, D-410): a longer reach bridges strips. A body covers every hole whose centre is inside it
 # (a box: `length` along the legs' line, `width` across; round: `diameter`), centred on
 # its legs. A part with no entry for its type, kind, value or package gets no layout, and
 # the window says so; a surface-mount part (SMD, SC-59, SOT-23) never goes on a stripboard.
@@ -15,10 +16,10 @@ axial:
     - max_watts: 0.25
       length: 6.3
       diameter: 2.5
-      flat: 4
+      flat: 3  # 7.62 mm (300 mil, 4 holes), the leads bent just past the body, as published layouts lay it (D-410)
       stand: 1
       source: >
-        KiCad R_Axial_DIN0207_L6.3mm_D2.5mm (P10.16mm Horizontal, P2.54mm Vertical),
+        KiCad R_Axial_DIN0207_L6.3mm_D2.5mm (P7.62mm Horizontal, P2.54mm Vertical),
         after Yageo's ¼ W metal-film sheet (cdn-reichelt.de B400 1_4W#YAG.pdf)
     - max_watts: 0.5
       length: 9.0
@@ -76,7 +77,7 @@ radial:
     - max_value: 47µ
       diameter: 5
       pitch: 2.0
-      holes: [1]
+      holes: [1, 2, 3]
       source: &nrws >
         NIC Components NRWS (miniature radial electrolytics), case size table, 25 V column,
         and lead spacing by case diameter (niccomp.com; read from
@@ -84,24 +85,24 @@ radial:
     - max_value: 100µ
       diameter: 6.3
       pitch: 2.5
-      holes: [1]
+      holes: [1, 2, 3]
       source: *nrws
     - max_value: 330µ
       diameter: 8
       pitch: 3.5
-      holes: [1, 2]
+      holes: [1, 2, 3]
       source: *nrws
     - max_value: 1m
       diameter: 10
       pitch: 5.0
-      holes: [2]
+      holes: [2, 3]
       source: *nrws
   film:  # box film, by value at 63 V
     - max_value: 150n
       length: 7.2
       width: 2.5
       pitch: 5
-      holes: [2]
+      holes: [2, 3, 4]
       source: &mks2 >
         WIMA MKS 2 (polyester, PCM 5 mm), general data table, 63 VDC column, W × H × L
         (page 2; wima.de/wp-content/uploads/media/e_WIMA_MKS_2.pdf, read 2026-11-24: W
@@ -110,56 +111,56 @@ radial:
       length: 7.2
       width: 3
       pitch: 5
-      holes: [2]
+      holes: [2, 3, 4]
       source: *mks2
     - max_value: 470n
       length: 7.2
       width: 3.5
       pitch: 5
-      holes: [2]
+      holes: [2, 3, 4]
       source: *mks2
     - max_value: 680n
       length: 7.2
       width: 4.5
       pitch: 5
-      holes: [2]
+      holes: [2, 3, 4]
       source: *mks2
     - max_value: 1µ
       length: 7.2
       width: 5
       pitch: 5
-      holes: [2]
+      holes: [2, 3, 4]
       source: *mks2
     - max_value: 1.5µ
       length: 7.2
       width: 5.5
       pitch: 5
-      holes: [2]
+      holes: [2, 3, 4]
       source: *mks2
     - max_value: 2.2µ
       length: 7.2
       width: 7.2
       pitch: 5
-      holes: [2]
+      holes: [2, 3, 4]
       source: *mks2
     - max_value: 3.3µ
       length: 7.2
       width: 11
       pitch: 5
-      holes: [2]
+      holes: [2, 3, 4]
       source: *mks2
     - max_value: 4.7µ
       length: 7.2
       width: 11
       pitch: 5
-      holes: [2]
+      holes: [2, 3, 4]
       source: *mks2
   c0g:  # leaded MLCC, the smallest case; larger values take a larger case (not listed)
     - max_value: 1µ
       length: 4.0
       width: 2.5
       pitch: 2.5
-      holes: [1, 2]
+      holes: [1, 2, 3, 4]
       source: &fg >
         TDK FG series leaded MLCCs, FG18 (2.5 mm lead spacing) and FG28 (5 mm), 4.0 × 5.5 ×
         2.5 mm (TDK Electronics, "Halogen-free leaded MLCCs for automotive and general
@@ -169,7 +170,7 @@ radial:
       length: 4.0
       width: 2.5
       pitch: 2.5
-      holes: [1, 2]
+      holes: [1, 2, 3, 4]
       source: *fg
   led:  # an LED on the board (the status LED is off it), by the model's package
     - package: T-1 3/4

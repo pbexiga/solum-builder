@@ -83,8 +83,15 @@ def test_a_part_that_doesnt_go_on_the_board_is_refused() -> None:
         edit(GOOD, place("VR1", {"1": "L1", "2": "L2", "3": "L3"}))
 
 
+def test_a_quarter_watt_resistor_lies_flat_three_holes_apart() -> None:
+    """300 mil, four holes, its leads bent just past the body, as published layouts lay it
+    (D-410)."""
+    board = edit(without("R2"), place("R2", {"1": "J4", "2": "J7"}))
+    assert layout_data(board)["parts"]["R2"] == {"1": "J4", "2": "J7"}
+
+
 def test_legs_as_the_footprint_doesnt_allow_are_refused() -> None:
-    with pytest.raises(EditError, match="R2 lying flat needs its legs at least 4 holes apart"):
+    with pytest.raises(EditError, match="R2 lying flat needs its legs at least 3 holes apart"):
         edit(without("R2"), place("R2", {"1": "J4", "2": "J6"}))
     with pytest.raises(EditError, match="R3 standing has its legs 1 hole apart"):
         edit(without("R3"), place("R3", {"1": "G3", "2": "G6"}, standing=True))

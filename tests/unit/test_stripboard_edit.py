@@ -83,18 +83,34 @@ def test_a_part_that_doesnt_go_on_the_board_is_refused() -> None:
         edit(GOOD, place("VR1", {"1": "L1", "2": "L2", "3": "L3"}))
 
 
+def test_a_quarter_watt_resistor_lies_flat_three_holes_apart() -> None:
+    """300 mil, four holes, its leads bent just past the body, as published layouts lay it
+    (D-410)."""
+    board = edit(without("R2"), place("R2", {"1": "J4", "2": "J7"}))
+    assert layout_data(board)["parts"]["R2"] == {"1": "J4", "2": "J7"}
+
+
 def test_legs_as_the_footprint_doesnt_allow_are_refused() -> None:
-    with pytest.raises(EditError, match="R2 lying flat needs its legs at least 4 holes apart"):
+    with pytest.raises(EditError, match="R2 lying flat needs its legs at least 3 holes apart"):
         edit(without("R2"), place("R2", {"1": "J4", "2": "J6"}))
-    with pytest.raises(EditError, match="R3 standing has its legs 1 hole apart"):
-        edit(without("R3"), place("R3", {"1": "G3", "2": "G6"}, standing=True))
+    with pytest.raises(EditError, match="R3's legs must be in one row or one column"):
+        edit(without("R3"), place("R3", {"1": "G3", "2": "H4"}, standing=True))
+    stood = edit(without("R3"), place("R3", {"1": "G3", "2": "G5"}, standing=True))
+    assert legs(stood, "R3") == {"1": "G3", "2": "G5"}  # a lead bent further: no most (D-410)
 
 
-def test_two_legs_in_a_hole_or_a_body_over_a_leg_are_refused() -> None:
-    with pytest.raises(EditError, match="share hole I4"):
+def test_bodies_on_one_hole_or_a_body_over_a_leg_are_refused() -> None:
+    with pytest.raises(EditError, match="R2 and R1's bodies overlap at I5"):
         edit(without("R1"), place("R1", {"1": "I8", "2": "I4"}))
     with pytest.raises(EditError, match="R1's body covers E3, where Q1 goes"):
         edit(without("R1"), place("R1", {"1": "E2", "2": "E6"}))
+
+
+def test_a_leg_in_another_part_s_hole_is_allowed() -> None:
+    """D-410: a warning for the builder to look at, not a refusal: R1 from I4 (R2's leg)
+    along strip 4 to L4, its body under the link at K."""
+    board = edit(without("R1"), place("R1", {"1": "L4", "2": "I4"}))
+    assert legs(board, "R1") == {"1": "L4", "2": "I4"}
 
 
 def test_a_fault_already_there_doesnt_refuse_another_edit() -> None:
@@ -155,10 +171,27 @@ def test_links_are_laid_and_lifted_down_a_column() -> None:
     assert layout_data(edit(GOOD, holes_edit("unlink", "B8", "B1")))["links"] == [["K2", "K8"]]
     with pytest.raises(EditError, match="A link runs down a column"):
         edit(GOOD, holes_edit("link", "L1", "M1"))
-    with pytest.raises(EditError, match="passes over Q1 at E3"):
-        edit(GOOD, holes_edit("link", "E2", "E6"))
+    over = edit(GOOD, holes_edit("link", "E2", "E6"))  # over Q1's legs: insulated (D-410)
+    assert layout_data(over)["links"][-1] == ["E2", "E6"]
+    tap = edit(GOOD, holes_edit("link", "B8", "B9"))  # an end on another link's: a tap
+    assert layout_data(tap)["links"][-1] == ["B8", "B9"]
+    with pytest.raises(EditError, match="There's a link from B1 to B8 already"):
+        edit(GOOD, holes_edit("link", "B8", "B1"))
     with pytest.raises(EditError, match="no link from L1 to L3"):
         edit(GOOD, holes_edit("unlink", "L1", "L3"))
+
+
+def test_a_link_is_tapped_at_a_hole_it_passes_over() -> None:
+    """D-410: B1–B8 tapped at B4 is two links ending in B4, in its place in the list (a
+    tap: strip 4 joined too); not between its ends, or no such link, refused by name."""
+    tapped = edit(GOOD, holes_edit("tap", "B8", "B1", "B4"))
+    assert layout_data(tapped)["links"] == [["B1", "B4"], ["B4", "B8"], ["K2", "K8"]]
+    with pytest.raises(EditError, match="a hole the link passes over, between B1 and B8"):
+        edit(GOOD, holes_edit("tap", "B1", "B8", "B9"))
+    with pytest.raises(EditError, match="between B1 and B8"):
+        edit(GOOD, holes_edit("tap", "B1", "B8", "C4"))
+    with pytest.raises(EditError, match="no link from L1 to L3"):
+        edit(GOOD, holes_edit("tap", "L1", "L3", "L2"))
 
 
 def test_shorts_are_the_pairs_of_nets_the_board_joins() -> None:

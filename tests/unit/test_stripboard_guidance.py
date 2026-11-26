@@ -10,8 +10,7 @@ from solum.models import load_models
 from solum.stripboard.board import hole_name, layout_from_data, parse_hole
 from solum.stripboard.check import check_layout, placement_faults
 from solum.stripboard.footprints import board_parts
-from solum.stripboard.guidance import Guidance, Kept, guidance
-from solum.stripboard.limits import LoudInput
+from solum.stripboard.guidance import Guidance, guidance
 from solum.yamlio import load_yaml
 
 REPO = Path(__file__).resolve().parents[2]
@@ -115,8 +114,8 @@ def test_suggested_links_never_pass_over_each_other() -> None:
 def test_next_follows_the_signal_and_prefers_what_joins_the_board() -> None:
     empty = run({"size": [12, 9]}).next
     assert empty is not None and empty.ref == "C1" and "input" in empty.why
-    nxt = run(only("Q1", "R1")).next  # its bypass cap first, kept by its emitter (D-400)
-    assert nxt is not None and nxt.why == "Next: C3, by Q1's emitter: its bypass cap."
+    nxt = run(only("Q1", "R1")).next  # joins what's placed, nearest the input
+    assert nxt is not None and nxt.why == "Next: C1. It joins R1's leg at C4 (Q1.B)."
     nxt = run(only("Q1", "R1", "C3")).next
     assert nxt is not None and nxt.ref == "C1"  # joins Q1's base, nearest the input
     assert nxt.why.startswith("Next: C1. It joins ") and "(Q1.B)" in nxt.why
@@ -161,68 +160,3 @@ def test_a_blocked_link_names_what_is_in_the_way() -> None:
 
 def test_nothing_is_stuck_when_the_suggestions_join_everything() -> None:
     assert run({**GOOD, "cuts": [], "links": []}).stuck == []
-
-
-# --- the guidance follows the placement limits (D-400) ---------------------------------
-TS808 = load_circuit(LIBRARY / "starters" / "ts808.json")
-TS808_LOUD = [
-    LoudInput("Q1", "B", frozenset({"GND", "V+"})),
-    LoudInput("IC1B", "+", frozenset({"GND", "V+"})),
-]  # as `probe.loud_inputs` finds them (it needs ngspice)
-IC1 = {"1": "E3", "2": "E4", "3": "E5", "4": "E6", "8": "H3", "7": "H4", "6": "H5", "5": "H6"}
-UNDER = ["F3", "F4", "F5", "F6"]  # the cuts under the chip
-
-
-def ts808(**data: Any) -> Guidance:
-    board = {"size": [20, 12], "parts": {"IC1": IC1}, "cuts": UNDER, **data}
-    return guidance(layout_from_data(board), TS808, MODELS, TABLE, TS808_LOUD)
-
-
-def holes_of(kept: Kept) -> list[str]:
-    return [hole_name((c, strip)) for strip, c0, c1 in kept.holes for c in range(c0, c1 + 1)]
-
-
-def test_a_part_kept_by_a_placed_pin_is_marked_only_by_that_pin() -> None:
-    """The TS808 with IC1 placed: C4 (on pin 6's net, with D1 and D2: reach 4) is marked
-    on pin 6's own copper only, I5 to L5 (none between the chip's rows: its body, D-401);
-    R11 by pin 2, the chip on its right: C4 and D4."""
-    g = ts808()
-    assert g.kept["C4"] == Kept("1", "IC1B.-", g.kept["C4"].holes, None)
-    assert holes_of(g.kept["C4"]) == ["I5", "J5", "K5", "L5"]
-    assert holes_of(g.kept["R11"]) == ["C4", "D4"]
-    assert "R1" not in g.kept  # kept by no pin
-
-
-def test_no_free_hole_by_the_pin_names_what_is_in_the_way() -> None:
-    g = ts808(cuts=[*UNDER, "D4"])
-    assert g.kept["R11"].holes == []
-    assert g.kept["R11"].blocked == (
-        "No free hole by IC1's pin 2: the cut at D4 and the cut at F4 are in the way. Move "
-        "one, or place R11 elsewhere and it will show as a warning."
-    )
-
-
-def test_place_next_names_a_part_a_placed_pin_keeps_first_saying_why() -> None:
-    g = ts808()
-    assert g.next is not None
-    assert g.next.why == "Next: C2, by IC1's pin 5: the high-gain stage's input."
-    assert guidance(layout_from_data({"size": [20, 12], "parts": {}}), TS808, MODELS, TABLE,
-                    TS808_LOUD).kept == {}  # fmt: skip
-
-
-def test_a_suggested_link_keeps_clear_of_a_sensitive_part_when_it_can() -> None:
-    """D-402: with a link taken out, the shortest link back is suggested; with the holes of
-    that link kept clear of another net's sensitive part, a link down another free column
-    comes first."""
-    from solum.stripboard.check import read_layout
-    from solum.stripboard.guidance import _linking, suggested_cuts
-
-    data = {**GOOD, "links": [["B1", "B8"]]}
-    r = read_layout(layout_from_data(data), RANGEMASTER, MODELS, TABLE)
-    cuts = suggested_cuts(r)
-    (first,) = _linking(r, cuts)[1]
-    column = first[0][0]
-    zone = {(column, y): "elsewhere" for y in range(r.layout.strips)}
-    (other,) = _linking(r, cuts, zone)[1]
-    assert other[0][0] != column
-    assert abs(other[1][1] - other[0][1]) >= abs(first[1][1] - first[0][1])

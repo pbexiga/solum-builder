@@ -5,9 +5,7 @@ and the scope at the probed nets plus the output. `part_view` is the view for on
 by type. Both go through `Simulator`, so bias targets are solved and runs are cached.
 """
 
-import cmath
 import math
-from collections import defaultdict
 from collections.abc import Callable, Mapping, Sequence
 from dataclasses import asdict, dataclass
 from typing import Any
@@ -54,8 +52,6 @@ from solum.circuit.schema import (
 )
 from solum.circuit.supply import drawable, no_power, no_power_refs, supply_volts
 from solum.netlist import Dc, input_part
-from solum.rules.graph import distances, quiet_nets, signal_edges
-from solum.sim.engine import SimError
 from solum.simulate import (
     IMPEDANCE_HZ,
     LEVELS,
@@ -82,7 +78,6 @@ from solum.stages import (
     stage_clips,
     stage_parts,
 )
-from solum.stripboard.limits import LoudInput
 from solum.units import format_quantity, parse_value, signed_db
 from solum.view import controls, drawn_pins, part_text, pin_number, probe_nets, rail_nets
 
@@ -909,182 +904,6 @@ def _signal_path(sim: Simulator, circuit: Circuit, tone: float = TONE_HZ) -> _Pa
 
 
 FOLLOWER = 1.25  # a stage with no more gain than this passes the signal on as it is
-
-
-def gain_end(path: "_Path", circuit: Circuit, nets: Nets) -> str | None:
-    """The net a high-gain input's gain is measured to (P6i3): the input of the last pot
-    on the way to the amp (its lug with more signal), so the Volume turned down doesn't
-    hide the gain before it; the amp's net when no pot is. The last pot is the one whose
-    wiper reaches the amp through passive parts and followers (`FOLLOWER`) only, the
-    nearest when several do. None without an amp."""
-    amp = next((p for p in circuit.parts if isinstance(p, AmpInput)), None)
-    if amp is None:
-        return None
-    out = nets.net_of(amp.ref, "in")
-    quiet = quiet_nets(circuit, nets)
-    ac = path.ac
-    jumps = [(entry, stage.net) for stage, entry in zip(path.found, path.inputs, strict=True)
-             if stage.kind == "stage" and entry is not None
-             and _tone_gain(ac, stage.net) <= FOLLOWER * _tone_gain(ac, entry)]  # fmt: skip
-    best: tuple[int, str, str] | None = None
-    for pot in circuit.parts:
-        if not isinstance(pot, Pot) or (pot.ref, "2") not in nets.by_pin:
-            continue
-        edges = signal_edges(circuit, nets, skip=pot.ref, active=False) + jumps
-        far = distances(nets.net_of(pot.ref, "2"), edges, quiet).get(out)
-        lugs = [nets.net_of(pot.ref, k) for k in ("1", "3") if (pot.ref, k) in nets.by_pin]
-        lugs = [n for n in lugs if n in path.ac.responses]
-        if far is not None and lugs and (best is None or far < best[0]):
-            best = (far, pot.ref, max(lugs, key=lambda n: _tone_gain(path.ac, n)))
-    return best[2] if best else out
-
-
-LOUD = 10 ** (25 / 20)  # gain to the output from which a stage's input wiring must be short
-LOUD_HIGH_Z = 10.0  # ...or this much on a node of `HIGH_Z` or more (P6i3, D-400)
-HIGH_Z = 470e3  # ohms at the scope's tone, the guitar left out: a 1 MΩ-biased input
-QUIET = 0.01  # a net's signal under this share of a loud input's is AC-quiet (D-400)
-_INPUT_PINS = ("B", "G", "+")  # where a stage's signal enters: base, gate, op-amp +
-_COMMON_PINS = {"B": "E", "G": "S", "+": "-"}  # the stage's own pin that follows it
-PHASE_TONES = (2e3, 10e3, 50e3)  # where an output beside its input is judged (P6i2)
-
-
-def _feeds_back(ac: AcResult, start: str, later: str, end: str, high_z: bool) -> bool:
-    """Whether `later` beside `start` would feed back (P6i2): at any of `PHASE_TONES`,
-    louder than `start` and in phase with it (within ±90°: what couples back adds to the
-    input), while the gain from `start` to `end` is high gain's (`LOUD`, or `LOUD_HIGH_Z`
-    on a high-impedance node)."""
-    for tone in PHASE_TONES:
-        a, b, e = (_tone_response(ac, n, tone) for n in (start, later, end))
-        if abs(a) < 1e-12 or abs(b) <= abs(a):
-            continue
-        gain = abs(e) / abs(a)
-        loud = gain >= LOUD or (high_z and gain >= LOUD_HIGH_Z)
-        if loud and abs(cmath.phase(b / a)) <= math.pi / 2:
-            return True
-    return False
-
-
-def jacks_in_phase(sim: Simulator, circuit: Circuit) -> bool:
-    """Whether the input and output jacks' wires must be kept apart (P6i2): the output in
-    phase with the guitar at one of `PHASE_TONES` with high gain between (`_feeds_back`),
-    with the pots as set, all down or all up. False when it doesn't simulate."""
-    amp = next((p for p in circuit.parts if isinstance(p, AmpInput)), None)
-    if amp is None:
-        return False
-    nets = connect(circuit)
-    try:
-        for c in _turned(circuit):
-            path = _signal_path(sim, c)
-            if isinstance(path, str):
-                return False
-            end, out = gain_end(path, c, nets), nets.net_of(amp.ref, "in")
-            if (
-                end
-                and out in path.ac.responses
-                and _feeds_back(path.ac, path.source, out, end, False)
-            ):
-                return True
-    except SimError:
-        return False
-    return False
-
-
-def _turned(circuit: Circuit) -> list[Circuit]:
-    """The circuit with its pots as set, all turned down and all turned up (just the one
-    without pots)."""
-    pots = [p.ref for p in circuit.parts if isinstance(p, Pot)]
-    turned = [circuit]
-    for rotation in (0.0, 1.0) if pots else ():
-        c = circuit
-        for ref in pots:
-            c = c.with_part(ref, rotation=rotation)
-        turned.append(c)
-    return turned
-
-
-def loud_inputs(sim: Simulator, circuit: Circuit) -> list[LoudInput]:
-    """Each high-gain stage's input pin for the placement limits (D-400, P6i3): a stage
-    input on the signal path whose gain to the output (to `gain_end`, the last pot's
-    input, so the Volume turned down still counts), at the scope's tone, reaches `LOUD`
-    with the pots as set, all turned down or all turned up, or `LOUD_HIGH_Z` on a node of
-    `HIGH_Z` or more with the guitar left out (a pickup barely loads it with the guitar's
-    volume down); an input past the end (an output buffer after the Volume) never. With
-    the nets whose signal there is under `QUIET` of the input's (rails, ground, a
-    reference behind its cap), from the first run that found it. None when the circuit
-    doesn't simulate. Each with the later nets that would feed back beside it
-    (`_feeds_back`: in phase at one of `PHASE_TONES` with high gain), but those whose
-    feedback is meant: its stage's own pin that follows it (an op-amp's −, an emitter, a
-    source) and a net a part joins to it directly (a feedback resistor's far end); none for
-    an input on a bias net (its signal is a trace: nothing for feedback to add to)."""
-    found: dict[tuple[str, str], frozenset[str]] = {}
-    along: dict[tuple[str, str], set[str]] = defaultdict(set)
-    nets = connect(circuit)
-    held = quiet_nets(circuit, nets)  # supplies and bias nets: the signal path stops there
-    guitar = input_part(circuit)
-    high: dict[str, bool] = {}
-
-    def high_z(net: str) -> bool:
-        if net not in high:
-            open_ = guitar.ref if guitar else None
-            z = sim.impedance(circuit, net, freq=TONE_HZ, open=open_)[0]
-            high[net] = abs(z) >= HIGH_Z
-        return high[net]
-
-    try:
-        for c in _turned(circuit):
-            path = _signal_path(sim, c)
-            if isinstance(path, str):
-                return []
-            end = gain_end(path, c, nets)
-            order = distances(path.source, signal_edges(c, nets), held)
-            for stage, entry in zip(path.found, path.inputs, strict=True):
-                if stage.kind != "stage" or entry is None or stage.inputs:
-                    continue
-                to = end if end is not None else stage.net
-                if order.get(entry, 0) > order.get(to, 0):
-                    continue  # past the end: its gain to there means nothing
-                gain = _tone_gain(path.ac, to) / max(_tone_gain(path.ac, entry), 1e-12)
-                if gain < LOUD and (gain < LOUD_HIGH_Z or not high_z(entry)):
-                    continue
-                pin = next(((ref, pin) for (ref, pin), net in nets.by_pin.items()
-                            if ref in stage.refs and pin in _INPUT_PINS and net == entry),
-                           None)  # fmt: skip
-                if pin is None:
-                    continue
-                heard = QUIET * _tone_gain(path.ac, entry)
-                if pin not in found:
-                    found[pin] = frozenset(n for n in path.ac.responses
-                                           if _tone_gain(path.ac, n) < heard)  # fmt: skip
-                own = nets.by_pin.get((pin[0], _COMMON_PINS[pin[1]]))
-                meant = _joined(nets, entry) | ({own} if own else set())
-                if entry in held:
-                    continue  # on a bias net (an inverting stage's +): no signal to feed back to
-                hz = gain >= LOUD_HIGH_Z and high_z(entry)
-                along[pin] |= {
-                    n for n in path.ac.responses
-                    if order.get(n, 0) > order.get(entry, 0) and n not in held and n not in meant
-                    and _tone_gain(path.ac, n) >= heard
-                    and _feeds_back(path.ac, entry, n, to, hz)
-                }  # fmt: skip
-    except SimError:
-        return []
-    return [LoudInput(ref, pin, quiet, frozenset(along[ref, pin]))
-            for (ref, pin), quiet in found.items()]  # fmt: skip
-
-
-def _joined(nets: Nets, net: str) -> set[str]:
-    """The nets a two-pin part joins to `net` directly: a feedback resistor's far end (the
-    board's coupling is nothing beside the part itself)."""
-    pins: dict[str, list[str]] = defaultdict(list)
-    for (ref, _), n in nets.by_pin.items():
-        pins[ref].append(n)
-    return {m for ends in pins.values() if len(ends) == 2 and net in ends for m in ends} - {net}
-
-
-def _tone_response(ac: AcResult, net: str, tone: float) -> complex:
-    """The complex small-signal response at `net` at `tone`, from the nearest point."""
-    i = int(np.argmin(np.abs(np.log10(ac.freq) - np.log10(tone))))
-    return complex(ac.responses[net][i])
 
 
 def _tone_gain(ac: AcResult, net: str, tone: float = TONE_HZ) -> float:

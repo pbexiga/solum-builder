@@ -6,14 +6,12 @@ from typing import Any
 
 import pytest
 
-from solum.circuit.connectivity import connect
 from solum.circuit.io import load_circuit
 from solum.guides import footprint_table
 from solum.models import load_models
 from solum.stripboard.board import Layout, layout_from_data
-from solum.stripboard.check import check_layout, misfits, read_layout
+from solum.stripboard.check import check_layout, misfits, placement_warnings, read_layout
 from solum.stripboard.footprints import board_parts
-from solum.stripboard.limits import LoudInput, broken_limits, placement_limits
 from solum.stripboard.size import insert_line
 from solum.stripboard.start import start_for_me
 from solum.stripboard.tidy import MendFirst, TidyError, joins, key, tidy_up
@@ -97,20 +95,13 @@ def test_joins_name_an_either_way_part_by_its_ref() -> None:
     assert joins(swapped, frozenset({"R1"})) == joins(good(), frozenset({"R1"}))
 
 
-# as `probe.loud_inputs` finds it (it needs ngspice)
-RAT_LOUD = LoudInput("IC1", "+", frozenset({"GND", "IC1.comp1", "V+", "VREF"}))
-
-
-def test_tidy_up_keeps_every_placement_limit_the_board_met() -> None:
-    """The Rat's limits are on three pins (decoupling, feedback, the input on +, its pin
-    given as `probe.loud_inputs` finds it); Start's board meets two (test_stripboard_start's
-    `BROKEN`), and tidied it's smaller and still meets them."""
-    rat, loud = load_circuit(LIBRARY / "starters" / "proco-rat.json"), [RAT_LOUD]
-    limits = placement_limits(rat, connect(rat), board_parts(rat, MODELS, TABLE)[0], loud)
-    started = start_for_me(None, rat, MODELS, TABLE, fill=False, loud=loud).layout
-    assert {(lim.anchor, lim.pin) for lim in limits} == {("IC1", "2"), ("IC1", "3"), ("IC1", "7")}
-    assert broken_limits(started, limits) == [("IC1", "2")]
-    tidied = tidy_up(started, rat, MODELS, TABLE, loud=loud).layout
+def test_tidy_up_makes_the_rat_smaller_and_adds_no_warning() -> None:
+    """Start's Rat tidied: smaller, still passing, with no more of D-410's warnings (two
+    things in a hole, a leg under a chip, a link over a leg) than it had."""
+    rat = load_circuit(LIBRARY / "starters" / "proco-rat.json")
+    board = board_parts(rat, MODELS, TABLE)[0]
+    started = start_for_me(None, rat, MODELS, TABLE, fill=False).layout
+    tidied = tidy_up(started, rat, MODELS, TABLE).layout
     assert tidied.columns * tidied.strips < started.columns * started.strips
-    assert set(broken_limits(tidied, limits)) <= {("IC1", "2")}
+    assert len(placement_warnings(tidied, board)) <= len(placement_warnings(started, board))
     assert check_layout(tidied, rat, MODELS, TABLE).ok

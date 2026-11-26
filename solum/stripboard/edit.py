@@ -29,7 +29,7 @@ from solum.stripboard.check import kept_dismissals, outline_overlaps, placement_
 from solum.stripboard.footprints import BoardPart, leg_problem
 from solum.stripboard.size import crop, fit_box, used_holes
 
-EditKind = Literal["place", "remove", "cut", "uncut", "link", "unlink", "spot", "unspot",
+EditKind = Literal["place", "remove", "cut", "uncut", "link", "unlink", "tap", "spot", "unspot",
                    "wire", "unwire", "rewire", "route", "clear", "where", "note-add",
                    "note-set", "note-delete", "dismiss", "restore"]  # fmt: skip
 
@@ -130,6 +130,9 @@ def _uncut(layout: Layout, hole: Hole) -> Layout:
 def _link(layout: Layout, a: Hole, b: Hole) -> Layout:
     if a[0] != b[0] or a[1] == b[1]:
         raise EditError("A link runs down a column, from one strip to another.")
+    if any({link.a, link.b} == {a, b} for link in layout.links):
+        top, bottom = sorted((a, b), key=lambda h: h[1])
+        raise EditError(f"There's a link from {_name(top)} to {_name(bottom)} already.")
     return replace(layout, links=(*layout.links, Link(a, b)))
 
 
@@ -137,6 +140,20 @@ def _unlink(layout: Layout, a: Hole, b: Hole) -> Layout:
     links = tuple(link for link in layout.links if {link.a, link.b} != {a, b})
     if len(links) == len(layout.links):
         raise EditError(f"There's no link from {_name(a)} to {_name(b)}.")
+    return replace(layout, links=links)
+
+
+def _tap(layout: Layout, a: Hole, b: Hole, at: Hole) -> Layout:
+    """The link from `a` to `b` split at `at`, a hole it passes over: two links ending
+    there, a tap, joining that strip too (D-410)."""
+    i = next((i for i, link in enumerate(layout.links) if {link.a, link.b} == {a, b}), None)
+    if i is None:
+        raise EditError(f"There's no link from {_name(a)} to {_name(b)}.")
+    top, bottom = sorted((a, b), key=lambda h: h[1])
+    if at[0] != top[0] or not top[1] < at[1] < bottom[1]:
+        raise EditError(f"A tap goes in a hole the link passes over, between {_name(top)} "
+                        f"and {_name(bottom)}.")  # fmt: skip
+    links = (*layout.links[:i], Link(top, at), Link(at, bottom), *layout.links[i + 1 :])
     return replace(layout, links=links)
 
 
@@ -244,6 +261,8 @@ def _applied(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
         raise EditError("A cut is in one hole.")
     if edit.kind in ("link", "unlink") and len(holes) != 2:
         raise EditError("A link has two ends.")
+    if edit.kind == "tap" and len(holes) != 3:
+        raise EditError("A tap names the link's two ends and the hole to tap it at.")
     match edit.kind:
         case "place":
             return _place(layout, edit, board)
@@ -257,6 +276,8 @@ def _applied(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
             return _link(layout, *holes)
         case "unlink":
             return _unlink(layout, *holes)
+        case "tap":
+            return _tap(layout, *holes)
         case "spot":
             return _spot(layout, edit, items)
         case "unspot":
@@ -311,9 +332,9 @@ def edit_layout(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
     the board has been saved before (an empty one is drawn at its start size and becomes
     just what's on it at the first placement).
     `grow`: auto-grow (D-372): the board fits what's on it; off, an edit past its edge is
-    refused. A placement fault the edit brings (two things in a hole, a body over a leg, a
-    link over a leg) refuses it, named. Dismissals of overlaps the edit ends are dropped;
-    notes and dismissals change nothing else (D-398)."""
+    refused. A placement fault the edit brings (two legs of a part in a hole, a body over a
+    leg, bodies on one hole) refuses it, named; a warning doesn't (D-410). Dismissals of
+    overlaps the edit ends are dropped; notes and dismissals change nothing else (D-398)."""
     if edit.kind in _NOTED:
         return Edited(_noted(layout, edit, board, set(board) | set(items or {}) | set(known)))
     edited = _edited(layout, edit, board, started, grow, items or {}, known, usual or {})

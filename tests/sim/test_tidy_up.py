@@ -16,13 +16,13 @@ from solum.stripboard.tidy import key, tidy_up
 LIBRARY = Path(__file__).resolve().parents[2] / "library"
 MODELS = load_models([LIBRARY / "models"])
 TABLE = footprint_table(LIBRARY)
-SMALLER = {  # Start for me's columns → at most these after Tidy up (measured 2026-11-21;
-    # the Rangemaster and the Rat 2026-11-24, Tidy up keeping the placement limits, D-400)
-    "dallas-rangemaster": 10,  # 10×9 (9 before D-400)
-    "fuzz-face": 15,  # 18×9
-    "tone-bender-mk2": 26,  # 28×12
-    "ts808": 46,  # 49×21 (45 until D-389 put the pads on the edge, where Trim can't take them)
-    "proco-rat": 52,  # 60×21 (48 before D-400, 47 until D-389)
+SMALLER = {  # Start for me's columns → at most these after Tidy up (measured 2026-11-26,
+    # D-410's spans and no placement limits; the TS808's Start board, 51×18, is already as
+    # tight as Tidy's steps reach: whether Tidy stays is P8's R3)
+    "dallas-rangemaster": 9,  # 10×8
+    "fuzz-face": 10,  # 13×9
+    "tone-bender-mk2": 18,  # 19×10
+    "proco-rat": 50,  # 61×22
 }
 
 pytestmark = pytest.mark.sim

@@ -10,7 +10,7 @@
  */
 
 import { fitView, holdView, panBy, viewBoxText, zoomAt, resizeView } from "../schematic/viewport.js";
-import { STEP, columnName, holeName, holeXY, itemRefs, itemShape, labelAt, legLabel, partShapes, pointAlong, routePath, runRects, shownHoles, valueOf, wireHops, wireObstacles, wireRoutes } from "./board-logic.js";
+import { STEP, columnName, holeName, holeXY, itemRefs, itemShape, labelAt, legLabel, linkTaps, partShapes, pointAlong, routePath, runRects, shownHoles, valueOf, wireHops, wireObstacles, wireRoutes } from "./board-logic.js";
 
 const SVG = "http://www.w3.org/2000/svg";
 const FIT_PAD = STEP; // board units round the shown holes when fitting
@@ -235,6 +235,10 @@ export function boardCanvas(svg, app) {
       el("line", { x1, y1, x2, y2, class: "link-hit" }, g);
       el("line", { x1, y1, x2, y2, class: "link" }, g);
       for (const [x, y] of [[x1, y1], [x2, y2]]) el("circle", { cx: x, cy: y, r: STEP * 0.18, class: "link-end" }, g);
+    }
+    for (const tap of linkTaps(board.links)) { // two links' ends in one hole: one joint (D-410)
+      const [cx, cy] = holeXY(tap);
+      el("circle", { cx, cy, r: STEP * 0.28, class: "link-tap", "data-hole": holeName(tap) }, links);
     }
     const items = el("g", { class: "off-items" }, root);
     const itemNames = el("g", { class: "off-labels" }); // a switch's name above it: over the wires, put in after them

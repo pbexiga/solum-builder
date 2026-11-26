@@ -22,6 +22,7 @@ from solum.circuit.refs import ref_key
 from solum.circuit.schema import (
     SCHEMA_VERSION,
     Bjt,
+    Capacitor,
     Guitar,
     Jfet,
     Stripboard,
@@ -232,10 +233,10 @@ def test_schema_v1_file_loads_as_current(repo: Path) -> None:
     (and dropped provenance), v6 text blocks (and dropped the power mode); a v1 file
     loads unchanged and saves as v6 at v1.0."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v1.json")
-    assert c.schema_ == SCHEMA_VERSION == 41
+    assert c.schema_ == SCHEMA_VERSION == 42
     assert c.tags == [] and c.texts == []
     assert [p.ref for p in c.parts] == ["R1", "R2"]
-    assert circuit_to_dict(c)["schema"] == 41
+    assert circuit_to_dict(c)["schema"] == 42
     assert (str(c.version), c.final) == ("v1.0", False)
 
 
@@ -818,7 +819,7 @@ def test_a_v40_board_reads_as_standing_when_needed(repo: Path) -> None:
     default, "needed", its standing parts kept; the default isn't written, another choice
     is, and it survives saving and loading."""
     c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v40.json")
-    assert c.schema_ == 41 and c.stripboard is not None
+    assert c.schema_ == 42 and c.stripboard is not None
     layout = c.stripboard.layout()
     assert layout.stand_up == "needed" and [p.ref for p in layout.parts if p.standing] == ["R1"]
     assert "stand_up" not in circuit_to_dict(c)["stripboard"]
@@ -830,3 +831,17 @@ def test_a_v40_board_reads_as_standing_when_needed(repo: Path) -> None:
     assert again is not None and again.layout().stand_up == "never"
     with pytest.raises(BoardError, match="never, needed or prefer"):
         layout_from_data({**layout_data(layout), "stand_up": "sometimes"})
+
+
+def test_a_v41_capacitor_reads_as_radial(repo: Path) -> None:
+    """v42 (D-411) added a capacitor's `axial`: a v41 electrolytic has none and reads as
+    radial, saving no `axial`; set, it survives saving and loading."""
+    c = load_circuit(repo / "tests/fixtures/circuits/old/schema-v41.json")
+    c1 = c.part("C1")
+    assert c.schema_ == 42 and isinstance(c1, Capacitor) and not c1.axial
+    assert "axial" not in next(p for p in circuit_to_dict(c)["parts"] if p["ref"] == "C1")
+    axial = c.with_part("C1", axial=True)
+    saved = next(p for p in circuit_to_dict(axial)["parts"] if p["ref"] == "C1")
+    assert saved["axial"] is True
+    again = parse_circuit(circuit_to_dict(axial)).part("C1")
+    assert isinstance(again, Capacitor) and again.axial

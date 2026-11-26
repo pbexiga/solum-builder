@@ -474,6 +474,11 @@
           ],
           "default": null,
           "title": "Rating V"
+        },
+        "axial": {
+          "default": false,
+          "title": "Axial",
+          "type": "boolean"
         }
       },
       "required": [
@@ -2712,7 +2717,7 @@
   "additionalProperties": false,
   "properties": {
     "schema": {
-      "const": 41,
+      "const": 42,
       "title": "Schema",
       "type": "integer"
     },
@@ -2949,7 +2954,7 @@
     "name",
     "parts"
   ],
-  "title": "Solum Builder circuit, schema v41",
+  "title": "Solum Builder circuit, schema v42",
   "type": "object",
   "$schema": "https://json-schema.org/draft/2020-12/schema"
 }

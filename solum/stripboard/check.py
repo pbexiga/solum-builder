@@ -8,7 +8,7 @@ plain-English sentence naming the parts and holes; a layout with none is the cir
 """
 
 from collections import defaultdict
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Iterable, Mapping
 from dataclasses import dataclass, field, replace
 from typing import Literal
 
@@ -18,12 +18,12 @@ from solum.circuit.schema import POLARISED, SUPPLY_SIGNS, Capacitor, Circuit, Pa
 from solum.export import built_where, chosen_where, why_not_moved
 from solum.guides import FootprintTable
 from solum.models import ModelError, ModelLibrary
-from solum.stripboard.apart import alongside, apart_warnings
 from solum.stripboard.board import (
     EDGE,
     PITCH,
     Hole,
     Layout,
+    Link,
     Placed,
     hole_name,
     segments,
@@ -37,17 +37,8 @@ from solum.stripboard.footprints import (
     body_holes,
     body_outline,
     leg_problem,
-    links_under,
     one_board_part,
     outline_overlap,
-)
-from solum.stripboard.limits import (
-    LoudInput,
-    far_grounds,
-    ground_legs,
-    ground_warnings,
-    limit_warnings,
-    placement_limits,
 )
 from solum.stripboard.offboard import (
     POWER,
@@ -57,7 +48,6 @@ from solum.stripboard.offboard import (
     lug_nets,
     off_board_items,
 )
-from solum.stripboard.quiet import guards, noisy_links, quiet_warnings
 from solum.words import listed
 
 Terminal = PinRef | str  # a board part's pin, or an off-board lug ("VR1.1", "IN.S", "V+")
@@ -137,14 +127,15 @@ class _Words:
 
 
 def occupants(layout: Layout) -> tuple[dict[Hole, list[str]], list[str]]:
-    """Who has a wire or leg in each hole, and the faults of where links and wires are."""
+    """Who has a wire or leg in each hole (a part by its ref, once per leg), and the faults
+    of where links and wires are: off the board, in a cut, a link not down a column."""
     used: dict[Hole, list[str]] = defaultdict(list)
     faults = []
     for placed in layout.parts:
         for _, hole in placed.legs:
             used[hole].append(placed.ref)
     for link in layout.links:
-        name = f"the link from {hole_name(link.a)} to {hole_name(link.b)}"
+        name = _link_name(link)
         if link.a[0] != link.b[0] or link.a[1] == link.b[1]:
             faults.append(f"A link runs down a column: {name} doesn't.")
         for hole in (link.a, link.b):
@@ -160,9 +151,11 @@ def occupants(layout: Layout) -> tuple[dict[Hole, list[str]], list[str]]:
                 f"{_cap(who[0])} is in a cut hole ({hole_name(hole)}): the cut takes its "
                 "copper away."
             )
-        if len(who) > 1:
-            faults.append(f"{_cap(' and '.join(who))} share hole {hole_name(hole)}.")
     return used, faults
+
+
+def _link_name(link: Link) -> str:
+    return f"the link from {hole_name(link.a)} to {hole_name(link.b)}"
 
 
 def _cap(text: str) -> str:
@@ -273,8 +266,9 @@ def note_words(parts: Iterable[str], text: str) -> str:
 
 def placement_faults(layout: Layout, board: dict[str, BoardPart],
                      off_board: set[str]) -> list[str]:  # fmt: skip
-    """What's wrong with where things sit: parts missing or extra, legs not as the part's
-    footprint allows, two things in a hole, a body over a leg, a link under a body."""
+    """What can't be built as it sits (D-410): parts missing or extra, legs not as the
+    part's footprint allows, two legs of one part in a hole, a leg or link end in a cut,
+    bodies on one hole, a body over another part's leg (a chip's excepted: a warning)."""
     faults = []
     placed = {p.ref: p for p in layout.parts}
     for ref in sorted(board.keys() - placed.keys()):
@@ -284,10 +278,29 @@ def placement_faults(layout: Layout, board: dict[str, BoardPart],
             faults.append(f"{ref} goes off the board: put it beside the board and wire it.")
         else:
             faults.append(f"{ref} is on the board but not in the circuit.")
-    used, occupied = occupants(layout)
-    faults += occupied
+    return faults + _placement(layout, board)[0]
+
+
+def placement_warnings(layout: Layout, board: Mapping[str, BoardPart]) -> list[str]:
+    """What builders do but is worth a look (D-410): two things from different parts in one
+    hole (two link ends alone are a tap: fine), a leg under a chip, a link passing over a
+    leg, a wire or another link's end (insulated wire)."""
+    return _placement(layout, board)[1]
+
+
+def _placement(layout: Layout, board: Mapping[str, BoardPart]) -> tuple[list[str], list[str]]:
+    """`placement_faults`' holes and bodies, and `placement_warnings`."""
+    used, faults = occupants(layout)
+    warnings = []
+    for hole, here in sorted(used.items(), key=lambda kv: (kv[0][1], kv[0][0])):
+        name = hole_name(hole)
+        twice = sorted({w for w in here if here.count(w) > 1 and not w.startswith("the ")})
+        faults += [f"{ref} has two legs in {name}." for ref in twice]
+        things = list(dict.fromkeys(here))
+        if len(things) > 1 and not all(w.startswith("the link") for w in things):
+            warnings.append(f"{_cap(listed(things))} share {name}: check both leads fit.")
     bodies: dict[Hole, list[str]] = defaultdict(list)
-    flat: set[str] = set()
+    chips: set[str] = set()
     for p in layout.parts:
         part = board.get(p.ref)
         if part is None:
@@ -296,27 +309,31 @@ def placement_faults(layout: Layout, board: dict[str, BoardPart],
         if problem:
             faults.append(problem)
             continue
-        if links_under(part, p.standing):
-            flat.add(p.ref)
+        if part.footprint.shape == "dip":
+            chips.add(p.ref)
         for hole in body_holes(part, p.holes, p.standing):
             bodies[hole].append(p.ref)
+    under: list[tuple[str, str]] = []
     for hole, owners in sorted(bodies.items(), key=lambda kv: (kv[0][1], kv[0][0])):
         name = hole_name(hole)
         if len(owners) > 1:
             faults.append(f"{' and '.join(owners)}'s bodies overlap at {name}.")
         for who in used.get(hole, []):
             if who.startswith("the link"):
-                continue
-            faults.append(f"{owners[0]}'s body covers {name}, where {who} goes.")
+                continue  # a link may end under a body: soldered from below
+            if owners[0] in chips:
+                if (who, owners[0]) not in under:
+                    under.append((who, owners[0]))
+            else:
+                faults.append(f"{owners[0]}'s body covers {name}, where {who} goes.")
+    warnings += [f"{_cap(who)} sits under {chip}: only if the chip is in a socket and the "
+                 "part is low enough." for who, chip in under]  # fmt: skip
     for link in layout.links:
-        name = f"the link from {hole_name(link.a)} to {hole_name(link.b)}"
         for hole in link.between:
-            for who in used.get(hole, []):
-                faults.append(f"{_cap(name)} passes over {who} at {hole_name(hole)}.")
-            for owner in bodies.get(hole, []):
-                if owner not in flat:
-                    faults.append(f"{_cap(name)} runs under {owner}'s body at {hole_name(hole)}.")
-    return faults
+            for who in dict.fromkeys(used.get(hole, [])):
+                warnings.append(f"{_cap(_link_name(link))} passes over {who} at "
+                                f"{hole_name(hole)}: use insulated wire for it.")  # fmt: skip
+    return faults, warnings
 
 
 def copper_groups(layout: Layout, holes: Iterable[Hole] | None = None) -> dict[Hole, int]:
@@ -698,8 +715,9 @@ class Progress:
     the tray, D-370); `nets` each net's progress; `legs` each board part's legs; `faults` what's
     wrong now (placement, pads, a part the wrong way round, a leg on another net's strip);
     `stale` parts no longer in the circuit (D-376: placed, beside the board, or wired to);
-    `warnings` the placement limits broken; `overlaps` bodies touching or past the edge,
-    `dismissed` the ones the builder dismissed, `notes` theirs with why each is out of date
+    `warnings` what to look at but may be meant (`placement_warnings`); `overlaps`
+    bodies touching or past the edge, `dismissed` the ones the builder dismissed, `notes` theirs
+    with why each is out of date
     (D-398); `done` the full check passes; `shorted` the
     copper carrying two nets (D-374); `rails` the copper carrying only a rail, V+, V- or
     GND, by net, as runs (D-381)."""
@@ -844,12 +862,11 @@ def _gone(r: Reading, circuit: Circuit) -> list[str]:
     return sorted(gone)
 
 
-def progress(layout: Layout, circuit: Circuit, models: ModelLibrary, table: FootprintTable,
-             loud: Sequence[LoudInput] = ()) -> Progress:  # fmt: skip
+def progress(layout: Layout, circuit: Circuit, models: ModelLibrary,
+             table: FootprintTable) -> Progress:  # fmt: skip
     """The editor's check of a board in the making (D-368): what's left to place, each
-    net's progress, each leg's needs, what's wrong now (`loud`: the high-gain stages'
-    input pins for the placement limits, `probe.loud_inputs`, D-400). `check_layout`
-    still decides a board is done."""
+    net's progress, each leg's needs, what's wrong now and what to look at (`warnings`).
+    `check_layout` still decides a board is done."""
     r = read_layout(layout, circuit, models, table)
     placed = {p.ref for p in r.layout.parts}
     in_circuit = r.board.keys() | r.off_board
@@ -897,15 +914,7 @@ def progress(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Foot
             )  # fmt: skip
             rows.append(LegProgress(leg, holes.get((ref, leg)), need, reach))
         legs[ref] = rows
-    limits = placement_limits(circuit, r.nets, r.board, loud)
-    warnings = limit_warnings(r.layout, limits)
-    grounds = ground_legs(circuit, r.nets, r.board, limits)
-    warnings += ground_warnings(far_grounds(r.layout, grounds))  # P6i4
-    warnings += quiet_warnings(
-        noisy_links(r.layout, r.board, r.nets, guards(r.board, r.nets, loud))
-    )
-    beside = alongside(r.layout, r.board, r.nets, loud, copper_groups(r.layout))
-    warnings += apart_warnings(beside)
+    warnings = placement_warnings(kept, r.board)
     touching = outline_overlaps(r.layout, r.board)
     overlaps, dismissed = dismissed_apart(layout, touching)
     done = check_layout(layout, circuit, models, table).ok

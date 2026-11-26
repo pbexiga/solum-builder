@@ -885,22 +885,25 @@ def test_stripboard_reports_the_open_circuit_s_board(monkeypatch: pytest.MonkeyP
     assert bad.status_code == 422 and "one column" in bad.text
 
 
-def test_stripboard_warns_of_a_link_near_a_high_gain_input(monkeypatch: pytest.MonkeyPatch) -> None:
-    """D-402: with Q1's base found high gain, a link of a net with signal on it beside R1's
-    base leg is warned about in words; the fixture's own V- link (quiet) is let be."""
-    from solum.stripboard.limits import LoudInput
-
+def test_stripboard_warns_of_what_builders_do_but_is_worth_a_look(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    """D-410: a link from GND's strip 2 down to R2's leg at I8 (GND too) shares the leg's
+    hole and passes over R2's other leg at I4: two warnings, no fault, and the board is
+    still done."""
     repo = Path(__file__).resolve().parents[2]
     data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
-    loud = [LoudInput("Q1", "B", frozenset({"GND", "V-"}))]
-    monkeypatch.setattr(app_module, "loud_inputs", lambda _sim, _c: loud)
     c = client(monkeypatch, lambda _s: FakeEngine())
     board = load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")
-    quiet = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": board}}).json()
-    assert not any(w.startswith("The link from") for w in quiet["warnings"])
-    near = {**board, "links": [*board["links"], ["D5", "D6"]]}  # the collector's strip, by C4
-    said = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": near}}).json()
-    assert any(w.startswith("The link from D5 to D6 runs beside") for w in said["warnings"])
+    plain = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": board}}).json()
+    assert plain["warnings"] == [] and plain["done"]
+    tapped = {**board, "links": [*board["links"], ["I2", "I8"]]}
+    said = c.post("/api/stripboard", json={"circuit": {**data, "stripboard": tapped}}).json()
+    assert said["faults"] == [] and said["done"]
+    assert said["warnings"] == [
+        "R2 and the link from I2 to I8 share I8: check both leads fit.",
+        "The link from I2 to I8 passes over R2 at I4: use insulated wire for it.",
+    ]
 
 
 def test_stripboard_size_changes_the_open_circuit_s_board(monkeypatch: pytest.MonkeyPatch) -> None:
@@ -909,7 +912,7 @@ def test_stripboard_size_changes_the_open_circuit_s_board(monkeypatch: pytest.Mo
     repo = Path(__file__).resolve().parents[2]
     data = circuit_to_dict(load_circuit(repo / "library/starters/dallas-rangemaster.json"))
     c = client(monkeypatch, lambda _s: FakeEngine())
-    assert c.post("/api/stripboard", json={"circuit": data}).json()["start_size"] == [11, 8]
+    assert c.post("/api/stripboard", json={"circuit": data}).json()["start_size"] == [11, 7]
     none = c.post("/api/stripboard/size", json={"circuit": data, "change": "trim"})
     assert none.status_code == 422 and "Place something" in none.json()["message"]
     board = {**data, "stripboard": load_yaml(repo / "tests/fixtures/stripboard/rangemaster.yaml")}
@@ -1068,8 +1071,8 @@ def test_stripboard_edit_puts_off_board_parts_and_wires(monkeypatch: pytest.Monk
     assert to_lug["wires"][i] == {"from": "VR1.2", "lug": "IN.out"}
     loose = edit(kind="wire", ref="VR1.2").json()["stripboard"]
     assert loose["wires"][-1] == {"from": "VR1.2"}
-    shared = edit(kind="wire", ref="VR1.2", holes=[[4, 2]])  # Q1's emitter
-    assert shared.status_code == 422 and "share hole E3" in shared.json()["message"]
+    shared = edit(kind="wire", ref="VR1.2", holes=[[4, 2]])  # Q1's emitter: a warning (D-410)
+    assert shared.json()["stripboard"]["wires"][-1] == {"from": "VR1.2", "hole": "E3"}
     twice = edit(kind="wire", ref="VR1.1", holes=[[3, 0]])
     assert twice.json()["message"] == "There's a wire there already."
     routed = edit(kind="route", index=i, runs=[[2, -1.234], [1, 3.5], [2, -1.5]]).json()

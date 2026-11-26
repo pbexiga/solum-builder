@@ -1,0 +1,1 @@
+{"schema": 41, "id": "v41", "name": "v41", "parts": [{"ref": "IN", "pos": [0, 0], "type": "guitar"}, {"ref": "C1", "pos": [100, 0], "type": "capacitor", "value": "10µ", "kind": "electrolytic", "rating_v": 25}, {"ref": "OUT", "pos": [200, 0], "type": "amp"}], "wires": [], "labels": []}

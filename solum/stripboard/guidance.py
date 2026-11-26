@@ -10,7 +10,6 @@ in, holes and sentences out.
 
 import heapq
 from collections import defaultdict
-from collections.abc import Mapping, Sequence
 from dataclasses import dataclass, field, replace
 from itertools import pairwise
 
@@ -29,18 +28,7 @@ from solum.stripboard.check import (
     read_layout,
     runs,
 )
-from solum.stripboard.footprints import body_holes, links_under
-from solum.stripboard.limits import (
-    REACH,
-    WHY,
-    Limit,
-    LoudInput,
-    limit_groups,
-    pin_said,
-    placement_limits,
-)
-from solum.stripboard.quiet import calm_nets, guards, link_holes, quiet_for, zone_of
-from solum.words import listed
+from solum.stripboard.footprints import body_holes
 
 Run = tuple[int, int, int]  # (strip, first column, last column), as `check.runs`
 
@@ -64,25 +52,12 @@ class Next:
 
 
 @dataclass(frozen=True)
-class Kept:
-    """A part not placed yet whose leg `leg` (on `net`) a placed part's pin keeps (a
-    placement limit, D-400): the free holes that keep it there (runs), marked in place of
-    the net's copper; none free: `blocked`, a sentence naming what's in the way (its net's
-    copper marked as usual; placing it is never stopped)."""
-
-    leg: str
-    net: str
-    holes: list[Run]
-    blocked: str | None
-
-
-@dataclass(frozen=True)
 class Guidance:
     """`marks`: each net's free copper holes (runs) on the groups that carry that net and
     no other: where a leg on that net joins it; `ratsnest`: the strands still to join;
     `cuts` and `links`: the ones the legs call for, suggested; `stuck`: a sentence per
     join no suggested link makes, why and what to do; `next`: what to place next (None:
-    nothing left, or nothing placeable); `kept`: each tray part a placed pin keeps."""
+    nothing left, or nothing placeable)."""
 
     marks: dict[str, list[Run]]
     ratsnest: list[Strand]
@@ -90,25 +65,18 @@ class Guidance:
     links: list[tuple[Hole, Hole]]
     stuck: list[str]
     next: Next | None
-    kept: dict[str, Kept] = field(default_factory=dict)
 
 
-def _blocked(r: Reading) -> tuple[set[Hole], set[Hole], set[Hole]]:
-    """The holes something sits in (a leg, a link's end, a pad), the holes under a body
-    that a link can't pass under (a standing or radial body; a chip's it may, D-401), and
-    the holes under any body."""
+def _blocked(r: Reading) -> tuple[set[Hole], set[Hole]]:
+    """The holes something sits in (a leg, a link's end, a pad), and the holes under a
+    body (a link may pass under one, not end there)."""
     used = set(occupants(r.layout)[0])
-    hard: set[Hole] = set()
     bodies: set[Hole] = set()
     for p in r.layout.parts:
         part = r.board.get(p.ref)
-        if part is None:
-            continue
-        covered = body_holes(part, p.holes, p.standing)
-        bodies |= covered
-        if not links_under(part, p.standing):
-            hard |= covered
-    return used, hard, bodies
+        if part is not None:
+            bodies |= body_holes(part, p.holes, p.standing)
+    return used, bodies
 
 
 def _terminal_holes(r: Reading) -> dict[Terminal, Hole]:
@@ -119,7 +87,7 @@ def _terminal_holes(r: Reading) -> dict[Terminal, Hole]:
 def marks(r: Reading) -> dict[str, list[Run]]:
     """Each net's free copper holes, as runs, on the joined groups carrying only it."""
     copper, _ = joined_groups(r.layout)
-    used, _, bodies = _blocked(r)
+    used, bodies = _blocked(r)
     only = {g: next(iter(here)) for g, here in groups_by_net(r).items() if len(here) == 1}
     free: dict[str, set[Hole]] = defaultdict(set)
     for hole, group in copper.items():
@@ -161,7 +129,7 @@ def suggested_cuts(r: Reading) -> list[Hole]:
     hole after the left one's last terminal (none free between them: no cut can part
     them, and none is suggested)."""
     holes = _terminal_holes(r)
-    used, _, _ = _blocked(r)
+    used, _ = _blocked(r)
     seg = segments(r.layout)
     along: dict[int, list[tuple[int, str]]] = defaultdict(list)
     for t, hole in holes.items():
@@ -184,15 +152,14 @@ def suggested_cuts(r: Reading) -> list[Hole]:
 @dataclass
 class _Linking:
     """The board as the link search sees it, the suggested cuts made: `copper` each hole's
-    group; `used` the holes something sits in (and the cuts); `hard` the holes under a body
-    no link passes under; `bodies` under any body; `crossed` the holes under a link, where
+    group; `used` the holes something sits in (and the cuts); `bodies` under any body;
+    `crossed` the holes under a link, where
     no link may end; `own` each group carrying one net, that net; `free` each own group's
     free holes by column; `taken` the suggested links' ends; `pieces` each net's groups
     joined into pieces by the suggested links."""
 
     copper: dict[Hole, int]
     used: set[Hole]
-    hard: set[Hole]
     bodies: set[Hole]
     crossed: set[Hole]
     own: dict[int, str]
@@ -204,15 +171,11 @@ class _Linking:
 _Links = list[tuple[Hole, Hole]]
 
 
-def _linking(r: Reading, cuts: list[Hole],
-             zone: Mapping[Hole, str] | None = None,
-             calm: frozenset[str] = frozenset()) -> tuple[_Linking, _Links]:  # fmt: skip
-    """The link search (`suggested_links`), and what it saw, for `stuck`; `zone`: the holes
-    kept clear of sensitive nets' parts (`quiet.zone_of`): a link keeping clear of them
-    comes before a shorter one that doesn't (D-402), a `calm` net's link always clear."""
+def _linking(r: Reading, cuts: list[Hole]) -> tuple[_Linking, _Links]:
+    """The link search (`suggested_links`), and what it saw, for `stuck`."""
     cut = replace(r.layout, cuts=r.layout.cuts | set(cuts))
     copper = copper_groups(cut)
-    used, hard, bodies = _blocked(r)
+    used, bodies = _blocked(r)
     used |= set(cuts)
     crossed = {h for link in r.layout.links for h in link.between}
     nets_of: dict[int, set[str]] = defaultdict(set)
@@ -224,14 +187,14 @@ def _linking(r: Reading, cuts: list[Hole],
     for hole, group in copper.items():
         if group in own and hole not in used and hole not in bodies:
             free[(group, hole[0])].append(hole)
-    k = _Linking(copper, used, hard, bodies, set(crossed), own, free)
+    k = _Linking(copper, used, bodies, set(crossed), own, free)
     by_net: dict[str, list[int]] = defaultdict(list)
     for g, net in sorted(own.items()):
         by_net[net].append(g)
     links: list[tuple[Hole, Hole]] = []
     for net in sorted(by_net):
         groups = by_net[net]
-        heap: list[tuple[bool, int, Hole, Hole, int, int]] = []
+        heap: list[tuple[int, Hole, Hole, int, int]] = []
         for i, ga in enumerate(groups):
             for gb in groups[i + 1 :]:
                 for column in range(cut.columns):
@@ -239,9 +202,7 @@ def _linking(r: Reading, cuts: list[Hole],
                         for b in free.get((gb, column), ()):
                             if _link_blocker(k, a, b) is None:
                                 top, bottom = sorted((a, b), key=lambda h: h[1])
-                                over = link_holes(Link(top, bottom))
-                                noisy = bool(zone) and not quiet_for(zone or {}, net, over, calm)
-                                heap.append((noisy, bottom[1] - top[1], top, bottom, ga, gb))
+                                heap.append((bottom[1] - top[1], top, bottom, ga, gb))
         heapq.heapify(heap)
         parent = {g: g for g in groups}
 
@@ -251,7 +212,7 @@ def _linking(r: Reading, cuts: list[Hole],
             return g
 
         while heap:  # Kruskal's: the shortest link between two pieces not yet joined
-            _, _, top, bottom, ga, gb = heapq.heappop(heap)
+            _, top, bottom, ga, gb = heapq.heappop(heap)
             if find(ga) == find(gb) or _link_blocker(k, top, bottom) is not None:
                 continue
             parent[find(ga)] = find(gb)
@@ -267,14 +228,14 @@ def _linking(r: Reading, cuts: list[Hole],
 
 def _link_blocker(k: _Linking, a: Hole, b: Hole) -> Hole | None:
     """The first hole in the way of a link from `a` to `b` (an end under a link or on a
-    suggested link's end; a leg, pad, link end or cut it passes over, a body it can't pass
-    under), or None when it can be laid."""
+    suggested link's end; a leg, pad, link end or cut it passes over), or None when it
+    can be laid."""
     for end in (a, b):
         if end in k.crossed or end in k.taken:
             return end
     top, bottom = sorted((a, b), key=lambda h: h[1])
     for h in Link(top, bottom).between:
-        if h in k.used or h in k.hard or h in k.taken:
+        if h in k.used or h in k.taken:
             return h
     return None
 
@@ -282,8 +243,7 @@ def _link_blocker(k: _Linking, a: Hole, b: Hole) -> Hole | None:
 def suggested_links(r: Reading, cuts: list[Hole]) -> list[tuple[Hole, Hole]]:
     """With the suggested cuts made, the shortest links joining each net's pieces: down a
     free column, both ends in free copper of the net's own groups, over no leg, pad or
-    link end, under no body but a flat resistor's (as the check allows), and no end under
-    another link, laid or suggested."""
+    link end (no warning: D-410), and no end under another link, laid or suggested."""
     return _linking(r, cuts)[1]
 
 
@@ -383,73 +343,13 @@ def signal_order(circuit: Circuit, r: Reading) -> dict[str, int]:
     return distances(start, signal_edges(circuit, r.nets)) if start else {}
 
 
-def _keepers(r: Reading, limits: Sequence[Limit]) -> dict[str, tuple[Limit, Hole, int]]:
-    """Each part not placed yet that a placed part's pin keeps: its first such limit, the
-    pin's hole and the reach (one more hole for each other part that pin keeps)."""
-    placed = {p.ref for p in r.layout.parts}
-    holes = {(p.ref, leg): h for p in r.layout.parts for leg, h in p.legs}
-    found: dict[str, tuple[Limit, Hole, int]] = {}
-    for (anchor, pin), group in limit_groups(limits).items():
-        at = holes.get((anchor, pin))
-        if at is None:
-            continue
-        for lim in group:
-            if lim.part not in placed and lim.part not in found:
-                found[lim.part] = (lim, at, REACH + len(group) - 1)
-    return found
-
-
-def kept_holes(r: Reading, k: _Linking, limits: Sequence[Limit]) -> dict[str, Kept]:
-    """Each tray part a placed pin keeps (`Kept`): the free holes on the pin's own copper
-    within reach, nothing between (the copper runs unbroken from the pin, D-400); none:
-    what's in the way, nearest first."""
-    seg = segments(r.layout)
-    used, _, bodies = _blocked(r)
-    found = {}
-    for ref, (lim, pin, reach) in sorted(_keepers(r, limits).items()):
-        part = r.board[ref]
-        net = r.nets.net_of(*part.pins[lim.leg])
-        x0, strip = pin
-        free: list[Hole] = []
-        ways: list[Hole] = []
-        for step in (1, -1):
-            for x in range(x0 + step, x0 + step * (reach + 1), step):
-                hole = (x, strip)
-                if seg.get(hole) != seg.get(pin):
-                    if r.layout.on_board(hole):
-                        ways.append(hole)  # a cut: nothing past it is on the pin's copper
-                    break
-                if hole in used or hole in bodies:
-                    ways.append(hole)
-                else:
-                    free.append(hole)
-        blocked = None
-        if not free:
-            ways.sort(key=lambda h: (abs(h[0] - x0), h[0]))
-            names = list(dict.fromkeys(mover or who for who, mover in
-                                       (_in_the_way(r, k, h) for h in ways)))  # fmt: skip
-            way = (f": {listed(names)} {'is' if len(names) == 1 else 'are'} in the way"
-                   if names else ": it's at the board's edge")  # fmt: skip
-            blocked = (f"No free hole by {pin_said(lim.anchor, lim.pin)}{way}. Move "
-                       f"{'it' if len(names) == 1 else 'one'}, or place {ref} elsewhere "
-                       "and it will show as a warning.")  # fmt: skip
-        found[ref] = Kept(lim.leg, net, runs(set(free)), blocked)
-    return found
-
-
-def next_part(circuit: Circuit, r: Reading, limits: Sequence[Limit] = ()) -> Next | None:
-    """The part to place next: one a placed part's pin keeps first (its decoupling cap,
-    D-400), then one whose nets are on the board already, then the nearest the input along
-    the signal, chips and transistors before the rest at the same distance."""
+def next_part(circuit: Circuit, r: Reading) -> Next | None:
+    """The part to place next: one whose nets are on the board already, then the nearest
+    the input along the signal, chips and transistors before the rest at the same distance."""
     placed = {p.ref for p in r.layout.parts}
     left = sorted(r.board.keys() - placed)
     if not left:
         return None
-    keepers = _keepers(r, limits)
-    if keepers:
-        ref = min(keepers)
-        lim = keepers[ref][0]
-        return Next(ref, f"Next: {ref}, by {pin_said(lim.anchor, lim.pin)}: {WHY[lim.why]}.")
     holes = _terminal_holes(r)
     on_board: dict[str, list[Terminal]] = defaultdict(list)
     for t in sorted(holes, key=lambda t: (holes[t][1], holes[t][0])):
@@ -476,14 +376,10 @@ def next_part(circuit: Circuit, r: Reading, limits: Sequence[Limit] = ()) -> Nex
     return Next(ref, f"Next: {ref}.")
 
 
-def guidance(layout: Layout, circuit: Circuit, models: ModelLibrary, table: FootprintTable,
-             loud: Sequence[LoudInput] = ()) -> Guidance:  # fmt: skip
-    """Everything the editor shows to guide the next step on `layout`; `loud`: the
-    high-gain stages' inputs for the placement limits (`probe.loud_inputs`)."""
+def guidance(layout: Layout, circuit: Circuit, models: ModelLibrary,
+             table: FootprintTable) -> Guidance:  # fmt: skip
+    """Everything the editor shows to guide the next step on `layout`."""
     r = read_layout(layout, circuit, models, table)
     cuts = suggested_cuts(r)
-    kept = guards(r.board, r.nets, loud)
-    k, links = _linking(r, cuts, zone_of(r.layout, r.board, kept), calm_nets(kept))
-    limits = placement_limits(circuit, r.nets, r.board, loud)
-    return Guidance(marks(r), ratsnest(r), cuts, links, _stuck(r, k),
-                    next_part(circuit, r, limits), kept_holes(r, k, limits))  # fmt: skip
+    k, links = _linking(r, cuts)
+    return Guidance(marks(r), ratsnest(r), cuts, links, _stuck(r, k), next_part(circuit, r))

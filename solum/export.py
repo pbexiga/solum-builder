@@ -262,6 +262,8 @@ def _item(part: Part, models: ModelLibrary, chosen: Mapping[str, Where]) -> _Ite
         return make(format_value(parse_value(part.value)), rating)
     if isinstance(part, Capacitor):
         kind = _CAP_KINDS[part.kind] if part.kind else "type not set"
+        if part.axial and part.kind == "electrolytic":
+            kind = "axial electrolytic"  # D-411
         if part.rating_v is not None:
             kind += f", {format_quantity(part.rating_v, 'V')}"
         elif part.kind in POLARISED:

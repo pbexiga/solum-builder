@@ -41,7 +41,7 @@ from solum.circuit.switches import (
 from solum.stripboard.board import Layout, layout_from_data
 from solum.units import format_quantity, format_value, parse_value
 
-SCHEMA_VERSION: Final = 41
+SCHEMA_VERSION: Final = 42
 
 Point = tuple[int, int]
 Rotation = Literal[0, 90, 180, 270]
@@ -146,6 +146,7 @@ class Capacitor(_Part):
     value: Farads
     kind: Literal["film", "ceramic", "c0g", "electrolytic", "tantalum"] | None = None
     rating_v: float | None = None
+    axial: bool = False  # an electrolytic with a lead at each end, lying flat (v42, D-411)
 
 
 class Inductor(_Part):
@@ -780,7 +781,7 @@ class Stripboard(_Model):
 
 
 class Circuit(_Model):
-    schema_: Literal[41] = Field(alias="schema")
+    schema_: Literal[42] = Field(alias="schema")
     id: str = Field(pattern=ID_PATTERN)
     name: str
     description: str = ""

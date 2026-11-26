@@ -102,8 +102,8 @@ def test_a_strip_stretches_resistors_and_links_across_it() -> None:
 def test_a_line_through_a_part_that_cant_stretch_is_refused() -> None:
     with pytest.raises(SizeError, match="before strip 5 would go through Q1"):
         insert_line(GOOD, BOARD, "strip", 4)  # between Q1's legs
-    with pytest.raises(SizeError, match="through C1"):
-        insert_line(GOOD, BOARD, "strip", 5)  # between a radial cap's legs
+    wider = insert_line(GOOD, BOARD, "strip", 5)  # a film cap's legs go 2 to 4 apart (D-410)
+    assert passes(wider)
 
 
 def test_an_empty_column_can_be_taken_out() -> None:
@@ -171,7 +171,7 @@ def test_fit_keeps_the_size_when_nothing_is_left() -> None:
 
 def test_an_empty_board_starts_with_room_wider_than_tall() -> None:
     columns, strips = start_size(BOARD)
-    assert (columns, strips) == (11, 8)  # 8 parts, 34 holes: 85 holes, 3 to 2
+    assert (columns, strips) == (11, 7)  # 8 parts, their least spans (D-410), 3 to 2
     assert start_size({}) == (10, 6)  # the least
 
 

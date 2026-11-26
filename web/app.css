@@ -162,7 +162,7 @@ kbd {
   overflow-y: auto;
   background: var(--surface-1);
   border-right: 1px solid var(--border);
-  padding: 6px 8px 16px;
+  padding: 6px 2px 16px 8px; /* the scroll bar's gutter is the right-hand gap: the bar sits by the tiles */
 }
 /* each group folds under its heading, the browser's own marker as the panes' (palette.js) */
 .palette-group > summary { cursor: pointer; color: var(--text-3); font-size: 10px; margin: 10px 2px 6px; }
@@ -276,14 +276,16 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
    it gives it back. A peek slides by a transform instead (side-panes.js): WebKit, the Mac
    app's, left a column moved by `left` drawn and hit-tested partly where it was, and a
    peeking column's own large view is tucked away, so there's nothing to carry */
-.side-pane { position: relative; left: 0; transition: left 0.18s ease-out, transform 0.18s ease-in, visibility 0s; }
+.side-pane { position: relative; left: 0; transition: left 0.18s ease-out, transform 0.18s ease-in, visibility 0s, --side-thumb 0.25s ease-out; }
 .side-pane.side-left { --slide: calc(-1 * var(--side-w)); }
 .side-pane.side-right { --slide: var(--side-w); }
 .side-pane.side-left.side-hidden { margin-left: calc(-1 * var(--side-w)); }
 .side-pane.side-right.side-hidden { margin-right: calc(-1 * var(--side-w)); }
-.side-pane.side-hidden { visibility: hidden; transition: left 0.18s ease-in, transform 0.18s ease-in, visibility 0s 0.18s; }
+.side-pane.side-hidden { visibility: hidden; transition: left 0.18s ease-in, transform 0.18s ease-in, visibility 0s 0.18s, --side-thumb 0.25s ease-out; }
 .side-pane.side-out { left: var(--slide); }
-.side-pane.side-hidden.side-peek { transform: translateX(calc(-1 * var(--slide))); visibility: visible; z-index: 35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); transition: transform 0.18s ease-out, visibility 0s; }
+.side-pane.side-hidden.side-peek { transform: translateX(calc(-1 * var(--slide))); visibility: visible; z-index: 35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); transition: transform 0.18s ease-out, visibility 0s, --side-thumb 0.25s ease-out; }
+/* sliding back from a peek: still above the canvas until it's gone (side-panes.js) */
+.side-pane.side-hidden.side-leaving { z-index: 35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
 .side-pane.no-slide { transition: none !important; }
 @media (prefers-reduced-motion: reduce) { .side-pane { transition: none !important; } }
 /* back once the peek has slid away, not carried by it */
@@ -294,12 +296,13 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 /* the side columns' scroll bars: thin, and shown only while the pointer is over the column
    or something in it has focus, so the palette's doesn't stand between the tiles and the
    canvas (the standard properties; WebKit, the Mac app's, reads the -webkit- ones) */
-.side-pane { scrollbar-width: thin; scrollbar-color: transparent transparent; }
-.side-pane:hover, .side-pane:focus-within { scrollbar-color: var(--text-3) transparent; }
+/* the thumb's colour is a registered property so it can fade in and out */
+@property --side-thumb { syntax: "<color>"; inherits: true; initial-value: transparent; }
+.side-pane { --side-thumb: transparent; scrollbar-width: thin; scrollbar-color: var(--side-thumb) transparent; }
+.side-pane:hover, .side-pane:focus-within { --side-thumb: var(--text-3); }
 .side-pane::-webkit-scrollbar { width: 6px; }
 .side-pane::-webkit-scrollbar-track { background: transparent; }
-.side-pane::-webkit-scrollbar-thumb { background: transparent; border-radius: 3px; }
-.side-pane:hover::-webkit-scrollbar-thumb, .side-pane:focus-within::-webkit-scrollbar-thumb { background: var(--text-3); }
+.side-pane::-webkit-scrollbar-thumb { background: var(--side-thumb); border-radius: 3px; }
 /* each side's bar, at the window's edge beyond its column, always there: a click hides or
    shows the column; resting on it while hidden peeks the column out (side-panes.js) */
 .side-bar { flex: none; position: relative; z-index: 36; /* over a peeking column (35): it never takes the bar's pointer; large views are inset from the edge */ width: 10px; padding: 0; border: 0; border-radius: 0; background: var(--surface-1); color: var(--text-2); font-size: 15px; line-height: 1; }
@@ -367,7 +370,7 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 .board-needs .reach-joined .state { color: var(--ok); }
 body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-show="board"] .panels { display: none; }
 /* the Tray: the palette's place in the Board view (D-371) */
-.board-tray { --side-w: 232px; width: var(--side-w); flex: none; overflow-y: auto; background: var(--surface-1); border-right: 1px solid var(--border); padding: 6px 10px 16px; font-size: 13px; }
+.board-tray { --side-w: 232px; width: var(--side-w); flex: none; overflow-y: auto; background: var(--surface-1); border-right: 1px solid var(--border); padding: 6px 4px 16px 10px; /* the scroll bar's gutter is the rest of the right-hand gap */ font-size: 13px; }
 .board-tray[hidden] { display: none; }
 .board-edit { display: flex; gap: 6px; margin: 6px 0 4px; } /* Cuts and Links (D-406) */
 .board-edit[hidden] { display: none; }
@@ -437,6 +440,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-drawing .cut-hole { pointer-events: none; }
 .board-drawing .link { stroke: var(--board-link); stroke-width: 1.4; }
 .board-drawing .link-end { fill: var(--board-link); }
+.board-drawing .link-tap { fill: var(--board-link); pointer-events: none; }
 /* off-board parts beside the board and their wires (D-375) */
 .board-drawing .off-item { cursor: grab; }
 .board-drawing .off-body { fill: var(--surface-1); stroke: var(--sch-line); stroke-width: 1.2; vector-effect: non-scaling-stroke; }
@@ -481,7 +485,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-drawing .band-yellow { fill: var(--band-yellow); } .board-drawing .band-green { fill: var(--band-green); }
 .board-drawing .band-blue { fill: var(--band-blue); } .board-drawing .band-violet { fill: var(--band-violet); }
 .board-drawing .band-grey { fill: var(--band-grey); } .board-drawing .band-white { fill: var(--band-white); }
-.board-drawing .band-gold { fill: var(--band-gold); } .board-drawing .band-silver, .board-drawing .band-cathode { fill: var(--band-silver); }
+.board-drawing .band-gold { fill: var(--band-gold); } .board-drawing .band-silver, .board-drawing .band-cathode, .board-drawing .band-minus { fill: var(--band-silver); }
 .board-drawing .stripe { fill: var(--band-silver); opacity: 0.8; pointer-events: none; }
 .board-drawing .notch { fill: none; stroke: var(--sch-line); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .board-drawing .dot { fill: var(--sch-line); }

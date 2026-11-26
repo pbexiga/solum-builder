@@ -231,6 +231,8 @@ export function inspectorFields(part, ctx) {
         text("value", "Value", part.value, { unit: "F" }),
         { ...select("kind", "Kind", part.kind, capKindOptions(ctx.capKinds ?? [])), hint: "Choosing capacitors", help: "capacitors" },
         num("rating_v", "Rating", part.rating_v, { unit: "V" }),
+        ...(part.kind === "electrolytic" ? [{ ...select("leads", "Leads", part.axial ? "axial" : "", [["", "radial (both at one end)"], ["axial", "axial (one at each end)"]]),
+          hint: "Axial lies flat on a stripboard, like a resistor (D-411)." }] : []),
       );
       break;
     case "inductor":
@@ -888,6 +890,7 @@ export function editFrom(part, values, ctx = {}) {
   }
   if ("show_pins" in values) patch.show_pins = v("show_pins") === "on" ? true : null;
   if ("at_rest" in values) patch.off_by_design = v("at_rest") === "off" ? true : null;
+  if ("leads" in values) patch.axial = v("leads") === "axial" ? true : null;
   if ("mounting" in values) patch.adapter = v("mounting") === "adapter" ? true : null;
   if ("style" in values) patch.style = v("style") === "inline" ? "inline" : null; // a triangle unless set (D-393)
   if ("source" in values) Object.assign(patch, guitarPatch(v, ctx.pickups ?? [], ctx.pickup));

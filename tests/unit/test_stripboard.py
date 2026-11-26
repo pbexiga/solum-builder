@@ -34,6 +34,7 @@ from solum.stripboard.check import (
     check_layout,
     joined_groups,
     outline_overlaps,
+    placement_warnings,
     stripboard_nets,
 )
 from solum.stripboard.footprints import (
@@ -42,7 +43,6 @@ from solum.stripboard.footprints import (
     dip_legs,
     drawing_data,
     leg_problem,
-    links_under,
     one_board_part,
     triangle_legs,
 )
@@ -126,11 +126,36 @@ def test_footprints_come_from_the_table_by_type_value_and_package() -> None:
     assert problems == []
     assert set(board) == {"Q1", "R1", "R2", "R3", "C1", "C2", "C3", "C4"}  # not VR1
     r1, c1, c3, q1 = board["R1"].footprint, board["C1"].footprint, board["C3"], board["Q1"]
-    assert (r1.shape, r1.flat, r1.stand, r1.length) == ("axial", 4, 1, 6.3)  # ¼ W
-    assert (c1.shape, c1.steps, c1.length) == ("radial", (2,), 7.2)  # 5n film, WIMA MKS 2
-    assert (c3.footprint.diameter, c3.footprint.steps) == (5, (1,))  # 47µ: 5 mm, NIC NRWS
+    assert (r1.shape, r1.flat, r1.stand, r1.length) == ("axial", 3, 1, 6.3)  # ¼ W (D-410)
+    assert (c1.shape, c1.steps, c1.length) == ("radial", (2, 3, 4), 7.2)  # 5n film, MKS 2
+    assert (c3.footprint.diameter, c3.footprint.steps) == (5, (1, 2, 3))  # 47µ: NIC NRWS
     assert q1.footprint.order == ("E", "B", "C")  # OC44: e b c in a line
     assert q1.pins["B"] == ("Q1", "B")
+
+
+def test_an_axial_electrolytic_lies_flat_or_stands_as_a_resistor(
+    circuit: Callable[..., CircuitBuilder],
+) -> None:
+    """D-411: by value at 25 V from Vishay's 021 ASM: 10µ in its 4.5 × 10 mm case, flat
+    from 4 holes apart as the published Fuzz Face lays it (10.16 mm: leads bent at the
+    body), standing from 2; 470µ, 10 × 18, flat from 8, standing from 3. Radial unless set."""
+    c = (
+        circuit()
+        .part("C1", "capacitor", "a", "0", value="10µ", kind="electrolytic", axial=True)
+        .part("C2", "capacitor", "a", "0", value="470µ", kind="electrolytic", axial=True)
+        .part("C3", "capacitor", "a", "0", value="10µ", kind="electrolytic")
+        .part("C4", "capacitor", "a", "0", value="2.2m", kind="electrolytic", axial=True)
+        .build()
+    )
+    board, problems = board_parts(c, MODELS, TABLE)
+    c1, c2 = board["C1"].footprint, board["C2"].footprint
+    assert (c1.shape, c1.flat, c1.stand, c1.length, c1.width) == ("axial", 4, 2, 10, 4.5)
+    assert (c2.flat, c2.stand, c2.length, c2.width) == (8, 3, 18, 10)
+    assert board["C3"].footprint.shape == "radial"
+    assert problems == ["There's no board size for an axial electrolytic as big as C4 yet."]
+    assert leg_problem(board["C1"], {"1": (2, 7), "2": (2, 3)}, False) is None
+    assert "at least 4 holes" in (leg_problem(board["C1"], {"1": (2, 6), "2": (2, 3)}, False) or "")
+    assert leg_problem(board["C1"], {"1": (2, 5), "2": (2, 3)}, True) is None
 
 
 def test_a_capacitor_without_a_type_or_size_gets_no_footprint(
@@ -156,11 +181,15 @@ def test_a_capacitor_without_a_type_or_size_gets_no_footprint(
 def test_legs_must_sit_as_the_footprint_allows() -> None:
     board, _ = board_parts(RANGEMASTER, MODELS, TABLE)
     r1, c1, q1 = board["R1"], board["C1"], board["Q1"]
-    assert leg_problem(r1, {"1": (2, 7), "2": (2, 3)}, False) is None  # 4 apart, flat
-    assert "at least 4 holes" in (leg_problem(r1, {"1": (2, 6), "2": (2, 3)}, False) or "")
+    assert leg_problem(r1, {"1": (2, 6), "2": (2, 3)}, False) is None  # 3 apart, flat (D-410)
+    assert leg_problem(r1, {"1": (2, 10), "2": (2, 3)}, False) is None  # long leads: no most
+    assert "at least 3 holes" in (leg_problem(r1, {"1": (2, 5), "2": (2, 3)}, False) or "")
     assert leg_problem(r1, {"1": (2, 4), "2": (2, 3)}, True) is None  # stood up
+    assert leg_problem(r1, {"1": (2, 5), "2": (2, 3)}, True) is None  # a lead bent further
     assert "one row or one column" in (leg_problem(r1, {"1": (3, 7), "2": (2, 3)}, False) or "")
-    assert "2 holes apart" in (leg_problem(c1, {"1": (2, 4), "2": (2, 3)}, False) or "")
+    assert leg_problem(c1, {"1": (2, 4), "2": (2, 3)}, False) == (
+        "C1's legs must be 2 to 4 holes apart."
+    )
     assert "can't be stood up" in (leg_problem(c1, {"1": (2, 5), "2": (2, 3)}, True) or "")
     assert leg_problem(q1, {"E": (4, 4), "B": (4, 6), "C": (4, 8)}, False) is None  # bent out
     assert "in a line, in order" in (
@@ -323,7 +352,10 @@ def test_a_wire_in_a_cut_hole_or_beside_a_leg_is_refused() -> None:
         cut.faults
     )
     wires = [{**w, "hole": "E3"} if w["from"] == "VR1.1" else w for w in GOOD["wires"]]
-    assert "Q1 and the wire from VR1 lug 1 share hole E3." in check(edited(wires=wires)).faults
+    beside = layout_from_data(edited(wires=wires))
+    assert "Q1 and the wire from VR1 lug 1 share E3: check both leads fit." in (
+        placement_warnings(beside, board_parts(RANGEMASTER, MODELS, TABLE)[0])
+    )  # D-410: a warning, the builder's call
 
 
 def test_missing_extra_and_off_board_parts_are_named() -> None:
@@ -333,22 +365,50 @@ def test_missing_extra_and_off_board_parts_are_named() -> None:
     assert "VR1 goes off the board: put it beside the board and wire it." in extra.faults
 
 
-def test_two_legs_in_a_hole_or_a_body_over_a_leg_is_refused() -> None:
-    shared = check(edited(parts={"R3": {"1": "F3", "2": "H2"}}))
-    assert "R3 and C3 share hole F3." in shared.faults
-    covered = check(edited(parts={"R2": {"1": "C4", "2": "C8"}, "R1": {"1": "C8", "2": "C4"}}))
-    assert any("share hole" in f for f in covered.faults)
+def test_two_legs_of_a_part_in_a_hole_or_a_body_over_a_leg_is_refused() -> None:
+    """D-410: what can't be built is a fault; two things from different parts in one hole
+    is a warning (`test_two_parts_in_a_hole_is_a_warning`)."""
+    twice = check(edited(parts={"R1": {"1": "C4", "2": "C4"}}))
+    assert "R1 has two legs in C4." in twice.faults
     over = check(edited(parts={"Q1": {"E": "C5", "B": "C6", "C": "C7"}}))  # under R1's body
     assert "R1's body covers C5, where Q1 goes." in over.faults
 
 
-def test_a_link_may_run_under_a_flat_resistor_but_not_over_a_leg() -> None:
-    under = edited(links=[*GOOD["links"], ["D3", "D9"]], cuts=["G8"])
-    assert not any("runs under" in f for f in check(under).faults)
-    flat_r1 = check(edited(links=[["B1", "B8"], ["K2", "K8"], ["C5", "C7"]]))
-    assert not any("runs under" in f for f in flat_r1.faults)
-    over = check(edited(links=[["B1", "B8"], ["K2", "K8"], ["E2", "E6"]]))
-    assert "The link from E2 to E6 passes over Q1 at E3." in over.faults
+def test_two_parts_in_a_hole_is_a_warning() -> None:
+    """R3 stood in C3's leg's hole: no "share" fault (the nets' check still has its say)."""
+    data = edited(parts={"R3": {"1": "F3", "2": "F4"}})
+    assert not any("share" in f for f in check(data).faults)
+    board = board_parts(RANGEMASTER, MODELS, TABLE)[0]
+    assert placement_warnings(layout_from_data(data), board)[:2] == [
+        "R3 and C3 share F3: check both leads fit.",
+        "R3 and C1 share F4: check both leads fit.",
+    ]
+
+
+def test_a_link_may_run_under_any_body_and_over_a_leg_with_insulated_wire() -> None:
+    """D-410: a link under a flat resistor, a film cap or an electrolytic says nothing; over
+    a leg it's a warning (insulated wire), not a fault."""
+    board = board_parts(RANGEMASTER, MODELS, TABLE)[0]
+    for link in (["C5", "C7"], ["F4", "F6"]):  # under R1's body, under C1's (film)
+        data = edited(links=[*GOOD["links"], link])
+        assert not any("under" in f for f in check(data).faults)
+        assert not any("under" in w for w in placement_warnings(layout_from_data(data), board))
+    over = layout_from_data(edited(links=[["B1", "B8"], ["K2", "K8"], ["E2", "E6"]]))
+    assert "The link from E2 to E6 passes over Q1 at E3: use insulated wire for it." in (
+        placement_warnings(over, board)
+    )
+    assert not any(
+        "passes over" in f for f in check_layout(over, RANGEMASTER, MODELS, TABLE).faults
+    )
+
+
+def test_two_link_ends_in_one_hole_are_a_tap_with_nothing_said() -> None:
+    """D-410: a link from strip 1 to 8 and one from 8 to 9 sharing B8, down one column (the
+    DS-1's "P joins 2, 6, 13"): no fault, no warning about the hole."""
+    tapped = layout_from_data(edited(links=[["B1", "B8"], ["B8", "B9"], ["K2", "K8"]]))
+    faults = check_layout(tapped, RANGEMASTER, MODELS, TABLE).faults
+    assert not any("share" in f or ("B8" in f and "link" in f) for f in faults)
+    assert placement_warnings(tapped, board_parts(RANGEMASTER, MODELS, TABLE)[0]) == []
 
 
 # --- the check: a chip -------------------------------------------------------------
@@ -413,20 +473,26 @@ def test_a_missed_cut_under_a_chip_is_named(circuit: Callable[..., CircuitBuilde
     assert result.faults == ["The strip under IC1 isn't cut between pins 3 and 6 (strip 5)."]
 
 
-def test_only_a_link_goes_between_a_chip_s_rows(circuit: Callable[..., CircuitBuilder]) -> None:
-    """D-401: the holes between a chip's rows are under its body: no leg or wire there, a
-    link may pass under it, the cuts under it are its own."""
+def test_a_leg_between_a_chip_s_rows_is_a_warning_and_a_link_may_pass(
+    circuit: Callable[..., CircuitBuilder],
+) -> None:
+    """D-410 (D-401 relaxed): the holes between a chip's rows are under its body; a leg
+    there is a warning (a socketed chip over a low part), not a fault; a link may pass
+    under it and say nothing."""
     c = _two_buffers(circuit)
     board, _ = board_parts(c, MODELS, TABLE)
     legs = {leg: parse_hole(name) for leg, name in CHIP["parts"]["IC1"].items()}
     assert body_holes(board["IC1"], legs, False) == {
         parse_hole(f"{col}{strip}") for col in "FG" for strip in range(3, 7)
     }
-    assert links_under(board["IC1"], False) and not links_under(board["C1"], False)
-    moved = check({**CHIP, "parts": {**CHIP["parts"], "R1": {"1": "G5", "2": "G6"}}}, c)
-    assert "IC1's body covers G5, where R1 goes." in moved.faults
-    under = check({**CHIP, "links": [*CHIP["links"], ["G2", "G7"]]}, c)
-    assert not any("runs under" in f for f in under.faults)
+    moved = {**CHIP, "parts": {**CHIP["parts"], "R1": {"1": "G5", "2": "G6"}}}
+    assert not any("body covers" in f for f in check(moved, c).faults)
+    assert placement_warnings(layout_from_data(moved), board) == [
+        "R1 sits under IC1: only if the chip is in a socket and the part is low enough."
+    ]
+    under = {**CHIP, "links": [*CHIP["links"], ["G2", "G7"]]}
+    assert check(under, c).faults == []
+    assert placement_warnings(layout_from_data(under), board) == []
 
 
 def test_a_chip_placed_along_a_strip_is_refused(circuit: Callable[..., CircuitBuilder]) -> None:

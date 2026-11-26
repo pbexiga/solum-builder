@@ -43,7 +43,7 @@ import { compactRun } from "./compact-run.js";
 import { boardNotes } from "./board-notes.js";
 import { needsCard } from "./needs.js";
 import { openForm } from "../editor/form.js";
-import { BOARD_SETTINGS, EDGE, overlapKey, overlapMarks, overlapParts, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, jackWiresWarning, legNeeds, legsAt, legsData, lineChanges, linkFrom, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, placedRows, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, standUpOf, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
+import { BOARD_SETTINGS, EDGE, overlapKey, overlapMarks, overlapParts, boardRefOf, choiceMark, chosenMarks, drawnBoard, firstPose, holeName, isOut, itemRefs, legNeeds, legsAt, legsData, lineChanges, linkFrom, linkTap, lugPlaces, lugWords as lugWordsOf, offBoardDrawing, markedHoles, runAt, middleOf, moveWords, netWords, netsLine, netsOf, offBoardRows, partsOnNet, placedRows, posed, poseOf, readBoard, readSettings, shownHoles, sizeLine, spotFor, staleLine, standUpOf, suggestionsLine, trayGroups, trayRows, whereMove, wireLine, wireObstacles, wireRoutes } from "./board-logic.js";
 
 /**
  * @typedef {import("../schematic/render.js").Selection} Selection
@@ -139,6 +139,8 @@ export function boardView(host, app) {
   let pressedPart = null;
   /** @type {Hole | null} where a link being laid starts */
   let linkStart = null;
+  /** @type {[Hole, Hole] | null} a link pressed: a click lifts it, a drag lays a new one from the hole (a tap at its end, D-410) */
+  let pressedLink = null;
   /** @type {{x: number, y: number} | null} a press on a tray row */
   let trayPress = null;
   /** @type {CarriedItem | null} */
@@ -176,8 +178,8 @@ export function boardView(host, app) {
       if (tool === "parts" && spot.lug) return (wiring = { lug: spot.lug, index: -1, end: "new" }), true;
       if (tool === "parts" && spot.item) return (pressedItem = { ref: spot.item, hole: spot.hole }), true;
       if (tool === "links") {
-        linkStart = spot.link ? null : spot.hole;
-        if (spot.link) void boardEdit({ kind: "unlink", holes: spot.link }, `Lift the link ${spot.link.map(holeName).join("–")}`);
+        linkStart = spot.hole;
+        pressedLink = spot.link;
         return true;
       }
       if (tool !== "parts" || !spot.ref || !placedLegs(spot.ref)) return false;
@@ -204,10 +206,11 @@ export function boardView(host, app) {
       if (carryItem) return void putItem(hole);
       if (item && !moved) return selectItem(item.ref);
       if (linkStart) {
-        const link = linkFrom(linkStart, hole);
-        linkStart = null;
+        const [link, lifted] = [moved ? linkFrom(linkStart, hole) : null, pressedLink];
+        linkStart = pressedLink = null;
         canvas.ghost(null);
         if (link) void boardEdit({ kind: "link", holes: link }, "Lay a link");
+        else if (lifted && !moved) void boardEdit({ kind: "unlink", holes: lifted }, `Lift the link ${lifted.map(holeName).join("–")}`);
         return;
       }
       if (carry) return void putDown(hole);
@@ -224,6 +227,7 @@ export function boardView(host, app) {
       if (locked) return true; // no menu
       if (spot.wire) return wireMenu(spot.wire.index, x, y), true;
       if (spot.item) return itemMenu(spot.item, x, y), true;
+      if (spot.link) return linkMenu(spot.link, spot.hole, x, y), true;
       if (spot.ref) return partMenu(spot.ref, x, y), true;
       return false;
     },
@@ -391,8 +395,6 @@ export function boardView(host, app) {
     carry = { ref, from: "tray", pose: firstPose(fp), grab: [0, 0] };
     svg.classList.add("carrying");
     showCarried();
-    const blocked = guidanceNow()?.kept?.[ref]?.blocked;
-    if (blocked) app.refuse(blocked); // said, never stopped (D-400)
     focus();
   }
 
@@ -621,7 +623,7 @@ export function boardView(host, app) {
     pressedItem = null;
     wiring = null;
     bending = null;
-    linkStart = null;
+    linkStart = pressedLink = null;
     svg.classList.remove("carrying");
     canvas.ghost(null);
     focus();
@@ -690,6 +692,16 @@ export function boardView(host, app) {
     const legs = legsAt(fp, next, middleOf(placed.legs));
     void boardEdit({ kind: "place", ref, legs: legsData(legs), standing: next.standing }, `${moveWords(move, pose)} ${ref}`);
     return true;
+  }
+
+  /** A link's menu: a tap where it was right-clicked, if between its ends (D-410), and lift it. */
+  function linkMenu(/** @type {[Hole, Hole]} */ link, /** @type {Hole} */ hole, /** @type {number} */ x, /** @type {number} */ y) {
+    const name = link.map(holeName).join("–");
+    const tap = linkTap(link, hole);
+    openMenu(x, y, [
+      ...(tap ? [{ label: `Tap here (${holeName(hole)})`, run: () => void boardEdit({ kind: "tap", holes: tap }, `Tap the link ${name} at ${holeName(hole)}`) }] : []),
+      { label: "Lift the link", run: () => void boardEdit({ kind: "unlink", holes: link }, `Lift the link ${name}`) },
+    ]);
   }
 
   /** A placed part's menu: each pose move it allows, and back to the tray. @param {string} ref @param {number} x @param {number} y */
@@ -1092,8 +1104,7 @@ export function boardView(host, app) {
         return row;
       })),
     );
-    const jacks = jackWiresWarning(progress, boardNow(), routes().all);
-    const said = [...progress.faults, ...progress.guidance.stuck, ...progress.warnings, ...(jacks ? [jacks] : [])];
+    const said = [...progress.faults, ...progress.guidance.stuck, ...progress.warnings];
     const overlaps = progress.overlaps ?? [];
     const dismissed = progress.dismissed ?? [];
     const stale = staleLine(progress.stale);

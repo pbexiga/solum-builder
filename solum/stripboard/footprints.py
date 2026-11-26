@@ -48,7 +48,7 @@ SURFACE_MOUNT = ("SMD", "SC-59", "SC-70", "SOT-", "SOD-")  # in a package's name
 @dataclass(frozen=True)
 class Footprint:
     """`steps`: the leg spacings allowed, in holes (a radial's span, an inline's step);
-    `flat`/`stand`: an axial's least span lying flat and its span standing; the body in mm
+    `flat`/`stand`: an axial's least span lying flat and standing (D-410); the body in mm
     (`length` along the legs' line, `width` across, or `diameter`; none: covers no hole);
     `order`: the legs in a line or a chip's, in pin order; `row_holes`: a DIP's rows apart;
     `package`: the table's package it was sized by, for the drawing (an inline part's)."""
@@ -406,8 +406,8 @@ def leg_problem(part: BoardPart, legs: dict[str, Hole], standing: bool) -> str |
         span = abs(a[0] - b[0]) + abs(a[1] - b[1])
         if fp.shape == "radial" and span not in fp.steps:
             return f"{part.ref}'s legs must be {_holes_text(fp.steps)} apart."
-        if fp.shape == "axial" and standing and span != fp.stand:
-            return f"{part.ref} standing has its legs {_holes_text((fp.stand,))} apart."
+        if fp.shape == "axial" and standing and span < fp.stand:
+            return f"{part.ref} standing needs its legs at least {fp.stand} holes apart."
         if fp.shape == "axial" and not standing and span < fp.flat:
             return f"{part.ref} lying flat needs its legs at least {fp.flat} holes apart."
         return None
@@ -436,8 +436,15 @@ def leg_problem(part: BoardPart, legs: dict[str, Hole], standing: bool) -> str |
 
 
 def _holes_text(steps: tuple[int, ...]) -> str:
-    words = [f"{n} hole" + ("s" if n > 1 else "") for n in steps]
-    return " or ".join(words)
+    """Leg steps in words: "1 hole", "1 or 2 holes", "2 to 4 holes"."""
+    unit = "hole" if steps == (1,) else "holes"
+    if len(steps) > 2 and list(steps) == list(range(steps[0], steps[-1] + 1)):
+        return f"{steps[0]} to {steps[-1]} {unit}"
+    return f"{' or '.join(str(n) for n in steps)} {unit}"
+
+
+LEAD = 0.6  # mm: a ¼ W resistor's or a small diode's lead, bent over a standing body (D-403)
+Outline = tuple[float, float, float, float, float]  # x0, y0, x1, y1 in mm; radius (0: a box)
 
 
 def body_holes(part: BoardPart, legs: dict[str, Hole], standing: bool) -> set[Hole]:
@@ -450,16 +457,6 @@ def body_holes(part: BoardPart, legs: dict[str, Hole], standing: bool) -> set[Ho
     y0 = min(h[1] for h in legs.values())
     shape = _body_shape(fp, frozenset((h[0] - x0, h[1] - y0) for h in legs.values()))
     return {(x + x0, y + y0) for x, y in shape}
-
-
-def links_under(part: BoardPart, standing: bool) -> bool:
-    """Whether a link may pass under the part's body: a flat resistor's or diode's, or a
-    chip's between its rows (D-401); never a leg or a wire's hole."""
-    return part.footprint.shape == "dip" or (part.footprint.shape == "axial" and not standing)
-
-
-LEAD = 0.6  # mm: a ¼ W resistor's or a small diode's lead, bent over a standing body (D-403)
-Outline = tuple[float, float, float, float, float]  # x0, y0, x1, y1 in mm; radius (0: a box)
 
 
 def body_outline(part: BoardPart, legs: dict[str, Hole], standing: bool) -> Outline | None:

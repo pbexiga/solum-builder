@@ -310,7 +310,11 @@ def test_see_through_from_its_button_or_t(page: Page, base_url: str) -> None:
 def click_mark(page: Page, axis: str, line: int) -> None:
     """Click a ruler's mark where it's drawn, as a user does: a wire's hover line over it
     is looked through (so Playwright's own click, refusing a covered element, isn't used)."""
-    box = page.locator(f"#board .ruler[data-axis='{axis}'][data-line='{line}']").bounding_box()
+    mark = page.locator(f"#board .ruler[data-axis='{axis}'][data-line='{line}']")
+    box, was = mark.bounding_box(), None
+    while box != was:  # the view refits once the check answers (the off-board parts drawn)
+        page.wait_for_timeout(100)
+        box, was = mark.bounding_box(), box
     assert box
     page.mouse.click(box["x"] + box["width"] / 2, box["y"] + box["height"] / 2)
 
@@ -413,10 +417,14 @@ def test_parts_are_placed_turned_moved_cut_and_linked_by_hand(
     expect(tray_r2).to_be_visible()
     box = tray_r2.bounding_box()
     assert box
-    drag_to(page, (box["x"] + 20, box["y"] + box["height"] / 2), hole_point(page, 9, 5))  # J6
+    # carried from the tray at its least span (3 apart, D-410), + stretches it to 4: J4–J8
+    page.mouse.move(box["x"] + 20, box["y"] + box["height"] / 2)
+    page.mouse.down()
+    page.mouse.move(*hole_point(page, 9, 5), steps=8)  # J6
+    page.keyboard.press("+")
+    page.mouse.up()
     r2 = page.locator("#board .board-part[data-ref='R2']")
     expect(r2).to_have_count(1)
-    # R2 biases Q1's base, so no limit keeps it by the base (D-400 amended): no warning
     expect(page.locator("#board-warnings-body")).to_contain_text("The board matches the circuit.")
     expect(page.locator("#board-warnings-body li.fault")).to_have_count(0)
     expect(page.locator("#dirty")).to_be_visible()
@@ -699,25 +707,6 @@ def test_the_guidance_marks_suggests_and_says_what_is_next(page: Page, base_url:
     expect(page.locator("#board .ghost .mark")).to_have_count(0)
 
 
-def test_a_part_kept_by_a_placed_pin_is_next_and_marked_by_it(page: Page, base_url: str) -> None:
-    """D-400: the Rangemaster with only Q1 placed (E3, B4, C5): the tray names C1 next, on
-    the high-gain stage's input, saying why; carried, it's marked only by Q1's base, within
-    2 holes either side on its strip (it alone is kept there, R1 and R2 biasing it: C4, D4,
-    F4, G4; its other leg's net isn't on the board yet)."""
-    board = load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml")
-    board["parts"] = {"Q1": board["parts"]["Q1"]}
-    board["standing"], board["cuts"], board["links"], board["wires"] = [], [], [], []
-    open_with_board(page, base_url, board)
-    show_board(page)
-    expect(page.locator("#board-tray-body .board-next")).to_contain_text(
-        "Next: C1, by Q1's base: the high-gain stage's input."
-    )
-    page.locator("#board-tray-body .board-next").click()
-    page.mouse.move(*hole_point(page, 9, 7))
-    expect(page.locator("#board .ghost .mark")).to_have_count(4)
-    page.keyboard.press("Escape")
-
-
 def test_the_realistic_drawing_see_through_and_the_copper_side(page: Page, base_url: str) -> None:
     """D-378: R1's colour bands and C3's stripe drawn, each leg named; See-through makes the
     bodies faint; Hide parts shows the copper side (unmirrored, D-390), and a cut clicked
@@ -898,8 +887,7 @@ def test_the_kept_board_is_exported_drawn_by_the_board_canvas(page: Page, base_u
         assert any(n.endswith("/stripboard.pdf") for n in z.namelist())
 
 
-# A starter whose Start board Tidy up makes smaller (the Rangemaster's no longer: its input
-# limit keeps C1 by Q1's base, D-400 amended).
+# A starter whose Start board Tidy up makes smaller.
 TIDIES = "tone-bender-mk2"
 
 
@@ -924,8 +912,8 @@ def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_s
     rest and Tidy up are greyed with the reason and Start a board is chosen. Each choice
     is confirmed, saying what will happen; each is one undo step. Once parts are placed
     nothing is chosen at first and Continue waits for a choice. On the Tone Bender MK2
-    Start a board without *Make the board compact* lays out 34 columns, Tidy up makes them
-    30 (D-388); Start a board on a board with parts names what it replaces, and Cancel
+    Start a board without *Make the board compact* lays out 19 columns, Tidy up makes them
+    18 (D-388, D-410); Start a board on a board with parts names what it replaces, and Cancel
     changes nothing."""
     open_with_board(page, base_url, None, TIDIES)
     page.locator("#board-button").click()
@@ -942,11 +930,11 @@ def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_s
     expect(page.locator(".ask-text")).to_contain_text("Lays out the whole board: 14 parts")
     page.locator(".ask-buttons button[data-answer='layout']").click()
     size = page.locator("#board-size-text")
-    expect(size).to_contain_text("34 × 13 holes")
+    expect(size).to_contain_text("19 × 10 holes")
     layout(page, "tidy")
     expect(page.locator(".ask-text")).to_contain_text("make the board smaller")
     page.locator(".ask-buttons button[data-answer='layout']").click()
-    expect(size).to_contain_text("30 × 13 holes")
+    expect(size).to_contain_text("18 × 10 holes")
     page.locator("#board-layout").click()  # parts placed: nothing chosen, Continue waits
     expect(dialog.locator("input[name='layout']:checked")).to_have_count(0)
     expect(dialog.locator("button[data-answer='go']")).to_be_disabled()
@@ -965,9 +953,9 @@ def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_s
         "Replace the board"
     )
     page.locator(".ask-buttons button[data-answer='cancel']").click()
-    expect(size).to_contain_text("30 × 13 holes")
+    expect(size).to_contain_text("18 × 10 holes")
     page.keyboard.press("Control+z")  # the tidy: one step
-    expect(size).to_contain_text("34 × 13 holes")
+    expect(size).to_contain_text("19 × 10 holes")
     page.keyboard.press("Control+z")  # the layout: one step
     expect(size).to_have_text("Empty board")
 
@@ -977,7 +965,7 @@ def test_the_layout_dialog_s_standing_choice_is_kept_with_the_board(
 ) -> None:
     """D-403: the dialog's last line, Standing resistors and diodes, opens on the board's
     own choice (When needed on a new board). Start a board with Prefer stands the
-    Fuzz Face's resistors (10 × 6 for 10 × 10 flat) and the board keeps the choice: the
+    Fuzz Face's R3 (14 × 8 for 13 × 9 flat) and the board keeps the choice: the
     dialog opens on Prefer next time; Never then lays everything flat again."""
     open_with_board(page, base_url, None, "fuzz-face")
     page.locator("#board-button").click()
@@ -991,14 +979,14 @@ def test_the_layout_dialog_s_standing_choice_is_kept_with_the_board(
     dialog.locator("button[data-answer='go']").click()
     page.locator(".ask-buttons button[data-answer='layout']").click()
     size = page.locator("#board-size-text")
-    expect(size).to_contain_text("10 × 6 holes")
+    expect(size).to_contain_text("14 × 8 holes")
     page.locator("#board-layout").click()
     expect(dialog.locator("input[name='layout-stand'][value='prefer']")).to_be_checked()
     dialog.locator(".layout-choice[data-layout='start'] input").check()
     dialog.locator("input[name='layout-stand'][value='never']").check()
     dialog.locator("button[data-answer='go']").click()
     page.locator(".ask-buttons button[data-answer='layout']").click()
-    expect(size).to_contain_text("10 × 10 holes")
+    expect(size).to_contain_text("13 × 9 holes")
 
 
 def test_the_tray_shows_the_placed_parts_on_request(page: Page, base_url: str) -> None:
@@ -1008,7 +996,7 @@ def test_the_tray_shows_the_placed_parts_on_request(page: Page, base_url: str) -
     page.locator("#board-button").click()
     layout(page, "start", compact=True)
     page.locator(".ask-buttons button[data-answer='layout']").click()
-    expect(page.locator("#board-size-text")).to_contain_text("30 × 13 holes")
+    expect(page.locator("#board-size-text")).to_contain_text("18 × 10 holes")
     toggle = page.locator("#board-tray .placed-toggle")
     expect(toggle).to_have_text("▸ Show placed (19)")  # 14 on the board, 5 beside it
     expect(page.locator("#board-tray li.placed")).to_have_count(0)
@@ -1034,7 +1022,7 @@ def test_the_layout_says_what_its_doing_while_it_works(page: Page, base_url: str
     expect(button).to_be_disabled()
     expect(page.locator("#board-working")).to_be_visible()
     held[0].continue_()
-    expect(page.locator("#board-size-text")).to_contain_text("30 × 13 holes")
+    expect(page.locator("#board-size-text")).to_contain_text("18 × 10 holes")
     expect(page.locator("#board-working")).to_be_hidden()
     expect(button).to_have_text("Layout…")
 

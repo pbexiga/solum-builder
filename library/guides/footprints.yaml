@@ -3,20 +3,22 @@
 #
 # Sizes in mm, as the source gives them; `holes` are the leg steps on the board (0.1"
 # each) a part's legs are bent to. A capacitor's go from its own pitch to a hole or two
-# wider, the leads bent out (the user, 2026-11-26, D-410): a longer reach bridges strips. A body covers every hole whose centre is inside it
+# wider, the leads bent out (the user, 2026-11-26, D-410): a longer reach bridges strips.
+# Each span is the least the part's real size allows, as published boards lay it (D-410).
+# A body covers every hole whose centre is inside it
 # (a box: `length` along the legs' line, `width` across; round: `diameter`), centred on
 # its legs. A part with no entry for its type, kind, value or package gets no layout, and
 # the window says so; a surface-mount part (SMD, SC-59, SOT-23) never goes on a stripboard.
 
 # Two legs lying flat (at least `flat` holes apart: the legs bend just past the body) or
-# standing (`stand` holes apart, the body upright over one leg, covering no other hole).
-# A link may run under a flat one's body (the user, 2026-11-19).
+# standing (at least `stand` holes apart, the body upright over one leg, covering no other
+# hole). Longer leads are the builder's call: no most. A link may run under any body (D-410).
 axial:
   resistor:  # by rating: the first whose `max_watts` holds the part's (¼ W when none set)
     - max_watts: 0.25
       length: 6.3
       diameter: 2.5
-      flat: 3  # 7.62 mm (300 mil, 4 holes), the leads bent just past the body, as published layouts lay it (D-410)
+      flat: 3  # 7.62 mm (300 mil, 4 holes), the leads bent just past the body (D-410)
       stand: 1
       source: >
         KiCad R_Axial_DIN0207_L6.3mm_D2.5mm (P7.62mm Horizontal, P2.54mm Vertical),
@@ -33,7 +35,7 @@ axial:
     - package: DO-35
       length: 4.0
       diameter: 2.0
-      flat: 3
+      flat: 2  # 5.08 mm: legs bent at the body, as published boards lay it (D-410)
       stand: 1
       source: >
         KiCad D_DO-35_SOD27 (P7.62mm Horizontal, P2.54mm Vertical), after Diodes Inc.'s
@@ -41,14 +43,14 @@ axial:
     - package: DO-34
       length: 3.04
       diameter: 1.6
-      flat: 3
+      flat: 2  # 5.08 mm: legs bent at the body, as published boards lay it (D-410)
       stand: 1
       source: KiCad D_DO-34_SOD68 (P7.62mm Horizontal, P2.54mm Vertical), after NXP's KTY83 outline
     - package: DO-41
       length: 5.2
       diameter: 2.7
-      flat: 3
-      stand: 2
+      flat: 2  # 5.08 mm: legs bent at the body, as published boards lay it (D-410)
+      stand: 1
       source: >
         KiCad D_DO-41_SOD81 (P7.62mm Horizontal, P5.08mm Vertical), after Diodes Inc.'s
         DO-41 outline (diodes.com Package-Files/DO-41-Plastic.pdf)

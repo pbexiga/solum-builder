@@ -282,10 +282,9 @@ export function boardRefOf(footprints, ref) {
  *   legs: Record<string, LegProgress[]>, faults: string[], stale: string[], warnings: string[],
  *   done: boolean, nets_done: number, footprints: Record<string, Footprint>, start_size: [number, number],
  *   shorted: Array<[number, number, number]>, rails?: Record<string, Array<[number, number, number]>>, guidance: Guidance,
- *   choices?: Record<string, Choice>, overlaps?: Overlap[], dismissed?: Overlap[], notes?: NoteState[],
- *   jacks_apart?: boolean}} Progress
+ *   choices?: Record<string, Choice>, overlaps?: Overlap[], dismissed?: Overlap[], notes?: NoteState[]}} Progress
  *   what `/api/stripboard` answers (check.py's `Progress`, with the footprints and the
- *   guidance, D-377; `jacks_apart`: the jacks' wires must be kept apart, D-404)
+ *   guidance, D-377)
  * @typedef {{where: "board" | "off-board", moved: boolean, why: string | null}} Choice where a
  *   part is built (D-385): `moved` there by the builder's choice, `why` it can't be moved
  */
@@ -521,48 +520,6 @@ export function offBoardDrawing(progress, board) {
     return line ? [{ index, line, title: `${lugWords(progress, wire.lug)} to ${far}: drag either end to move it`, pad: Boolean(wire.hole) }] : [];
   });
   return { items: shown.map((item) => ({ item, at: board.spots[item.ref] ?? progress.spots[item.ref] ?? /** @type {Hole} */ ([0, 0]) })), wires };
-}
-
-export const APART_MM = 10; // the jacks' wires may run side by side this far, no further (P6i2, D-404)
-
-/**
- * How far two wires' routes run side by side, in mm: their straight runs along the same
- * way in one lane or neighbouring lanes (`GRID` apart or closer), overlaps added up.
- * @param {Array<[number, number]>} a @param {Array<[number, number]>} b @returns {number}
- */
-export function sideBySide(a, b) {
-  const runs = (/** @type {Array<[number, number]>} */ r) => r.slice(1).map((p, i) => [r[i], p]);
-  let total = 0;
-  for (const [[ax1, ay1], [ax2, ay2]] of runs(a)) {
-    for (const [[bx1, by1], [bx2, by2]] of runs(b)) {
-      const across = ay1 === ay2 && by1 === by2 ? [ay1, by1, [ax1, ax2], [bx1, bx2]]
-        : ax1 === ax2 && bx1 === bx2 ? [ax1, bx1, [ay1, ay2], [by1, by2]] : null;
-      if (!across) continue;
-      const [p, q, [s1, s2], [t1, t2]] = /** @type {[number, number, number[], number[]]} */ (across);
-      if (Math.abs(p - q) > GRID + 0.01) continue;
-      total += Math.max(0, Math.min(Math.max(s1, s2), Math.max(t1, t2)) - Math.max(Math.min(s1, s2), Math.min(t1, t2)));
-    }
-  }
-  return total / MM;
-}
-
-/**
- * The warning for the jacks' wires run side by side (P6i2, D-404): only when the check
- * found the output in phase with the input at high gain (`jacks_apart`), and the IN and
- * OUT jacks' tip wires run side by side further than `APART_MM`. Null otherwise.
- * @param {Progress | null} progress @param {{wires: Array<{lug: string, to: string | null}>}} board
- * @param {Array<Array<[number, number]> | null>} routes each of `board.wires`' drawn route
- * @returns {string | null}
- */
-export function jackWiresWarning(progress, board, routes) {
-  if (!progress?.jacks_apart) return null;
-  const tip = (/** @type {string} */ ref) => progress.items.find((i) => i.ref === ref)?.lugs.find((l) => l.label === "T")?.end;
-  const [inTip, outTip] = [tip("IN"), tip("OUT")];
-  if (!inTip || !outTip) return null;
-  const of = (/** @type {string} */ end) => board.wires.flatMap((w, i) => (w.lug === end || w.to === end) && routes[i] ? [/** @type {Array<[number, number]>} */ (routes[i])] : []);
-  const far = Math.max(0, ...of(inTip).flatMap((a) => of(outTip).map((b) => sideBySide(a, b))));
-  if (far <= APART_MM) return null;
-  return `The input and output jacks' wires run side by side for ${Math.round(far)} mm: the output is in phase with the input, with high gain between, so it can feed back and squeal. Route one round the other side of the board, or keep them more than a hole apart.`;
 }
 
 const CORNER = STEP * 0.25; // a bend's rounding
@@ -1300,8 +1257,7 @@ export function legPattern(fp, pose) {
   } else if (fp.shape === "triangle") { // a trimmer (D-393): 1 above 3, the wiper a hole back to the left, as footprints.TRIANGLE
     at = [[1, 0], [0, 1], [1, 2]];
   } else {
-    const step = fp.shape === "axial" && pose.standing ? fp.stand : pose.span;
-    at = fp.legs.map((_, i) => [0, i * step]);
+    at = fp.legs.map((_, i) => [0, i * pose.span]);
   }
   const names = pose.flipped && fp.shape !== "dip" ? [...fp.legs].reverse() : fp.legs; // a triangle's ends 1 and 3 swapped
   const turn = (/** @type {[number, number]} */ [x, y]) => /** @type {[number, number]} */ ([-y, x]);
@@ -1339,7 +1295,7 @@ export function poseOf(fp, legs, standing) {
   const a = at.get(fp.legs[0]);
   const b = at.get(fp.legs[1]);
   if (!a || !b) return null;
-  const span = fp.shape === "dip" ? 0 : fp.shape === "axial" && standing ? fp.flat : Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
+  const span = fp.shape === "dip" ? 0 : Math.abs(a[0] - b[0]) + Math.abs(a[1] - b[1]);
   for (const flipped of [false, true]) {
     for (let turns = 0; turns < 4; turns++) {
       const pose = { turns, flipped, standing, span };
@@ -1360,20 +1316,20 @@ export function poseOf(fp, legs, standing) {
  * A pose changed by one of the editor's moves: `turn` a quarter (a chip half round: it
  * only sits across the strips), `flip` its legs' order (not a chip), `stand` up or lay
  * flat (an axial part), `longer` or `shorter` its span (a flat axial part from its least
- * span, a radial or a line through its footprint's spacings). Null when the move doesn't
- * apply to this part.
+ * span, flat or standing, D-410; a radial or a line through its footprint's spacings). Null
+ * when the move doesn't apply to this part.
  * @param {Footprint} fp @param {Pose} pose @param {"turn" | "flip" | "stand" | "longer" | "shorter"} move
  * @returns {Pose | null}
  */
 export function posed(fp, pose, move) {
   if (move === "turn") return { ...pose, turns: (pose.turns + (fp.shape === "dip" ? 2 : 1)) % 4 };
   if (move === "flip") return fp.shape === "dip" ? null : { ...pose, flipped: !pose.flipped };
-  if (move === "stand") return fp.shape === "axial" ? { ...pose, standing: !pose.standing, span: fp.flat } : null;
-  if (fp.shape === "dip" || pose.standing) return null;
+  if (move === "stand") return fp.shape === "axial" ? { ...pose, standing: !pose.standing, span: pose.standing ? fp.flat : fp.stand } : null;
+  if (fp.shape === "dip") return null;
   const by = move === "longer" ? 1 : -1;
   if (fp.shape === "axial") {
     const span = pose.span + by;
-    return span >= fp.flat ? { ...pose, span } : null;
+    return span >= (pose.standing ? fp.stand : fp.flat) ? { ...pose, span } : null;
   }
   const i = fp.steps.indexOf(pose.span) + by;
   return i >= 0 && i < fp.steps.length ? { ...pose, span: fp.steps[i] } : null;
@@ -1412,30 +1368,24 @@ export function linkFrom(from, to) {
 
 /**
  * @typedef {{net: string, a: Hole, b: Hole}} Strand a ratsnest line: two pieces of `net` not joined yet
- * @typedef {{leg: string, net: string, holes: Array<[number, number, number]>, blocked: string | null}} Kept
- *   a tray part a placed pin keeps (D-400): the free holes that keep it there, as runs;
- *   none free: `blocked` names what's in the way
  * @typedef {{marks: Record<string, Array<[number, number, number]>>, ratsnest: Strand[], cuts: Hole[],
- *   links: Array<[Hole, Hole]>, stuck: string[], next: {ref: string, why: string} | null,
- *   kept?: Record<string, Kept>}} Guidance
+ *   links: Array<[Hole, Hole]>, stuck: string[], next: {ref: string, why: string} | null}} Guidance
  *   what `/api/stripboard` sends to guide the next step (guidance.py, D-377): each net's
  *   free copper as runs, the ratsnest, the suggested cuts and links, a sentence per join no
- *   suggested link makes (why, what to do), what to place next, the parts placed pins keep
+ *   suggested link makes (why, what to do), what to place next
  */
 
 /**
  * The holes marked for a part being carried: the free copper of each of its legs' nets,
- * where that leg would join its net (none for a net not on the board yet); for a part a
- * placed pin keeps, its kept leg's net only by that pin (D-400), unless none is free.
+ * where that leg would join its net (none for a net not on the board yet).
  * @param {Progress} progress @param {Guidance} guidance @param {string} ref @returns {Hole[]}
  */
 export function markedHoles(progress, guidance, ref) {
   const nets = new Set((progress.legs[ref] ?? []).map((l) => l.net).filter((n) => n !== null));
-  const kept = guidance.kept?.[ref];
   /** @type {Hole[]} */
   const holes = [];
   for (const net of nets) {
-    const runs = kept && kept.net === net && kept.holes.length ? kept.holes : guidance.marks[/** @type {string} */ (net)] ?? [];
+    const runs = guidance.marks[/** @type {string} */ (net)] ?? [];
     for (const [strip, c0, c1] of runs) {
       for (let c = c0; c <= c1; c++) holes.push([c, strip]);
     }

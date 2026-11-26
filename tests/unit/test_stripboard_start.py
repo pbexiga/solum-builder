@@ -7,15 +7,13 @@ from typing import Any
 import pytest
 
 from solum.circuit.build import CircuitBuilder
-from solum.circuit.connectivity import connect
 from solum.circuit.io import load_circuit
 from solum.guides import footprint_table
 from solum.models import load_models
 from solum.stripboard.board import Layout, layout_from_data
 from solum.stripboard.check import check_layout
 from solum.stripboard.footprints import board_parts
-from solum.stripboard.limits import Limit, LoudInput, broken_limits, placement_limits
-from solum.stripboard.start import StartError, _Block, _units, shapes, start_for_me
+from solum.stripboard.start import StartError, shapes, start_for_me
 from solum.yamlio import load_yaml
 
 REPO = Path(__file__).resolve().parents[2]
@@ -140,74 +138,10 @@ def test_a_part_with_two_legs_on_one_net_gets_a_short_link_beside_it() -> None:
         assert beside, f"{ref}: no short link beside it in {board.links}"
 
 
-# --- placement limits (D-367, D-400) -------------------------------------------------
-# The high-gain stages' inputs as `probe.loud_inputs` finds them (it needs ngspice).
-LOUD = {
-    "dallas-rangemaster": [LoudInput("Q1", "B", frozenset({"GND", "V-"}))],
-    "fuzz-face": [LoudInput("Q1", "B", frozenset({"GND", "V-"}))],
-    "proco-rat": [LoudInput("IC1", "+", frozenset({"GND", "IC1.comp1", "V+", "VREF"}))],
-}  # fmt: skip
-# What Start still breaks: the Rat's C4 (feedback, pin 2) lands a hole too far, the chip's
-# own link left of pin 1 taking the nearer column (Build a full layout meets it).
-BROKEN = {"proco-rat": [("IC1", "2")]}
-
-
-def test_units_take_each_kept_part_into_the_block_of_the_part_whose_pin_keeps_it() -> None:
-    """In the order given; a part kept by two pins goes with the first; a part that keeps
-    others (a transistor kept by a chip's pin) stays a block of its own."""
-    limits = [Limit("C1", "1", "IC1", "8", "decoupling"), Limit("R4", "2", "IC1", "2", "feedback"),
-              Limit("R4", "1", "Q1", "E", "bypass"), Limit("Q1", "B", "IC1", "1", "input"),
-              Limit("C2", "1", "Q1", "E", "bypass")]  # fmt: skip
-    order = ["R1", "Q1", "C2", "IC1", "C1", "R4", "R9"]
-    assert _units(order, limits) == [
-        "R1",
-        _Block("Q1", (limits[4],)),
-        _Block("IC1", (limits[0], limits[1])),
-        "R9",
-    ]
-    assert _units(["R1", "R2"], limits) == ["R1", "R2"]
-
-
-@pytest.mark.parametrize("name", sorted(LOUD))
-def test_start_over_breaks_no_placement_limit(name: str) -> None:
-    """The Rangemaster and Fuzz Face (bypass caps, the parts in series on each base) and the
-    Rat (its chip's decoupling cap, feedback parts, the input on +): every kept part by its
-    pin, but for those in `BROKEN`."""
+@pytest.mark.parametrize("name", ["dallas-rangemaster", "fuzz-face", "proco-rat", "ts808"])
+def test_start_over_lays_out_the_starters_with_nothing_left(name: str) -> None:
+    """With D-410's spans (a resistor flat from 3 apart, film caps 2–4): every leg on its
+    net's copper and every net joined, nothing left to the builder."""
     c = load_circuit(LIBRARY / "starters" / f"{name}.json")
-    limits = placement_limits(c, connect(c), board_parts(c, MODELS, TABLE)[0], LOUD[name])
-    assert limits
-    made = start_for_me(None, c, MODELS, TABLE, fill=False, loud=LOUD[name])
-    assert made.left == () and check_layout(made.layout, c, MODELS, TABLE).ok
-    assert broken_limits(made.layout, limits) == BROKEN.get(name, [])
-
-
-def test_a_chip_s_kept_parts_sit_by_their_pins() -> None:
-    """A boost: the feedback resistor goes before the chip by pin 2 (the first column, its
-    strip runs left), the decoupling cap after it by pin 7, each on the pin's strip."""
-    c = (
-        CircuitBuilder()
-        .rail("V+", 9)
-        .part("IN", "guitar", "in")
-        .part("C1", "capacitor", "in", "p", value="100n", kind="film")
-        .part("R1", "resistor", "p", "vb", value="1M")
-        .part("R2", "resistor", "V+", "vb", value="10k")
-        .part("R3", "resistor", "vb", "GND", value="10k")
-        .part("C2", "capacitor", "vb", "GND", value="10u", kind="electrolytic")
-        .part("IC1", "opamp", "p", "m", "o", model="TL071")
-        .part("R4", "resistor", "o", "m", value="100k")
-        .part("R5", "resistor", "m", "g", value="4k7")
-        .part("C4", "capacitor", "g", "GND", value="1u", kind="film")
-        .part("C5", "capacitor", "V+", "GND", value="100n", kind="ceramic")
-        .part("C6", "capacitor", "o", "out", value="1u", kind="film")
-        .part("R6", "resistor", "out", "GND", value="100k")
-        .part("OUT", "amp", "out")
-    ).build()
-    limits = placement_limits(c, connect(c), board_parts(c, MODELS, TABLE)[0])
-    assert [(lim.part, lim.pin) for lim in limits] == [("C5", "7"), ("R4", "2")]
     made = start_for_me(None, c, MODELS, TABLE, fill=False)
     assert made.left == () and check_layout(made.layout, c, MODELS, TABLE).ok
-    assert broken_limits(made.layout, limits) == []
-    legs = {p.ref: dict(p.legs) for p in made.layout.parts}
-    pin2, pin7 = legs["IC1"]["2"], legs["IC1"]["7"]
-    assert legs["R4"]["2"][1] == pin2[1] and legs["R4"]["2"][0] < pin2[0]
-    assert legs["C5"]["1"][1] == pin7[1] and legs["C5"]["1"][0] > pin7[0]

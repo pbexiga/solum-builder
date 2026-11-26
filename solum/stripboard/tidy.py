@@ -6,22 +6,21 @@ out an empty column or strip, drop a link or a cut, slide a part left (with the 
 links of its own columns, then alone) or up, slide a link, a cut or a pad, shorten a link,
 and, when the board's choice is Prefer (D-403), stand a resistor or diode up (one leg
 kept, the other beside it) and take out the lines that empties. When needed, a part is
-stood up only where that leaves fewer placement limits broken and warnings (links near
-a sensitive part, strips alongside a high-gain input), whatever it does to the size, and
-then the board is tidied again (the user: as the other layout choices do).
+stood up only where that leaves fewer warnings (`placement_warnings`), whatever it does
+to the size, and then the board is tidied again (the user: as the other layout choices do).
 After each step the board is trimmed to what's on it. A step is kept when the check passes
 and the board's size, cuts and links are each no worse and its measure (size, cuts, links,
 standing parts when preferred, the links' length, then how far everything sits from the
 top left) is smaller, so the
 search always ends and the same board always tidies the same way. It can't break a board,
-nor a placement limit it met (D-367, D-400): a part kept by its pin stays there.
+nor add a warning.
 
 Parts placed wrongly (the wrong way round, or a leg on a strip carrying only other nets,
 as the progress check names them) are offered back to the tray first: with `mend` they go
 back and *Fill the rest* lays them out again, then the board is tidied.
 """
 
-from collections.abc import Callable, Iterator, Sequence
+from collections.abc import Callable, Iterator
 from contextlib import suppress
 from dataclasses import dataclass, replace
 from functools import partial
@@ -29,21 +28,18 @@ from functools import partial
 from solum.circuit.schema import Circuit
 from solum.guides import FootprintTable
 from solum.models import ModelLibrary
-from solum.stripboard.apart import alongside
 from solum.stripboard.board import Hole, Layout, Link, Placed, StandUp
 from solum.stripboard.check import (
     check_layout,
-    copper_groups,
     either_way,
     joined_groups,
     misfits,
     occupants,
     placement_faults,
+    placement_warnings,
     read_layout,
 )
 from solum.stripboard.footprints import BoardPart
-from solum.stripboard.limits import LoudInput, broken_limits, placement_limits
-from solum.stripboard.quiet import guards, noisy_links
 from solum.stripboard.size import SizeError, remove_line, trim
 from solum.stripboard.start import StartError, start_for_me
 
@@ -192,7 +188,7 @@ def stand_where_needed(layout: Layout, passes: Callable[[Layout], bool],
                        faults: Callable[[Layout], int],
                        board: dict[str, BoardPart]) -> Layout:  # fmt: skip
     """`layout` with parts stood up one at a time, each kept only where the board still
-    `passes` and has fewer `faults` (limits broken and warnings), the first such in the
+    `passes` and has fewer `faults` (warnings), the first such in the
     steps' order, until none helps (When needed, D-403)."""
     best, worst = layout, faults(layout)
     while worst:
@@ -293,11 +289,9 @@ def joins(layout: Layout, turnable: frozenset[str] = frozenset()) -> Joins:
 
 
 def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: FootprintTable,
-            mend: bool = False, loud: Sequence[LoudInput] = (),
-            stand_up: StandUp | None = None) -> Tidied:  # fmt: skip
-    """*Tidy up* on a board: smaller, still passing the check, every placement limit it
-    met still met and no more links near a sensitive net's parts than it had (D-402; `loud`:
-    the high-gain stages' inputs, `probe.loud_inputs`), the same every run; `stand_up`:
+            mend: bool = False, stand_up: StandUp | None = None) -> Tidied:  # fmt: skip
+    """*Tidy up* on a board: smaller, still passing the check, with no more warnings than
+    it had (`placement_warnings`), the same every run; `stand_up`:
     standing resistors and diodes (None: the board's own choice), kept with it (D-403).
     Parts placed wrongly raise `MendFirst` unless `mend`, which lays them out
     again first. A board that doesn't pass, or can't be made smaller, raises `TidyError`
@@ -311,7 +305,7 @@ def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Footp
     if mended:
         tray = replace(layout, parts=tuple(p for p in layout.parts if p.ref not in mended))
         try:
-            filled = start_for_me(tray, circuit, models, table, fill=True, loud=loud)
+            filled = start_for_me(tray, circuit, models, table, fill=True)
         except StartError as err:
             raise TidyError(str(err)) from None
         if filled.left:
@@ -325,34 +319,20 @@ def tidy_up(layout: Layout, circuit: Circuit, models: ModelLibrary, table: Footp
     turnable = frozenset(ref for ref, part in r.board.items()
                          if len(part.legs) == 2 and either_way(part, kinds.get(ref)))  # fmt: skip
     board, off, same = r.board, r.off_board, joins(layout, turnable)
-    limits = placement_limits(circuit, r.nets, board, loud)
-    kept = guards(board, r.nets, loud)
 
-    def broken(made: Layout) -> set[tuple[str, str]]:
-        return set(broken_limits(made, limits, turnable))
-
-    def noisy(made: Layout) -> int:
-        return len(noisy_links(made, board, r.nets, kept))
-
-    def beside(made: Layout) -> int:  # D-404
-        return len(alongside(made, board, r.nets, loud, copper_groups(made)))
+    def faults(made: Layout) -> int:
+        return len(placement_warnings(made, board))
 
     def no_worse(than: Layout) -> Callable[[Layout], bool]:
-        """A step's check: the board still passes, with no limit broken that `than` met
-        and no more warnings."""
-        was = (broken(than), noisy(than), beside(than))
+        """A step's check: the board still passes, with no more warnings than `than`."""
+        was = faults(than)
 
         def passes(made: Layout) -> bool:  # quickest first: holes, joins, then the check
             return (not occupants(made)[1] and joins(made, turnable) == same
-                    and not placement_faults(made, board, off)
-                    and broken(made) <= was[0] and noisy(made) <= was[1]
-                    and beside(made) <= was[2]
+                    and not placement_faults(made, board, off) and faults(made) <= was
                     and check_layout(made, circuit, models, table).ok)  # fmt: skip
 
         return passes
-
-    def faults(made: Layout) -> int:
-        return len(broken(made)) + noisy(made) + beside(made)
 
     tidied = tidy_steps(layout, no_worse(layout), board)
     if tidied.stand_up == "prefer":  # then parts stood up, from there: never worse (D-403)

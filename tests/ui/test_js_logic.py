@@ -1216,6 +1216,10 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
           turned: b.legsAt(r, turned, [5, 5]),
           standing: b.legsAt(r, standing, [5, 5]),
           longer: b.posed(r, first, 'longer').span,
+          stoodLonger: b.posed(r, standing, 'longer').span,
+          stoodShorter: b.posed(r, standing, 'shorter'),
+          laidAgain: b.posed(r, b.posed(r, standing, 'longer'), 'stand').span,
+          poseStood: b.poseOf(r, [['1', [2, 2]], ['2', [2, 4]]], true),
           shorter: b.posed(r, first, 'shorter'),
           flippedQ: placedQ,
           poseQ: b.poseOf(q, placedQ, false),
@@ -1242,6 +1246,9 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
     assert got["turned"] == [["1", [7, 5]], ["2", [3, 5]]]  # a quarter turn about its middle
     assert got["standing"] == [["1", [5, 4]], ["2", [5, 5]]]
     assert got["longer"] == 5 and got["shorter"] is None
+    # standing, a lead bent further: from its least span up (D-410); laid flat, its least
+    assert got["stoodLonger"] == 2 and got["stoodShorter"] is None and got["laidAgain"] == 4
+    assert got["poseStood"] == {"turns": 0, "flipped": False, "standing": True, "span": 2}
     assert got["flippedQ"] == [["C", [5, 4]], ["B", [5, 5]], ["E", [5, 6]]]
     # a line turned half round is the same legs as flipped: the first match is kept
     assert got["poseQ"] == {"turns": 2, "flipped": False, "standing": False, "span": 1}
@@ -1698,28 +1705,6 @@ def test_the_board_s_overlap_marks_and_note_forms(js: Page) -> None:
     assert got["parts"] == ["C1"]
 
 
-def test_a_part_a_placed_pin_keeps_is_marked_only_by_that_pin(js: Page) -> None:
-    """D-400: C1's leg 1 kept by IC1's pin 8: its net marked only where the pin keeps it;
-    its other leg's net as usual; with none free (blocked), the net's copper as usual."""
-    got = run(
-        js,
-        """
-        const b = await m('board/board-logic.js');
-        const progress = { legs: { C1: [{ leg: '1', net: 'V+' }, { leg: '2', net: 'GND' }] } };
-        const marks = { 'V+': [[2, 0, 9]], GND: [[5, 0, 1]] };
-        const kept = { leg: '1', net: 'V+', holes: [[2, 8, 9]], blocked: null };
-        const as = (holes) => holes.map(([c, s]) => `${c},${s}`);
-        return {
-          kept: as(b.markedHoles(progress, { marks, kept: { C1: kept } }, 'C1')),
-          blocked: as(b.markedHoles(progress, { marks, kept: { C1: { ...kept, holes: [], blocked: 'No free hole' } } }, 'C1')).length,
-          plain: as(b.markedHoles(progress, { marks }, 'C1')).length,
-        };
-        """,
-    )
-    assert got["kept"] == ["8,2", "9,2", "0,5", "1,5"]
-    assert got["blocked"] == got["plain"] == 12
-
-
 def test_build_a_full_layout_s_words(js: Page) -> None:
     """D-399: the times in words, the confirmation (replacing a board, or an empty one),
     the figures, the time left, and a try that's the same board as an earlier one."""
@@ -1762,33 +1747,3 @@ def test_build_a_full_layout_s_words(js: Page) -> None:
                              "About 20 seconds left.", "About 20 seconds left.",
                              "Almost done.", "Taking a little longer than expected…"]  # fmt: skip
     assert got["same"] == [1, -1]
-
-
-def test_the_jacks_wires_side_by_side(js: Page) -> None:
-    """P6i2 (D-404): two routes' runs along the same way in one lane or the next (half a
-    hole apart) add up, in mm; the warning only when the check says the jacks must be kept
-    apart and they run beside each other more than 10 mm."""
-    got = run(
-        js,
-        """
-        const b = await m('board/board-logic.js');
-        const a = [[0, 0], [100, 0], [100, 50]];  // 10 holes along, then down
-        const near = [[20, 5], [80, 5]];  // half a hole below, 6 holes along
-        const apart = [[20, 10], [80, 10]];  // a hole below: two lanes apart
-        const progress = { jacks_apart: true, items: [
-          { ref: 'IN', lugs: [{ end: 'IN.out', label: 'T' }] },
-          { ref: 'OUT', lugs: [{ end: 'OUT.in', label: 'T' }, { end: 'OUT.S', label: 'S' }] }] };
-        const board = { wires: [{ lug: 'IN.out', to: null }, { lug: 'OUT.in', to: null }] };
-        return {
-          near: b.sideBySide(a, near), apart: b.sideBySide(a, apart), down: b.sideBySide(a, [[105, 0], [105, 50]]),
-          warned: b.jackWiresWarning(progress, board, [a, near]),
-          short: b.jackWiresWarning(progress, board, [a, [[20, 5], [40, 5]]]),
-          fine: b.jackWiresWarning({ ...progress, jacks_apart: false }, board, [a, near]),
-        };
-        """,
-    )
-    assert got["near"] == pytest.approx(60 / (10 / 2.54))  # 6 holes: 15.24 mm
-    assert got["apart"] == 0
-    assert got["down"] == pytest.approx(50 / (10 / 2.54))
-    assert got["warned"].startswith("The input and output jacks' wires run side by side for 15 mm")
-    assert got["short"] is None and got["fine"] is None

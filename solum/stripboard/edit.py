@@ -130,6 +130,9 @@ def _uncut(layout: Layout, hole: Hole) -> Layout:
 def _link(layout: Layout, a: Hole, b: Hole) -> Layout:
     if a[0] != b[0] or a[1] == b[1]:
         raise EditError("A link runs down a column, from one strip to another.")
+    if any({link.a, link.b} == {a, b} for link in layout.links):
+        top, bottom = sorted((a, b), key=lambda h: h[1])
+        raise EditError(f"There's a link from {_name(top)} to {_name(bottom)} already.")
     return replace(layout, links=(*layout.links, Link(a, b)))
 
 
@@ -311,9 +314,9 @@ def edit_layout(layout: Layout, edit: BoardEdit, board: Mapping[str, BoardPart],
     the board has been saved before (an empty one is drawn at its start size and becomes
     just what's on it at the first placement).
     `grow`: auto-grow (D-372): the board fits what's on it; off, an edit past its edge is
-    refused. A placement fault the edit brings (two things in a hole, a body over a leg, a
-    link over a leg) refuses it, named. Dismissals of overlaps the edit ends are dropped;
-    notes and dismissals change nothing else (D-398)."""
+    refused. A placement fault the edit brings (two legs of a part in a hole, a body over a
+    leg, bodies on one hole) refuses it, named; a warning doesn't (D-410). Dismissals of
+    overlaps the edit ends are dropped; notes and dismissals change nothing else (D-398)."""
     if edit.kind in _NOTED:
         return Edited(_noted(layout, edit, board, set(board) | set(items or {}) | set(known)))
     edited = _edited(layout, edit, board, started, grow, items or {}, known, usual or {})

@@ -7,8 +7,8 @@ size (Quick, or Thorough's four times as many), so the same circuit and choice g
 same board on any machine: a slower one, or one with fewer workers (the seeds queue),
 takes longer to the same board. *Try another* is the next set of seeds. When standing
 parts is allowed, a fifth attempt lies everything flat (`FLAT_SEED`, the same steps:
-Never's own board for that seed), so standing shapes can't leave a board breaking more
-limits or with more warnings than lying flat would (D-403); it's the same for every try,
+Never's own board for that seed), so standing shapes can't leave a board worse than
+lying flat would (D-403); it's the same for every try,
 so it runs once per board and Try another reuses it. When every attempt, flat one too,
 ends with a problem on its board (a short, a net not joined, a leg off the copper), the
 rest of Never's seeds for the try run flat before Start a board's layout is kept: When
@@ -23,7 +23,7 @@ import os
 import queue
 import threading
 import time
-from collections.abc import Callable, Sequence
+from collections.abc import Callable
 from concurrent.futures import ProcessPoolExecutor
 from dataclasses import dataclass
 from multiprocessing.synchronize import Event as MpEvent
@@ -37,7 +37,6 @@ from solum.guides import FootprintTable
 from solum.models import ModelLibrary
 from solum.stripboard.board import Layout, layout_data
 from solum.stripboard.compact import Found, Problem, best_of, problem, search
-from solum.stripboard.limits import LoudInput
 
 WORKERS = min(4, max(1, (os.cpu_count() or 2) - 1))  # as renders' (D-083)
 ATTEMPTS = 4  # seeds a run tries (P6h5a's measurement)
@@ -81,11 +80,11 @@ def _init_worker(settings: Settings, reports: "mp.Queue[Any]", stop: MpEvent) ->
                    reports=reports, stop=stop)  # fmt: skip
 
 
-def _attempt(layout: Layout | None, circuit: Circuit, loud: Sequence[LoudInput],
-             steps: int, seed: int, tag: int, flat: bool) -> Found | None:  # fmt: skip
+def _attempt(layout: Layout | None, circuit: Circuit, steps: int, seed: int, tag: int,
+             flat: bool) -> Found | None:  # fmt: skip
     """One seed's search (`flat`: no standing shape), its progress reported every
     `PROGRESS_EVERY` seconds under `tag`."""
-    pb = problem(layout, circuit, _worker["models"], _worker["table"], loud)
+    pb = problem(layout, circuit, _worker["models"], _worker["table"])
     reports, stop = _worker["reports"], _worker["stop"]
     last = 0.0
 
@@ -109,17 +108,15 @@ _flat: dict[str, Found | None] = {}  # the flat attempt's board, by what it sear
 FLAT_KEPT = 16  # boards' flat attempts kept, the oldest dropped
 
 
-def _flat_key(pb: Problem, circuit: Circuit, loud: Sequence[LoudInput], steps: int) -> str:
+def _flat_key(pb: Problem, circuit: Circuit, steps: int) -> str:
     """What decides the flat attempt's board, hashed by content: the circuit as saved, the
-    base board and its choices, the high-gain inputs the simulation found, the parts'
-    shapes as the search sees them (footprints from the library), and the steps. The
-    rules are the code's: the cache lives in the server's memory, so a new version of
+    base board and its choices, the parts' shapes as the search sees them (footprints
+    from the library), and the steps. The rules are the code's: the cache lives in the server's
+    memory, so a new version of
     them (a restart) starts it empty."""
     shapes = [[ref, [[v.legs, v.standing] for v in pb.variants[ref]]] for ref in pb.refs]
     return content_hash(json.dumps(circuit_to_dict(circuit), sort_keys=True),
                         json.dumps(layout_data(pb.base), sort_keys=True),
-                        json.dumps([[i.ref, i.pin, sorted(i.quiet), sorted(i.along)]
-                                    for i in loud]),
                         json.dumps(shapes), str(steps))  # fmt: skip
 
 
@@ -143,9 +140,8 @@ class Run:
     stopped: bool
 
 
-def run(pb: Problem, layout: Layout | None, circuit: Circuit, loud: Sequence[LoudInput],
-        thorough: bool, attempt: int, settings: Settings, report: Report,
-        stop: threading.Event) -> Run:  # fmt: skip
+def run(pb: Problem, layout: Layout | None, circuit: Circuit, thorough: bool, attempt: int,
+        settings: Settings, report: Report, stop: threading.Event) -> Run:  # fmt: skip
     """Try `attempt`'s seeds on up to `WORKERS` processes, telling `report` the steps done
     and each new best; `stop` set ends every worker at its next check, with its best so
     far. `pb` is the server's own reading of the same circuit (the workers read it again:
@@ -153,7 +149,7 @@ def run(pb: Problem, layout: Layout | None, circuit: Circuit, loud: Sequence[Lou
     steps = steps_for(len(pb.refs), thorough)
     seeds = seeds_for(attempt)
     jobs = [(s, s, False) for s in seeds]  # (tag, seed, flat)
-    flat = _flat_key(pb, circuit, loud, steps) if flat_needed(pb) else None
+    flat = _flat_key(pb, circuit, steps) if flat_needed(pb) else None
     known: list[Found | None] = []
     if flat is not None and flat in _flat:
         known.append(_flat[flat])  # Try another: the same flat board as before
@@ -184,7 +180,7 @@ def run(pb: Problem, layout: Layout | None, circuit: Circuit, loud: Sequence[Lou
         with ProcessPoolExecutor(min(WORKERS, len(jobs)), mp_context=ctx,
                                  initializer=_init_worker,
                                  initargs=(settings, reports, halt)) as pool:  # fmt: skip
-            futures = [pool.submit(_attempt, layout, circuit, loud, steps, seed, tag, fl)
+            futures = [pool.submit(_attempt, layout, circuit, steps, seed, tag, fl)
                        for tag, seed, fl in jobs]  # fmt: skip
             while not {tag for tag, _, _ in jobs} <= ended:
                 if stop.is_set():
@@ -221,12 +217,12 @@ class Estimate:
 
 
 def estimate(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
-             table: FootprintTable, loud: Sequence[LoudInput]) -> Estimate:  # fmt: skip
+             table: FootprintTable) -> Estimate:  # fmt: skip
     """Time `SAMPLE` seconds of real steps on this circuit, here, and scale them to each
     choice's steps, attempts and workers, corrected for the run speeding up as the board
     shrinks (`RAMP`); plus what every worker does first (the base)."""
     started = time.monotonic()
-    pb = problem(layout, circuit, models, table, loud)
+    pb = problem(layout, circuit, models, table)
     base = time.monotonic() - started
     timing: list[float] = []
     counted = 0
@@ -242,7 +238,7 @@ def estimate(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
 
     def seconds(thorough: bool) -> float:
         steps = steps_for(len(pb.refs), thorough)
-        flat = flat_needed(pb) and _flat_key(pb, circuit, loud, steps) not in _flat
+        flat = flat_needed(pb) and _flat_key(pb, circuit, steps) not in _flat
         # the flat attempt too (D-403): it starts as the quickest attempt ends and runs
         # mostly alone, so it costs its share, not a whole round (TS808: +26 %, 4 workers)
         rounds = max(math.ceil(ATTEMPTS / WORKERS), (ATTEMPTS + flat) / WORKERS)

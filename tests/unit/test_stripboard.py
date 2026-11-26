@@ -188,8 +188,9 @@ def test_legs_must_sit_as_the_footprint_allows() -> None:
     assert leg_problem(r1, {"1": (2, 5), "2": (2, 3)}, True) is None  # a lead bent further
     assert "one row or one column" in (leg_problem(r1, {"1": (3, 7), "2": (2, 3)}, False) or "")
     assert leg_problem(c1, {"1": (2, 4), "2": (2, 3)}, False) == (
-        "C1's legs must be 2 to 4 holes apart."
+        "C1's legs must be at least 2 holes apart."
     )
+    assert leg_problem(c1, {"1": (2, 9), "2": (2, 3)}, False) is None  # leads bent out: no most
     assert "can't be stood up" in (leg_problem(c1, {"1": (2, 5), "2": (2, 3)}, True) or "")
     assert leg_problem(q1, {"E": (4, 4), "B": (4, 6), "C": (4, 8)}, False) is None  # bent out
     assert "in a line, in order" in (

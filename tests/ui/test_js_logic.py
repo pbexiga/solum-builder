@@ -1206,6 +1206,7 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
         const q = { shape: 'inline', legs: ['E', 'B', 'C'], steps: [1, 2], flat: 0, stand: 0, refs: ['Q1'] };
         const ic = { shape: 'dip', legs: ['1','2','3','4','5','6','7','8'], steps: [], flat: 0, stand: 0, row_holes: 3, refs: ['IC1A'] };
         const tr = { shape: 'triangle', legs: ['1', '2', '3'], steps: [1], flat: 0, stand: 0, length: 6.6, width: 6.99, diameter: 0, refs: ['TR1'] };
+        const c = { shape: 'radial', legs: ['1', '2'], steps: [2, 3, 4], flat: 0, stand: 0, refs: ['C1'] };
         const first = b.firstPose(r);
         const turned = b.posed(r, first, 'turn');
         const standing = b.posed(r, first, 'stand');
@@ -1225,6 +1226,9 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
           poseQ: b.poseOf(q, placedQ, false),
           poseTurned: b.poseOf(r, b.legsAt(r, b.posed(r, turned, 'turn'), [2, 2]), false),
           wideQ: b.posed(q, b.firstPose(q), 'longer').span,
+          capFirst: b.firstPose(c).span,
+          capPastSteps: b.posed(c, { ...b.firstPose(c), span: 4 }, 'longer').span,
+          capShorter: b.posed(c, b.firstPose(c), 'shorter'),
           chip: b.legsAt(ic, b.firstPose(ic), [4, 4]),
           chipTurn: b.posed(ic, b.firstPose(ic), 'turn').turns,
           chipFlip: b.posed(ic, b.firstPose(ic), 'flip'),
@@ -1260,6 +1264,8 @@ def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> 
     # a line turned half round is the same legs as flipped: the first match is kept
     assert got["poseQ"] == {"turns": 2, "flipped": False, "standing": False, "span": 1}
     assert got["poseTurned"]["turns"] == 2 and got["wideQ"] == 2
+    # a radial from its first spacing up, past its listed ones: no most (D-410)
+    assert got["capFirst"] == 2 and got["capPastSteps"] == 5 and got["capShorter"] is None
     assert got["chip"][:2] == [["1", [2, 2]], ["2", [2, 3]]] and got["chip"][7] == ["8", [5, 2]]
     assert got["chipTurn"] == 2 and got["chipFlip"] is None
     # D-393: a triangle trimmer as footprints.triangle_legs, turned a quarter clockwise, or

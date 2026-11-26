@@ -2,8 +2,9 @@
 # and what its body covers. The one source for the stripboard layouts (`solum.stripboard`).
 #
 # Sizes in mm, as the source gives them; `holes` are the leg steps on the board (0.1"
-# each) a part's legs are bent to. A capacitor's go from its own pitch to a hole or two
-# wider, the leads bent out (the user, 2026-11-26, D-410): a longer reach bridges strips.
+# each) a part's legs are bent to. A capacitor's go from its own pitch up, the leads bent
+# out (D-410): the listed spans are the ones the layout help tries; any wider is allowed
+# (published boards bend a standing electrolytic's lead 5 to 7 holes to reach a strip).
 # Each span is the least the part's real size allows, as published boards lay it (D-410).
 # A body covers every hole whose centre is inside it
 # (a box: `length` along the legs' line, `width` across; round: `diameter`), centred on

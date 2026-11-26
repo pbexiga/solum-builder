@@ -1316,8 +1316,9 @@ export function poseOf(fp, legs, standing) {
 /**
  * A pose changed by one of the editor's moves: `turn` a quarter (a chip half round: it
  * only sits across the strips), `flip` its legs' order (not a chip), `stand` up or lay
- * flat (an axial part), `longer` or `shorter` its span (a flat axial part from its least
- * span, flat or standing, D-410; a radial or a line through its footprint's spacings). Null
+ * flat (an axial part), `longer` or `shorter` its span (an axial part from its least
+ * span, flat or standing, a radial from its first spacing, no most, D-410; a line through
+ * its footprint's spacings). Null
  * when the move doesn't apply to this part.
  * @param {Footprint} fp @param {Pose} pose @param {"turn" | "flip" | "stand" | "longer" | "shorter"} move
  * @returns {Pose | null}
@@ -1328,9 +1329,10 @@ export function posed(fp, pose, move) {
   if (move === "stand") return fp.shape === "axial" ? { ...pose, standing: !pose.standing, span: pose.standing ? fp.flat : fp.stand } : null;
   if (fp.shape === "dip") return null;
   const by = move === "longer" ? 1 : -1;
-  if (fp.shape === "axial") {
+  if (fp.shape === "axial" || fp.shape === "radial") {
     const span = pose.span + by;
-    return span >= (pose.standing ? fp.stand : fp.flat) ? { ...pose, span } : null;
+    const least = fp.shape === "radial" ? fp.steps[0] : pose.standing ? fp.stand : fp.flat;
+    return span >= least ? { ...pose, span } : null;
   }
   const i = fp.steps.indexOf(pose.span) + by;
   return i >= 0 && i < fp.steps.length ? { ...pose, span: fp.steps[i] } : null;

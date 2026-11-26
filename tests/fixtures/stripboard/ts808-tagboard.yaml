@@ -1,0 +1,101 @@
+# A published stripboard layout entered by hand (P8 R2, D-410): our check must pass it with
+# no faults, its warnings as listed below (tests/unit/test_stripboard_samples.py).
+# Read hole by hole from the drawing by the agent, 2026-11-26.
+starter: ts808
+drawing:
+  title: Tagboard Effects, "Ibanez TS808 layout 2" (IvIark)
+  url: https://tagboardeffects.blogspot.com/2012/02/ibanez-ts808.html
+  size: [20, 15]
+  cuts: 17
+  links: 7
+# The drawing's own parts where they differ from our starter's, applied to the circuit
+# before the check: `model` a part's model, `half` which half of the dual op-amp a stage is.
+circuit:
+  model: {Q1: 2N5088, Q3: 2N5088}
+  half: {IC1A: b, IC1B: a}
+differences:
+  - >-
+    It names a 2N5088 (E-B-C) for both transistors, drawn C-B-E down a column; our 2SC1815
+    is E-C-B, so the test uses the 2N5088 the drawing names.
+  - >-
+    The drive stage is the chip's pins 1-3 and the tone stage pins 5-7; ours has them the
+    other way round (IC1B drives), so the test swaps the halves.
+  - >-
+    Its 4K7 and 47n from the drive stage's inverting input go 4K7 first, then 47n to the
+    4.5 V rail; ours has C3 (47n) first, then R4 (4k7) to ground. C3 lies across H5-H11 (the
+    4K7's holes) and R4 stands from G11 to the ground strip (G12).
+  - >-
+    Its Level lug 1 goes to the 4.5 V rail (T9, through the T9-T10 link); ours goes to
+    ground (D12 here).
+  - >-
+    It has a 1M from the input to ground and an LED with a 4K7 (the LED+ wire); ours has
+    neither, so they're left off.
+  - >-
+    The input's and the output's sleeves share its ground hole: the input's goes to T12
+    here, the output's to it.
+  - >-
+    The drawing shows the TS808's two links ending in one hole (M4, "note double link in
+    single hole"): a tap, under the chip between its rows (D-410). Its 100n lies along strip
+    14 over a cut (Q14).
+warnings:
+  - "Q1 and R1's bodies touch: move one a hole further away if you can."
+  - "R2 and C2's bodies touch: move one a hole further away if you can."
+  - "C2 and C4's bodies touch: move one a hole further away if you can."
+  - "C2 and R6's bodies touch: move one a hole further away if you can."
+  - "R5 and C6's bodies touch: move one a hole further away if you can."
+  - "R11 and C7's bodies touch: move one a hole further away if you can."
+  - "R33 and C5's bodies touch: move one a hole further away if you can."
+  - "C5 and R9's bodies touch: move one a hole further away if you can."
+size: [20, 15]
+parts:
+  IC1: {1: K4, 2: K5, 3: K6, 4: K7, 5: N7, 6: N6, 7: N5, 8: N4}
+  Q1: {C: B1, B: B2, E: B3}
+  Q3: {C: N13, B: N14, E: N15}
+  R1: {1: C6, 2: C2}
+  R2: {1: E9, 2: E2}
+  R3: {1: D3, 2: D7}
+  C2: {1: F3, 2: F6}
+  C4: {1: G2, 2: G4}
+  R6: {1: G5, 2: G8}
+  C3: {1: H11, 2: H5}
+  R4: {1: G12, 2: G11}
+  D1: {A: I3, K: I5}
+  D2: {K: J3, A: J5}
+  R5: {1: J6, 2: J9}
+  C1: {1: B9, 2: B6}
+  R35: {1: F14, 2: F7}
+  R34: {1: E15, 2: E11}
+  C9: {1: B11, 2: B14}
+  C16: {1: I9, 2: I12}
+  C17: {1: K13, 2: K12}
+  R14: {1: H15, 2: H12}
+  C6: {1: K11, 2: K8}
+  R10: {1: N8, 2: N12}
+  R8: {1: O3, 2: O7}
+  R12: {1: P8, 2: P1}
+  R11: {1: Q6, 2: Q3}
+  C7: {1: R3, 2: R1}
+  R13: {1: O9, 2: O14}
+  R32: {1: P9, 2: P12}
+  R33: {1: Q13, 2: Q9}
+  C5: {1: R7, 2: R12}
+  R9: {1: S7, 2: S10}
+  C8: {1: R14, 2: P14}
+standing: [R4]
+cuts: [O1, F2, G3, P3, L4, M5, M6, M7, D6, I8, O8, D9, Q10, F11, J11, G14, Q14]
+links: [[M1, M4], [M4, M13], [L2, L5], [L7, L12], [H3, H4], [S3, S5], [T9, T10]]
+wires:
+  - {from: V+, hole: A1}
+  - {from: VR1.2, hole: A4}
+  - {from: VR1.1, hole: A8}
+  - {from: IN.out, hole: A9}
+  - {from: GND, hole: A12}
+  - {from: OUT.in, hole: A14}
+  - {from: VR3.1, hole: D12}
+  - {from: IN.S, hole: T12}
+  - {from: OUT.S, lug: IN.S}
+  - {from: VR2.3, hole: T6}
+  - {from: VR2.1, hole: T7}
+  - {from: VR3.3, hole: T8}
+  - {from: VR2.2, hole: T11}
+  - {from: VR3.2, hole: T14}

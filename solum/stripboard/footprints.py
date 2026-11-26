@@ -47,7 +47,8 @@ SURFACE_MOUNT = ("SMD", "SC-59", "SC-70", "SOT-", "SOD-")  # in a package's name
 
 @dataclass(frozen=True)
 class Footprint:
-    """`steps`: the leg spacings allowed, in holes (a radial's span, an inline's step);
+    """`steps`: the leg spacings, in holes (an inline's step; a radial's from the first up,
+    no most, D-410: the steps are the spans the layout help tries);
     `flat`/`stand`: an axial's least span lying flat and standing (D-410); the body in mm
     (`length` along the legs' line, `width` across, or `diameter`; none: covers no hole);
     `order`: the legs in a line or a chip's, in pin order; `row_holes`: a DIP's rows apart;
@@ -416,8 +417,9 @@ def leg_problem(part: BoardPart, legs: dict[str, Hole], standing: bool) -> str |
         if a[0] != b[0] and a[1] != b[1]:
             return f"{part.ref}'s legs must be in one row or one column."
         span = abs(a[0] - b[0]) + abs(a[1] - b[1])
-        if fp.shape == "radial" and span not in fp.steps:
-            return f"{part.ref}'s legs must be {_holes_text(fp.steps)} apart."
+        if fp.shape == "radial" and span < fp.steps[0]:  # no most: leads bent out (D-410)
+            unit = "hole" if fp.steps[0] == 1 else "holes"
+            return f"{part.ref}'s legs must be at least {fp.steps[0]} {unit} apart."
         if fp.shape == "axial" and standing and span < fp.stand:
             return f"{part.ref} standing needs its legs at least {fp.stand} holes apart."
         if fp.shape == "axial" and not standing and span < fp.flat:

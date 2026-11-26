@@ -1,0 +1,85 @@
+# A published stripboard layout entered by hand (P8 R2, D-410): our check must pass it with
+# no faults, its warnings as listed below (tests/unit/test_stripboard_samples.py).
+# Read hole by hole from the drawing by the agent, 2026-11-26.
+starter: proco-rat
+drawing:
+  title: Tagboard Effects, "Proco Rat - smaller" (IvIark)
+  url: https://tagboardeffects.blogspot.com/2012/01/proco-rat.html
+  size: [20, 11]
+  cuts: 15
+  links: 4
+# The drawing's own parts where they differ from our starter's, applied to the circuit
+# before the check: `omit` parts it leaves out.
+circuit:
+  omit: [C12]
+# How it differs from our starter, and what was changed to draw it on our circuit:
+differences:
+  - >-
+    It has no 100n beside the 100u on the supply (our C12): left out of the circuit.
+  - >-
+    It puts the 1K before the 4u7 after the op-amp; ours has C7 (4u7) first, then R6 (1K).
+    The two swap places: C7 lies across L5-L8 (the 1K's holes) and R6 stands at K8-K9.
+  - >-
+    Its 100u is drawn about 5 mm across; ours is the 6.3 mm can of a 25 V part, which at S
+    covers C8's leg (R8) and the 9 V wire (T7). C11 moves a column right (T4-T11), the 9 V
+    wire to Q7 and Filter lug 1 to S9.
+  - >-
+    Distortion lugs 2-3 and Filter lugs 2-3 are joined at the pot; ours leaves lug 3
+    unwired. The input and the 9 V share the drawing's ground hole: the input's sleeve here
+    goes to B11, the output's sleeve to it, Volume lug 1 to the output's sleeve.
+  - >-
+    Its D1 and D2 are our D2 and D1 (each by its band); its capacitors reach on long bent
+    leads (the 4u7 at E 5 apart, the 1n film at F 6 apart), which our check allows (D-410).
+warnings:
+  - "R4 and C5's bodies touch: move one a hole further away if you can."
+  - "C2 and C13's bodies touch: move one a hole further away if you can."
+  - "R11 and C7's bodies touch: move one a hole further away if you can."
+  - "C7 and R10's bodies touch: move one a hole further away if you can."
+  - "C10 and Q1's bodies touch: move one a hole further away if you can."
+  - "C11 hangs past the board's edge: check it clears the enclosure, or move it in."
+size: [20, 11]
+parts:
+  IC1: {1: G3, 2: G4, 3: G5, 4: G6, 5: J6, 6: J5, 7: J4, 8: J3}
+  R5: {1: B4, 2: B1}
+  C3: {1: C3, 2: C2}
+  C6: {1: E1, 2: E6}
+  R4: {1: C4, 2: C7}
+  C5: {1: B7, 2: B6}
+  R3: {1: D10, 2: D5}
+  C1: {1: B8, 2: B10}
+  R1: {1: C8, 2: C11}
+  R2: {1: E10, 2: E7}
+  C2: {1: F5, 2: F11}
+  C13: {1: G7, 2: G11}
+  R12: {1: J7, 2: J11}
+  R11: {1: K4, 2: K7}
+  C7: {1: L5, 2: L8}
+  R6: {1: K8, 2: K9}
+  R10: {1: M7, 2: M4}
+  C4: {1: N1, 2: N5}
+  C9: {1: N8, 2: N6}
+  R7: {1: O2, 2: O8}
+  R9: {1: P5, 2: P11}
+  R8: {1: Q6, 2: Q11}
+  C10: {1: Q5, 2: Q3}
+  C8: {1: R8, 2: R11}
+  C11: {1: T4, 2: T11}
+  D2: {A: M9, K: M11}
+  D1: {K: N9, A: N11}
+  Q1: {D: R4, S: R5, G: R6}
+standing: [R6]
+cuts: [F1, K2, H3, K3, I4, H5, O5, I6, L6, D7, L7, D8, M8, J9, F10]
+links: [[H1, H4], [I2, I3], [I5, I9], [H6, H11]]
+wires:
+  - {from: VR1.1, hole: A4}
+  - {from: IN.out, hole: A8}
+  - {from: VR1.2, hole: A9}
+  - {from: GND, hole: A11}
+  - {from: IN.S, hole: B11}
+  - {from: VR2.2, hole: T2}
+  - {from: VR3.3, hole: T3}
+  - {from: V+, hole: Q7}
+  - {from: VR2.1, hole: S9}
+  - {from: OUT.in, lug: VR3.2}
+  - {from: OUT.S, lug: IN.S}
+  - {from: VR3.1, lug: OUT.S}

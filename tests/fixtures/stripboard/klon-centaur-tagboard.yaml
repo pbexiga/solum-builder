@@ -1,0 +1,131 @@
+# A published stripboard layout entered by hand (P8 R2, D-410): our check must pass it with
+# no faults, its warnings as listed below (tests/unit/test_stripboard_samples.py).
+# Read hole by hole from the drawing by the agent, 2026-11-26.
+starter: klon-centaur
+drawing:
+  title: Tagboard Effects, "Klon Centaur - Smaller" (IvIark)
+  url: https://tagboardeffects.blogspot.com/2012/02/klon-centaur.html
+  size: [21, 26]
+  cuts: 32
+  links: 14
+# The drawing's own parts where they differ from our starter's, applied to the circuit
+# before the check: `kind` a capacitor's kind.
+circuit:
+  kind: {C11: ceramic, C10: electrolytic}
+differences:
+  - >-
+    Its ICL7660 is our MAX1044 (pin-compatible; pin 1 to the 9 V on both).
+  - >-
+    It wires the footswitch on the board (Sw1, Sw4, Sw5, Sw6); ours has no footswitch. The
+    560R from the buffer (our R4) goes through switch lug 4 to a 68K (B21-B25, our R243):
+    here R4 is off the board, wired from C6 and to A25, as if at the switch. Its second 68K
+    (from Volume 2 and Sw6 to the output) is left off and Volume 2 goes to C21; the Sw1
+    wire on the clipping node is left off.
+  - >-
+    It has a 1M from the input to ground (E11-E13) and an LED with a 4K7 (S22-S25, LED+);
+    ours has neither, so they're left off.
+  - >-
+    Its tone network has the 4K7 on Tone lug 3 and the 1K8 on Tone lug 1; ours has R21
+    (1k8) on lug 3 and R23 (4k7) on lug 1: each sits in the other's holes.
+  - >-
+    Its 2n2 is a ceramic and the 1u at Q10-Q11 an electrolytic, as drawn (ours: box film).
+  - >-
+    It lays the 15K at P6-P8 and the 392K at F15-F17 flat with legs 2 apart, which only a
+    1/8 W resistor fits: they stand here. Its germanium diodes (S10-S13, T10-T13) lie flat
+    3 apart; our DO-7 lies flat from 4 (glass, not bent at the body), so they stand too.
+  - >-
+    The input's sleeve goes to F13 here, the output's to it.
+  - >-
+    It joins strips 9, 15 and 19 with two links ending in one hole (P15, "watch double link
+    in single hole"): a tap (D-410). Links start and end under all three chips.
+warnings:
+  - "R29 and C17's bodies touch: move one a hole further away if you can."
+  - "C16 and R15's bodies touch: move one a hole further away if you can."
+  - "D2 and D3's bodies touch: move one a hole further away if you can."
+  - "R243 and D4's bodies touch: move one a hole further away if you can."
+size: [21, 26]
+parts:
+  U1: {1: J4, 2: J5, 3: J6, 4: J7, 5: M7, 6: M6, 7: M5, 8: M4}
+  U2: {1: K16, 2: K17, 3: K18, 4: K19, 5: N19, 6: N18, 7: N17, 8: N16}
+  U3: {1: J22, 2: J23, 3: J24, 4: J25, 5: M25, 6: M24, 7: M23, 8: M22}
+  C6: {1: B1, 2: B3}
+  R5: {1: D5, 2: D1}
+  C4: {1: E5, 2: E1}
+  R8: {1: F1, 2: F9}
+  C3: {1: G4, 2: G2}
+  R9: {1: H3, 2: H9}
+  R7: {1: I2, 2: I8}
+  C2: {1: A4, 2: A6}
+  C1: {1: G8, 2: G6}
+  R2: {1: E9, 2: E6}
+  R3: {1: B6, 2: B13}
+  R1: {1: C11, 2: C8}
+  R29: {1: D12, 2: D9}
+  C18: {1: G9, 2: G13}
+  R30: {1: I9, 2: I13}
+  R19: {1: J8, 2: J17}
+  C17: {1: C12, 2: C13}
+  R16: {1: H11, 2: H17}
+  C5: {1: N2, 2: N7}
+  R6: {1: O2, 2: O7}
+  C8: {1: P1, 2: P5}
+  R12: {1: Q1, 2: Q5}
+  R13: {1: R3, 2: R10}
+  R10: {1: S2, 2: S8}
+  C9: {1: U5, 2: U3}
+  R11: {1: P8, 2: P6}
+  C7: {1: Q8, 2: Q6}
+  C16: {1: M8, 2: M13}
+  R15: {1: N10, 2: N14}
+  C11: {1: O11, 2: O10}
+  C10: {1: Q10, 2: Q11}
+  D2: {K: S10, A: S13}
+  D3: {A: T10, K: T13}
+  R18: {1: B19, 2: B14}
+  R17: {1: C17, 2: C14}
+  C12: {1: A17, 2: A19}
+  C13: {1: E17, 2: E15}
+  R20: {1: F17, 2: F15}
+  R21: {1: G16, 2: G20}
+  R22: {1: I16, 2: I20}
+  C19: {1: E24, 2: E19}
+  R28: {1: G21, 2: G24}
+  C21: {1: I21, 2: I24}
+  R243: {1: B25, 2: B21}
+  D4: {K: A22, A: A24}
+  C22: {1: G26, 2: G25}
+  R24: {1: O20, 2: O17}
+  C14: {1: Q18, 2: Q16}
+  R25: {1: S19, 2: S15}
+  R23: {1: T14, 2: T17}
+  C15: {1: U17, 2: U19}
+  D7: {A: O22, K: O24}
+  D8: {K: Q21, A: Q24}
+  C20: {1: P24, 2: P26}
+standing: [R11, R20, D2, D3]
+where: {R4: off-board}
+cuts: [K1, F2, P2, K3, K4, L5, D6, K6, L7, H8, N8, P10, F11, P14, G15, Q15, L16, O16, M17, M18,
+       D19, M19, Q19, H20, H21, L23, L24, N24, D25, K25, N25, D26]
+links: [[T1, T6], [B4, B5], [L4, L12], [K7, K13], [P9, P15], [P15, P19], [D13, D24], [R12, R22],
+        [A15, A16], [L15, L18], [M16, M21], [T18, T20], [L19, L25], [K23, K26]]
+wires:
+  - {from: VR1B.1, hole: A1}
+  - {from: VR1B.3, hole: A9}
+  - {from: IN.out, hole: A11}
+  - {from: V+, hole: A12}
+  - {from: GND, hole: A13}
+  - {from: VR1B.2, hole: A14}
+  - {from: VR2.3, hole: A20}
+  - {from: OUT.in, hole: A21}
+  - {from: VR3.2, hole: C21}
+  - {from: R4.1, hole: C6}
+  - {from: R4.2, hole: A25}
+  - {from: IN.S, hole: F13}
+  - {from: OUT.S, lug: IN.S}
+  - {from: VR1A.3, hole: U2}
+  - {from: VR1A.1, hole: U7}
+  - {from: VR1A.2, hole: U9}
+  - {from: VR3.1, hole: U13}
+  - {from: VR2.1, hole: U14}
+  - {from: VR3.3, hole: U15}
+  - {from: VR2.2, hole: U16}

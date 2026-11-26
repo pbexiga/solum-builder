@@ -9,7 +9,8 @@ drawing:
   cuts: 17
   links: 7
 # The drawing's own parts where they differ from our starter's, applied to the circuit
-# before the check: `model` a part's model, `half` which half of the dual op-amp a stage is.
+# before the check: `model` a part's model, `half` which half of the dual op-amp a stage is
+# (the stage then takes that half's ref: our IC1A, on half B, is IC1B).
 circuit:
   model: {Q1: 2N5088, Q3: 2N5088}
   half: {IC1A: b, IC1B: a}

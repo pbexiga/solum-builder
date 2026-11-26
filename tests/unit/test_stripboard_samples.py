@@ -10,7 +10,7 @@ from typing import Any
 
 import pytest
 
-from solum.circuit.io import load_circuit
+from solum.circuit.io import circuit_to_dict, load_circuit, parse_circuit
 from solum.circuit.schema import Circuit, Stripboard
 from solum.guides import footprint_table
 from solum.models import load_models
@@ -27,7 +27,9 @@ SAMPLES = sorted((REPO / "tests" / "fixtures" / "stripboard").glob("*-tagboard.y
 
 def as_drawn(data: dict[str, Any]) -> Circuit:
     """The fixture's starter with the drawing's own parts (`circuit`) and the board's
-    on/off choices (`where` is read from the circuit's board, D-385)."""
+    on/off choices (`where` is read from the circuit's board, D-385), read back as a
+    saved file is, so it's a circuit the app would open. A stage moved to the chip's other
+    half (`half`) takes that half's ref (IC1A on half B is IC1B: the file's rule)."""
     circuit = load_circuit(LIBRARY / "starters" / f"{data['starter']}.json")
     edits = data.get("circuit", {})
     parts = []
@@ -37,9 +39,12 @@ def as_drawn(data: dict[str, Any]) -> Circuit:
         for field in ("model", "half", "kind"):
             if part.ref in edits.get(field, {}):
                 part = part.model_copy(update={field: edits[field][part.ref]})
+        if part.ref in edits.get("half", {}):
+            part = part.model_copy(update={"ref": part.ref[:-1] + edits["half"][part.ref].upper()})
         parts.append(part)
     board = Stripboard.model_validate(layout_data(layout_from_data(data)))
-    return circuit.model_copy(update={"parts": parts, "stripboard": board})
+    drawn = circuit.model_copy(update={"parts": parts, "stripboard": board})
+    return parse_circuit(circuit_to_dict(drawn))
 
 
 def test_there_are_the_four_sample_boards() -> None:

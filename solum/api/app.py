@@ -152,8 +152,7 @@ from solum.stripboard.guidance import guidance
 from solum.stripboard.offboard import off_board_items
 from solum.stripboard.sheet import Drawings, lists_for, packaged_board, stripboard_page
 from solum.stripboard.size import Axis, SizeError, insert_line, remove_line, start_size, trim
-from solum.stripboard.start import StartError, start_for_me
-from solum.stripboard.tidy import MendFirst, TidyError, tidy_up
+from solum.stripboard.start import StartError
 from solum.stripboard.wiring import WiringError, wire_for_me
 from solum.units import parse_value
 from solum.view import circuit_view
@@ -202,30 +201,11 @@ class CircuitRequest(BaseModel):
     circuit: dict[str, Any]
 
 
-class BoardTidyRequest(BaseModel):
-    """*Tidy up* (D-388): `mend` sends the parts placed wrongly back to the tray and lays
-    them out again first (the page asks)."""
-
-    circuit: dict[str, Any]
-    mend: bool = False
-    stand_up: StandUp | None = None  # standing resistors and diodes (None: the board's, D-403)
-
-
-class BoardStartRequest(BaseModel):
-    """*Start for me* (D-387): `fill` keeps what's on the board and lays out the rest;
-    otherwise the whole board is laid out afresh."""
-
-    circuit: dict[str, Any]
-    fill: bool = False
-    stand_up: StandUp | None = None  # standing resistors and diodes (None: the board's, D-403)
-
-
 class BoardCompactRequest(BaseModel):
-    """*Build a full layout* (D-399): Quick or `thorough`; `attempt` 1, 2…: *Try
-    another*'s seed set; `progress`: stream the base, the progress and the best so far."""
+    """*Lay it out for me* (D-399, P8 R3): `attempt` 1, 2…: *Try another*'s seed set;
+    `progress`: stream the base, the progress and the best so far."""
 
     circuit: dict[str, Any]
-    thorough: bool = False
     attempt: int = Limit(1, ge=1, le=10_000)
     progress: bool = False
     stand_up: StandUp | None = None  # standing resistors and diodes (None: the board's, D-403)
@@ -1294,52 +1274,14 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             raise HTTPException(422, str(err)) from None
         return {"stripboard": layout_data(wired)}
 
-    @app.post("/api/stripboard/start")
-    def stripboard_start(req: BoardStartRequest) -> dict[str, Any]:
-        """*Start for me* (D-387): the open circuit's board laid out (Fill the rest or
-        Start over) and wired, and `left`: what Fill the rest couldn't join, in sentences
-        (none: the board passes the check). Nothing to do is a 422 saying why."""
-        circuit = parse_circuit(req.circuit)
-        table = footprint_table(settings.library_dir)
-        kept = circuit.stripboard
-        try:
-            made = start_for_me(kept.layout() if kept else None, circuit, models, table,
-                                fill=req.fill, stand_up=req.stand_up)  # fmt: skip
-        except StartError as err:
-            raise HTTPException(422, str(err)) from None
-        parts = board_parts(circuit, models, table)[0]
-        return {"stripboard": layout_data(kept_dismissals(made.layout, parts)),
-                "left": list(made.left)}  # fmt: skip
-
-    @app.post("/api/stripboard/tidy")
-    def stripboard_tidy(req: BoardTidyRequest) -> dict[str, Any]:
-        """*Tidy up* (D-388): the open circuit's board made smaller, still passing the
-        check, and `mended`, the parts laid out again. Parts placed wrongly and no `mend`:
-        `ask`, the question, and `refs`, nothing changed. Can't tidy: a 422 saying why."""
-        circuit = parse_circuit(req.circuit)
-        kept = circuit.stripboard
-        if kept is None:
-            raise HTTPException(422, "There's nothing on the board to tidy: place the parts first.")
-        table = footprint_table(settings.library_dir)
-        try:
-            tidied = tidy_up(kept.layout(), circuit, models, table, mend=req.mend,
-                             stand_up=req.stand_up)  # fmt: skip
-        except MendFirst as err:
-            return {"ask": str(err), "refs": err.refs}
-        except TidyError as err:
-            raise HTTPException(422, str(err)) from None
-        parts = board_parts(circuit, models, table)[0]
-        return {"stripboard": layout_data(kept_dismissals(tidied.layout, parts)),
-                "mended": list(tidied.mended)}  # fmt: skip
-
     def board_line(layout: Layout) -> dict[str, Any]:
-        """A board as a *Build a full layout* line: its figures and its plain form."""
+        """A board as a *Lay it out for me* line: its figures and its plain form."""
         return {"columns": layout.columns, "strips": layout.strips, "cuts": len(layout.cuts),
                 "links": len(layout.links), "stripboard": layout_data(layout)}  # fmt: skip
 
     def compact_problem(circuit: Circuit, stand_up: StandUp | None = None
                         ) -> tuple[Any, Layout | None]:  # fmt: skip
-        """The search's reading of the circuit (Start a board's base, D-399) and the board
+        """The search's reading of the circuit (its starting board, D-399) and the board
         it keeps the choices of (`stand_up` replacing its own, D-403); a circuit with
         nothing for a board is a 422 saying why."""
         table = footprint_table(settings.library_dir)
@@ -1360,9 +1302,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/stripboard/compact")
     def stripboard_compact(req: BoardCompactRequest) -> Any:
-        """*Build a full layout* (D-399): the whole board laid out afresh and made as small
-        as the search can, wired and checked. With `progress`, JSON lines: `{"base"}`
-        (Start a board's board), `{"done", "of", "best"?}` (`best` when it improved: the
+        """*Lay it out for me* (D-399, P8 R3): the whole board laid out afresh and made as
+        small as the search can, wired and checked. With `progress`, JSON lines: `{"base"}`
+        (the starting board), `{"done", "of", "best"?}` (`best` when it improved: the
         board not yet wired), then `{"result"}` or `{"message"}`; the workers stop when the
         page goes away (Stop, Cancel)."""
         circuit = parse_circuit(req.circuit)
@@ -1379,7 +1321,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
                     line["best"] = board_line(board_of(pb, best))
                 put(line)
 
-            got = compact_job.run(pb, layout, circuit, req.thorough, req.attempt,
+            got = compact_job.run(pb, layout, circuit, req.attempt,
                                   settings, report, stop)  # fmt: skip
             return built_result(circuit, finish(pb, got.best, models, table), got.stopped)
 
@@ -1402,8 +1344,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
 
     @app.post("/api/stripboard/compact/estimate")
     def stripboard_compact_estimate(req: CircuitRequest) -> dict[str, Any]:
-        """How long Quick and Thorough take on this circuit on this machine, in seconds
-        (D-399): half a second of real steps timed and scaled."""
+        """How long *Lay it out for me* takes on this circuit on this machine, in seconds
+        (D-399): half a second of real steps timed and scaled; its board parts and how
+        many count as large (P8 R3)."""
         circuit = parse_circuit(req.circuit)
         kept = circuit.stripboard
         try:

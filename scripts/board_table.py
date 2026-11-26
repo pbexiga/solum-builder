@@ -1,4 +1,4 @@
-"""The starters' full layouts as a table (P6i): *Build a full layout*, Quick, try 1, on every
+"""The starters' full layouts as a table (P6i): *Lay it out for me*, try 1, on every
 starter that can go on a board, and what each board came to. Layouts are deterministic
 (D-399), so a change to the layout rules shows as this table's diff.
 
@@ -67,7 +67,7 @@ def table(names: list[str] | None, stand_up: StandUp = "needed") -> tuple[list[R
             skipped.append(f"{name}: {err}")
             continue
         started = time.monotonic()
-        got = compact_job.run(pb, empty, circuit, False, 1, settings,
+        got = compact_job.run(pb, empty, circuit, 1, settings,
                               lambda *_: None, threading.Event())  # fmt: skip
         built = finish(pb, got.best, models, tbl)
         lay = built.layout

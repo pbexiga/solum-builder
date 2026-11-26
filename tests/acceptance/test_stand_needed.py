@@ -42,7 +42,7 @@ def test_when_needed_falls_back_only_where_never_does_and_stands_nothing_unneede
     def run(choice: StandUp) -> tuple[Problem, Found | None]:
         layout = Layout(0, 0, (), stand_up=choice)
         pb = problem(layout, circuit, models, table)
-        got = compact_job.run(pb, layout, circuit, False, 1, load_settings(),
+        got = compact_job.run(pb, layout, circuit, 1, load_settings(),
                               lambda *_: None, threading.Event())  # fmt: skip
         return pb, got.best
 

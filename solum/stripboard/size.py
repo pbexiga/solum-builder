@@ -129,7 +129,7 @@ def fit(before: Layout | None, after: Layout, board: Mapping[str, BoardPart]) ->
 
 def trim(layout: Layout, board: Mapping[str, BoardPart]) -> Layout:
     """The empty columns and strips at the edges taken off (inside ones stay: taking those
-    out moves parts, *Tidy up*'s job). An empty board can't be trimmed."""
+    out moves parts). An empty board can't be trimmed."""
     used = used_box(layout, board)
     if used is None:
         raise SizeError("There's nothing on the board to trim it to.")

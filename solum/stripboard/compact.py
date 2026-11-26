@@ -1,7 +1,7 @@
-"""*Build a full layout* (D-399): the whole board laid out afresh and made as small as
+"""*Lay it out for me* (D-399, D-413): the whole board laid out afresh and made as small as
 the search can, wired and checked; the same board for the same circuit everywhere.
 
-It starts from Start a board's base (`start_for_me`, Start over), squeezes it (each line
+It starts from its starting board (`start_for_me`), squeezes it (each line
 taken out while nothing gets worse), then anneals: a fixed number of steps per seed, the
 temperature by step, never by clock. The state is each board part's shape and spot;
 everything else is derived from it: a cut in the middle of each gap between two nets'
@@ -145,12 +145,12 @@ class Problem:
 
 def problem(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
             table: FootprintTable, stand_up: StandUp | None = None) -> Problem:  # fmt: skip
-    """The search's view of `circuit`, from Start a board's base (Start over, untidied:
-    the parts' On / Off the board choices and the notes kept, D-398); `stand_up`: standing
-    resistors and diodes (None: the board's own choice, D-403); `StartError` as Start a
-    board's."""
+    """The search's view of `circuit`, from its starting board (`start_for_me`: the
+    parts' On / Off the board choices and the notes kept, D-398); `stand_up`: standing
+    resistors and diodes (None: the board's own choice, D-403); `StartError` as the
+    starting board's."""
     chosen = stand_up or (layout.stand_up if layout else "needed")
-    base = start_for_me(layout, circuit, models, table, fill=False, stand_up="never").layout
+    base = start_for_me(layout, circuit, models, table, stand_up="never").layout
     base = replace(base, stand_up=chosen)  # the search stands parts, not its base (D-403)
     r = read_layout(base, circuit, models, table)
     names: dict[str, int] = {}

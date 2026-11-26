@@ -10,7 +10,7 @@ import zipfile
 from typing import Any
 
 import pytest
-from playwright.sync_api import Page, Route, expect
+from playwright.sync_api import Locator, Page, expect
 
 from solum.yamlio import load_yaml
 from tests.ui.conftest import REPO, click_part, open_circuit, reload_kept
@@ -904,144 +904,35 @@ def test_the_kept_board_is_exported_drawn_by_the_board_canvas(page: Page, base_u
         assert any(n.endswith("/stripboard.pdf") for n in z.namelist())
 
 
-# A starter whose Start board Tidy up makes smaller.
-TIDIES = "tone-bender-mk2"
-
-
-def layout(page: Page, choice: str, compact: bool | None = None) -> None:
-    """Open *Layout…* in the board's Settings, pick `choice` (and set *Make the board
-    compact*) and press Continue: the confirmation is then showing."""
+def lay_it_out(page: Page, stand: str | None = None) -> Locator:
+    """Open *Lay it out for me…* in the board's Settings, wait for its time, set the
+    standing choice (when given) and confirm: the confirmation is returned, now closed."""
     settings = page.locator("#board-settings")
     if settings.get_attribute("open") is None:
         settings.locator("summary").click()
     page.locator("#board-layout").click()
     dialog = page.locator("#layout-dialog")
-    dialog.locator(f".layout-choice[data-layout='{choice}'] input").check()
-    if compact is not None:
-        dialog.locator("#layout-compact").set_checked(compact)
-    dialog.locator("button[data-answer='go']").click()
-
-
-def test_the_layout_dialog_starts_fills_and_tidies_each_confirmed_and_one_undo_step(
-    page: Page, base_url: str
-) -> None:
-    """P6h2: *Layout…* in the board's Settings opens the choices; on an empty board Fill the
-    rest and Tidy up are greyed with the reason and Start a board is chosen. Each choice
-    is confirmed, saying what will happen; each is one undo step. Once parts are placed
-    nothing is chosen at first and Continue waits for a choice. On the Tone Bender MK2
-    Start a board without *Make the board compact* lays out 19 columns, Tidy up makes them
-    18 (D-388, D-410); Start a board on a board with parts names what it replaces, and Cancel
-    changes nothing."""
-    open_with_board(page, base_url, None, TIDIES)
-    page.locator("#board-button").click()
-    page.locator("#board-settings summary").click()
-    page.locator("#board-layout").click()
-    dialog = page.locator("#layout-dialog")
-    for greyed in ("fill", "tidy"):
-        row = dialog.locator(f".layout-choice[data-layout='{greyed}']")
-        expect(row.locator("input")).to_be_disabled()
-        expect(row).to_contain_text("Nothing is placed yet")
-    expect(dialog.locator(".layout-choice[data-layout='start'] input")).to_be_checked()
-    dialog.locator("#layout-compact").set_checked(False)
-    dialog.locator("button[data-answer='go']").click()
-    expect(page.locator(".ask-text")).to_contain_text("Lays out the whole board: 14 parts")
-    page.locator(".ask-buttons button[data-answer='layout']").click()
-    size = page.locator("#board-size-text")
-    expect(size).to_contain_text("19 × 10 holes")
-    layout(page, "tidy")
-    expect(page.locator(".ask-text")).to_contain_text("make the board smaller")
-    page.locator(".ask-buttons button[data-answer='layout']").click()
-    expect(size).to_contain_text("18 × 10 holes")
-    page.locator("#board-layout").click()  # parts placed: nothing chosen, Continue waits
-    expect(dialog.locator("input[name='layout']:checked")).to_have_count(0)
-    expect(dialog.locator("button[data-answer='go']")).to_be_disabled()
-    expect(dialog.locator(".layout-choice[data-layout='start']")).to_contain_text("Start over")
-    # every part placed and joined (Start a board leaves nothing undone): nothing to fill
-    filled = dialog.locator(".layout-choice[data-layout='fill']")
-    expect(filled.locator("input")).to_be_disabled()
-    expect(filled).to_contain_text("nothing left to fill")
-    expect(dialog.locator(".layout-choice[data-layout='tidy'] input")).to_be_enabled()
-    dialog.locator(".layout-choice[data-layout='start'] input").check()
-    dialog.locator("button[data-answer='go']").click()
-    expect(page.locator(".ask-text")).to_contain_text(
-        "This replaces everything on the board: 14 parts,"
-    )
-    expect(page.locator(".ask-buttons button[data-answer='layout']")).to_have_text(
-        "Replace the board"
-    )
-    page.locator(".ask-buttons button[data-answer='cancel']").click()
-    expect(size).to_contain_text("18 × 10 holes")
-    page.keyboard.press("Control+z")  # the tidy: one step
-    expect(size).to_contain_text("19 × 10 holes")
-    page.keyboard.press("Control+z")  # the layout: one step
-    expect(size).to_have_text("Empty board")
-
-
-def test_the_layout_dialog_s_standing_choice_is_kept_with_the_board(
-    page: Page, base_url: str
-) -> None:
-    """D-403: the dialog's last line, Standing resistors and diodes, opens on the board's
-    own choice (When needed on a new board). Start a board with Prefer stands the
-    Fuzz Face's R3 (14 × 8 for 13 × 9 flat) and the board keeps the choice: the
-    dialog opens on Prefer next time; Never then lays everything flat again."""
-    open_with_board(page, base_url, None, "fuzz-face")
-    page.locator("#board-button").click()
-    page.locator("#board-settings summary").click()
-    page.locator("#board-layout").click()
-    dialog = page.locator("#layout-dialog")
-    expect(dialog.locator(".layout-standing")).to_contain_text("Standing resistors and diodes")
-    expect(dialog.locator("input[name='layout-stand'][value='needed']")).to_be_checked()
-    dialog.locator("input[name='layout-stand'][value='prefer']").check()
-    dialog.locator("#layout-compact").set_checked(False)
-    dialog.locator("button[data-answer='go']").click()
-    page.locator(".ask-buttons button[data-answer='layout']").click()
-    size = page.locator("#board-size-text")
-    expect(size).to_contain_text("14 × 8 holes")
-    page.locator("#board-layout").click()
-    expect(dialog.locator("input[name='layout-stand'][value='prefer']")).to_be_checked()
-    dialog.locator(".layout-choice[data-layout='start'] input").check()
-    dialog.locator("input[name='layout-stand'][value='never']").check()
-    dialog.locator("button[data-answer='go']").click()
-    page.locator(".ask-buttons button[data-answer='layout']").click()
-    expect(size).to_contain_text("13 × 9 holes")
+    expect(dialog.locator(".layout-takes")).not_to_contain_text("Working out")
+    if stand is not None:
+        dialog.locator(f"input[name='layout-stand'][value='{stand}']").check()
+    dialog.locator("button[data-answer='layout']").click()
+    return dialog
 
 
 def test_the_tray_shows_the_placed_parts_on_request(page: Page, base_url: str) -> None:
     """D-387: once laid out, the tray lists the placed parts (on the board and beside it)
     under *Show placed*, above its lists; a click selects one."""
-    open_with_board(page, base_url, None, TIDIES)
-    page.locator("#board-button").click()
-    layout(page, "start", compact=True)
-    page.locator(".ask-buttons button[data-answer='layout']").click()
-    expect(page.locator("#board-size-text")).to_contain_text("18 × 10 holes")
+    open_with_board(page, base_url, load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml"))
+    show_board(page)
     toggle = page.locator("#board-tray .placed-toggle")
-    expect(toggle).to_have_text("▸ Show placed (19)")  # 14 on the board, 5 beside it
+    expect(toggle).to_have_text("▸ Show placed (12)")  # 8 on the board, the rest beside it
     expect(page.locator("#board-tray li.placed")).to_have_count(0)
     toggle.click()
-    expect(page.locator("#board-tray li.placed")).to_have_count(19)
+    expect(page.locator("#board-tray li.placed")).to_have_count(12)
     on_list = page.locator("#board-tray .tray-section[data-where='board']")
     assert toggle.bounding_box()["y"] < on_list.bounding_box()["y"]  # above the lists
     page.locator("#board-tray li.placed[data-ref='R1']").click()
     expect(page.locator("#board .board-part[data-ref='R1']")).to_have_class(re.compile("selected"))
-
-
-def test_the_layout_says_what_its_doing_while_it_works(page: Page, base_url: str) -> None:
-    """A big board takes seconds to tidy (D-388): while it does, the Layout button says so
-    and can't be pressed again, and the working bar shows."""
-    held: list[Route] = []
-    page.route("**/api/stripboard/tidy", lambda route: held.append(route))
-    open_with_board(page, base_url, None, TIDIES)
-    page.locator("#board-button").click()
-    layout(page, "start", compact=True)
-    page.locator(".ask-buttons button[data-answer='layout']").click()
-    button = page.locator("#board-layout")
-    expect(button).to_have_text("Tidying…")
-    expect(button).to_be_disabled()
-    expect(page.locator("#board-working")).to_be_visible()
-    held[0].continue_()
-    expect(page.locator("#board-size-text")).to_contain_text("18 × 10 holes")
-    expect(page.locator("#board-working")).to_be_hidden()
-    expect(button).to_have_text("Layout…")
 
 
 def open_overlapping(page: Page, base_url: str) -> None:
@@ -1134,28 +1025,31 @@ def test_an_overlap_is_noted_dismissed_brought_back_and_marked(
     browser_errors.clear()  # that refusal's 422
 
 
-def test_build_a_full_layout_reviewed_tried_again_kept_and_undone(
-    page: Page, base_url: str
-) -> None:
-    """D-399: *Build a full layout* on the Rangemaster's empty board, Quick, its time
-    worked out; the running window, then the review, a pane at the top of the right column
-    with the canvas outlined (D-406): After | Before | Both (top and bottom), Hide parts and
-    Flip still at hand (both backs shown in Both), Try another and back to try 1, Keep
-    try 1 (one undo step). Then Thorough, stopped early: its best kept for the review, and the
-    old board kept."""
+def test_lay_it_out_for_me_reviewed_tried_again_kept_and_undone(page: Page, base_url: str) -> None:
+    """D-399, P8 R3: *Lay it out for me…* on the Rangemaster's empty board: its
+    confirmation says what it does, its time worked out, that it's a draft and what counts
+    as large, and the standing choice opens on the board's own (When needed); Cancel
+    changes nothing. Laid out with Prefer: the running window, then the review, a pane at
+    the top of the right column with the canvas outlined (D-406): After | Before | Both
+    (top and bottom), Hide parts and Flip still at hand (both backs shown in Both), Try
+    another and back to try 1, Keep try 1 (one undo step); the board keeps Prefer (D-403).
+    Then again, stopped early: its best kept for the review, and the old board kept."""
     open_with_board(page, base_url, None)
     page.locator("#board-button").click()
     page.locator("#board-settings summary").click()
-    page.locator("#board-layout").click()
+    button = page.locator("#board-layout")
+    expect(button).to_have_text("Lay it out for me…")
+    button.click()
     dialog = page.locator("#layout-dialog")
-    expect(dialog.locator("input[name='layout-speed']").first).to_be_disabled()
-    dialog.locator(".layout-choice[data-layout='full'] input").check()
-    dialog.locator("input[name='layout-speed'][value='quick']").check()
-    expect(dialog.locator(".layout-time[data-time='quick']")).not_to_contain_text("Working out")
-    expect(dialog).to_contain_text("Check it, and adjust it if you need to")
-    dialog.locator("button[data-answer='go']").click()
-    expect(page.locator(".ask-text")).to_contain_text("you can stop early")
-    page.locator(".ask-buttons button[data-answer='layout']").click()
+    expect(dialog.locator(".ask-text").first).to_have_text(
+        "Lays out the whole board for you, wired and checked. One step to undo."
+    )
+    expect(dialog.locator(".layout-takes")).to_contain_text("you can stop early")
+    expect(dialog.locator(".layout-draft")).to_contain_text("count as large")
+    expect(dialog.locator("input[name='layout-stand'][value='needed']")).to_be_checked()
+    dialog.locator("button[data-answer='cancel']").click()
+    expect(page.locator("#board-size-text")).to_have_text("Empty board")
+    lay_it_out(page, "prefer")
     review = page.locator(".compact-review")
     expect(review).to_be_visible(timeout=90_000)
     expect(page.locator(".compact-run")).to_be_hidden()
@@ -1198,17 +1092,20 @@ def test_build_a_full_layout_reviewed_tried_again_kept_and_undone(
     expect(page.locator("#board-nets")).to_have_js_property("inert", False)
     expect(page.locator("section.canvas")).not_to_have_class(re.compile(r"\breviewing\b"))
     kept = page.locator("#board-size-text").inner_text()
+    button.click()  # the board keeps its standing choice
+    expect(dialog.locator("input[name='layout-stand'][value='prefer']")).to_be_checked()
+    dialog.locator("button[data-answer='cancel']").click()
     page.keyboard.press("Control+z")
     expect(page.locator("#board .board-part")).to_have_count(0)
     page.keyboard.press("Control+Shift+z")
     expect(page.locator("#board-size-text")).to_have_text(kept)
-    # Thorough, stopped early: the best so far wired and checked, then the old board kept
-    page.locator("#board-layout").click()
-    dialog.locator(".layout-choice[data-layout='full'] input").check()
-    dialog.locator("input[name='layout-speed'][value='thorough']").check()
-    dialog.locator("button[data-answer='go']").click()
-    expect(page.locator(".ask-text")).to_contain_text("replaces everything on the board: 8 parts")
-    page.locator(".ask-buttons button[data-answer='layout']").click()
+    # again, stopped early: the best so far wired and checked, then the old board kept
+    button.click()
+    expect(dialog.locator(".ask-text").first).to_contain_text(
+        "This replaces everything on the board: 8 parts"
+    )
+    dialog.locator("button[data-answer='cancel']").click()
+    lay_it_out(page)
     stop = page.locator(".compact-run [data-run='stop']")
     expect(stop).to_be_enabled(timeout=60_000)
     expect(page.locator("#board")).to_have_class(re.compile("dimmed"))

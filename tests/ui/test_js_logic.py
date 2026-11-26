@@ -1141,11 +1141,10 @@ def test_the_board_size_offers_and_the_empty_board(js: Page) -> None:
     assert got["emptyLine"] == "Empty board"
 
 
-def test_the_layout_dialog_s_choices_default_and_confirmations(js: Page) -> None:
-    """P6h2: Fill the rest and Tidy up greyed with the reason on an empty board; the
-    dialog opens on Start a board on an empty board, on nothing once parts are placed,
-    when the first choice is called Start over; each confirmation says what happens,
-    naming what Start over replaces by count, and that it's one step to undo."""
+def test_lay_it_out_for_me_s_confirmation_words(js: Page) -> None:
+    """P8 R3: what it replaces, named by count (or the empty board laid out), one undo
+    step; the time once known (still being worked out, or not known); the draft line with
+    what counts as large, or the large-circuit line past it."""
     got = run(
         js,
         """
@@ -1153,44 +1152,37 @@ def test_the_layout_dialog_s_choices_default_and_confirmations(js: Page) -> None
         const placed = { parts: [1, 2, 3], cuts: ['A1'], links: [], wires: [1, 2] };
         const empty = { parts: [], cuts: [], links: [], wires: [] };
         return {
-          empty: b.layoutChoices(false).map((c) => [c.value, Boolean(c.why)]),
-          names: [b.layoutChoices(false)[0].label, b.layoutChoices(true)[0].label],
-          placed: b.layoutChoices(true).map((c) => Boolean(c.why)),
-          why: b.layoutChoices(false)[1].why,
-          full: b.layoutChoices(true, false).map((c) => c.why),
-          defaults: [b.layoutDefault(false), b.layoutDefault(true)],
-          fresh: b.layoutConfirm('start', true, empty, 8),
-          over: b.layoutConfirm('start', false, placed, 0),
-          fill: b.layoutConfirm('fill', false, placed, 1).text,
-          tidy: b.layoutConfirm('tidy', false, placed, 0).label,
+          over: b.layOutWords(placed, { seconds: 33, parts: 8, large: 30 }),
+          waiting: b.layOutWords(empty),
+          unknown: b.layOutWords(empty, null).takes,
+          big: b.layOutWords(empty, { seconds: 130, parts: 42, large: 30 }).draft,
+          large: [b.largeText(25, 25), b.largeText(26, 25)],
         };
         """,
     )
-    assert got["empty"] == [["start", False], ["fill", True], ["tidy", True], ["full", False]]
-    assert got["placed"] == [False, False, False, False]
-    assert got["why"] == "Nothing is placed yet: start a board first."
-    # every part placed and every net joined: Fill the rest has nothing to do, Tidy up still has
-    assert got["full"] == [
-        "",
-        "Every part is placed and every net joined: nothing left to fill.",
-        "",
-        "",
-    ]
-    assert got["defaults"] == ["start", None]
-    assert got["fresh"] == {
-        "title": "Start a board",
-        "text": "Lays out the whole board: 8 parts in signal order, then made compact. "
+    assert got["over"] == {
+        "text": "This replaces everything on the board: 3 parts, 1 cut and 2 wires. "
         "One step to undo.",
-        "label": "Start a board",
+        "takes": "It takes about 35 seconds; you can stop early and keep the best board "
+        "found so far.",
+        "draft": "The layout is a draft: look it over before you build it. Circuits with "
+        "more than 30 parts on the board count as large: a layout made for them is likely "
+        "larger than one laid out by hand.",
     }
-    assert got["over"]["text"] == (
-        "This replaces everything on the board: 3 parts, 1 cut and 2 wires. "
-        "A fresh layout takes its place. One step to undo."
+    assert got["waiting"] == {
+        "text": "Lays out the whole board for you, wired and checked. One step to undo.",
+        "takes": "Working out the time…",
+        "draft": "The layout is a draft: look it over before you build it.",
+    }
+    assert got["unknown"] == (
+        "It may take a while; you can stop early and keep the best board found so far."
     )
-    assert got["over"]["label"] == "Replace the board" and got["over"]["title"] == "Start over"
-    assert got["names"] == ["Start a board", "Start over"]
-    assert got["fill"].startswith("Lays out the 1 part still in the tray below")
-    assert got["tidy"] == "Tidy up"
+    big = (
+        "This circuit has 42 parts: a layout made for you will likely be larger than one "
+        "laid out by hand. Use it as a draft and look it over."
+    )
+    assert got["big"] == big
+    assert got["large"] == ["", big.replace("42", "26")]
 
 
 def test_a_carried_part_turns_flips_stands_and_lands_by_its_middle(js: Page) -> None:
@@ -1720,21 +1712,17 @@ def test_the_board_s_overlap_marks_and_note_forms(js: Page) -> None:
     assert got["parts"] == ["C1"]
 
 
-def test_build_a_full_layout_s_words(js: Page) -> None:
-    """D-399: the times in words, the confirmation (replacing a board, or an empty one),
-    the figures, the time left, and a try that's the same board as an earlier one."""
+def test_lay_it_out_for_me_s_run_words(js: Page) -> None:
+    """D-399: the times in words, the figures, the time left, and a try that's the same
+    board as an earlier one."""
     got = run(
         js,
         """
         const b = await m('board/board-logic.js');
-        const placed = { parts: [1, 2, 3], cuts: ['A1'], links: [], wires: [1, 2] };
-        const empty = { parts: [], cuts: [], links: [], wires: [] };
         const one = { stripboard: { size: [9, 8], parts: { R1: { 1: 'A1', 2: 'A5' } } } };
         const two = { stripboard: { size: [9, 7], parts: { R1: { 1: 'A1', 2: 'A5' } } } };
         return {
           times: [4, 12, 33, 70, 130, 600].map(b.timeText),
-          over: b.layoutConfirm('full', false, placed, 0, 33),
-          fresh: b.layoutConfirm('full', false, empty, 8, 5).text,
           figures: b.figuresLine({ columns: 21, strips: 14, cuts: 1, links: 13 }),
           of: b.figuresOf({ size: [9, 8], cuts: ['A1', 'B2'], links: [['C1', 'C4']] }),
           left: [3, 22, 130].map(b.leftText),
@@ -1746,15 +1734,6 @@ def test_build_a_full_layout_s_words(js: Page) -> None:
     )
     assert got["times"] == ["A few seconds", "About 10 seconds", "About 35 seconds",
                             "About a minute", "About 2 minutes", "About 10 minutes"]  # fmt: skip
-    assert got["over"] == {
-        "title": "Build a full layout",
-        "text": "This replaces everything on the board: 3 parts, its cuts, links and wires. "
-        "It takes about 35 seconds; you can stop early and keep the best board found so far.",
-        "label": "Build it",
-    }
-    assert got["fresh"] == (
-        "It takes a few seconds; you can stop early and keep the best board found so far."
-    )
     assert got["figures"] == "21 × 14 holes, 1 cut, 13 links"
     assert got["of"] == {"columns": 9, "strips": 8, "cuts": 2, "links": 1}
     assert got["left"] == ["Almost done.", "About 25 seconds left.", "About 2 minutes left."]

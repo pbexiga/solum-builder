@@ -1,15 +1,12 @@
 """Standing resistors and diodes, the board's choice (D-403): Never, When needed (the
-default) or Prefer, for Start a board, Fill the rest, Tidy up and Build a full layout;
-kept with the board, so Try another and a later Tidy up use it; and a standing part's
-outline, checked for touching like any other body. When needed, a part stands only where
-lying flat it breaks a placement limit (or a warning, in the full layout), never to save
+default) or Prefer, for *Lay it out for me* and its starting board; kept with the board, so
+Try another uses it; and a standing part's outline, checked for touching like any other
+body. When needed, a part stands only where lying flat it can't do as well, never to save
 room (the user)."""
 
 from dataclasses import replace
 from pathlib import Path
 from types import SimpleNamespace
-
-import pytest
 
 from solum.circuit.io import load_circuit
 from solum.circuit.schema import Capacitor, Resistor
@@ -30,8 +27,6 @@ from solum.stripboard.compact import (
 )
 from solum.stripboard.footprints import one_board_part
 from solum.stripboard.start import stand_order, start_for_me
-from solum.stripboard.tidy import key as tidy_key
-from solum.stripboard.tidy import stand_where_needed, tidy_up
 
 REPO = Path(__file__).resolve().parents[2]
 LIBRARY = REPO / "library"
@@ -58,7 +53,7 @@ def test_start_a_board_stands_a_part_only_when_preferred() -> None:
     can't fit); Prefer stands parts (the Fuzz Face's R4)."""
     assert [stand_order(s) for s in CHOICES] == ["none", "none", "first"]
     for choice in CHOICES:
-        made = start_for_me(empty(choice), FUZZ_FACE, MODELS, TABLE, fill=False).layout
+        made = start_for_me(empty(choice), FUZZ_FACE, MODELS, TABLE).layout
         assert made.stand_up == choice and check_layout(made, FUZZ_FACE, MODELS, TABLE).ok
         assert (len(standing(made)) > 0) == (choice == "prefer")
 
@@ -123,54 +118,10 @@ def test_a_full_layout_s_standing_parts_a_limit_or_warning_doesn_t_need_lie_flat
 def test_try_another_uses_the_board_s_own_choice() -> None:
     """The search reads the choice off the board it's given (`stand_up` None): a board
     made with Never is searched again with no standing shape."""
-    kept = start_for_me(empty("never"), RANGEMASTER, MODELS, TABLE, fill=False).layout
+    kept = start_for_me(empty("never"), RANGEMASTER, MODELS, TABLE).layout
     pb = problem(kept, RANGEMASTER, MODELS, TABLE)
     assert pb.stand_up == "never"
     assert not any(v.standing for vs in pb.variants.values() for v in vs)
-
-
-@pytest.mark.parametrize(("choice", "stood"),
-                         [("never", []), ("needed", []), ("prefer", ["R3", "R6"])])  # fmt: skip
-def test_tidy_up_stands_a_part_as_the_choice_says(choice: StandUp, stood: list[str]) -> None:
-    """On the Tone Bender's Start a board (19 × 10): Prefer stands R3 and R6 up (17 × 10;
-    the Rangemaster's 3-apart resistors gain nothing standing since D-410); When needed
-    doesn't (no warning for it to clear: standing would only save room); Never doesn't
-    try. The choice is kept with the board, and None means the board's own."""
-    base = start_for_me(None, TONE_BENDER, MODELS, TABLE, fill=False).layout
-    tidied = tidy_up(base, TONE_BENDER, MODELS, TABLE, stand_up=choice).layout
-    assert standing(tidied) == stood and tidied.stand_up == choice
-    assert check_layout(tidied, TONE_BENDER, MODELS, TABLE).ok
-    own = tidy_up(replace(base, stand_up=choice), TONE_BENDER, MODELS, TABLE)
-    assert own.layout == tidied
-
-
-def test_when_needed_tidy_up_stands_a_part_only_where_it_clears_a_fault() -> None:
-    """`stand_where_needed`: R1 lies flat across A1–A5 (legs 1 and 2, a strip apart is
-    the hole below); a fault cleared only with leg 2 brought to A2 (leg 1 kept in A1,
-    the other stood beside it): that stand is kept, and nothing more. With no fault, or a
-    fault no stand clears, the board is left as it was; a board that wouldn't pass the
-    check isn't taken."""
-    r1 = one_board_part(Resistor(ref="R1", pos=(0, 0), type="resistor", value=10e3), MODELS,
-                        TABLE)  # fmt: skip
-    board = {"R1": r1}
-    flat = Layout(3, 6, (Placed("R1", (("1", (0, 0)), ("2", (0, 4)))),))
-
-    def met(layout: Layout) -> bool:
-        return dict(layout.parts[0].legs)["2"] == (0, 1)
-
-    stood = stand_where_needed(flat, lambda _: True, lambda m: 0 if met(m) else 1, board)
-    assert standing(stood) == ["R1"] and met(stood)
-    assert stand_where_needed(flat, lambda _: True, lambda _: 0, board) == flat  # room alone
-    assert stand_where_needed(flat, lambda _: True, lambda _: 1, board) == flat  # no help
-    assert stand_where_needed(flat, lambda _: False, lambda m: 0 if met(m) else 1, board) == flat
-
-
-def test_tidy_up_s_measure_counts_standing_parts_only_when_preferred() -> None:
-    """Preferred, the more standing the tidier; otherwise they don't count."""
-    part = Placed("R1", (("1", (0, 0)), ("2", (0, 1))), True)
-    assert tidy_key(Layout(4, 9, (part,)))[:4] == (36, 0, 0, 0)  # the default: needed
-    assert tidy_key(Layout(4, 9, (part,), stand_up="never"))[3] == 0
-    assert tidy_key(Layout(4, 9, (part,), stand_up="prefer"))[3] == -1
 
 
 def test_a_standing_part_is_checked_for_touching() -> None:

@@ -1,9 +1,9 @@
-"""*Build a full layout* as a job (D-399): the search's attempts on worker processes, their
+"""*Lay it out for me* as a job (D-399, P8 R3): the search's attempts on worker processes, their
 progress and best board so far reported as they go, stopped when asked; and the time it
 will take on this machine, measured.
 
 A run is a fixed set of attempts (seeds), each a fixed number of steps by the circuit's
-size (Quick, or Thorough's four times as many), so the same circuit and choice give the
+size (one speed: Thorough went with P8's R3, D-413), so the same circuit and choice give the
 same board on any machine: a slower one, or one with fewer workers (the seeds queue),
 takes longer to the same board. *Try another* is the next set of seeds. When standing
 parts is allowed, a fifth attempt lies everything flat (`FLAT_SEED`, the same steps:
@@ -11,7 +11,7 @@ Never's own board for that seed), so standing shapes can't leave a board worse t
 lying flat would (D-403); it's the same for every try,
 so it runs once per board and Try another reuses it. When every attempt, flat one too,
 ends with a problem on its board (a short, a net not joined, a leg off the copper), the
-rest of Never's seeds for the try run flat before Start a board's layout is kept: When
+rest of Never's seeds for the try run flat before the starting board is kept: When
 needed falls back only where Never would (D-403). The workers are spawned for the run
 (not the render pool: a render and a layout don't queue behind each other) and end with it.
 """
@@ -44,7 +44,9 @@ FLAT_SEED = 1  # the flat attempt's seed (D-403): Never's first board
 RESCUE = 1000  # tags of the flat seeds run when no attempt found a board (+ the seed)
 STEPS_PER_PART = 12_000  # Quick: each attempt's steps for each board part
 MOST_PARTS = 40  # ...counted up to this many parts: a big board's run stays in minutes
-THOROUGH = 4  # Thorough looks this many times as long
+LARGE = 25  # board parts past which a layout made for you is likely larger than by hand
+# (measured 2026-11-26 against the published boards: 14 parts or fewer 0.35-0.73x, 28 or
+# more 1.16-1.74x their area, D-413)
 PROGRESS_EVERY = 0.2  # seconds between a worker's reports
 SAMPLE = 0.5  # seconds of real steps the estimate times
 # the opening's speed against a whole run's (it speeds up as the board shrinks) and a run
@@ -52,13 +54,12 @@ SAMPLE = 0.5  # seconds of real steps the estimate times
 # starters' Quick runs took 1.07–2.1× that estimate (median 1.42), so 0.70 / 1.42 (D-399)
 RAMP = 0.49
 SPAWN = 1.5  # seconds a run spends starting its workers (measured on a Mac)
-FELL_BACK = "Couldn't do better than Start a board's layout: here it is."
+FELL_BACK = "Couldn't do better than the first rough layout: here it is."
 
 
-def steps_for(parts: int, thorough: bool) -> int:
-    """Each attempt's steps: by the board parts (up to `MOST_PARTS`), four times as many
-    when Thorough."""
-    return STEPS_PER_PART * min(max(parts, 1), MOST_PARTS) * (THOROUGH if thorough else 1)
+def steps_for(parts: int) -> int:
+    """Each attempt's steps: by the board parts (up to `MOST_PARTS`)."""
+    return STEPS_PER_PART * min(max(parts, 1), MOST_PARTS)
 
 
 def seeds_for(attempt: int) -> list[int]:
@@ -140,13 +141,13 @@ class Run:
     stopped: bool
 
 
-def run(pb: Problem, layout: Layout | None, circuit: Circuit, thorough: bool, attempt: int,
+def run(pb: Problem, layout: Layout | None, circuit: Circuit, attempt: int,
         settings: Settings, report: Report, stop: threading.Event) -> Run:  # fmt: skip
     """Try `attempt`'s seeds on up to `WORKERS` processes, telling `report` the steps done
     and each new best; `stop` set ends every worker at its next check, with its best so
     far. `pb` is the server's own reading of the same circuit (the workers read it again:
     the same base)."""
-    steps = steps_for(len(pb.refs), thorough)
+    steps = steps_for(len(pb.refs))
     seeds = seeds_for(attempt)
     jobs = [(s, s, False) for s in seeds]  # (tag, seed, flat)
     flat = _flat_key(pb, circuit, steps) if flat_needed(pb) else None
@@ -202,7 +203,7 @@ def run(pb: Problem, layout: Layout | None, circuit: Circuit, thorough: bool, at
             del _flat[next(iter(_flat))]
     results += known
     if flat is not None and best_of(results) is None and not stop.is_set():
-        # no board without a problem: the rest of Never's seeds, before Start a board's
+        # no board without a problem: the rest of Never's seeds, before the starting board
         rescue = [(RESCUE + s, s, True) for s in seeds if s != FLAT_SEED]
         results += attempts(rescue)
     return Run(pb, best_of(results), stop.is_set())
@@ -210,16 +211,18 @@ def run(pb: Problem, layout: Layout | None, circuit: Circuit, thorough: bool, at
 
 @dataclass(frozen=True)
 class Estimate:
-    """How long Quick and Thorough take on this circuit on this machine, in seconds."""
+    """How long a run takes on this circuit on this machine, in seconds; its board parts,
+    and how many count as large (`LARGE`)."""
 
-    quick: float
-    thorough: float
+    seconds: float
+    parts: int
+    large: int = LARGE
 
 
 def estimate(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
              table: FootprintTable) -> Estimate:  # fmt: skip
-    """Time `SAMPLE` seconds of real steps on this circuit, here, and scale them to each
-    choice's steps, attempts and workers, corrected for the run speeding up as the board
+    """Time `SAMPLE` seconds of real steps on this circuit, here, and scale them to a
+    run's steps, attempts and workers, corrected for the run speeding up as the board
     shrinks (`RAMP`); plus what every worker does first (the base)."""
     started = time.monotonic()
     pb = problem(layout, circuit, models, table)
@@ -236,12 +239,9 @@ def estimate(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
     search(pb, 10**9, 1, going)
     speed = counted / max(timing[-1] - timing[0], 1e-3) / RAMP if counted else 1e4
 
-    def seconds(thorough: bool) -> float:
-        steps = steps_for(len(pb.refs), thorough)
-        flat = flat_needed(pb) and _flat_key(pb, circuit, steps) not in _flat
-        # the flat attempt too (D-403): it starts as the quickest attempt ends and runs
-        # mostly alone, so it costs its share, not a whole round (TS808: +26 %, 4 workers)
-        rounds = max(math.ceil(ATTEMPTS / WORKERS), (ATTEMPTS + flat) / WORKERS)
-        return SPAWN + base + rounds * steps / speed
-
-    return Estimate(round(seconds(False), 1), round(seconds(True), 1))
+    steps = steps_for(len(pb.refs))
+    flat = flat_needed(pb) and _flat_key(pb, circuit, steps) not in _flat
+    # the flat attempt too (D-403): it starts as the quickest attempt ends and runs
+    # mostly alone, so it costs its share, not a whole round (TS808: +26 %, 4 workers)
+    rounds = max(math.ceil(ATTEMPTS / WORKERS), (ATTEMPTS + flat) / WORKERS)
+    return Estimate(round(SPAWN + base + rounds * steps / speed, 1), len(pb.refs))

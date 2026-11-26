@@ -1,5 +1,5 @@
-"""*Start for me* (spec, *Automatic help*; D-387): a board laid out from the circuit that
-passes the check, the same every run.
+"""The starting board (D-387; *Lay it out for me*'s, D-399): a board laid out from the
+circuit that passes the check, the same every run.
 
 The parts go left to right in signal order, each across the strips in columns of its own.
 A strip carries a net along: a part whose leg lands on a strip already carrying that leg's
@@ -15,10 +15,8 @@ to its input) has them on neighbouring strips: the second is joined to the first
 link beside the part, never a bus (the user, 2026-11-23).
 Several heights are tried for the parts' rows; the smallest board is kept.
 
-*Fill the rest* keeps what's on the board and lays out the tray the same way below it,
-the buses in between; each piece already on the board of a net with a bus is joined to it
-by a link down a free column from its copper. What can't be joined that way is named,
-never forced: the builder's own placements are never moved.
+Since P8's R3 it has no button of its own: it is *Lay it out for me*'s starting board
+(D-399), and *Fill the rest* went with it.
 """
 
 from collections import defaultdict
@@ -36,9 +34,6 @@ from solum.stripboard.board import PITCH, Hole, Layout, Link, Placed, StandUp
 from solum.stripboard.check import (
     Reading,
     check_layout,
-    groups_by_net,
-    joined_groups,
-    occupants,
     read_layout,
 )
 from solum.stripboard.footprints import (
@@ -64,10 +59,9 @@ class StartError(ValueError):
 
 @dataclass(frozen=True)
 class Started:
-    """The board laid out, and what's left for the builder to join (empty: it passes)."""
+    """The board laid out."""
 
     layout: Layout
-    left: tuple[str, ...] = ()
 
 
 # --- the room links need ------------------------------------------------------------------
@@ -103,18 +97,6 @@ class _Room:
         self.links.append(made)
         self.used |= {made.a, made.b}
         self.over |= set(made.between)
-
-
-def _room(layout: Layout, board: dict[str, BoardPart]) -> _Room:
-    """The room a board already leaves (Fill the rest)."""
-    room = _Room(used=set(occupants(layout)[0]) | set(layout.cuts))
-    for p in layout.parts:
-        part = board.get(p.ref)
-        if part is not None:
-            room.bodies |= body_holes(part, p.holes, p.standing)
-    for link in layout.links:
-        room.over |= set(link.between)
-    return room
 
 
 # --- a part's shapes: its legs across the strips ------------------------------------------
@@ -158,9 +140,9 @@ def shapes(part: BoardPart, every: bool = False, stand: Stand = "none") -> list[
 
 
 def stand_order(stand_up: StandUp) -> Stand:
-    """How Start a board and Fill the rest try standing a part (D-403): first when
-    preferred; otherwise not (when needed, it's *Build a full layout* that stands one,
-    where lying flat leaves a warning)."""
+    """How the starting board tries standing a part (D-403): first when preferred;
+    otherwise not (when needed, it's the search that stands one, where lying flat can't
+    do as well)."""
     order: dict[StandUp, Stand] = {"prefer": "first", "needed": "none", "never": "none"}
     return order[stand_up]
 
@@ -224,15 +206,6 @@ def _order(circuit: Circuit, r: Reading, refs: Iterable[str]) -> list[str]:
         return (near, rank.get(part.footprint.shape, 2), ref)
 
     return sorted(refs, key=key)
-
-
-def _pieces(r: Reading) -> dict[str, list[int]]:
-    """Each net's joined groups on the board that carry it and no other net."""
-    found: dict[str, list[int]] = defaultdict(list)
-    for group, here in groups_by_net(r).items():
-        if len(here) == 1:
-            found[next(iter(here))].append(group)
-    return found
 
 
 # --- pass 1: each part's rows and way round -----------------------------------------------
@@ -346,30 +319,6 @@ class _Plan:
     parts: list[Placed] = field(default_factory=list)
     cuts: set[Hole] = field(default_factory=set)
     last: dict[int, int] = field(default_factory=dict)
-    left: list[str] = field(default_factory=list)
-
-
-def _join_pieces(r: Reading, plan: _Plan, bus: dict[str, int]) -> None:
-    """Each piece already on the board of a net with a bus, joined to it by a link down
-    from its copper: the shortest, the leftmost of those; one that can't be named."""
-    holes, _ = joined_groups(r.layout)
-    by_group: dict[int, list[Hole]] = defaultdict(list)
-    for hole, group in holes.items():
-        by_group[group].append(hole)
-    for net, groups in sorted(_pieces(r).items()):
-        if net not in bus:
-            continue
-        for group in groups:
-            row = bus[net]
-            ways = sorted((row - h[1], h[0], h) for h in by_group[group] if h[1] < row)
-            way = next((h for _, _, h in ways if plan.room.free(h[0], h[1], row)), None)
-            if way is None:
-                plan.left.append(
-                    f"{net}: no free column runs down from its copper on the board to its "
-                    "new strip. Lay a link to join them, or Start over."
-                )
-                continue
-            plan.room.link(way[0], way[1], row)
 
 
 @dataclass(frozen=True)
@@ -496,36 +445,36 @@ def _lay(r: Reading, plan: _Plan, choice: _Choice, top: int, bus: dict[str, int]
 
 
 def _laid_out(r: Reading, circuit: Circuit, base: Layout, todo: list[str],
-              choices: list[_Choice], height: int) -> tuple[Layout, list[str]]:  # fmt: skip
-    """`base` with the parts placed as chosen below it, the buses between, every net's
-    pieces joined (module doc)."""
-    fresh = not base.parts
+              choices: list[_Choice], height: int) -> Layout:  # fmt: skip
+    """`base` (its choices only) with the parts placed as chosen, the buses above and
+    below them, every net's pieces joined (module doc)."""
     pieces = _band_pieces(r, choices)
-    on_board = _pieces(r)
     new = {net for c in choices for net in (_leg_net(r, r.board[c.ref], leg) for leg in c.starts)}
-    wanted = {n for n in new | on_board.keys() if pieces.get(n, 0) + len(on_board.get(n, ())) > 1}
+    wanted = {n for n in new if pieces.get(n, 0) > 1}
     order = signal_order(circuit, r)
     rails = list(circuit.power.rails)
     ranked = sorted(wanted, key=lambda n: (0 if n in rails else 1, order.get(n, len(order) + 1), n))
-    below = [n for n in BOTTOM if n in wanted] if fresh else []
+    below = [n for n in BOTTOM if n in wanted]
     above = [n for n in ranked if n not in below]
-    start = base.strips if not fresh else 0
-    bus = {net: start + k for k, net in enumerate(above)}
-    top = start + len(above)
+    bus = {net: k for k, net in enumerate(above)}
+    top = len(above)
     floor = top + height
     bus |= {net: floor + k for k, net in enumerate(below)}
-    plan = _Plan(_room(base, r.board) if not fresh else _Room())
-    _join_pieces(r, plan, bus)
+    plan = _Plan(_Room())
     lone = set(r.ends.values()) - bus.keys()
     for choice in choices:
         _lay(r, plan, choice, top, bus, lone)
-    strips = max(floor + len(below) if todo else top, base.strips, 1)
+    strips = max(floor + len(below) if todo else top, 1)
     taken = plan.room.used | plan.room.bodies
-    columns = max(max((h[0] for h in taken), default=0) + 1, base.columns, 1)
-    layout = replace(base, columns=columns, strips=strips,
-                     parts=base.parts + tuple(plan.parts), cuts=base.cuts | plan.cuts,
-                     links=base.links + tuple(plan.room.links))  # fmt: skip
-    return layout, plan.left
+    columns = max(max((h[0] for h in taken), default=0) + 1, 1)
+    return replace(
+        base,
+        columns=columns,
+        strips=strips,
+        parts=tuple(plan.parts),
+        cuts=frozenset(plan.cuts),
+        links=tuple(plan.room.links),
+    )
 
 
 def _legs_to_place(r: Reading, todo: list[str]) -> dict[str, int]:
@@ -538,49 +487,46 @@ def _legs_to_place(r: Reading, todo: list[str]) -> dict[str, int]:
 
 
 def start_for_me(layout: Layout | None, circuit: Circuit, models: ModelLibrary,
-                 table: FootprintTable, fill: bool,
-                 stand_up: StandUp | None = None) -> Started:  # fmt: skip
-    """*Fill the rest* (`fill`: what's placed kept, the tray laid out) or *Start over* (the
-    whole board laid out afresh; the parts' On / Off the board choices kept), with the
-    off-board parts beside it and wired; `StartError` when there's nothing to do or a part
-    can't go on a board. `stand_up`: standing resistors and diodes (`stand_order`; None:
-    the board's own choice), kept with the board made (D-403)."""
+                 table: FootprintTable, stand_up: StandUp | None = None) -> Started:  # fmt: skip
+    """The starting board for *Lay it out for me* (D-399; its own button went with P8's
+    R3): the whole board laid out afresh, the parts' On / Off the board choices and the
+    notes kept, with the off-board parts beside it and wired; `StartError` when a part
+    can't go on a board or nothing does. `stand_up`: standing resistors and diodes
+    (`stand_order`; None: the board's own choice), kept with the board made (D-403)."""
     old = layout or Layout(0, 0, ())
     stand_up = stand_up or old.stand_up
     stand = stand_order(stand_up)
-    kept = replace(Layout(0, 0, ()), where=old.where, notes=old.notes, dismissed=old.dismissed,
-                   stand_up=stand_up)  # fmt: skip
-    base = replace(old, stand_up=stand_up) if fill else kept  # Start over keeps the choices
-    # and the notes (D-398)
+    base = replace(
+        Layout(0, 0, ()),
+        where=old.where,
+        notes=old.notes,
+        dismissed=old.dismissed,
+        stand_up=stand_up,
+    )  # its choices and notes kept (D-398)
     r = read_layout(base, circuit, models, table)
     if r.unboardable:
         raise StartError(" ".join(r.unboardable))
     if not r.board:
         raise StartError("Nothing in this circuit goes on a board.")
-    placed = {p.ref for p in base.parts}
-    todo = _order(circuit, r, sorted(r.board.keys() - placed))
+    todo = _order(circuit, r, sorted(r.board))
     tallest = max((min(s.up + s.down for s in shapes(r.board[ref])) for ref in todo), default=0)
     remaining = _legs_to_place(r, todo)
-    best: tuple[tuple[int, int, int], Layout, list[str]] | None = None
+    best: tuple[tuple[int, int], Layout] | None = None
     for height in range(tallest + 1, tallest + 2 + EXTRA_ROWS):
         chosen = _choose(r, todo, height, remaining, stand)
         if chosen is not None:
-            made, left = _laid_out(r, circuit, base, todo, chosen, height)
-            key = (len(left), made.columns * made.strips, len(made.links))
+            made = _laid_out(r, circuit, base, todo, chosen, height)
+            key = (made.columns * made.strips, len(made.links))
             if best is None or key < best[0]:
-                best = (key, made, left)
+                best = (key, made)
         if not todo:
             break
     if best is None:
         raise StartError("Couldn't lay this board out.")
-    _, made, left = best
+    made = best[1]
     with suppress(WiringError):  # nothing to wire
         made = wire_for_me(made, circuit, models, table)
-    if fill and replace(made, spots=old.spots, stand_up=old.stand_up) == old:  # off-board only
-        raise StartError("Nothing to fill: every part is placed and every net joined.")
     checked = check_layout(made, circuit, models, table)
-    if not checked.ok and not left:
-        if not fill:
-            raise StartError(f"Couldn't lay this board out: {checked.faults[0]}")
-        left = [checked.faults[0]]
-    return Started(made, tuple(left))
+    if not checked.ok:
+        raise StartError(f"Couldn't lay this board out: {checked.faults[0]}")
+    return Started(made)

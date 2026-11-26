@@ -949,39 +949,14 @@ export const BOARD_SETTINGS = /** @type {const} */ ([
 ]);
 
 /**
- * The Layout dialog's choices (P6h2), in order, each with a line saying what it does and,
- * when it can't be chosen, why (`why`): Fill the rest and Tidy up need something placed,
- * and Fill the rest something to fill (a part in the tray or a net in pieces).
- * The first is *Start a board* on an empty board, *Start over* once parts are placed; it
- * has *Make the board compact* under it (the dialog's own checkbox). The last, below a
- * divider, *Build a full layout* (D-399), has Quick and Thorough under it.
- * @typedef {"start" | "fill" | "tidy" | "full"} LayoutChoice
- * @param {boolean} placed whether any part is on the board
- * @param {boolean} [rest] whether anything is left to fill: a part in the tray, a net in pieces
- * @returns {Array<{value: LayoutChoice, label: string, text: string, why: string}>}
- */
-export function layoutChoices(placed, rest = true) {
-  const none = placed ? "" : "Nothing is placed yet: start a board first.";
-  const filled = none || (rest ? "" : "Every part is placed and every net joined: nothing left to fill.");
-  return [
-    placed
-      ? { value: "start", label: "Start over", text: "Wipes the board and lays it all out afresh: a base layout, the parts in signal order left to right, for you to edit by hand.", why: "" }
-      : { value: "start", label: "Start a board", text: "A base layout of the whole board, the parts in signal order left to right, for you to edit by hand.", why: "" },
-    { value: "fill", label: "Fill the rest", text: "Keeps what you've placed and lays out the parts still in the tray below it.", why: filled },
-    { value: "tidy", label: "Tidy up", text: "Makes the board smaller by moving parts, links and cuts in small steps, keeping the check passing.", why: none },
-    { value: "full", label: "Build a full layout", text: "Starts afresh and does everything for you: lays the board out, then keeps making it smaller, wired and checked. Replaces what's on the board.", why: "" },
-  ];
-}
-
-/**
- * Standing resistors and diodes (D-403), the Layout dialog's last line: used by whichever
- * choice runs and kept with the board it makes. The board's own choice, else the default.
+ * Standing resistors and diodes (D-403), asked in *Lay it out for me*'s confirmation and
+ * kept with the board it makes. The board's own choice, else the default.
  * @typedef {"never" | "needed" | "prefer"} StandUp
  * @type {Array<{value: StandUp, label: string, text: string}>}
  */
 export const STAND_UP = [
   { value: "never", label: "Never", text: "Every resistor and diode lies flat." },
-  { value: "needed", label: "When needed", text: "Stood up only where lying flat it can't sit by its pin or would break a rule; never just to save room." },
+  { value: "needed", label: "When needed", text: "Stood up only where lying flat it can't sit by its pin; never just to save room." },
   { value: "prefer", label: "Prefer", text: "Stood up wherever it fits." },
 ];
 
@@ -990,12 +965,6 @@ export function standUpOf(data) {
   const kept = STAND_UP.find((s) => s.value === data?.stand_up);
   return kept ? kept.value : "needed";
 }
-
-/** The notes under *Build a full layout*'s choices (the user, 2026-11-24). */
-export const FULL_NOTES = [
-  "These times are estimates, from the circuit's size and this computer's speed: the more parts, the longer it takes to build.",
-  "The layout is worked out by the app. Check it, and adjust it if you need to, before you build it on a real board.",
-];
 
 /**
  * How long a run takes, in words (D-399): "A few seconds", "About 40 seconds", "About a
@@ -1060,43 +1029,36 @@ export function sameTry(tries, made) {
 }
 
 /**
- * The choice the Layout dialog opens on: Start a board on an empty board; none once parts
- * are placed, so the builder chooses (Start a board would wipe them).
- * @param {boolean} placed @returns {LayoutChoice | null}
+ * The large-circuit line (P8 R3): past `large` board parts a layout made for you is likely
+ * larger than one laid out by hand, so it's said, in the confirmation and the running
+ * window; "" for a smaller circuit.
+ * @param {number} parts the board parts @param {number} large how many count as large
  */
-export function layoutDefault(placed) {
-  return placed ? null : "start";
+export function largeText(parts, large) {
+  return parts > large ? `This circuit has ${parts} parts: a layout made for you will likely be larger than one laid out by hand. Use it as a draft and look it over.` : "";
 }
 
 /**
- * The confirmation after the Layout dialog: what will happen, what's replaced (named by
- * count), and that it's one step to undo.
- * @param {LayoutChoice} choice @param {boolean} compact *Make the board compact* ticked
+ * *Lay it out for me*'s confirmation (P8 R3): what it replaces (named by count) and that
+ * it's one undo step; how long it takes and that it can stop early (`estimate` undefined:
+ * still being worked out; null: not known); and that the layout is a draft, with the
+ * large-circuit line when it applies, else what counts as large.
  * @param {{parts: unknown[], cuts: unknown[], links: unknown[], wires: unknown[]}} board what's on the board now
- * @param {number} toPlace the parts still in the tray
- * @param {number} [seconds] *Build a full layout*'s time, estimated
- * @returns {{title: string, text: string, label: string}}
+ * @param {{seconds: number, parts: number, large: number} | null} [estimate]
+ * @returns {{text: string, takes: string, draft: string}}
  */
-export function layoutConfirm(choice, compact, board, toPlace, seconds = 0) {
+export function layOutWords(board, estimate) {
   const count = (/** @type {number} */ n, /** @type {string} */ word) => `${n} ${word}${n === 1 ? "" : "s"}`;
-  const undo = "One step to undo.";
-  if (choice === "full") {
-    const takes = `It takes ${timeText(seconds).toLowerCase()}; you can stop early and keep the best board found so far.`;
-    const text = board.parts.length ? `This replaces everything on the board: ${count(board.parts.length, "part")}, its cuts, links and wires. ${takes}` : takes;
-    return { title: "Build a full layout", text, label: "Build it" };
-  }
-  if (choice === "fill") {
-    const what = toPlace ? `Lays out the ${count(toPlace, "part")} still in the tray below what you've placed` : "Every part is placed: it joins what's still in pieces";
-    return { title: "Fill the rest", text: `${what}; the parts you've placed stay where they are. ${undo}`, label: "Fill the rest" };
-  }
-  if (choice === "tidy") {
-    return { title: "Tidy up", text: `Moves parts, links and cuts a step at a time to make the board smaller, keeping the check passing, so parts may end up away from where you put them. ${undo}`, label: "Tidy up" };
-  }
-  const then = compact ? ", then made compact" : "";
-  if (!board.parts.length) return { title: "Start a board", text: `Lays out the whole board: ${count(toPlace, "part")} in signal order${then}. ${undo}`, label: "Start a board" };
   const listed = [count(board.parts.length, "part"), ...[[board.cuts.length, "cut"], [board.links.length, "link"], [board.wires.length, "wire"]].filter(([n]) => n).map(([n, w]) => count(/** @type {number} */ (n), /** @type {string} */ (w)))];
   const named = listed.length > 1 ? `${listed.slice(0, -1).join(", ")} and ${listed[listed.length - 1]}` : listed[0];
-  return { title: "Start over", text: `This replaces everything on the board: ${named}. A fresh layout takes its place${then}. ${undo}`, label: "Replace the board" };
+  const text = board.parts.length
+    ? `This replaces everything on the board: ${named}. One step to undo.`
+    : "Lays out the whole board for you, wired and checked. One step to undo.";
+  const stop = "you can stop early and keep the best board found so far.";
+  const takes = estimate === undefined ? "Working out the time…" : estimate ? `It takes ${timeText(estimate.seconds).toLowerCase()}; ${stop}` : `It may take a while; ${stop}`;
+  const large = estimate ? largeText(estimate.parts, estimate.large) : "";
+  const draft = large || `The layout is a draft: look it over before you build it.${estimate ? ` Circuits with more than ${estimate.large} parts on the board count as large: a layout made for them is likely larger than one laid out by hand.` : ""}`;
+  return { text, takes, draft };
 }
 
 /** @typedef {Record<(typeof BOARD_SETTINGS)[number]["key"], boolean>} BoardSettings */

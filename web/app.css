@@ -389,8 +389,6 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-tray .board-list li { padding: 3px 2px; color: var(--text-2); border-radius: 3px; }
 .board-tray .board-list li.pickable { cursor: pointer; }
 /* the Layout dialog's help at work (a big board takes seconds): no value, so it just moves */
-.board-tray .tray-working { display: block; width: 100%; height: 6px; margin: 0 0 8px; accent-color: var(--accent); }
-.board-tray .tray-working[hidden] { display: none; }
 .board-tray .placed-toggle { display: block; margin: 4px 0 2px; padding: 0 2px; background: none; border: none; color: var(--text-3); font: 12px var(--font-ui); cursor: pointer; }
 .board-tray .placed-toggle:hover { color: var(--text-2); }
 .board-tray .board-list li.placed { color: var(--text-3); cursor: pointer; }
@@ -555,23 +553,6 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-panels .board-settings-head { font-family: var(--font-display); font-weight: 300; text-transform: uppercase; letter-spacing: 0.14em; font-size: 10px; color: var(--text-3); margin: 12px 2px 6px; }
 .board-panels .board-settings-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
 /* the Layout dialog (P6h2): a radio list, each choice's line under its name, greyed with its reason */
-.layout-choices { display: flex; flex-direction: column; gap: 10px; margin: 0 0 16px; }
-.layout-choice { display: grid; grid-template-columns: auto 1fr; column-gap: 8px; cursor: pointer; }
-.layout-choice input { grid-row: span 2; margin: 2px 0 0; accent-color: var(--accent); }
-.layout-choice .layout-name { color: var(--text); font-weight: 600; }
-.layout-choice .layout-text { color: var(--text-2); font-size: 12px; }
-.layout-choice.greyed { cursor: default; }
-.layout-choice.greyed .layout-name, .layout-choice.greyed .layout-text { color: var(--text-3); }
-.layout-compact { margin: -4px 0 0 24px; color: var(--text-2); font-size: 12px; cursor: pointer; }
-.layout-compact:has(input:disabled) { color: var(--text-3); cursor: default; }
-.layout-divider { border: 0; border-top: 1px solid var(--border); margin: 2px 0; }
-.layout-speed { display: grid; grid-template-columns: auto auto 1fr; column-gap: 6px; margin: -4px 0 0 24px; color: var(--text-2); font-size: 12px; cursor: pointer; }
-.layout-speed input { margin: 1px 0 0; accent-color: var(--accent); }
-.layout-speed .layout-name { font-weight: 600; color: var(--text); }
-.layout-speed .layout-time { color: var(--text-2); }
-.layout-speed .layout-text { grid-column: 2 / -1; color: var(--text-3); }
-.layout-speed:has(input:disabled), .layout-speed:has(input:disabled) .layout-name { color: var(--text-3); cursor: default; }
-.layout-note { margin: 0 0 0 24px; color: var(--text-3); font-size: 12px; }
 .layout-standing { display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; row-gap: 4px; font-size: 12px; color: var(--text-2); }
 .layout-standing .layout-name { flex-basis: 100%; font-size: 13px; font-weight: 600; color: var(--text); }
 .layout-stand { cursor: pointer; }
@@ -586,6 +567,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .compact-progress.working { animation: working 1.6s ease-in-out infinite alternate; }
 @keyframes working { from { opacity: 1; } to { opacity: 0.55; } }
 @media (prefers-reduced-motion: reduce) { .compact-progress.working { animation: none; } }
+.compact-large { color: var(--text); border-left: 3px solid var(--warning); padding-left: 8px; }
 .compact-best { font-family: var(--font-mono); font-variant-numeric: tabular-nums; color: var(--text); }
 .compact-buttons { display: flex; gap: 8px; justify-content: flex-end; margin-top: 8px; }
 .compact-dim { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); padding: 4px 10px; background: var(--surface-1); border: 1px solid var(--border); border-radius: 4px; font-size: 12px; color: var(--text-2); pointer-events: none; z-index: 2; }

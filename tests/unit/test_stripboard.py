@@ -544,7 +544,7 @@ def test_a_dip_switch_is_one_board_part_like_a_chip() -> None:
     assert leg_problem(sw3, legs, standing=False) is None
     assert body_holes(sw3, legs, standing=False) == {(1, 0), (2, 0), (1, 1), (2, 1)}
     circuit = load_circuit(path)
-    laid = start_for_me(None, circuit, MODELS, TABLE, fill=False).layout
+    laid = start_for_me(None, circuit, MODELS, TABLE).layout
     moved = tuple(
         Placed(p.ref, tuple((leg, (x, y + 1)) for leg, (x, y) in p.legs)) if p.ref == "SW3" else p
         for p in laid.parts

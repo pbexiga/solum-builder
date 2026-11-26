@@ -13,6 +13,7 @@
 # Two legs lying flat (at least `flat` holes apart: the legs bend just past the body) or
 # standing (at least `stand` holes apart, the body upright over one leg, covering no other
 # hole). Longer leads are the builder's call: no most. A link may run under any body (D-410).
+# An axial electrolytic lies flat or stands as a resistor does (D-411).
 axial:
   resistor:  # by rating: the first whose `max_watts` holds the part's (¼ W when none set)
     - max_watts: 0.25
@@ -72,6 +73,61 @@ axial:
         BKC Semiconductors 1N34A sheet, DO-7 glass package: body 5.85-7.62 mm long,
         2.16-2.71 mm across (the largest taken; highered.mheducation.com 1N34A.pdf); its
         spans as DO-15's, the same length
+
+  electrolytic:  # axial (a capacitor's `axial`, D-411), by value at 25 V, the first whose `max_value` holds it
+    - max_value: 47µ
+      length: 10
+      diameter: 4.5
+      flat: 5
+      stand: 2
+      source: &asm >
+        Vishay BCcomponents 021 ASM (axial standard miniature), document 28325, revision
+        16-Sep-16, selection chart, 25 V column, nominal case D × L (vishay.com/docs/28325/
+        021asm.pdf; smaller values at 25 V come in its smallest case, 4.5 × 10, at 63 V).
+        Spans as the rows above follow: flat, the least holes holding the body and 1.3 mm
+        of bent lead; standing, half the diameter and 1 mm of lead (D-411)
+    - max_value: 100µ
+      length: 10
+      diameter: 6
+      flat: 5
+      stand: 2
+      source: *asm
+    - max_value: 150µ
+      length: 11
+      diameter: 8
+      flat: 5
+      stand: 2
+      source: *asm
+    - max_value: 220µ
+      length: 18
+      diameter: 6.5
+      flat: 8
+      stand: 2
+      source: *asm
+    - max_value: 330µ
+      length: 18
+      diameter: 8
+      flat: 8
+      stand: 2
+      source: *asm
+    - max_value: 470µ
+      length: 18
+      diameter: 10
+      flat: 8
+      stand: 3
+      source: *asm
+    - max_value: 680µ
+      length: 25
+      diameter: 10
+      flat: 11
+      stand: 3
+      source: *asm
+    - max_value: 1m
+      length: 30
+      diameter: 12.5
+      flat: 13
+      stand: 3
+      source: *asm
 
 # Two legs standing, `holes` apart (the maker's `pitch` bent to the nearest 0.1" step).
 radial:

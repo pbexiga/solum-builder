@@ -230,6 +230,7 @@ export function partShapes(fp, legs, standing) {
   };
   const marks = (look.bands ?? []).slice(0, BAND_AT.length).map((colour, i) => band(BAND_AT[i], colour));
   if (look.cathode) marks.push(band(atEnd(look.cathode) ? 0.32 : -0.32, "cathode"));
+  if (look.minus) marks.push(band(atEnd(look.minus) ? 0.36 : -0.36, "minus")); // an axial electrolytic's − end (D-411)
   return [...leads, body, ...marks];
 }
 

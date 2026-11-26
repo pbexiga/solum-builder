@@ -79,6 +79,9 @@ def test_identical_parts_group_and_different_ones_do_not() -> None:
         .part("C1", "capacitor", "a", "GND", value="10u", kind="electrolytic", rating_v=16)
         .part("C4", "capacitor", "a", "GND", value="10u", kind="electrolytic")
         .part("C5", "capacitor", "a", "GND", value="1n")
+        .part(
+            "C6", "capacitor", "a", "GND", value="10u", kind="electrolytic", axial=True, rating_v=16
+        )
     )
     assert [(x.value, x.details, x.refs) for x in lines] == [
         ("1n", "type not set", ("C5",)),
@@ -86,6 +89,7 @@ def test_identical_parts_group_and_different_ones_do_not() -> None:
         ("100n", "ceramic (X7R)", ("C3",)),
         ("10µ", "electrolytic, 16 V", ("C1",)),
         ("10µ", "electrolytic, voltage rating not set", ("C4",)),
+        ("10µ", "axial electrolytic, 16 V", ("C6",)),  # bought as its own (D-411)
     ]
 
 

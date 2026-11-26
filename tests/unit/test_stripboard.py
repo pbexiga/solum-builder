@@ -133,6 +133,30 @@ def test_footprints_come_from_the_table_by_type_value_and_package() -> None:
     assert q1.pins["B"] == ("Q1", "B")
 
 
+def test_an_axial_electrolytic_lies_flat_or_stands_as_a_resistor(
+    circuit: Callable[..., CircuitBuilder],
+) -> None:
+    """D-411: by value at 25 V from Vishay's 021 ASM: 10µ in its 4.5 × 10 mm case, flat
+    from 5 holes (12.7 mm: the body and its bent leads), standing from 2; 470µ, 10 × 18,
+    flat from 8, standing from 3. Radial unless set; a film cap ignores it."""
+    c = (
+        circuit()
+        .part("C1", "capacitor", "a", "0", value="10µ", kind="electrolytic", axial=True)
+        .part("C2", "capacitor", "a", "0", value="470µ", kind="electrolytic", axial=True)
+        .part("C3", "capacitor", "a", "0", value="10µ", kind="electrolytic")
+        .part("C4", "capacitor", "a", "0", value="2.2m", kind="electrolytic", axial=True)
+        .build()
+    )
+    board, problems = board_parts(c, MODELS, TABLE)
+    c1, c2 = board["C1"].footprint, board["C2"].footprint
+    assert (c1.shape, c1.flat, c1.stand, c1.length, c1.width) == ("axial", 5, 2, 10, 4.5)
+    assert (c2.flat, c2.stand, c2.length, c2.width) == (8, 3, 18, 10)
+    assert board["C3"].footprint.shape == "radial"
+    assert problems == ["There's no board size for an axial electrolytic as big as C4 yet."]
+    assert "at least 5 holes" in (leg_problem(board["C1"], {"1": (2, 6), "2": (2, 3)}, False) or "")
+    assert leg_problem(board["C1"], {"1": (2, 5), "2": (2, 3)}, True) is None
+
+
 def test_a_capacitor_without_a_type_or_size_gets_no_footprint(
     circuit: Callable[..., CircuitBuilder],
 ) -> None:

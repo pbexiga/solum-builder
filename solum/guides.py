@@ -141,12 +141,14 @@ def battery_guide(library_dir: Path) -> BatteryGuide:
 
 class AxialSize(BaseModel):
     """A two-leg part lying flat (legs at least `flat` holes apart) or standing (`stand`
-    holes apart): a resistor by rating, a diode by package (D-367)."""
+    holes apart): a resistor by rating, a diode by package (D-367), an axial electrolytic by
+    value (D-411)."""
 
     model_config = ConfigDict(extra="forbid")
 
     max_watts: float | None = None
     package: str | None = None
+    max_value: str | None = None
     length: float  # mm
     diameter: float
     flat: int = Field(ge=1)

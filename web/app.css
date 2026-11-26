@@ -482,7 +482,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-drawing .band-yellow { fill: var(--band-yellow); } .board-drawing .band-green { fill: var(--band-green); }
 .board-drawing .band-blue { fill: var(--band-blue); } .board-drawing .band-violet { fill: var(--band-violet); }
 .board-drawing .band-grey { fill: var(--band-grey); } .board-drawing .band-white { fill: var(--band-white); }
-.board-drawing .band-gold { fill: var(--band-gold); } .board-drawing .band-silver, .board-drawing .band-cathode { fill: var(--band-silver); }
+.board-drawing .band-gold { fill: var(--band-gold); } .board-drawing .band-silver, .board-drawing .band-cathode, .board-drawing .band-minus { fill: var(--band-silver); }
 .board-drawing .stripe { fill: var(--band-silver); opacity: 0.8; pointer-events: none; }
 .board-drawing .notch { fill: none; stroke: var(--sch-line); stroke-width: 1; vector-effect: non-scaling-stroke; }
 .board-drawing .dot { fill: var(--sch-line); }

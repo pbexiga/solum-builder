@@ -1044,6 +1044,28 @@ def test_a_surface_mount_transistor_is_offered_an_adapter(js: Page) -> None:
     assert r == {"smd": "", "on": "adapter", "th": None, "set": True, "back": None}
 
 
+def test_an_electrolytic_is_offered_axial_leads(js: Page) -> None:
+    """D-411: an electrolytic's form asks for its leads, radial unless set; picking axial
+    sets `axial`, picking back removes it. A film cap's form doesn't ask."""
+    r = run(
+        js,
+        """
+        const f = await m('editor/fields.js');
+        const e = { ref: 'C1', type: 'capacitor', value: '10µ', kind: 'electrolytic', rating_v: 25 };
+        const film = { ref: 'C2', type: 'capacitor', value: '10n', kind: 'film' };
+        const ctx = { circuit: { parts: [e, film] }, models: {} };
+        const leads = (q) => f.inspectorFields(q, ctx).find((x) => x.name === 'leads');
+        const form = { ref: 'C1', value: '10µ', kind: 'electrolytic', rating_v: '25' };
+        return {
+          shown: leads(e)?.value, on: leads({ ...e, axial: true })?.value, film: leads(film) ?? null,
+          set: f.editFrom(e, { ...form, leads: 'axial' }).patch.axial,
+          back: f.editFrom({ ...e, axial: true }, { ...form, leads: '' }).patch.axial,
+        };
+        """,
+    )
+    assert r == {"shown": "", "on": "axial", "film": None, "set": True, "back": None}
+
+
 def test_inspector_fields_for_a_jfet(js: Page) -> None:
     r = run(
         js,

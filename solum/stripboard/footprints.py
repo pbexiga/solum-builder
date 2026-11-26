@@ -33,7 +33,7 @@ from solum.circuit.schema import (
 )
 from solum.circuit.switches import POLE_LETTERS, lug_name
 from solum.export import built_where, chosen_where
-from solum.guides import FootprintTable, InlineSize, RadialSize
+from solum.guides import AxialSize, FootprintTable, InlineSize, RadialSize
 from solum.markings import resistor_bands
 from solum.models import Model, ModelError, ModelLibrary
 from solum.rules.checks import DEFAULT_RATING_W
@@ -167,11 +167,23 @@ def two_leg_footprint(part: Part, models: ModelLibrary, table: FootprintTable) -
                 f"{ref} has no type, so its size isn't known: set its type (film, "
                 "electrolytic...) in its properties."
             )
+        value = parse_value(part.value)
+
+        def holds(size: AxialSize | RadialSize) -> bool:
+            return parse_value(size.max_value or "0") >= value * 0.999
+
+        if part.axial and part.kind == "electrolytic":  # D-411
+            flat = next((s for s in table.axial["electrolytic"] if holds(s)), None)
+            if flat is None:
+                raise NoFootprint(
+                    f"There's no board size for an axial electrolytic as big as {ref} yet."
+                )
+            return Footprint("axial", flat=flat.flat, stand=flat.stand, length=flat.length,
+                             width=flat.diameter)  # fmt: skip
         sizes = table.radial.get(part.kind)
         if sizes is None:
             raise NoFootprint(f"There's no board size for {part.kind} capacitors ({ref}) yet.")
-        value = parse_value(part.value)
-        cap = next((s for s in sizes if parse_value(s.max_value or "0") >= value * 0.999), None)
+        cap = next((s for s in sizes if holds(s)), None)
         if cap is None:
             raise NoFootprint(f"There's no board size for a {part.kind} as big as {ref} yet.")
         return _radial(cap)

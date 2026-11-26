@@ -1501,7 +1501,7 @@ def test_parts_gone_from_the_circuit_are_said_in_one_sentence(js: Page) -> None:
 
 def test_a_board_part_is_drawn_with_its_markings(js: Page) -> None:
     """D-378: a resistor's colour bands from its first leg, a diode's band at the cathode, an
-    electrolytic's stripe, a TO-92's D-shaped body, a chip's notch and pin-1 dot."""
+    electrolytic's stripe (an axial one's − end banded, D-411), a TO-92's D-shaped body, a chip's notch and pin-1 dot."""
     got = run(
         js,
         """
@@ -1512,12 +1512,13 @@ def test_a_board_part_is_drawn_with_its_markings(js: Page) -> None:
         const resistor = b.partShapes({ ...axial, look: { bands: ['yellow', 'violet', 'red', 'gold'] } }, legs, false);
         const diode = b.partShapes({ ...axial, kind: 'diode', look: { cathode: '2' } }, legs, false);
         const cap = b.partShapes({ ...axial, shape: 'radial', diameter: 5, look: { minus: '2' } }, [['1', [0, 0]], ['2', [0, 1]]], false);
+        const axialCap = b.partShapes({ ...axial, kind: 'capacitor', length: 10, width: 4.5, look: { minus: '2' } }, [['1', [0, 0]], ['2', [5, 0]]], false);
         const to92 = b.partShapes({ ...axial, shape: 'inline', length: 4.6, width: 4.2, look: { face: true } }, [['E', [0, 0]], ['B', [1, 0]], ['C', [2, 0]]], false);
         const chip = b.partShapes({ ...axial, shape: 'dip', kind: 'chip', length: 0, width: 6.4, legs: ['1','2','3','4','5','6','7','8'] },
           [['1', [0, 0]], ['2', [0, 1]], ['3', [0, 2]], ['4', [0, 3]], ['5', [3, 3]], ['6', [3, 2]], ['7', [3, 1]], ['8', [3, 0]]], false);
         const firstBand = resistor.find((s) => s.kind === 'band');
         return { resistor: kinds(resistor), firstBandX: firstBand.cx, diode: kinds(diode), diodeBandX: diode.find((s) => s.kind === 'band').cx,
-                 cap: kinds(cap), capAngle: cap.find((s) => s.kind === 'path').angle, to92: kinds(to92), chip: kinds(chip),
+                 cap: kinds(cap), axialCap: kinds(axialCap), minusX: axialCap.find((s) => s.kind === 'band').cx, capAngle: cap.find((s) => s.kind === 'path').angle, to92: kinds(to92), chip: kinds(chip),
                  label: b.legLabel({ ...axial, shape: 'dip' }, '3') };
         """,
     )
@@ -1525,6 +1526,7 @@ def test_a_board_part_is_drawn_with_its_markings(js: Page) -> None:
     assert got["firstBandX"] < 20  # the first band toward the first leg (x 0), the middle is 20
     assert got["diode"] == ["lead", "lead", "rect", "cathode"] and got["diodeBandX"] > 20
     assert got["cap"] == ["lead", "lead", "circle", "stripe"] and got["capAngle"] == 90
+    assert got["axialCap"] == ["lead", "lead", "rect", "minus"] and got["minusX"] > 25  # D-411
     assert got["to92"] == ["lead", "lead", "lead", "body"]
     assert got["chip"] == ["rect", "notch", "dot"] and got["label"] == "pin 3"
 

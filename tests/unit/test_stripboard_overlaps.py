@@ -71,7 +71,7 @@ def test_outlines_overlap_by_how_far_they_run_into_each_other() -> None:
 def test_a_v39_board_has_no_notes_and_its_overlap_is_a_plain_warning() -> None:
     """v40 added `notes` and `dismissed`: a v39 board has neither, its overlap is warned of
     with no amount (the outlines are one maker's), and empty lists aren't written."""
-    assert V39.schema_ == 41 and (LAYOUT.notes, LAYOUT.dismissed) == ((), ())
+    assert V39.schema_ == 42 and (LAYOUT.notes, LAYOUT.dismissed) == ((), ())
     assert outline_overlaps(LAYOUT, BOARD) == [Overlap(("TR1", "C1"), TOUCH)]
     saved = circuit_to_dict(V39)["stripboard"]
     assert "notes" not in saved and "dismissed" not in saved

@@ -13,12 +13,14 @@ from playwright.sync_api import Page, expect
 
 from solum.yamlio import load_yaml
 from tests.ui.conftest import REPO, open_circuit, part_pos, reload_kept, to_screen
-from tests.ui.test_board import expect_matches, open_with_board
-from tests.ui.test_editor import menu
+from tests.ui.test_board import expect_matches, open_overlapping, open_with_board
+from tests.ui.test_editor import delete_part, menu
+from tests.ui.test_problems import run as run_sim
 
 pytestmark = pytest.mark.ui
 
 HIDDEN = re.compile(r"\bside-hidden\b")
+PEEK = re.compile(r"\bside-peek\b")
 
 
 def canvas_width(page: Page) -> float:
@@ -232,8 +234,19 @@ def test_a_peek_covers_its_own_large_view(page: Page, base_url: str) -> None:
     expect(page.locator("aside.panels")).to_have_class(HIDDEN)
     expect(frequency).to_be_visible()  # out as it was
     page.mouse.move(*bar_point(page, "right"))
-    expect(page.locator("aside.panels")).to_have_class(re.compile(r"\bside-peek\b"))
-    expect(frequency).to_be_hidden()  # tucked away while its column peeks over everything
+    panels = page.locator("aside.panels")
+    expect(panels).to_have_class(re.compile(r"\bside-peek\b"))
+    # still out, but the column comes over it as over everything (the user, 2026-11-26):
+    # where they meet, the point is the column's
+    expect(frequency).to_be_visible()
+    page.wait_for_timeout(400)  # the slide
+    col = panels.bounding_box()
+    out = frequency.bounding_box()
+    assert col and out
+    at = (col["x"] + 40, out["y"] + out["height"] / 2)
+    hit = "([x, y]) => !!document.elementFromPoint(x, y)?.closest('#panel-frequency')"
+    assert not page.evaluate(hit, at)
+    assert page.evaluate(hit, (col["x"] - 40, at[1]))  # beside the column, the view's
     page.mouse.move(400, 400)
     expect(page.locator("aside.panels")).not_to_have_class(re.compile(r"\bside-peek\b"))
     expect(frequency).to_be_visible()
@@ -277,3 +290,38 @@ def test_a_side_column_s_scroll_bar_shows_only_while_hovered(page: Page, base_ur
     page.wait_for_function(f"{colour}.startsWith('rgba(0, 0, 0, 0)')")
     page.locator("#palette").hover()
     page.wait_for_function(f"!{colour}.startsWith('rgba(0, 0, 0, 0)')")
+
+
+def workspace_scroll(page: Page) -> float:
+    return float(page.evaluate("document.querySelector('.workspace').scrollLeft"))
+
+
+def test_a_mark_clicked_peeks_its_hidden_side_out(page: Page, base_url: str) -> None:
+    """A problem's mark on the schematic and an overlap's on the board, clicked with the
+    right side hidden: the side peeks out with the row in view, the page not scrolled
+    sideways (the whole hidden column slid into sight, the user, 2026-11-26); a click
+    elsewhere sends it back."""
+    open_circuit(page, base_url)
+    delete_part(page, "R2")  # Q1 cut off: a warning mark
+    run_sim(page)
+    panels = page.locator("aside.panels")
+    width = canvas_width(page)
+    page.keyboard.press("]")
+    expect(panels).to_have_class(HIDDEN)
+    page.locator("#schematic .problem-mark[data-mark='bjt-cut-off|Q1']").click()
+    expect(panels).to_have_class(PEEK)
+    row = page.locator("#problems-body details.problem[data-key='bjt-cut-off|Q1']")
+    expect(row).to_be_in_viewport()
+    assert workspace_scroll(page) == 0
+    assert canvas_width(page) > width  # still hidden: the canvas keeps the width
+    page.locator("#schematic").click(position={"x": 5, "y": 5})
+    expect(panels).not_to_have_class(PEEK)
+
+    open_overlapping(page, base_url)
+    column = page.locator("#board-panels")
+    page.keyboard.press("]")
+    expect(column).to_have_class(HIDDEN)
+    page.locator("#board .board-marks .problem-mark").click()
+    expect(column).to_have_class(PEEK)
+    expect(page.locator("#board-warnings-body li.overlap")).to_be_in_viewport()
+    assert workspace_scroll(page) == 0

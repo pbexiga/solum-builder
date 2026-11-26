@@ -128,6 +128,14 @@ export function sidePanes(workspace, opts) {
   /** @param {Side} side the view shown's column on that side */
   const column = (side) => opts.columns[opts.view()][side];
 
+  // a click anywhere but the peeking side (or its bar) sends it back: a side peeked by
+  // `reveal` has no pointer on it to leave
+  document.addEventListener("pointerdown", (e) => {
+    if (!peeking) return;
+    const target = /** @type {Node} */ (e.target);
+    if (!column(peeking).contains(target) && !bars[peeking].contains(target)) unpeek();
+  }, true);
+
   function apply() {
     for (const v of VIEWS) {
       for (const s of SIDES) {
@@ -152,12 +160,40 @@ export function sidePanes(workspace, opts) {
     }
   }
 
+  /**
+   * The column's own panes out as large views, clipped where the column will be once it
+   * has peeked out (`side` given), or whole again (null): the column comes over them as it
+   * does over everything else (the user, 2026-11-26), though they are its children.
+   * @param {HTMLElement} col @param {Side | null} side
+   */
+  function clipLarge(col, side) {
+    const views = /** @type {HTMLElement[]} */ ([...col.querySelectorAll(":scope > .large-view")]);
+    if (!views.length) return;
+    const r = col.getBoundingClientRect();
+    const w = col.offsetWidth;
+    const [left, right] = side === "right" ? [r.left - w, r.right - w] : [r.left + w, r.right + w];
+    for (const v of views) {
+      if (!side) {
+        v.style.clipPath = "inset(0 0 0 0)";
+        window.setTimeout(() => { if (!col.classList.contains("side-peek")) v.style.clipPath = ""; }, motion.matches ? 0 : SLIDE_MS);
+        continue;
+      }
+      const b = v.getBoundingClientRect();
+      v.style.clipPath = "inset(0 0 0 0)";
+      void v.offsetWidth; // from whole, so the clip slides in with the column
+      v.style.clipPath = side === "right"
+        ? `inset(0 ${Math.max(0, Math.min(b.width, b.right - left))}px 0 0)`
+        : `inset(0 0 0 ${Math.max(0, Math.min(b.width, right - b.left))}px)`;
+    }
+  }
+
   /** A hidden side slides out over the canvas, the drawing untouched. @param {Side} side */
   function peek(side) {
     finishSlide(); // a side still sliding out lands first
     if (!sides[opts.view()][side]) return;
     if (peeking && peeking !== side) unpeek();
     peeking = side;
+    clipLarge(column(side), side);
     column(side).classList.remove("side-leaving");
     column(side).classList.add("side-peek");
     showBars();
@@ -171,6 +207,7 @@ export function sidePanes(workspace, opts) {
       const col = column(peeking);
       col.classList.add("side-leaving");
       col.classList.remove("side-peek");
+      clipLarge(col, null);
       window.setTimeout(() => col.classList.remove("side-leaving"), motion.matches ? 0 : SLIDE_MS);
     }
     peeking = null;
@@ -216,6 +253,7 @@ export function sidePanes(workspace, opts) {
       sliding = { timer: window.setTimeout(finishSlide, motion.matches ? 0 : SLIDE_MS), finish: () => still(col, () => { commit(); col.classList.remove("side-out"); }) };
     } else if (col.classList.contains("side-peek")) {
       peeking = null;
+      for (const v of /** @type {NodeListOf<HTMLElement>} */ (col.querySelectorAll(":scope > .large-view"))) v.style.clipPath = "";
       still(col, commit); // pinned where it peeks: nothing moves
     } else {
       // showing: the canvas gives the width back, then it slides in from the edge
@@ -241,6 +279,30 @@ export function sidePanes(workspace, opts) {
   apply();
 
   return {
+    /**
+     * Bring an element in a side column into view (a problem's or a warning's row, a
+     * note): a hidden side peeks out (until the pointer leaves it or a click lands
+     * elsewhere), and the row scrolls into view within its column only. A hidden column
+     * sits past the window's edge, so a plain `scrollIntoView` scrolled the whole page
+     * sideways to reach it: any sideways scroll of the page is put back.
+     * @param {Element | null | undefined} el
+     */
+    reveal(el) {
+      if (!el) return;
+      const side = SIDES.find((s) => column(s).contains(el));
+      if (side && sides[opts.view()][side]) {
+        if (peeking !== side) {
+          peek(side);
+          finishSlide();
+        }
+        clearTimeout(peekTimer);
+      }
+      el.scrollIntoView({ block: "nearest" });
+      for (let up = side ? column(side).parentElement : el.parentElement; up; up = up.parentElement) {
+        if (up.scrollLeft) up.scrollLeft = 0;
+      }
+      if (document.scrollingElement?.scrollLeft) document.scrollingElement.scrollLeft = 0;
+    },
     /** Hide or show a side of the view shown. @param {Side} side */
     toggle: (side) => set(side, undefined),
     /** Whether a side of the view shown is hidden. @param {Side} side */

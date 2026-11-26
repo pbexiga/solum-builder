@@ -1164,3 +1164,29 @@ def test_a_wire_lights_anywhere_along_it(page: Page, base_url: str) -> None:
     page.mouse.move(x, y)
     wire = page.locator("#board .off-wire").nth(i)
     assert wire.evaluate("g => g.matches(':hover')")
+
+
+def test_find_part_in_the_board_view(page: Page, base_url: str) -> None:
+    """Find part (Ctrl+F, Edit → Find part…) in the Board view: a placed part ringed on
+    the board and selected; one still in the tray, its row shown and flashed; a ref the
+    circuit hasn't refused in the form (the user, 2026-11-26)."""
+    good = load_yaml(REPO / "tests/fixtures/stripboard/rangemaster.yaml")
+    board = {**good, "parts": {k: v for k, v in good["parts"].items() if k != "R2"}}
+    open_with_board(page, base_url, board)
+    show_board(page)
+    page.locator("#board").click(position={"x": 5, "y": 5})  # the canvas has the keys
+    page.keyboard.press("Control+f")
+    page.locator("#field-ref").fill("r99")
+    page.locator("#field-ref").press("Enter")
+    expect(page.locator(".popup .error")).to_have_text("There's no part R99 on this sheet.")
+    page.locator("#field-ref").fill("r1")
+    page.locator("#field-ref").press("Enter")
+    expect(page.locator('#board .found-ring[data-found="R1"]')).to_have_count(1)
+    expect(page.locator('#board .board-part.selected[data-ref="R1"]')).to_have_count(1)
+    expect(page.locator("#board .found-ring")).to_have_count(0, timeout=3000)  # it fades
+    menu(page, "edit-menu", "menu-find")
+    page.locator("#field-ref").fill("R2")
+    page.locator("#field-ref").press("Enter")
+    row = page.locator('#board-tray-body li[data-ref="R2"]').first
+    expect(row).to_be_in_viewport()
+    expect(row).to_have_class(re.compile(r"\bflash\b"))

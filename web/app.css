@@ -283,16 +283,18 @@ body.dragging-part, body.dragging-part * { cursor: grabbing !important; }
 .side-pane.side-right.side-hidden { margin-right: calc(-1 * var(--side-w)); }
 .side-pane.side-hidden { visibility: hidden; transition: left 0.18s ease-in, transform 0.18s ease-in, visibility 0s 0.18s, --side-thumb 0.25s ease-out; }
 .side-pane.side-out { left: var(--slide); }
-.side-pane.side-hidden.side-peek { transform: translateX(calc(-1 * var(--slide))); visibility: visible; z-index: 35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); transition: transform 0.18s ease-out, visibility 0s, --side-thumb 0.25s ease-out; }
+/* `left`, not a transform: a transform would make a pane out as a large view (fixed) sit inside
+   the column instead of where it is on screen */
+.side-pane.side-hidden.side-peek { left: calc(-1 * var(--slide)); visibility: visible; z-index: 35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); transition: left 0.18s ease-out, visibility 0s, --side-thumb 0.25s ease-out; }
 /* sliding back from a peek: still above the canvas until it's gone (side-panes.js) */
 .side-pane.side-hidden.side-leaving { z-index: 35; box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35); }
 .side-pane.no-slide { transition: none !important; }
 @media (prefers-reduced-motion: reduce) { .side-pane { transition: none !important; } }
-/* back once the peek has slid away, not carried by it */
-.side-hidden > .large-view { visibility: visible; transition: visibility 0s 0.18s; }
 /* a peek covers everything, on both sides: a peeking column's own pane out as a large view
-   (which would sit above it, being its child) is tucked away until it slides back */
-.side-pane.side-peek > .large-view { visibility: hidden; transition: none; }
+   (which sits above it, being its child) is clipped where the column comes over it, the clip
+   moving with the slide (side-panes.js) */
+.side-hidden > .large-view { visibility: visible; transition: clip-path 0.18s ease-in; }
+.side-pane.side-peek > .large-view { transition: clip-path 0.18s ease-out; }
 /* the side columns' scroll bars: thin, and shown only while the pointer is over the column
    or something in it has focus, so the palette's doesn't stand between the tiles and the
    canvas (the standard properties; WebKit, the Mac app's, reads the -webkit- ones) */
@@ -599,7 +601,7 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .board-panels .net-shorted .state { color: var(--error); }
 .board-panels .warnings .fault { color: var(--error); }
 .board-panels .warnings .warning { color: var(--warning); }
-.board-panels .overlap.flash { animation: kept 1.2s ease-out; }
+.board-panels .overlap.flash, .board-tray li.flash { animation: kept 1.2s ease-out; }
 .board-panels .dismissed li, .board-panels .dismissed .reason { color: var(--text-3); }
 .board-panels .board-note.out-of-date .note-line { color: var(--text-3); }
 .board-panels .note-why { color: var(--text-3); font-style: italic; }
@@ -644,9 +646,9 @@ body[data-show="board"] .palette, body[data-show="board"] #schematic, body[data-
 .schematic .part.selected .filled { fill: var(--sch-selected); }
 .schematic .part-text.selected text { fill: var(--sch-selected); }
 .schematic .wire.selected { stroke: var(--sch-selected); stroke-width: 2.4; }
-#schematic .found-ring { fill: none; stroke: var(--sch-selected); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; animation: found-ring 1.6s ease-out forwards; }
+#schematic .found-ring, .board-drawing .found-ring { fill: none; stroke: var(--sch-selected); stroke-width: 2; vector-effect: non-scaling-stroke; pointer-events: none; animation: found-ring 1.6s ease-out forwards; }
 @keyframes found-ring { 0%, 50% { opacity: 1; } 100% { opacity: 0; } }
-@media (prefers-reduced-motion: reduce) { #schematic .found-ring { animation: none; } }
+@media (prefers-reduced-motion: reduce) { #schematic .found-ring, .board-drawing .found-ring { animation: none; } }
 .schematic .net-label.selected text { fill: var(--sch-selected); }
 .schematic .part[data-drag] { opacity: 0.8; }
 /* text blocks (D-091): notes on the sheet, not part of the circuit */

@@ -71,6 +71,7 @@ import { BOARD_SETTINGS, EDGE, overlapKey, overlapMarks, overlapParts, boardRefO
  *   refuse: (message: string) => void,
  *   marks: () => boolean,
  *   reviewing?: (open: boolean) => void,
+ *   reveal?: (el: Element | null) => void,
  * }} BoardApp
  *   `resting`: what's selected when the empty canvas is clicked (the root's own choice);
  *   `shown`: told when the view changes, so the root sets its hint (`hint`) and buttons;
@@ -78,7 +79,8 @@ import { BOARD_SETTINGS, EDGE, overlapKey, overlapMarks, overlapParts, boardRefO
  *   board*, D-370), one undo step; `editPart`: a part's properties changed and this board
  *   with it (a trimmer's style, D-393), one undo step; `marks`: View → Problem marks is on
  *   (the board's overlaps marked too, D-398); `reviewing`: a full layout's review has
- *   opened (true) or closed (false), so a hidden right column can be shown (D-408)
+ *   opened (true) or closed (false), so a hidden right column can be shown (D-408);
+ *   `reveal`: an element in a side column brought into view, a hidden side peeking out
  */
 
 const BUTTON_TITLE = "Lay out a stripboard for this circuit";
@@ -1125,7 +1127,8 @@ export function boardView(host, app) {
     const pane = /** @type {HTMLDetailsElement} */ ($("board-warnings"));
     pane.open = true;
     const row = $("board-warnings-body").querySelector(`[data-overlap="${CSS.escape(key)}"]`);
-    row?.scrollIntoView({ block: "nearest" });
+    if (app.reveal) app.reveal(row);
+    else row?.scrollIntoView({ block: "nearest" });
     row?.classList.remove("flash");
     void (/** @type {HTMLElement | null} */ (row))?.offsetWidth; // the flash again on a second click
     row?.classList.add("flash");
@@ -1204,6 +1207,24 @@ export function boardView(host, app) {
   return {
     /** Whether the Board view is showing. */
     active: () => active,
+    /**
+     * Find part in the Board view: a part (a chip's unit: its chip) brought into view and
+     * ringed on the board or beside it, else its row in the tray shown and flashed; then
+     * selected on both drawings.
+     * @param {string} ref
+     */
+    find(ref) {
+      const boardRef = (progress && boardRefOf(progress.footprints, ref)) ?? ref;
+      if (!canvas.reveal(boardRef) && !canvas.reveal(ref)) {
+        const row = $("board-tray-body").querySelector(`li[data-ref="${CSS.escape(boardRef)}"]`);
+        if (app.reveal) app.reveal(row);
+        else row?.scrollIntoView({ block: "nearest" });
+        row?.classList.remove("flash");
+        void (/** @type {HTMLElement | null} */ (row))?.offsetWidth;
+        row?.classList.add("flash");
+      }
+      selectPart(ref);
+    },
     /**
      * A Board view key (`boardActionFor`); false when it does nothing here.
      * @param {string} action

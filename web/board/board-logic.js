@@ -980,10 +980,11 @@ export function timeText(seconds) {
 
 export const LONGER = "Taking a little longer than expected…";
 /** A run is late past this many times its estimate... */
-const LATE_BY = 1.25;
-/** ...and these seconds more: the estimate is good to about a quarter either way, and a
- * few seconds' run has fixed costs of its own (D-399). */
-const LATE_PLUS = 5;
+const LATE_BY = 2;
+/** ...and these seconds more: runs take 0.75 to 1.5 times the estimate, more on a busy
+ * machine, and a few seconds' run has fixed costs of its own (D-399; it said so too often
+ * at 1.25 × + 5 s, the user, 2026-11-26). */
+const LATE_PLUS = 10;
 
 /**
  * The time a run has left, in words, from its speed so far: "About 25 seconds left."; once

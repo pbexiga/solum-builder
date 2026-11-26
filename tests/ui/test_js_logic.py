@@ -1726,8 +1726,8 @@ def test_lay_it_out_for_me_s_run_words(js: Page) -> None:
           figures: b.figuresLine({ columns: 21, strips: 14, cuts: 1, links: 13 }),
           of: b.figuresOf({ size: [9, 8], cuts: ['A1', 'B2'], links: [['C1', 'C4']] }),
           left: [3, 22, 130].map(b.leftText),
-          // late only past 1.25 × the estimate + 5 s: 35 s said, late after 48.75 s; 4 s said, after 10 s
-          longer: [b.leftText(20, 49, 35), b.leftText(20, 45, 35), b.leftText(20, 40, 0), b.leftText(2, 9, 4), b.leftText(2, 11, 4)],
+          // late only past 2 × the estimate + 10 s: 35 s said, late after 80 s; 4 s said, after 18 s
+          longer: [b.leftText(20, 81, 35), b.leftText(20, 79, 35), b.leftText(20, 90, 0), b.leftText(2, 17, 4), b.leftText(2, 19, 4)],
           same: [b.sameTry([one, two], { stripboard: { ...two.stripboard } }), b.sameTry([one], two)],
         };
         """,

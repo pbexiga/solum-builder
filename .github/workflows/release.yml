@@ -9,6 +9,7 @@
 # (docs/maintain/release.md).
 # Signed and notarised only when the certificate secrets exist; pull requests never run this.
 name: Release
+run-name: Release ${{ github.ref_name }}
 
 on:
   push:

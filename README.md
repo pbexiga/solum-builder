@@ -11,7 +11,7 @@ A circuit simulator for guitar-pedal builders that runs on your own computer. Dr
 
 It is for one person on one machine: no accounts, no cloud. Your circuits are plain JSON files in a folder you choose. It comes two ways: **a Mac app** (Apple Silicon), or **a Docker image** for any computer (Linux, Windows, an Intel Mac; x86-64 and ARM64).
 
-Solum Builder is **source-available**: you may use it, change it and share it, but not sell it (see [Licence](#licence)). Pedal makers are welcome: designing, building and selling pedals with it is allowed.
+Solum Builder is **free and open source** (AGPL-3.0, see [Licence](#licence)). Pedal makers are welcome: designing, building and selling pedals with it is allowed.
 
 - [A quick tour](#a-quick-tour)
 - [Install and run](#install-and-run): [the Mac app](#the-mac-app) or [Docker](#docker-any-computer)
@@ -111,6 +111,6 @@ Everything for people who work on the code is in **[Maintaining Solum Builder](d
 
 ## Licence
 
-MIT with the Commons Clause: see [`LICENSE`](LICENSE). In short, anyone may use, change and share Solum Builder; nobody may sell it, or a product or service whose value is mainly the app itself. Designing, building and selling pedals with it is allowed.
+GNU Affero General Public License v3.0 (AGPL-3.0): see [`LICENSE`](LICENSE). In short, anyone may use, change and share Solum Builder. Anyone who shares a changed version, or lets others use one over a network (a hosted service, say), must give those people its source under the same licence, so a paid version has to stay open too. Designing, building and selling pedals with it is allowed: using the app doesn't make your pedals subject to it. This is a summary, not legal advice.
 
 Fonts, the plotting library, makers' SPICE models and the sources the starter circuits follow keep their own terms: see [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md).

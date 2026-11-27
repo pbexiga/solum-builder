@@ -7,6 +7,7 @@ name = "solum-builder"
 dynamic = ["version"]
 description = "Self-hosted circuit simulator for guitar-pedal builders"
 requires-python = ">=3.12"
+license = {text = "AGPL-3.0-only"}
 dependencies = [
     "fastapi>=0.115",
     "uvicorn>=0.30",

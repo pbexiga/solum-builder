@@ -25,8 +25,8 @@ Thanks for wanting to help. Read `AGENTS.md` first: it is the working agreement 
 
 ## Licence
 
-By contributing you agree that your contribution is released under the repo's licence: MIT with
-the Commons Clause (see `LICENSE`).
+By contributing you agree that your contribution is released under the repo's licence: AGPL-3.0
+(see `LICENSE`).
 
 ## Security problems
 

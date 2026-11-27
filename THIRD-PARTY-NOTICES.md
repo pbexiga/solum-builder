@@ -1,7 +1,7 @@
 # Third-party notices
 
 Solum Builder's own code, rules, drawings, guides and fitted models are under the
-licence in `LICENSE` (MIT with the Commons Clause). The files and text below come from
+licence in `LICENSE` (AGPL-3.0). The files and text below come from
 other people and keep their own terms; `LICENSE` does not cover them.
 
 ## Code in this repository
